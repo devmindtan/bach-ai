@@ -1,30 +1,214 @@
 {
-  "_doc": "Knight level-up pool. kind skill = an attack the run uses; stat = a modifier. effects apply per level: add (flat) or mul (+fraction). weight = roll weight.",
+  "_doc": "Knight level-up pool. kind skill = an attack the run uses; stat = a modifier. effects apply per level: add (flat) or mul (+fraction). weight = roll weight. TEMP: frost_nova + earth_strike are exposed on knight for both-tier gameplay testing until the mage class lands.",
   "upgrades": [
-    { "id": "blade_arc", "kind": "skill", "name": "Chém kiếm", "desc": "Tự chém một nhát kiếm ngắn về phía quái gần nhất. Mỗi cấp: +20% sát thương.",
-      "max_level": 5, "weight": 3, "effects": { "skill_damage.blade_arc": { "mul": 0.20 } } },
-    { "id": "back_slash", "kind": "stat", "name": "Chém ngược", "desc": "Chém thêm một nhát về phía sau (50% sát thương). Mỗi cấp sau: +25%.",
-      "max_level": 3, "weight": 2, "effects": { "back_slash": { "add": 1.0 } } },
-    { "id": "whirlwind", "kind": "skill", "name": "Lốc xoáy", "desc": "Định kỳ xoáy kiếm quanh người. Mỗi cấp: +25% sát thương, +10% vùng.",
-      "max_level": 5, "weight": 3, "effects": { "skill_damage.whirlwind": { "mul": 0.25 }, "skill_area.whirlwind": { "mul": 0.10 } } },
-    { "id": "sharpen", "kind": "stat", "name": "Mài kiếm", "desc": "+15% sát thương mọi đòn.",
-      "max_level": 5, "weight": 4, "effects": { "damage": { "mul": 0.15 } } },
-    { "id": "haste", "kind": "stat", "name": "Nhanh tay", "desc": "-10% thời gian hồi chiêu.",
-      "max_level": 5, "weight": 4, "effects": { "cooldown": { "mul": -0.10 } } },
-    { "id": "reach", "kind": "stat", "name": "Tầm với", "desc": "+15% vùng đánh.",
-      "max_level": 5, "weight": 3, "effects": { "area": { "mul": 0.15 } } },
-    { "id": "vitality", "kind": "stat", "name": "Sinh lực", "desc": "+20 máu tối đa và hồi đầy phần thêm.",
-      "max_level": 5, "weight": 3, "effects": { "max_hp": { "add": 20.0 } } },
-    { "id": "swift", "kind": "stat", "name": "Nhẹ chân", "desc": "+10% tốc độ chạy.",
-      "max_level": 5, "weight": 3, "effects": { "move_speed": { "mul": 0.10 } } },
-    { "id": "magnet", "kind": "stat", "name": "Nam châm", "desc": "+40% tầm hút vật phẩm.",
-      "max_level": 3, "weight": 2, "effects": { "magnet": { "mul": 0.40 } } },
-    { "id": "regen", "kind": "stat", "name": "Hồi phục", "desc": "Hồi 0.5 máu mỗi giây.",
-      "max_level": 4, "weight": 2, "effects": { "regen": { "add": 0.5 } } }
+    {
+      "id": "blade_arc",
+      "kind": "skill",
+      "name": "Chém kiếm",
+      "desc": "Tự chém một nhát kiếm ngắn về phía quái gần nhất. Mỗi cấp: +20% sát thương.",
+      "max_level": 5,
+      "weight": 3,
+      "effects": {
+        "skill_damage.blade_arc": {
+          "mul": 0.2
+        }
+      }
+    },
+    {
+      "id": "back_slash",
+      "kind": "stat",
+      "name": "Chém ngược",
+      "desc": "Chém thêm một nhát về phía sau (50% sát thương). Mỗi cấp sau: +25%.",
+      "max_level": 3,
+      "weight": 2,
+      "effects": {
+        "back_slash": {
+          "add": 1.0
+        }
+      }
+    },
+    {
+      "id": "whirlwind",
+      "kind": "skill",
+      "name": "Lốc xoáy",
+      "desc": "Định kỳ xoáy kiếm quanh người. Mỗi cấp: +25% sát thương, +10% vùng.",
+      "max_level": 5,
+      "weight": 3,
+      "effects": {
+        "skill_damage.whirlwind": {
+          "mul": 0.25
+        },
+        "skill_area.whirlwind": {
+          "mul": 0.1
+        }
+      }
+    },
+    {
+      "id": "sharpen",
+      "kind": "stat",
+      "name": "Mài kiếm",
+      "desc": "+15% sát thương mọi đòn.",
+      "max_level": 5,
+      "weight": 4,
+      "effects": {
+        "damage": {
+          "mul": 0.15
+        }
+      }
+    },
+    {
+      "id": "haste",
+      "kind": "stat",
+      "name": "Nhanh tay",
+      "desc": "-10% thời gian hồi chiêu.",
+      "max_level": 5,
+      "weight": 4,
+      "effects": {
+        "cooldown": {
+          "mul": -0.1
+        }
+      }
+    },
+    {
+      "id": "reach",
+      "kind": "stat",
+      "name": "Tầm với",
+      "desc": "+15% vùng đánh.",
+      "max_level": 5,
+      "weight": 3,
+      "effects": {
+        "area": {
+          "mul": 0.15
+        }
+      }
+    },
+    {
+      "id": "vitality",
+      "kind": "stat",
+      "name": "Sinh lực",
+      "desc": "+20 máu tối đa và hồi đầy phần thêm.",
+      "max_level": 5,
+      "weight": 3,
+      "effects": {
+        "max_hp": {
+          "add": 20.0
+        }
+      }
+    },
+    {
+      "id": "swift",
+      "kind": "stat",
+      "name": "Nhẹ chân",
+      "desc": "+10% tốc độ chạy.",
+      "max_level": 5,
+      "weight": 3,
+      "effects": {
+        "move_speed": {
+          "mul": 0.1
+        }
+      }
+    },
+    {
+      "id": "magnet",
+      "kind": "stat",
+      "name": "Nam châm",
+      "desc": "+40% tầm hút vật phẩm.",
+      "max_level": 3,
+      "weight": 2,
+      "effects": {
+        "magnet": {
+          "mul": 0.4
+        }
+      }
+    },
+    {
+      "id": "regen",
+      "kind": "stat",
+      "name": "Hồi phục",
+      "desc": "Hồi 0.5 máu mỗi giây.",
+      "max_level": 4,
+      "weight": 2,
+      "effects": {
+        "regen": {
+          "add": 0.5
+        }
+      }
+    },
+    {
+      "id": "frost_nova",
+      "kind": "skill",
+      "name": "Frost Nova",
+      "desc": "Bang no quanh nguoi; moi cap +25% sat thuong, +8% vung. Cap I-V theo cap skill.",
+      "max_level": 5,
+      "weight": 2,
+      "effects": {
+        "skill_damage.frost_nova": {
+          "mul": 0.25
+        },
+        "skill_area.frost_nova": {
+          "mul": 0.08
+        }
+      }
+    },
+    {
+      "id": "earth_strike",
+      "kind": "skill",
+      "name": "Earth Strike",
+      "desc": "Dat nut quanh nguoi; moi cap +25% sat thuong, +8% vung. Cap I-V theo cap skill.",
+      "max_level": 5,
+      "weight": 2,
+      "effects": {
+        "skill_damage.earth_strike": {
+          "mul": 0.25
+        },
+        "skill_area.earth_strike": {
+          "mul": 0.08
+        }
+      }
+    }
   ],
   "skills": {
-    "blade_arc": { "sprite": "sword-slash", "damage_mul": 1.0, "cooldown_mul": 1.0, "size_mul": 1.0,
-                   "back_damage_mul": 0.5, "back_damage_per_level": 0.25 },
-    "whirlwind": { "sprite": "whirlwind", "damage_mul": 0.6, "size_mul": 1.5, "cooldown": 3.2, "duration": 0.9, "ticks": 3 }
+    "blade_arc": {
+      "sprite": "sword-slash",
+      "damage_mul": 1.0,
+      "cooldown_mul": 1.0,
+      "size_mul": 1.0,
+      "back_damage_mul": 0.5,
+      "back_damage_per_level": 0.25
+    },
+    "whirlwind": {
+      "sprite": "whirlwind",
+      "damage_mul": 0.6,
+      "size_mul": 1.5,
+      "cooldown": 3.2,
+      "duration": 0.9,
+      "ticks": 3
+    },
+    "frost_nova": {
+      "sprite": "frost-nova-i",
+      "tier_sprites": [
+        "frost-nova-i",
+        "frost-nova-ii",
+        "frost-nova-iii",
+        "frost-nova-iv",
+        "frost-nova-v"
+      ],
+      "damage_mul": 1.0,
+      "size_mul": 1.0,
+      "cooldown": 3.5
+    },
+    "earth_strike": {
+      "sprite": "earth-strike-i",
+      "tier_sprites": [
+        "earth-strike-i",
+        "earth-strike-ii",
+        "earth-strike-iii",
+        "earth-strike-iv",
+        "earth-strike-v"
+      ],
+      "damage_mul": 1.0,
+      "size_mul": 1.0,
+      "cooldown": 3.5
+    }
   }
 }

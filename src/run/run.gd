@@ -57,6 +57,7 @@ var _anim_t := 0.0
 var _action_left := 0.0       # time left on a one-shot animation (attack / hurt)
 var _blade_cd := 0.5
 var _whirl_cd := 1.0
+var _tier_cd := {}
 var _whirl_left := 0.0
 var _whirl_ticks_done := 0
 var _fx: Array[Dictionary] = []
@@ -102,7 +103,10 @@ func _ready() -> void:
 		if not m.begins_with("_"):
 			names.append(String(monsters[m].get("sprite", m)))
 	for sk: String in pool.get("skills", {}):
-		names.append(String(pool["skills"][sk].get("sprite", sk)))
+		var sd: Dictionary = pool["skills"][sk]
+		names.append(String(sd.get("sprite", sk)))
+		for tn in sd.get("tier_sprites", []):
+			names.append(String(tn))
 	for n in names:
 		if not sheets.has(n):
 			sheets[n] = SpriteSheet.load_dir(SPRITES + n, n)
@@ -148,6 +152,13 @@ func _parse_args() -> void:
 		elif a.begins_with("--walk="):
 			var xy := a.get_slice("=", 1).split(",")
 			forced_walk = Vector2(float(xy[0]), float(xy[1])).normalized()
+			demo = true
+		elif a.begins_with("--skills="):
+			# Debug/testing: force skill levels, e.g. --skills=frost_nova:5,earth_strike:5
+			for pair in a.get_slice("=", 1).split(","):
+				var kv := pair.split(":")
+				if kv.size() == 2:
+					levels[kv[0]] = int(kv[1])
 			demo = true
 		elif a == "--no-auto-pick":
 			auto_pick = false
@@ -346,6 +357,31 @@ func _skills(dt: float) -> void:
 ## Auto-aim: turn the slash (4 directions) and the hero towards the nearest
 ## monster within twice the slash's reach (from its hitbox); otherwise keep
 ## the walking direction.
+	# Tiered AOE skills (frost-nova / earth-strike): one-shot burst centred on
+	# the player. Sprite is chosen by the skill's level (I-V), damage/area use
+	# the same stats pipeline as the other skills.
+	var tier_skills: Array = ["frost_nova", "earth_strike"]
+	for tid in tier_skills:
+		if levels.get(tid, 0) <= 0 or not skills.has(tid):
+			continue
+		var ts: Dictionary = skills[tid]
+		var tier_names: Array = ts.get("tier_sprites", [])
+		var sprite := String(ts.get("sprite", tid))
+		if tier_names.size() > 0:
+			var ti: int = clampi(int(levels[tid]) - 1, 0, tier_names.size() - 1)
+			sprite = String(tier_names[ti])
+		var cd_left := float(_tier_cd.get(tid, 0.0)) - dt
+		_tier_cd[tid] = cd_left
+		if cd_left <= 0.0:
+			var haste := float(stats["cooldown"]) / maxf(0.01, float(base_stats.get("cooldown", 1.0)))
+			_tier_cd[tid] = float(ts.get("cooldown", 3.5)) * haste
+			var dmg := float(stats["damage"]) * float(ts.get("damage_mul", 1.0)) \
+				* PlayerStats.skill_mul(stats, "skill_damage." + tid)
+			var sc := _sprite_scale * area * float(ts.get("size_mul", 1.0)) \
+				* PlayerStats.skill_mul(stats, "skill_area." + tid)
+			_add_fx(sprite, "burst", sc, dmg)
+
+
 func _aim(sheet: SpriteSheet, sc: float) -> void:
 	var center := player_pos + _hit_center
 	var hb := SpriteHitbox.of(sheet, "slash_right", center, sc)
