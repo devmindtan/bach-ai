@@ -36,6 +36,6 @@ Luật dưới đây là **bắt buộc khi thiết kế**; số liệu nằm tr
 
 - `gamekit test bach-ai` chạy `tests/integration/data/gameplay_rules_test.gd`: luật **bắt buộc** sai thì test
   fail, không commit được.
-- Dashboard (`sprite-lab/serve-viewer.sh` → `games.html`, tab **Luật gameplay**) chấm từng kỹ năng trong game và
-  từng hiệu ứng trong kho Sprite Lab, để chọn cái nào đưa vào game.
+- Dashboard (`sprite-lab/serve-viewer.sh` → `games.html`, tab **Luật gameplay**) chấm từng kỹ năng trong game; tab
+  **Kỹ năng** cho xem lúc chiêu trúng hình nhân.
 - Sửa ngưỡng: sửa `assets/data/gameplay_rules.json` (và bảng này), rồi chạy lại test.
