@@ -114,3 +114,23 @@ func test_bodies_come_from_sprites_not_data() -> void:
 		_check(sheet != null and sheet.meta.get("body") is Dictionary, "class sprite %s has no body" % name)
 	_check(not GameData.load_json(DATA + "run_config.json").get("player", {}).has("hit_radius"),
 		"run_config player.hit_radius is hand-typed; use the class sprite body")
+
+
+func test_class_sprites_are_layered_side_view_movers() -> void:
+	# Bach Ai: heroes move left/right only, attacks are effect sprites, and the
+	# body is layered so armour can replace parts (design/game-brief.md).
+	var classes := GameData.load_json(DATA + "classes.json")
+	for id: String in classes:
+		if id.begins_with("_"):
+			continue
+		var name := String(classes[id]["sprite"])
+		var sheet := SpriteSheet.load_dir(SPRITES + name, name)
+		if sheet == null:
+			_check(false, "class sprite %s missing" % name)
+			continue
+		for anim in ["idle", "run", "hurt", "death"]:
+			_check(sheet.has_animation(anim), "class sprite %s needs %s" % [name, anim])
+		_check(not sheet.layer_names().is_empty(), "class sprite %s must be layered (equipment)" % name)
+		for n in sheet.layer_names():
+			_check(ResourceLoader.exists(SPRITES + name + "/layers/" + n + "_strip.png"),
+				"class sprite %s: layer %s missing (gamekit art promote)" % [name, n])

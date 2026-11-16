@@ -5,5 +5,7 @@
   "pickups": { "radius": 70.0, "magnet_speed": 520.0, "collect_radius": 14.0, "gold_chance": 0.12 },
   "player": { "hit_invuln": 0.6 },
   "separation": { "cell": 48.0, "push": 60.0 },
-  "max_enemies": 600
+  "max_enemies": 600,
+  "ui": { "damage_number_time": 0.7, "damage_number_rise": 36.0, "damage_number_size": 16, "max_damage_numbers": 96,
+          "hp_bar_time": 2.0 }
 }

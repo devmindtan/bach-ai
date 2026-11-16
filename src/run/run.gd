@@ -41,7 +41,8 @@ var sheets: Dictionary = {}   # sprite name -> SpriteSheet
 # player
 var player_pos := Vector2.ZERO
 var facing := Vector2.RIGHT     # last move direction (8-dir)
-var attack_dir := Vector2.RIGHT # snapped to 4 directions for the sweep
+var face_left := false          # the hero is drawn in the side view only; left = mirrored
+var attack_dir := Vector2.RIGHT # towards the nearest monster, snapped to the slash's 4 directions
 var hp := 100.0
 var invuln := 0.0
 var level := 1
@@ -62,6 +63,14 @@ var _whirl_left := 0.0
 var _whirl_ticks_done := 0
 var _fx: Array[Dictionary] = []
 var _end_t := 0.0
+# floating damage numbers (ring buffer, sizes from run_config "ui")
+var _num_pos := PackedVector2Array()
+var _num_val := PackedFloat32Array()
+var _num_t := PackedFloat32Array()   # age in seconds, -1 = free
+var _num_next := 0
+var _num_life := 0.7
+var _num_rise := 36.0
+var _num_size := 16
 
 # options
 var demo := false
@@ -97,6 +106,15 @@ func _ready() -> void:
 	_sprite_scale = float(cfg.get("world", {}).get("sprite_scale", 2))
 	_arena_half = float(cfg.get("world", {}).get("arena_half", 1400.0))
 	xp_curve = XpCurve.from_config(cfg.get("xp", {}))
+	var ui: Dictionary = cfg.get("ui", {})
+	_num_life = float(ui.get("damage_number_time", 0.7))
+	_num_rise = float(ui.get("damage_number_rise", 36.0))
+	_num_size = int(ui.get("damage_number_size", 16))
+	var n_max := maxi(1, int(ui.get("max_damage_numbers", 96)))
+	_num_pos.resize(n_max)
+	_num_val.resize(n_max)
+	_num_t.resize(n_max)
+	_num_t.fill(-1.0)
 
 	var names: Array[String] = [String(class_data.get("sprite", "swordsman")), "exp-gem", "gold-coin"]
 	for m: String in monsters:
@@ -110,6 +128,10 @@ func _ready() -> void:
 	for n in names:
 		if not sheets.has(n):
 			sheets[n] = SpriteSheet.load_dir(SPRITES + n, n)
+	# the hero is layered: compose it here; equipment will pass its layers as overrides
+	var hero_sheet: SpriteSheet = sheets.get(names[0])
+	if hero_sheet != null and not hero_sheet.layer_names().is_empty():
+		hero_sheet.compose_layers()
 
 	enemies = Enemies.new(monsters, cfg, sheets, rng.seed)
 	_update_body()
@@ -230,6 +252,7 @@ func _tick(dt: float) -> void:
 	if got.x > 0.0:
 		_gain_xp(got.x)
 	_step_fx(dt)
+	_step_damage_numbers(dt)
 	if hp <= 0.0:
 		_die()
 	elif clock >= duration and bench == 0:
@@ -243,9 +266,9 @@ func _move_player(dt: float) -> void:
 	_moving = dir.length_squared() > 0.01
 	if _moving:
 		facing = dir.normalized()
-		_update_body()
-		attack_dir = Vector2(signf(facing.x), 0.0) if absf(facing.x) >= absf(facing.y) \
-			else Vector2(0.0, signf(facing.y))
+		if absf(facing.x) > 0.1:
+			face_left = facing.x < 0.0
+			_update_body()
 		player_pos += dir.limit_length(1.0) * float(stats["move_speed"]) * dt
 		player_pos = player_pos.clamp(Vector2(-_arena_half, -_arena_half), Vector2(_arena_half, _arena_half))
 	_action_left = maxf(0.0, _action_left - dt)
@@ -272,7 +295,7 @@ func _autopilot() -> Vector2:
 	var dir := Vector2.ZERO
 	if best < INF:
 		var hurt := hp < float(stats["max_hp"]) * 0.4
-		# close in, then creep so the sweep (which follows facing) points at it
+		# close in, then creep (the slash aims itself at the nearest monster)
 		dir = -nearest.normalized() if hurt else nearest.normalized() * (1.0 if best > 45.0 * 45.0 else 0.2)
 	var home := -player_pos / maxf(1.0, _arena_half) * 1.5
 	return (dir * 0.6 + crowd + home).limit_length(1.0)
@@ -319,13 +342,12 @@ func _skills(dt: float) -> void:
 			var sc := _sprite_scale * area * float(s.get("size_mul", 1.0)) \
 				* PlayerStats.skill_mul(stats, "skill_area.blade_arc")
 			var sprite := String(s.get("sprite", "sword-slash"))
-			_aim(sheets.get(sprite), sc)
+			_aim()
 			_add_fx(sprite, _slash_anim(attack_dir), sc, dmg)
 			var back := int(levels.get("back_slash", 0))
 			if back > 0:
 				var mul := float(s.get("back_damage_mul", 0.5)) + float(s.get("back_damage_per_level", 0.25)) * (back - 1)
 				_add_fx(sprite, _slash_anim(-attack_dir), sc, dmg * mul)
-			_play_action("attack")
 	if levels.get("whirlwind", 0) > 0:
 		var w: Dictionary = skills["whirlwind"]
 		if _whirl_left > 0.0:
@@ -354,9 +376,9 @@ func _skills(dt: float) -> void:
 				_add_fx(String(w.get("sprite", "whirlwind")), "spin", sc, 0.0, _whirl_left)
 
 
-## Auto-aim: turn the slash (4 directions) and the hero towards the nearest
-## monster within twice the slash's reach (from its hitbox); otherwise keep
-## the walking direction.
+## The slash never follows the walk: it always points at the nearest living
+## monster (snapped to the slash sprite's 4 directions). With no monster left
+## it keeps its last direction. Standing still, the hero turns to face it.
 	# Tiered AOE skills (frost-nova / earth-strike): one-shot burst cast out
 	# toward the nearest enemy (AOE/projectile-style: fired away from the player,
 	# not attached to it). Sprite is chosen by level (I-V).
@@ -390,18 +412,23 @@ func _skills(dt: float) -> void:
 			_add_fx(sprite, "burst", sc, dmg, -1.0, cast_pos)
 
 
-func _aim(sheet: SpriteSheet, sc: float) -> void:
+func _aim() -> void:
 	var center := player_pos + _hit_center
-	var hb := SpriteHitbox.of(sheet, "slash_right", center, sc)
-	var reach := hb.radius * 2.0 if hb != null else 80.0
-	var i := enemies.nearest(center, reach)
+	var i := enemies.nearest(center, INF)
 	if i < 0:
 		return
 	var d := enemies.center_of(i) - center
-	attack_dir = Vector2(signf(d.x), 0.0) if absf(d.x) >= absf(d.y) else Vector2(0.0, signf(d.y))
-	if absf(d.x) > 1.0 and not _moving:
-		facing = Vector2(signf(d.x), 0.0)
+	attack_dir = slash_dir(d)
+	if absf(d.x) > 1.0 and not _moving:   # standing still: turn towards the target
+		face_left = d.x < 0.0
 		_update_body()
+
+
+## Direction to a target snapped to the slash sprite's 4 directions.
+static func slash_dir(to_target: Vector2) -> Vector2:
+	if absf(to_target.x) >= absf(to_target.y):
+		return Vector2(signf(to_target.x) if to_target.x != 0.0 else 1.0, 0.0)
+	return Vector2(0.0, signf(to_target.y))
 
 
 func _slash_anim(d: Vector2) -> String:
@@ -544,21 +571,13 @@ func _play_action(anim: String) -> void:
 ## sprite): centre offset for contact / pickups / attack pivot, and radius.
 func _update_body() -> void:
 	var hero: SpriteSheet = sheets.get(String(class_data.get("sprite", "swordsman")))
-	var b := SpriteHitbox.body(hero, Vector2.ZERO, _sprite_scale, facing.x < 0.0)
+	var b := SpriteHitbox.body(hero, Vector2.ZERO, _sprite_scale, face_left)
 	if b == null:
 		push_error("class sprite has no body circle; regenerate it in Sprite Lab")
 		return
 	_hit_center = b.center
 	if enemies != null:
 		enemies.player_hit_radius = b.radius
-
-
-## Which drawn view a direction uses: "down" / "up" when it is mostly
-## vertical, otherwise "side" (diagonals included; left = mirrored).
-static func _view(d: Vector2) -> String:
-	if absf(d.y) > absf(d.x) * 1.5:
-		return "down" if d.y > 0.0 else "up"
-	return "side"
 
 
 func _set_anim(anim: String) -> void:
@@ -594,17 +613,13 @@ func _draw() -> void:
 	if hero != null:
 		var blink := invuln > 0.0 and state == State.PLAYING and int(invuln * 20.0) % 2 == 0
 		var tint := Color(1, 1, 1, 0.45) if blink else Color.WHITE
-		var acting := (_anim == "attack" or _anim == "hurt") and _action_left > 0.0
-		var dir := attack_dir if _anim == "attack" and acting else facing
-		var side := _view(dir)
-		var anim := _anim if side == "side" or not hero.has_animation(_anim + "_" + side) else _anim + "_" + side
-		# while attacking the hero faces the slash (attack_dir), otherwise the walk
-		var flip := dir.x < 0.0 and side == "side"
-		hero.draw(self, anim, _anim_t, player_pos, _sprite_scale, flip, tint)
+		hero.draw(self, _anim, _anim_t, player_pos, _sprite_scale, face_left, tint)
 	for fx in _fx:
 		var sh: SpriteSheet = fx["sheet"]
 		var t := fmod(float(fx["t"]), sh.duration(fx["anim"])) if fx["anim"] == "spin" else float(fx["t"])
 		sh.draw(self, fx["anim"], t, _fx_pos(fx), float(fx["scale"]))
+	_draw_monster_hp(view)
+	_draw_damage_numbers(view)
 	if show_hitboxes:
 		_draw_hitboxes(view)
 	# hp bar under the hero
@@ -612,6 +627,52 @@ func _draw() -> void:
 	var bar := Rect2(player_pos + Vector2(-w * 0.5, 8.0), Vector2(w, 5.0))
 	draw_rect(bar, Color(0.1, 0.05, 0.08))
 	draw_rect(Rect2(bar.position, Vector2(w * clampf(hp / float(stats["max_hp"]), 0.0, 1.0), 5.0)), Color(0.85, 0.2, 0.25))
+
+
+# --- damage numbers and monster hp bars ------------------------------------------
+
+## Turns this frame's hits into floating numbers (a fixed ring: the oldest is
+## reused when full) and ages them.
+func _step_damage_numbers(dt: float) -> void:
+	for i in _num_t.size():
+		if _num_t[i] >= 0.0:
+			_num_t[i] += dt
+			if _num_t[i] > _num_life:
+				_num_t[i] = -1.0
+	for k in enemies.hit_pos.size():
+		_num_pos[_num_next] = enemies.hit_pos[k] + Vector2(rng.randf_range(-6.0, 6.0), 0.0)
+		_num_val[_num_next] = enemies.hit_val[k]
+		_num_t[_num_next] = 0.0
+		_num_next = (_num_next + 1) % _num_t.size()
+	enemies.drain_hits()
+
+
+func _draw_damage_numbers(view: Rect2) -> void:
+	var font := ThemeDB.fallback_font
+	for i in _num_t.size():
+		var t := _num_t[i]
+		if t < 0.0 or not view.has_point(_num_pos[i]):
+			continue
+		var u := t / _num_life
+		var a := 1.0 if u < 0.6 else 1.0 - (u - 0.6) / 0.4
+		var p := (_num_pos[i] - Vector2(30.0, _num_rise * u)).round()
+		var txt := str(maxi(1, roundi(_num_val[i])))
+		draw_string_outline(font, p, txt, HORIZONTAL_ALIGNMENT_CENTER, 60.0, _num_size, 4, Color(0.1, 0.05, 0.08, a))
+		draw_string(font, p, txt, HORIZONTAL_ALIGNMENT_CENTER, 60.0, _num_size, Color(1.0, 0.93, 0.6, a))
+
+
+## Hp bar over each monster hit in the last ui.hp_bar_time seconds.
+func _draw_monster_hp(view: Rect2) -> void:
+	for i in enemies.count:
+		if enemies.hp_show[i] <= 0.0 or enemies.state[i] == Enemies.DYING or not view.has_point(enemies.pos[i]):
+			continue
+		var k := enemies.kind[i]
+		var r := enemies.k_radius[k]
+		var w := maxf(16.0, r * 2.0)
+		var top := (enemies.center_of(i) - Vector2(w * 0.5, r + 8.0)).round()
+		var frac := clampf(enemies.hp[i] / enemies.k_hp[k], 0.0, 1.0)
+		draw_rect(Rect2(top - Vector2(1, 1), Vector2(w + 2.0, 5.0)), Color(0.1, 0.05, 0.08))
+		draw_rect(Rect2(top, Vector2(roundf(w * frac), 3.0)), Color(0.9, 0.25, 0.3))
 
 
 func _draw_hitboxes(view: Rect2) -> void:

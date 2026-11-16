@@ -19,6 +19,9 @@ every reference below resolves and that nothing is orphaned.
 | `player.hit_invuln` | seconds of invulnerability after a hit (the body circle is the class sprite's json `body`) |
 | `separation.cell`, `separation.push` | spatial-hash cell size; how hard overlapping monsters push apart (px/s) |
 | `max_enemies` | spawn cap |
+| `ui.damage_number_time`, `ui.damage_number_rise`, `ui.damage_number_size` | floating damage number: lifetime (s), rise (px), font size |
+| `ui.max_damage_numbers` | how many numbers can float at once (oldest reused) |
+| `ui.hp_bar_time` | seconds a monster's hp bar stays visible after a hit (hidden otherwise) |
 
 ## classes.json — playable classes
 

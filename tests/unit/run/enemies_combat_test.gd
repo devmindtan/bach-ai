@@ -110,3 +110,28 @@ func test_body_comes_from_sprite_and_mirrors() -> void:
 	_check(e.center_of(0).distance_to(Vector2(104, -24)) < 0.1, "body (+4,-24) facing right, got %s" % e.center_of(0))
 	e.step(0.0001, Vector2(-200, 0), Vector2(-200, 0))  # player to the left: mirrored
 	_check(e.center_of(0).distance_to(Vector2(96, -24)) < 0.1, "body (-4,-24) mirrored, got %s" % e.center_of(0))
+
+
+func test_hit_records_damage_number_and_shows_hp_bar_for_a_while() -> void:
+	var e := _enemies()
+	e.hp_bar_time = 2.0
+	e.spawn("blob", Vector2(40, 0))
+	_settle(e)
+	_check(e.hp_show[0] == 0.0, "hp bar hidden before any hit")
+	e.hit_circle(Vector2.ZERO, 60.0, 5.0)
+	_check(e.hit_val.size() == 1 and is_equal_approx(e.hit_val[0], 5.0), "one damage number of 5")
+	_check(is_equal_approx(e.hp_show[0], 2.0), "hp bar shown for 2 s after the hit")
+	e.drain_hits()
+	_check(e.hit_pos.is_empty(), "drain clears the hits")
+	for i in 130:
+		e.step(1.0 / 60.0, Vector2(0, 300), Vector2(0, 300))
+	_check(e.hp_show[0] == 0.0, "hp bar hidden again after 2 s without hits")
+
+
+func test_nearest_finds_far_monster_when_unbounded() -> void:
+	var e := _enemies()
+	e.spawn("blob", Vector2(600, 0))
+	e.spawn("blob", Vector2(-400, 0))
+	_settle(e)
+	_check(e.nearest(Vector2.ZERO, INF) == 1, "the monster 400 px away is the nearest")
+	_check(e.nearest(Vector2.ZERO, 100.0) == -1, "none within 100 px")

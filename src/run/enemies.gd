@@ -32,6 +32,7 @@ var flash := PackedFloat32Array()
 var anim_t := PackedFloat32Array()
 var phase := PackedFloat32Array()
 var flip := PackedByteArray()          # 1 = drawn mirrored (player is to the left)
+var hp_show := PackedFloat32Array()    # seconds the hp bar stays visible (set on every hit)
 
 # per kind (index = kind id)
 var kind_ids: Array[String] = []
@@ -46,6 +47,11 @@ var k_scale := PackedFloat32Array()
 var k_center := PackedVector2Array()     # body centre relative to the anchor point (facing right)
 var k_death_time := PackedFloat32Array()
 var k_extra: Array[Dictionary] = []
+
+# hits since the last drain_hits() (the run shows them as damage numbers)
+var hit_pos := PackedVector2Array()
+var hit_val := PackedFloat32Array()
+var hp_bar_time := 2.0
 
 # kills since the last drain_kills() (the run turns them into gems)
 var kill_pos := PackedVector2Array()
@@ -89,6 +95,8 @@ func _init(monsters: Dictionary, cfg: Dictionary, sheets: Dictionary, seed_value
 	anim_t.resize(capacity)
 	phase.resize(capacity)
 	flip.resize(capacity)
+	hp_show.resize(capacity)
+	hp_bar_time = float(cfg.get("ui", {}).get("hp_bar_time", 2.0))
 	var behaviours := {"chase": CHASE, "swarm": SWARM, "charge": CHARGE}
 	var world_scale := float(world.get("sprite_scale", 2))
 	for id: String in monsters:
@@ -141,6 +149,7 @@ func spawn(id: String, p: Vector2) -> bool:
 	anim_t[i] = _rng.randf() * 2.0
 	phase[i] = _rng.randf() * TAU
 	flip[i] = 0
+	hp_show[i] = 0.0
 	return true
 
 
@@ -170,6 +179,7 @@ func step(delta: float, player_pos: Vector2, player_center: Vector2) -> float:
 	while i < count:
 		anim_t[i] += delta
 		flash[i] = maxf(0.0, flash[i] - delta)
+		hp_show[i] = maxf(0.0, hp_show[i] - delta)
 		if state[i] == DYING:
 			timer[i] += delta
 			if timer[i] >= k_death_time[kind[i]]:
@@ -299,6 +309,9 @@ func hit_circle(center: Vector2, radius: float, damage: float, knockback := 90.0
 func _damage(i: int, amount: float, kb: Vector2) -> void:
 	hp[i] -= amount
 	flash[i] = HURT_FLASH
+	hp_show[i] = hp_bar_time
+	hit_pos.append(center_of(i) - Vector2(0.0, k_radius[kind[i]]))
+	hit_val.append(amount)
 	if state[i] != DASH:
 		knock[i] += kb
 	if hp[i] <= 0.0:
@@ -314,9 +327,13 @@ func _damage(i: int, amount: float, kb: Vector2) -> void:
 ## [param max_dist] (body edge), or -1.
 func nearest(p: Vector2, max_dist: float) -> int:
 	_query.clear()
-	_hash.query(p, max_dist + 32.0, _query)
-	for j in range(_hashed_count, count):
-		_query.append(j)
+	if is_inf(max_dist):   # unbounded: every monster
+		for j in count:
+			_query.append(j)
+	else:
+		_hash.query(p, max_dist + 32.0, _query)
+		for j in range(_hashed_count, count):
+			_query.append(j)
 	var best := -1
 	var best_d := INF
 	for i in _query:
@@ -327,6 +344,12 @@ func nearest(p: Vector2, max_dist: float) -> int:
 			best_d = d
 			best = i
 	return best
+
+
+## Clears the hit buffers (call after turning them into damage numbers).
+func drain_hits() -> void:
+	hit_pos.clear()
+	hit_val.clear()
 
 
 ## Clears the kill buffers (call after turning them into drops).
@@ -372,4 +395,5 @@ func _remove(i: int) -> void:
 		anim_t[i] = anim_t[last]
 		phase[i] = phase[last]
 		flip[i] = flip[last]
+		hp_show[i] = hp_show[last]
 	count = last
