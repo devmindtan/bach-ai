@@ -60,7 +60,17 @@ func show_level_up(ids: Array[String]) -> void:
 		v.offset_bottom = -14
 		v.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		b.add_child(v)
-		v.add_child(_label("%d. %s" % [i + 1, u.get("name", ids[i])], 22, TEXT))
+		var head := HBoxContainer.new()
+		head.add_theme_constant_override("separation", 10)
+		var icon := TextureRect.new()
+		icon.texture = UiIcons.texture(ids[i])
+		icon.custom_minimum_size = Vector2(36, 36)
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		head.add_child(icon)
+		head.add_child(_label("%d. %s" % [i + 1, u.get("name", ids[i])], 22, TEXT))
+		v.add_child(head)
 		var tag := "Mới" if lv == 0 else "Cấp %d → %d" % [lv, lv + 1]
 		v.add_child(_label("%s   (tối đa %d)" % [tag, int(u.get("max_level", 1))], 14, BORDER))
 		var d := _label(String(u.get("desc", "")), 16, MUTED)

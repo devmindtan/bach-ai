@@ -1,7 +1,9 @@
 class_name UiIcons
 extends RefCounted
 ## The ui-icons sprite (Sprite Lab): heart, skull, coin, gem, star, clock,
-## sword, boot. Draw one in _draw, or get a texture for a TextureRect.
+## sword, boot, plus one icon per upgrade id (blade_arc, back_slash, whirlwind,
+## sharpen, haste, reach, vitality, swift, magnet, regen, frost_nova, earth_strike).
+## Draw one in _draw, or get a texture for a TextureRect.
 ##
 ## Example:
 ##   UiIcons.draw(self, "heart", Vector2(24, 40), 2.0)
