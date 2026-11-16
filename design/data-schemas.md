@@ -57,3 +57,13 @@ effect (`SpriteHitbox`). Effect scale = `world.sprite_scale` × class `area` × 
 
 `{ number, name, duration, waves[] }` (`number` and `name` are shown in the lobby and HUD); a wave is `{ monster, t_from, t_to, rate, rate_end }` (linear spawns/s) or
 `{ monster, t_from, t_to, burst }` (that many at once at `t_from`). See `WaveScheduler`.
+
+## gameplay_rules.json — design rules for skills and effects
+
+`{ limits{...}, rules[] }`. `rules[]`: `{ id, severity: "must"|"should", title, text }`; ids are fixed (`auto`,
+`hitbox`, `screen`, `snappy`, `directional`, `levels`, `small`, `class`, `dps`) because the checks are code.
+`limits`: `cooldown_min/max` (s), `reach_min/max` (world px of the hit area at max level), `cast_range_max` (px),
+`oneshot_max` (s, one-shot effect length), `active_start_max` (s, first damage frame), `frame_max` (px),
+`levels_min/max`, `dps_ratio_min/max` (level-1 skill dps / class base dps). Meaning of every rule:
+`design/gameplay-rules.md`. Checked by `tests/integration/data/gameplay_rules_test.gd` (must) and the studio
+dashboard (all).

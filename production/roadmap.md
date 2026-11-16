@@ -19,6 +19,7 @@ Nguyên tắc: **làm cho vòng lặp cốt lõi vui trước**, rồi mới t�
 | Nhân vật & đòn đánh | Nhân vật **chỉ có góc ngang trái/phải** (trái = lật): `idle`, `run`, `hurt`, `death`. Đòn đánh là **sprite hiệu ứng riêng** (có hitbox), không vẽ vào thân (2026-11-16, you said) |
 | Mặc giáp | Nhân vật vẽ **theo lớp** (tóc, mặt, thân áo, tay áo, bàn tay, quần, giày, khăn, vũ khí); đồ mặc thay lớp của ô trang bị, game ghép lớp rồi viền (`SpriteSheet.compose_layers`) (2026-11-16, you said) |
 | Phản hồi đòn đánh | Hiện **số sát thương** bay lên khi đánh trúng; **thanh máu quái chỉ hiện khi bị đánh** (2 s sau mỗi đòn) (2026-11-16, you said) |
+| Luật gameplay | Game 2D sinh tồn kiểu Vampire Survivors; mọi kỹ năng/hiệu ứng phải qua luật ở `design/gameplay-rules.md` (`assets/data/gameplay_rules.json`), test chặn luật bắt buộc, dashboard chấm cả kho hiệu ứng (2026-11-16, you said) |
 
 ## Quyết định còn mở (cần trước đợt ghi trong ngoặc)
 
