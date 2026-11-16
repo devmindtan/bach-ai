@@ -1,9 +1,9 @@
 {
   "_doc": "Per-run tuning (phase 1). Distances in screen pixels at the world scale, times in seconds. See design/game-brief.md.",
-  "world": { "arena_half": 1400.0, "sprite_scale": 2, "spawn_ring": [520.0, 640.0], "despawn_distance": 1100.0 },
-  "xp": { "base": 6.0, "growth": 1.22, "flat": 2.0, "_formula": "xp_to_next(L) = round(base * growth^(L-1) + flat * (L-1))" },
+  "world": { "arena_half": 1400.0, "sprite_scale": 2, "spawn_ring": [760.0, 860.0], "despawn_distance": 1300.0 },
+  "xp": { "base": 5.0, "growth": 1.22, "flat": 2.0, "_formula": "xp_to_next(L) = round(base * growth^(L-1) + flat * (L-1))" },
   "pickups": { "radius": 70.0, "magnet_speed": 520.0, "collect_radius": 14.0, "gold_chance": 0.12 },
-  "player": { "hit_invuln": 0.6, "hit_radius": 14.0 },
+  "player": { "hit_invuln": 0.6 },
   "separation": { "cell": 48.0, "push": 60.0 },
   "max_enemies": 600
 }

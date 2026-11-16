@@ -16,13 +16,16 @@ every reference below resolves and that nothing is orphaned.
 | `pickups.radius` | base magnet radius (× player `magnet` stat) |
 | `pickups.magnet_speed`, `pickups.collect_radius` | pull speed (px/s) and pick-up distance |
 | `pickups.gold_chance` | chance a kill also drops a coin |
-| `player.hit_invuln`, `player.hit_radius` | seconds of invulnerability after a hit; body radius |
+| `player.hit_invuln` | seconds of invulnerability after a hit (the body circle is the class sprite's json `body`) |
 | `separation.cell`, `separation.push` | spatial-hash cell size; how hard overlapping monsters push apart (px/s) |
 | `max_enemies` | spawn cap |
 
 ## classes.json — playable classes
 
 `<class_id>: { name, sprite, stats{...}, start_skills{skill_id: level}, upgrades: "<file>.json" }`
+
+The body circle (contact, pickups, attack pivot) is the `body` of the class sprite's json, measured from its
+pixels in Sprite Lab (`SpriteHitbox.body`).
 
 `stats`: `max_hp`, `move_speed` (px/s), `damage` (base hit), `cooldown` (s, auto attack), `area` (×),
 `regen` (hp/s), `armor` (flat reduction per hit), `magnet` (× pickup radius).
@@ -33,13 +36,17 @@ every reference below resolves and that nothing is orphaned.
 `add` adds per level; `mul` adds per level to a multiplier starting at 1 (floored at 0.2), see `PlayerStats`.
 A stat key `skill_damage.<skill>` / `skill_area.<skill>` scales one skill only.
 
-`skills.<id>`: parameters of each attack. `blade_arc`: `range`, `half_angle_deg`, `damage_mul`,
-`cooldown_mul`, `back_damage_mul`, `back_damage_per_level`. `whirlwind`: `radius`, `damage_mul`,
-`cooldown`, `duration`, `ticks`. Every `kind: "skill"` upgrade has a `skills` entry and vice versa.
+`skills.<id>`: coefficients of each attack. The hit area is **not** here: it is the `hitbox` of the skill
+sprite's animation (measured from the pixels in Sprite Lab), placed with the same anchor and scale as the drawn
+effect (`SpriteHitbox`). Effect scale = `world.sprite_scale` × class `area` × `size_mul` (× `skill_area.<id>`).
+`blade_arc`: `sprite`, `damage_mul`, `cooldown_mul`, `size_mul`, `back_damage_mul`, `back_damage_per_level`.
+`whirlwind`: `sprite`, `damage_mul`, `size_mul`, `cooldown` (scaled by the class cooldown stat), `duration`,
+`ticks`. Every `kind: "skill"` upgrade has a `skills` entry and vice versa.
 
 ## monsters.json — monster stats (stage 1)
 
-`<monster_id>: { sprite, behaviour: chase|swarm|charge, hp, damage, speed, radius, xp, scale, ... }`.
+`<monster_id>: { sprite, behaviour: chase|swarm|charge, hp, damage, speed, xp, scale, ... }`. The body circle
+(contact, separation, being hit) is the sprite json `body` × `scale`; never a radius typed here.
 `swarm` adds `wobble` (px/s sideways). `charge` adds `charge_range`, `windup`, `dash_speed`, `dash_time`,
 `charge_cooldown`. Sprites need `move` and `death` animations.
 

@@ -73,3 +73,44 @@ func test_monster_sprites_have_move_and_death() -> void:
 func test_pickup_sprites_exist() -> void:
 	for name in ["exp-gem", "gold-coin"]:
 		_check(_sprite_ok(name), "pickup sprite %s missing" % name)
+
+
+func test_skill_effects_have_pixel_hitboxes() -> void:
+	# hit areas come from the sprite json (measured from pixels), never from data
+	var classes := GameData.load_json(DATA + "classes.json")
+	for id: String in classes:
+		if id.begins_with("_"):
+			continue
+		var pool := GameData.load_json(DATA + String(classes[id].get("upgrades", "")))
+		for sk: String in pool.get("skills", {}):
+			var s: Dictionary = pool["skills"][sk]
+			for banned in ["range", "radius", "half_angle_deg", "fx_radius"]:
+				_check(not s.has(banned), "skill %s: '%s' is hand-typed geometry; use the sprite hitbox" % [sk, banned])
+			var name := String(s.get("sprite", ""))
+			var sheet := SpriteSheet.load_dir(SPRITES + name, name)
+			if sheet == null:
+				continue
+			for anim in sheet.animation_names():
+				_check(sheet.animation(anim).get("hitbox") is Dictionary,
+					"skill sprite %s animation %s has no hitbox" % [name, anim])
+
+
+func test_bodies_come_from_sprites_not_data() -> void:
+	var monsters := GameData.load_json(DATA + "monsters.json")
+	for m: String in monsters:
+		if m.begins_with("_"):
+			continue
+		_check(not monsters[m].has("radius"), "monster %s: hand-typed radius; the body is the sprite json 'body'" % m)
+		var name := String(monsters[m]["sprite"])
+		var sheet := SpriteSheet.load_dir(SPRITES + name, name)
+		_check(sheet != null and sheet.meta.get("body") is Dictionary, "monster sprite %s has no body" % name)
+	var classes := GameData.load_json(DATA + "classes.json")
+	for id: String in classes:
+		if id.begins_with("_"):
+			continue
+		_check(not classes[id].has("hit_center_y"), "class %s: hand-typed hit_center_y" % id)
+		var name := String(classes[id]["sprite"])
+		var sheet := SpriteSheet.load_dir(SPRITES + name, name)
+		_check(sheet != null and sheet.meta.get("body") is Dictionary, "class sprite %s has no body" % name)
+	_check(not GameData.load_json(DATA + "run_config.json").get("player", {}).has("hit_radius"),
+		"run_config player.hit_radius is hand-typed; use the class sprite body")

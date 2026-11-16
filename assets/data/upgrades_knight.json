@@ -1,7 +1,7 @@
 {
   "_doc": "Knight level-up pool. kind skill = an attack the run uses; stat = a modifier. effects apply per level: add (flat) or mul (+fraction). weight = roll weight.",
   "upgrades": [
-    { "id": "blade_arc", "kind": "skill", "name": "Kiếm chém", "desc": "Chém vòng cung về hướng đang đi. Mỗi cấp: +20% sát thương.",
+    { "id": "blade_arc", "kind": "skill", "name": "Chém kiếm", "desc": "Tự chém một nhát kiếm ngắn về phía quái gần nhất. Mỗi cấp: +20% sát thương.",
       "max_level": 5, "weight": 3, "effects": { "skill_damage.blade_arc": { "mul": 0.20 } } },
     { "id": "back_slash", "kind": "stat", "name": "Chém ngược", "desc": "Chém thêm một nhát về phía sau (50% sát thương). Mỗi cấp sau: +25%.",
       "max_level": 3, "weight": 2, "effects": { "back_slash": { "add": 1.0 } } },
@@ -23,8 +23,8 @@
       "max_level": 4, "weight": 2, "effects": { "regen": { "add": 0.5 } } }
   ],
   "skills": {
-    "blade_arc": { "sprite": "cleave-wave", "range": 70.0, "half_angle_deg": 70.0, "damage_mul": 1.0, "cooldown_mul": 1.0,
+    "blade_arc": { "sprite": "sword-slash", "damage_mul": 1.0, "cooldown_mul": 1.0, "size_mul": 1.0,
                    "back_damage_mul": 0.5, "back_damage_per_level": 0.25 },
-    "whirlwind": { "sprite": "whirlwind", "radius": 72.0, "damage_mul": 0.6, "cooldown": 3.2, "duration": 0.9, "ticks": 3 }
+    "whirlwind": { "sprite": "whirlwind", "damage_mul": 0.6, "size_mul": 1.5, "cooldown": 3.2, "duration": 0.9, "ticks": 3 }
   }
 }
