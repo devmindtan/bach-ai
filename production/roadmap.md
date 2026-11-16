@@ -15,13 +15,14 @@ Nguyên tắc: **làm cho vòng lặp cốt lõi vui trước**, rồi mới t�
 | Quái vật | Vẽ mới trong Sprite Lab, cùng phong cách tối giản 48 px với nhân vật |
 | Nền tảng | **PC trước** (Steam: Windows/Linux, bàn phím + tay cầm); mobile sau (đợt 8) |
 | Engine | Godot 4.7.2, GDScript, gamekit (test, shot, export) |
+| Gacha | Quay bằng **đá gacha trong game**, cày được bằng cách chơi (vượt ải, boss, nhiệm vụ). **Nạp tiền tính sau** (2026-11-16, you said) |
 
 ## Quyết định còn mở (cần trước đợt ghi trong ngoặc)
 
 | Câu hỏi | Đề xuất mặc định | Trước đợt |
 |---|---|---|
 | Tên chính thức | "Bách Ải" là tên tạm | 7 |
-| Gacha có bán bằng tiền thật không? | **Không** ở bản đầu: chỉ đá kiếm trong game. Bán tiền thật kéo theo luật hộp quà ngẫu nhiên (công bố tỉ lệ; một số nước cấm), đánh giá trên Steam, và cân bằng kiểu "trả tiền để thắng" | 5 |
+| Cơ chế nạp (mua đá bằng tiền thật) | Hoãn: đá chỉ cày trong game. Thiết kế ví đá và giao dịch sao cho sau này thêm nguồn "nạp" mà không sửa gacha. Khi quyết định cần xét luật hộp quà ngẫu nhiên (công bố tỉ lệ; một số nước cấm), đánh giá trên Steam, cân bằng "trả tiền để thắng" | 7 |
 | Bán game kiểu nào trên Steam | Trả tiền một lần (premium), không quảng cáo | 7 |
 | Thời lượng một lượt | 5 phút (ải 1–20), 6–8 phút về sau, boss ải 10/20/… | 1 (thử) |
 | Có 4 class không | Bắt đầu 2 (Kiếm sĩ, Pháp sư); Cung thủ, Sát thủ ở đợt 6 (giáp và chiêu đã có trong Sprite Lab) | 6 |
@@ -94,10 +95,13 @@ Cần vẽ mới: **quái vật** (xem `design/monsters.md`), viên kinh nghiệ
 ## Đợt 5: Gacha · cỡ M
 **Câu hỏi:** quay gacha có hồi hộp mà không làm hỏng cân bằng không?
 - Banner vũ khí và banner giáp; tỉ lệ công khai trong game; **bảo hiểm (pity)** sau N lần; trùng → nguyên liệu cường hoá.
-- Đá gacha chỉ kiếm trong game (vượt ải, nhiệm vụ ngày); lịch sử quay.
+- Đá gacha kiếm trong game: vượt ải (lần đầu nhiều hơn, cày lại ít hơn), boss, nhiệm vụ ngày, thành tựu; lịch sử quay.
+- **Ví đá tách riêng** (`Wallet`: số dư + nhật ký giao dịch có nguồn: `stage_clear`, `boss`, `daily`, …) để sau này thêm
+  nguồn `purchase` mà không đụng logic gacha.
+- Cân nhịp cày: ước lượng số lần quay/giờ chơi ở từng chặng ải, ghi vào `design/` khi làm đợt 5.
 - Màn quay có hiệu ứng theo độ hiếm.
 **Test:** mô phỏng 1.000.000 lượt quay khớp tỉ lệ khai báo (sai số nhỏ), pity luôn kích hoạt đúng lần N.
-**Xong khi:** tỉ lệ thực đo khớp tỉ lệ công bố; đã chốt quyết định "tiền thật hay không".
+**Xong khi:** tỉ lệ thực đo khớp tỉ lệ công bố; người chơi cày đủ đá cho vài lượt quay mỗi buổi chơi (số đo).
 
 ## Đợt 6: Nội dung đủ 100 ải · cỡ XL
 - 5 vùng × 20 ải (đồng cỏ, nghĩa địa, hang băng, núi lửa, hư không); mỗi vùng 3–4 loài quái mới + 2 boss.

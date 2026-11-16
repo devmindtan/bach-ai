@@ -49,7 +49,7 @@ Phút 2–3 của ải 1 đợt dơi bay nhanh vây quanh, phút 4 có quái tin
 - [ ] Hiệu ứng đặc biệt vĩnh viễn ở ải 10 / 20 / 30 (mở rộng mỗi 10 ải)
 - [ ] Cây kỹ năng vĩnh viễn theo class
 - [ ] Trang bị (vũ khí, giáp) có độ hiếm và hiệu ứng buff đặc biệt
-- [ ] Gacha vũ khí / giáp
+- [ ] Gacha vũ khí / giáp, quay bằng đá cày trong game
 
 ## Your systems
 - lượt chơi sống sót theo đợt (survivors) · in the slice
@@ -72,7 +72,7 @@ Phút 2–3 của ải 1 đợt dơi bay nhanh vây quanh, phút 4 có quái tin
 ## Out of scope
 - Bản mobile cho tới khi bản PC phát hành được (đợt 8 trong `production/roadmap.md`).
 - Chế độ endgame ngoài 100 ải.
-- Gacha bằng tiền thật: chưa quyết; chỉ dùng đá kiếm trong game tới khi có quyết định (xem roadmap, "Quyết định còn mở").
+- Nạp tiền mua đá gacha: tính sau ("cơ chế nạp sẽ được tính sau", you said); hiện đá chỉ cày trong game.
 - Chơi mạng / co-op.
 
 ## Build order
