@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dqrqkyeh36fnn"
-path="res://.godot/imported/hand_back_strip.png-82f9dd9cb84706d882b353e5c99bed2a.ctex"
+uid="uid://76ijvlj6urfo"
+path="res://.godot/imported/legs_front_strip.png-bca0586d5d03935f0c857889e2fce48f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/custom/swordsman/layers/hand_back_strip.png"
-dest_files=["res://.godot/imported/hand_back_strip.png-82f9dd9cb84706d882b353e5c99bed2a.ctex"]
+source_file="res://assets/sprites/custom/swordsman/layers/legs_front_strip.png"
+dest_files=["res://.godot/imported/legs_front_strip.png-bca0586d5d03935f0c857889e2fce48f.ctex"]
 
 [params]
 

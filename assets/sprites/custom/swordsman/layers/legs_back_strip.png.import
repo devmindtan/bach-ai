@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b8vq4ppb4avs6"
-path="res://.godot/imported/torso_strip.png-3bb904015d82c139c876279c18be04a5.ctex"
+uid="uid://cu32vdfup8lrx"
+path="res://.godot/imported/legs_back_strip.png-2cd02ed77282b9496f2d4d1fcaee3298.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/custom/swordsman/layers/torso_strip.png"
-dest_files=["res://.godot/imported/torso_strip.png-3bb904015d82c139c876279c18be04a5.ctex"]
+source_file="res://assets/sprites/custom/swordsman/layers/legs_back_strip.png"
+dest_files=["res://.godot/imported/legs_back_strip.png-2cd02ed77282b9496f2d4d1fcaee3298.ctex"]
 
 [params]
 

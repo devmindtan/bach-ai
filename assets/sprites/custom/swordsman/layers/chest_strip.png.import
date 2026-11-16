@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c7sjxibusu7ee"
-path="res://.godot/imported/boot_back_strip.png-1937a62a5e37a68d2062e82aad0b01d4.ctex"
+uid="uid://dc4df1kf6s4as"
+path="res://.godot/imported/chest_strip.png-1873718d57fc4d7fe3a1675f082b1718.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/custom/swordsman/layers/boot_back_strip.png"
-dest_files=["res://.godot/imported/boot_back_strip.png-1937a62a5e37a68d2062e82aad0b01d4.ctex"]
+source_file="res://assets/sprites/custom/swordsman/layers/chest_strip.png"
+dest_files=["res://.godot/imported/chest_strip.png-1873718d57fc4d7fe3a1675f082b1718.ctex"]
 
 [params]
 
