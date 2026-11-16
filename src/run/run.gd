@@ -7,6 +7,7 @@ extends Node2D
 ##   --seed=N        fixed random seed
 ##   --demo          autopilot moves and picks the first card (for shots)
 ##   --sim-steps=N   simulate N fixed steps per frame (fast-forward for shots)
+##   --walk=X,Y      the demo walks in a fixed direction (shots of each view)
 ##   --no-auto-pick  the demo stops at the first level-up panel (for shots)
 ##   --hitboxes      draw hit areas: effects (red while dealing damage), monster
 ##                   bodies, the player's body and pickup radius
@@ -54,7 +55,6 @@ var _moving := false
 var _anim := "idle"
 var _anim_t := 0.0
 var _action_left := 0.0       # time left on a one-shot animation (attack / hurt)
-var _attack_flip := false     # hero faces the aimed target while the attack plays
 var _blade_cd := 0.5
 var _whirl_cd := 1.0
 var _whirl_left := 0.0
@@ -68,6 +68,7 @@ var sim_steps := 1
 var bench := 0
 var show_hitboxes := false
 var auto_pick := true
+var forced_walk := Vector2.ZERO
 var _bench_frames := 0
 var _bench_tick_us: PackedInt64Array = []
 var _bench_frame_us: PackedInt64Array = []
@@ -144,6 +145,10 @@ func _parse_args() -> void:
 		elif a.begins_with("--seed="):
 			rng.seed = int(a.get_slice("=", 1))
 			seeded = true
+		elif a.begins_with("--walk="):
+			var xy := a.get_slice("=", 1).split(",")
+			forced_walk = Vector2(float(xy[0]), float(xy[1])).normalized()
+			demo = true
 		elif a == "--no-auto-pick":
 			auto_pick = false
 		elif a == "--hitboxes":
@@ -223,7 +228,7 @@ func _tick(dt: float) -> void:
 func _move_player(dt: float) -> void:
 	var dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	if demo:
-		dir = _autopilot()
+		dir = forced_walk if forced_walk != Vector2.ZERO else _autopilot()
 	_moving = dir.length_squared() > 0.01
 	if _moving:
 		facing = dir.normalized()
@@ -350,9 +355,8 @@ func _aim(sheet: SpriteSheet, sc: float) -> void:
 		return
 	var d := enemies.center_of(i) - center
 	attack_dir = Vector2(signf(d.x), 0.0) if absf(d.x) >= absf(d.y) else Vector2(0.0, signf(d.y))
-	if absf(d.x) > 1.0:
-		facing = Vector2(signf(d.x), 0.0) if not _moving else facing
-		_attack_flip = d.x < 0.0
+	if absf(d.x) > 1.0 and not _moving:
+		facing = Vector2(signf(d.x), 0.0)
 		_update_body()
 
 
@@ -496,6 +500,14 @@ func _update_body() -> void:
 		enemies.player_hit_radius = b.radius
 
 
+## Which drawn view a direction uses: "down" / "up" when it is mostly
+## vertical, otherwise "side" (diagonals included; left = mirrored).
+static func _view(d: Vector2) -> String:
+	if absf(d.y) > absf(d.x) * 1.5:
+		return "down" if d.y > 0.0 else "up"
+	return "side"
+
+
 func _set_anim(anim: String) -> void:
 	if _anim != anim:
 		_anim = anim
@@ -529,8 +541,13 @@ func _draw() -> void:
 	if hero != null:
 		var blink := invuln > 0.0 and state == State.PLAYING and int(invuln * 20.0) % 2 == 0
 		var tint := Color(1, 1, 1, 0.45) if blink else Color.WHITE
-		var flip := _attack_flip if _anim == "attack" and _action_left > 0.0 else facing.x < 0.0
-		hero.draw(self, _anim, _anim_t, player_pos, _sprite_scale, flip, tint)
+		var acting := (_anim == "attack" or _anim == "hurt") and _action_left > 0.0
+		var dir := attack_dir if _anim == "attack" and acting else facing
+		var side := _view(dir)
+		var anim := _anim if side == "side" or not hero.has_animation(_anim + "_" + side) else _anim + "_" + side
+		# while attacking the hero faces the slash (attack_dir), otherwise the walk
+		var flip := dir.x < 0.0 and side == "side"
+		hero.draw(self, anim, _anim_t, player_pos, _sprite_scale, flip, tint)
 	for fx in _fx:
 		var sh: SpriteSheet = fx["sheet"]
 		var t := fmod(float(fx["t"]), sh.duration(fx["anim"])) if fx["anim"] == "spin" else float(fx["t"])
