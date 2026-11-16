@@ -1,0 +1,30 @@
+{
+  "_doc": "Knight level-up pool. kind skill = an attack the run uses; stat = a modifier. effects apply per level: add (flat) or mul (+fraction). weight = roll weight.",
+  "upgrades": [
+    { "id": "blade_arc", "kind": "skill", "name": "Kiếm chém", "desc": "Chém vòng cung về hướng đang đi. Mỗi cấp: +20% sát thương.",
+      "max_level": 5, "weight": 3, "effects": { "skill_damage.blade_arc": { "mul": 0.20 } } },
+    { "id": "back_slash", "kind": "stat", "name": "Chém ngược", "desc": "Chém thêm một nhát về phía sau (50% sát thương). Mỗi cấp sau: +25%.",
+      "max_level": 3, "weight": 2, "effects": { "back_slash": { "add": 1.0 } } },
+    { "id": "whirlwind", "kind": "skill", "name": "Lốc xoáy", "desc": "Định kỳ xoáy kiếm quanh người. Mỗi cấp: +25% sát thương, +10% vùng.",
+      "max_level": 5, "weight": 3, "effects": { "skill_damage.whirlwind": { "mul": 0.25 }, "skill_area.whirlwind": { "mul": 0.10 } } },
+    { "id": "sharpen", "kind": "stat", "name": "Mài kiếm", "desc": "+15% sát thương mọi đòn.",
+      "max_level": 5, "weight": 4, "effects": { "damage": { "mul": 0.15 } } },
+    { "id": "haste", "kind": "stat", "name": "Nhanh tay", "desc": "-10% thời gian hồi chiêu.",
+      "max_level": 5, "weight": 4, "effects": { "cooldown": { "mul": -0.10 } } },
+    { "id": "reach", "kind": "stat", "name": "Tầm với", "desc": "+15% vùng đánh.",
+      "max_level": 5, "weight": 3, "effects": { "area": { "mul": 0.15 } } },
+    { "id": "vitality", "kind": "stat", "name": "Sinh lực", "desc": "+20 máu tối đa và hồi đầy phần thêm.",
+      "max_level": 5, "weight": 3, "effects": { "max_hp": { "add": 20.0 } } },
+    { "id": "swift", "kind": "stat", "name": "Nhẹ chân", "desc": "+10% tốc độ chạy.",
+      "max_level": 5, "weight": 3, "effects": { "move_speed": { "mul": 0.10 } } },
+    { "id": "magnet", "kind": "stat", "name": "Nam châm", "desc": "+40% tầm hút vật phẩm.",
+      "max_level": 3, "weight": 2, "effects": { "magnet": { "mul": 0.40 } } },
+    { "id": "regen", "kind": "stat", "name": "Hồi phục", "desc": "Hồi 0.5 máu mỗi giây.",
+      "max_level": 4, "weight": 2, "effects": { "regen": { "add": 0.5 } } }
+  ],
+  "skills": {
+    "blade_arc": { "sprite": "cleave-wave", "range": 70.0, "half_angle_deg": 70.0, "damage_mul": 1.0, "cooldown_mul": 1.0,
+                   "back_damage_mul": 0.5, "back_damage_per_level": 0.25 },
+    "whirlwind": { "sprite": "whirlwind", "radius": 72.0, "damage_mul": 0.6, "cooldown": 3.2, "duration": 0.9, "ticks": 3 }
+  }
+}

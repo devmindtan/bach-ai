@@ -1,0 +1,8 @@
+{
+  "_doc": "Monster stats at stage 1 (stage scaling comes in phase 3). behaviour: chase | swarm | charge. radius = body hit radius (px). xp = gem value. See design/monsters.md.",
+  "slime":  { "sprite": "slime",  "behaviour": "chase", "hp": 18.0, "damage": 8.0,  "speed": 42.0,  "radius": 13.0, "xp": 1.0, "scale": 2 },
+  "bat":    { "sprite": "bat",    "behaviour": "swarm", "hp": 8.0,  "damage": 5.0,  "speed": 95.0,  "radius": 10.0, "xp": 1.0, "scale": 2,
+              "wobble": 26.0 },
+  "goblin": { "sprite": "goblin", "behaviour": "charge", "hp": 34.0, "damage": 14.0, "speed": 58.0, "radius": 16.0, "xp": 3.0, "scale": 2,
+              "charge_range": 190.0, "windup": 0.45, "dash_speed": 330.0, "dash_time": 0.35, "charge_cooldown": 2.2 }
+}

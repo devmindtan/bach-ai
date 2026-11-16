@@ -1,0 +1,12 @@
+{
+  "_doc": "Stage 1 spawn schedule. Each wave spawns `monster` at `rate` per second (rate_end at t_to, linear) between t_from and t_to; `burst` spawns that many at once at t_from (in a ring).",
+  "duration": 300.0,
+  "waves": [
+    { "monster": "slime",  "t_from": 0,   "t_to": 300, "rate": 1.2, "rate_end": 5.0 },
+    { "monster": "bat",    "t_from": 45,  "t_to": 300, "rate": 0.6, "rate_end": 4.5 },
+    { "monster": "bat",    "t_from": 120, "t_to": 120, "burst": 24 },
+    { "monster": "goblin", "t_from": 90,  "t_to": 300, "rate": 0.2, "rate_end": 1.4 },
+    { "monster": "bat",    "t_from": 210, "t_to": 210, "burst": 40 },
+    { "monster": "goblin", "t_from": 270, "t_to": 270, "burst": 10 }
+  ]
+}
