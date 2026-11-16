@@ -67,3 +67,10 @@ effect (`SpriteHitbox`). Effect scale = `world.sprite_scale` × class `area` × 
 `levels_min/max`, `dps_ratio_min/max` (level-1 skill dps / class base dps). Meaning of every rule:
 `design/gameplay-rules.md`. Checked by `tests/integration/data/gameplay_rules_test.gd` (must) and the studio
 dashboard (all).
+
+## items.json — every item in the game
+
+`{ pickups{id: {name, sprite, desc}}, equipment{id: {name, sprite, desc, slot}} }`. `pickups.xp_gem` and
+`pickups.gold` are the drops `src/run/run.gd` draws (sprite names come from here). `equipment` is empty until the
+gear phase; its `slot` will be one of the sprite slots (`head`, `chest`, `arms`, `legs`, `weapon`). The studio
+dashboard lists everything here in its Items tab.

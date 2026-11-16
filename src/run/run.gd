@@ -90,6 +90,8 @@ var _bench_last_us := 0
 var _demo_pick_t := 0.0
 
 var _sprite_scale := 2.0
+var _gem_sprite := "exp-gem"    # from items.json pickups
+var _coin_sprite := "gold-coin"
 var _arena_half := 1400.0
 var _hit_center := Vector2(0, -26)
 var _camera: Camera2D
@@ -120,7 +122,10 @@ func _ready() -> void:
 	_num_t.resize(n_max)
 	_num_t.fill(-1.0)
 
-	var names: Array[String] = [String(class_data.get("sprite", "swordsman")), "exp-gem", "gold-coin"]
+	var items := GameData.load_json(DATA + "items.json")
+	_gem_sprite = String(items.get("pickups", {}).get("xp_gem", {}).get("sprite", "exp-gem"))
+	_coin_sprite = String(items.get("pickups", {}).get("gold", {}).get("sprite", "gold-coin"))
+	var names: Array[String] = [String(class_data.get("sprite", "swordsman")), _gem_sprite, _coin_sprite]
 	for m: String in monsters:
 		if not m.begins_with("_"):
 			names.append(String(monsters[m].get("sprite", m)))
@@ -608,8 +613,8 @@ func _set_anim(anim: String) -> void:
 func _draw() -> void:
 	var view := Rect2(_camera.position - get_viewport_rect().size * 0.5, get_viewport_rect().size).grow(64.0)
 	RunGround.draw(self, view, _arena_half)
-	var gem: SpriteSheet = sheets.get("exp-gem")
-	var coin: SpriteSheet = sheets.get("gold-coin")
+	var gem: SpriteSheet = sheets.get(_gem_sprite)
+	var coin: SpriteSheet = sheets.get(_coin_sprite)
 	for i in pickups.count:
 		if view.has_point(pickups.pos[i]):
 			var sh := gem if pickups.kind[i] == Pickups.GEM else coin

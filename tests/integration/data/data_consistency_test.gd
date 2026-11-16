@@ -70,9 +70,15 @@ func test_monster_sprites_have_move_and_death() -> void:
 			"monster sprite %s needs move + death" % name)
 
 
-func test_pickup_sprites_exist() -> void:
-	for name in ["exp-gem", "gold-coin"]:
-		_check(_sprite_ok(name), "pickup sprite %s missing" % name)
+func test_items_reference_existing_sprites() -> void:
+	var items := GameData.load_json(DATA + "items.json")
+	for id in ["xp_gem", "gold"]:   # the two pickups run.gd drops
+		_check(items.get("pickups", {}).has(id), "items.json pickups.%s missing" % id)
+	for group in ["pickups", "equipment"]:
+		var d: Dictionary = items.get(group, {})
+		for id: String in d:
+			_check(String(d[id].get("name", "")) != "", "item %s has no name" % id)
+			_check(_sprite_ok(String(d[id].get("sprite", ""))), "item %s: sprite missing" % id)
 
 
 func test_skill_effects_have_pixel_hitboxes() -> void:
