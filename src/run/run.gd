@@ -357,9 +357,9 @@ func _skills(dt: float) -> void:
 ## Auto-aim: turn the slash (4 directions) and the hero towards the nearest
 ## monster within twice the slash's reach (from its hitbox); otherwise keep
 ## the walking direction.
-	# Tiered AOE skills (frost-nova / earth-strike): one-shot burst centred on
-	# the player. Sprite is chosen by the skill's level (I-V), damage/area use
-	# the same stats pipeline as the other skills.
+	# Tiered AOE skills (frost-nova / earth-strike): one-shot burst cast out
+	# toward the nearest enemy (AOE/projectile-style: fired away from the player,
+	# not attached to it). Sprite is chosen by level (I-V).
 	var tier_skills: Array = ["frost_nova", "earth_strike"]
 	for tid in tier_skills:
 		if levels.get(tid, 0) <= 0 or not skills.has(tid):
@@ -379,7 +379,15 @@ func _skills(dt: float) -> void:
 				* PlayerStats.skill_mul(stats, "skill_damage." + tid)
 			var sc := _sprite_scale * area * float(ts.get("size_mul", 1.0)) \
 				* PlayerStats.skill_mul(stats, "skill_area." + tid)
-			_add_fx(sprite, "burst", sc, dmg)
+			var cdir := attack_dir
+			var target_i := enemies.nearest(player_pos + _hit_center, INF)
+			if target_i >= 0:
+				cdir = (enemies.center_of(target_i) - (player_pos + _hit_center)).normalized()
+			elif cdir.length_squared() < 0.01:
+				cdir = Vector2.RIGHT
+			var cast_range := float(ts.get("cast_range", 140.0))
+			var cast_pos := player_pos + _hit_center + cdir.normalized() * cast_range
+			_add_fx(sprite, "burst", sc, dmg, -1.0, cast_pos)
 
 
 func _aim(sheet: SpriteSheet, sc: float) -> void:
@@ -404,15 +412,24 @@ func _slash_anim(d: Vector2) -> String:
 	return "slash_down" if d.y > 0.0 else "slash_up"
 
 
-## Adds an effect drawn with its anchor on the player's body centre at
-## [param sc]. When [param damage] > 0 it hits once, on the animation's active
-## frames, through the hitbox stored in the sprite json (SpriteHitbox).
-func _add_fx(sprite: String, anim: String, sc: float, damage: float, life := -1.0) -> void:
+## Adds an effect. By default it follows the player's body centre (strikes,
+## shields, orbiting states). When [param world_pos] is given it is placed there
+## in the world instead (projectiles / cast-out AOE). When [param damage] > 0 it
+## hits once, on the animation's active frames, through the sprite hitbox.
+func _add_fx(sprite: String, anim: String, sc: float, damage: float, life := -1.0, world_pos: Variant = null) -> void:
 	var sheet: SpriteSheet = sheets.get(sprite)
 	if sheet == null:
 		return
 	_fx.append({"sheet": sheet, "anim": anim, "t": 0.0, "scale": sc, "damage": damage, "done": damage <= 0.0,
-		"life": life if life > 0.0 else sheet.duration(anim)})
+		"life": life if life > 0.0 else sheet.duration(anim),
+		"pos": world_pos, "follow": world_pos == null})
+
+
+
+func _fx_pos(fx: Dictionary) -> Vector2:
+	if bool(fx.get("follow", true)):
+		return player_pos + _hit_center
+	return fx.get("pos", player_pos + _hit_center)
 
 
 func _step_fx(dt: float) -> void:
@@ -421,7 +438,7 @@ func _step_fx(dt: float) -> void:
 		var fx: Dictionary = _fx[i]
 		fx["t"] = float(fx["t"]) + dt
 		if not fx["done"]:
-			var hb := SpriteHitbox.of(fx["sheet"], fx["anim"], player_pos + _hit_center, float(fx["scale"]))
+			var hb := SpriteHitbox.of(fx["sheet"], fx["anim"], _fx_pos(fx), float(fx["scale"]))
 			if hb == null:
 				fx["done"] = true
 			elif hb.is_active(float(fx["t"])):
@@ -587,7 +604,7 @@ func _draw() -> void:
 	for fx in _fx:
 		var sh: SpriteSheet = fx["sheet"]
 		var t := fmod(float(fx["t"]), sh.duration(fx["anim"])) if fx["anim"] == "spin" else float(fx["t"])
-		sh.draw(self, fx["anim"], t, player_pos + _hit_center, float(fx["scale"]))
+		sh.draw(self, fx["anim"], t, _fx_pos(fx), float(fx["scale"]))
 	if show_hitboxes:
 		_draw_hitboxes(view)
 	# hp bar under the hero
@@ -606,7 +623,7 @@ func _draw_hitboxes(view: Rect2) -> void:
 	draw_arc(center, enemies.player_hit_radius, 0.0, TAU, 16, Color(0.3, 0.7, 1.0), 1.5)
 	draw_arc(center, pickups.radius * float(stats.get("magnet", 1.0)), 0.0, TAU, 48, Color(0.3, 0.7, 1.0, 0.35), 1.0)
 	for fx in _fx:
-		var hb := SpriteHitbox.of(fx["sheet"], fx["anim"], center, float(fx["scale"]))
+		var hb := SpriteHitbox.of(fx["sheet"], fx["anim"], _fx_pos(fx), float(fx["scale"]))
 		if hb != null:
 			var on: bool = hb.is_active(float(fx["t"])) or fx["anim"] == "spin"
 			hb.draw(self, Color(1.0, 0.2, 0.2, 0.95) if on else Color(1.0, 0.6, 0.2, 0.4), 2.0 if on else 1.0)

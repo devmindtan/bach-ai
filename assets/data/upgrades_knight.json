@@ -138,7 +138,7 @@
       "id": "frost_nova",
       "kind": "skill",
       "name": "Frost Nova",
-      "desc": "Bang no quanh nguoi; moi cap +25% sat thuong, +8% vung. Cap I-V theo cap skill.",
+      "desc": "Băng nổ bắn ra phía quái gần nhất; mỗi cấp +25% sát thương, +8% vùng. Bậc I-V theo cấp skill.",
       "max_level": 5,
       "weight": 2,
       "effects": {
@@ -154,7 +154,7 @@
       "id": "earth_strike",
       "kind": "skill",
       "name": "Earth Strike",
-      "desc": "Dat nut quanh nguoi; moi cap +25% sat thuong, +8% vung. Cap I-V theo cap skill.",
+      "desc": "Đất nứt bắn ra phía quái gần nhất; mỗi cấp +25% sát thương, +8% vùng. Bậc I-V theo cấp skill.",
       "max_level": 5,
       "weight": 2,
       "effects": {
@@ -195,7 +195,8 @@
       ],
       "damage_mul": 1.0,
       "size_mul": 1.0,
-      "cooldown": 3.5
+      "cooldown": 3.5,
+      "cast_range": 140.0
     },
     "earth_strike": {
       "sprite": "earth-strike-i",
@@ -208,7 +209,8 @@
       ],
       "damage_mul": 1.0,
       "size_mul": 1.0,
-      "cooldown": 3.5
+      "cooldown": 3.5,
+      "cast_range": 140.0
     }
   }
 }
