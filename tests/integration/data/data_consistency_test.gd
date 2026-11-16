@@ -140,3 +140,18 @@ func test_class_sprites_are_layered_side_view_movers() -> void:
 		for n in sheet.layer_names():
 			_check(ResourceLoader.exists(SPRITES + name + "/layers/" + n + "_strip.png"),
 				"class sprite %s: layer %s missing (gamekit art promote)" % [name, n])
+
+
+func test_every_upgrade_has_a_card_icon() -> void:
+	# the level-up card draws the ui-icons animation named like the upgrade id
+	var icons := SpriteSheet.load_dir(SPRITES + "ui-icons", "ui-icons")
+	_check(icons != null, "ui-icons sprite missing")
+	if icons == null:
+		return
+	var classes := GameData.load_json(DATA + "classes.json")
+	for cid: String in classes:
+		if cid.begins_with("_"):
+			continue
+		var pool := GameData.load_json(DATA + String(classes[cid].get("upgrades", "")))
+		for u: Dictionary in pool.get("upgrades", []):
+			_check(icons.has_animation(String(u["id"])), "upgrade %s has no icon in ui-icons (draw it in Sprite Lab)" % u["id"])

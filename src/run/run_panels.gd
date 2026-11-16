@@ -62,14 +62,24 @@ func show_level_up(ids: Array[String]) -> void:
 		b.add_child(v)
 		var head := HBoxContainer.new()
 		head.add_theme_constant_override("separation", 10)
+		# the card's icon (ui-icons animation named like the upgrade id), 3x = 48 px in a framed tile
+		var tile := PanelContainer.new()
+		var ts := _style(Color("1d1828"))
+		ts.set_content_margin_all(4)
+		tile.add_theme_stylebox_override("panel", ts)
+		tile.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var icon := TextureRect.new()
 		icon.texture = UiIcons.texture(ids[i])
-		icon.custom_minimum_size = Vector2(36, 36)
+		icon.custom_minimum_size = Vector2(48, 48)
 		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		head.add_child(icon)
-		head.add_child(_label("%d. %s" % [i + 1, u.get("name", ids[i])], 22, TEXT))
+		tile.add_child(icon)
+		head.add_child(tile)
+		var title := _label("%d. %s" % [i + 1, u.get("name", ids[i])], 22, TEXT)
+		title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		head.add_child(title)
 		v.add_child(head)
 		var tag := "Mới" if lv == 0 else "Cấp %d → %d" % [lv, lv + 1]
 		v.add_child(_label("%s   (tối đa %d)" % [tag, int(u.get("max_level", 1))], 14, BORDER))

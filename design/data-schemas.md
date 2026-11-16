@@ -35,7 +35,8 @@ pixels in Sprite Lab (`SpriteHitbox.body`).
 
 ## upgrades_<class>.json — level-up pool and skills
 
-`upgrades[]`: `{ id, kind: "skill"|"stat", name, desc, max_level, weight, effects{stat: {add|mul}} }`.
+`upgrades[]`: `{ id, kind: "skill"|"stat", name, desc, max_level, weight, effects{stat: {add|mul}} }`. The card icon
+is the `ui-icons` animation named like `id` (a data test fails when it is missing).
 `add` adds per level; `mul` adds per level to a multiplier starting at 1 (floored at 0.2), see `PlayerStats`.
 A stat key `skill_damage.<skill>` / `skill_area.<skill>` scales one skill only.
 
