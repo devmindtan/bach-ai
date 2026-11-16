@@ -17,7 +17,7 @@ Nguyên tắc: **làm cho vòng lặp cốt lõi vui trước**, rồi mới t�
 | Engine | Godot 4.7.2, GDScript, gamekit (test, shot, export) |
 | Gacha | Quay bằng **đá gacha trong game**, cày được bằng cách chơi (vượt ải, boss, nhiệm vụ). **Nạp tiền tính sau** (2026-11-16, you said) |
 | Nhân vật & đòn đánh | Nhân vật **chỉ có góc ngang trái/phải** (trái = lật): `idle`, `run`, `hurt`, `death`. Đòn đánh là **sprite hiệu ứng riêng** (có hitbox), không vẽ vào thân (2026-11-16, you said) |
-| Mặc giáp | Nhân vật vẽ **theo ô trang bị**: thân, giáp đầu, giáp ngực, giáp tay, giáp chân, vũ khí (2026-11-17, you said: không cắt sâu hơn); đồ mặc thay đúng ô đó, game ghép lớp rồi viền (`SpriteSheet.compose_layers`) (2026-11-16, you said) |
+| Mặc giáp | Nhân vật vẽ **theo ô trang bị**: giáp đầu, giáp ngực, giáp tay, giáp chân, vũ khí, trên một lớp nền là mặt (2026-11-17, you said: không cắt sâu hơn); đồ mặc thay đúng ô đó, game ghép lớp rồi viền (`SpriteSheet.compose_layers`) (2026-11-16, you said) |
 | Phản hồi đòn đánh | Hiện **số sát thương** bay lên khi đánh trúng; **thanh máu quái chỉ hiện khi bị đánh** (2 s sau mỗi đòn) (2026-11-16, you said) |
 | Luật gameplay | Game 2D sinh tồn kiểu Vampire Survivors; mọi kỹ năng/hiệu ứng phải qua luật ở `design/gameplay-rules.md` (`assets/data/gameplay_rules.json`), test chặn luật bắt buộc, dashboard chấm các kỹ năng của game (2026-11-16, you said) |
 

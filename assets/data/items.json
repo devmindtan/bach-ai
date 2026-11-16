@@ -4,7 +4,7 @@
     "xp_gem": { "name": "Ngọc kinh nghiệm", "sprite": "exp-gem",
                 "desc": "Rơi khi hạ quái; giá trị bằng kinh nghiệm của quái đó. Nhặt đủ thì lên cấp và chọn 1 trong 3 thẻ." },
     "gold": { "name": "Đồng vàng", "sprite": "gold-coin",
-              "desc": "Có tỉ lệ rơi thêm khi hạ quái (pickups.gold_chance). Tích lũy qua các lượt chơi." }
+              "desc": "Có tỉ lệ rơi thêm khi hạ quái. Tích lũy qua các lượt chơi." }
   },
   "equipment": {}
 }
