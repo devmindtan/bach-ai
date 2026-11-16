@@ -8,6 +8,7 @@ extends Node2D
 ##   --demo          autopilot moves and picks the first card (for shots)
 ##   --sim-steps=N   simulate N fixed steps per frame (fast-forward for shots)
 ##   --walk=X,Y      the demo walks in a fixed direction (shots of each view)
+##   --god           the hero takes no damage (shots of the win screen)
 ##   --pause-at=T    open the pause panel at T seconds (shots)
 ##   --no-auto-pick  the demo stops at the first level-up panel (for shots)
 ##   --hitboxes      draw hit areas: effects (red while dealing damage), monster
@@ -81,6 +82,7 @@ var show_hitboxes := false
 var auto_pick := true
 var forced_walk := Vector2.ZERO
 var pause_at := -1.0
+var god := false
 var _bench_frames := 0
 var _bench_tick_us: PackedInt64Array = []
 var _bench_frame_us: PackedInt64Array = []
@@ -173,6 +175,8 @@ func _parse_args() -> void:
 		elif a.begins_with("--seed="):
 			rng.seed = int(a.get_slice("=", 1))
 			seeded = true
+		elif a == "--god":
+			god = true
 		elif a.begins_with("--pause-at="):
 			pause_at = float(a.get_slice("=", 1))
 		elif a.begins_with("--walk="):
@@ -250,7 +254,7 @@ func _tick(dt: float) -> void:
 	_move_player(dt)
 	_spawn(clock - dt, clock)
 	var contact := enemies.step(dt, player_pos, player_pos + _hit_center)
-	if contact > 0.0 and invuln <= 0.0 and bench == 0:
+	if contact > 0.0 and invuln <= 0.0 and bench == 0 and not god:
 		_take_hit(contact)
 	invuln = maxf(0.0, invuln - dt)
 	hp = minf(float(stats["max_hp"]), hp + float(stats.get("regen", 0.0)) * dt)
