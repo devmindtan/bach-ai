@@ -55,5 +55,5 @@ effect (`SpriteHitbox`). Effect scale = `world.sprite_scale` × class `area` × 
 
 ## waves/stage_NNN.json — spawn schedule
 
-`{ duration, waves[] }`; a wave is `{ monster, t_from, t_to, rate, rate_end }` (linear spawns/s) or
+`{ number, name, duration, waves[] }` (`number` and `name` are shown in the lobby and HUD); a wave is `{ monster, t_from, t_to, rate, rate_end }` (linear spawns/s) or
 `{ monster, t_from, t_to, burst }` (that many at once at `t_from`). See `WaveScheduler`.

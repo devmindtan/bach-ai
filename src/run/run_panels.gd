@@ -76,16 +76,41 @@ func show_level_up(ids: Array[String]) -> void:
 
 func show_pause() -> void:
 	var root := _open("Tạm dừng")
-	root.add_child(_button("Tiếp tục (Esc)", func() -> void: run.resume()))
+	var go_on := _button("Tiếp tục (Esc)", func() -> void: run.resume())
+	root.add_child(go_on)
+	go_on.call_deferred("grab_focus")
 	root.add_child(_button("Chơi lại", func() -> void: run.restart()))
+	root.add_child(_button("Về sảnh", func() -> void: run.to_lobby()))
 
 
 func show_end(won: bool) -> void:
 	var root := _open("Vượt ải!" if won else "Thất bại")
 	var t := int(run.clock)
-	root.add_child(_label("Thời gian %02d:%02d   Cấp %d   Hạ %d   Vàng %d" % [
-		t / 60, t % 60, run.level, run.enemies.total_kills, run.gold], 20, TEXT))
-	root.add_child(_button("Chơi lại (R)", func() -> void: run.restart()))
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 28)
+	row.add_child(_icon_value("clock", "%02d:%02d" % [t / 60, t % 60]))
+	row.add_child(_icon_value("star", str(run.level)))
+	row.add_child(_icon_value("skull", str(run.enemies.total_kills)))
+	row.add_child(_icon_value("coin", str(run.gold)))
+	root.add_child(row)
+	var again := _button("Chơi lại (R)", func() -> void: run.restart())
+	root.add_child(again)
+	root.add_child(_button("Về sảnh", func() -> void: run.to_lobby()))
+	again.call_deferred("grab_focus")
+
+
+func _icon_value(icon: String, value: String) -> HBoxContainer:
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 8)
+	var tex := TextureRect.new()
+	tex.texture = UiIcons.texture(icon)
+	tex.custom_minimum_size = Vector2(32, 32)
+	tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	h.add_child(tex)
+	h.add_child(_label(value, 24, TEXT))
+	return h
 
 
 func _open(title: String) -> VBoxContainer:

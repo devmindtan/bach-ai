@@ -8,6 +8,7 @@ extends Node2D
 ##   --demo          autopilot moves and picks the first card (for shots)
 ##   --sim-steps=N   simulate N fixed steps per frame (fast-forward for shots)
 ##   --walk=X,Y      the demo walks in a fixed direction (shots of each view)
+##   --pause-at=T    open the pause panel at T seconds (shots)
 ##   --no-auto-pick  the demo stops at the first level-up panel (for shots)
 ##   --hitboxes      draw hit areas: effects (red while dealing damage), monster
 ##                   bodies, the player's body and pickup radius
@@ -79,6 +80,7 @@ var bench := 0
 var show_hitboxes := false
 var auto_pick := true
 var forced_walk := Vector2.ZERO
+var pause_at := -1.0
 var _bench_frames := 0
 var _bench_tick_us: PackedInt64Array = []
 var _bench_frame_us: PackedInt64Array = []
@@ -171,6 +173,8 @@ func _parse_args() -> void:
 		elif a.begins_with("--seed="):
 			rng.seed = int(a.get_slice("=", 1))
 			seeded = true
+		elif a.begins_with("--pause-at="):
+			pause_at = float(a.get_slice("=", 1))
 		elif a.begins_with("--walk="):
 			var xy := a.get_slice("=", 1).split(",")
 			forced_walk = Vector2(float(xy[0]), float(xy[1])).normalized()
@@ -238,6 +242,11 @@ func _tick(dt: float) -> void:
 	if state != State.PLAYING:
 		return
 	clock += dt
+	if pause_at >= 0.0 and clock >= pause_at:
+		pause_at = -1.0
+		state = State.PAUSED
+		_panels.show_pause()
+		return
 	_move_player(dt)
 	_spawn(clock - dt, clock)
 	var contact := enemies.step(dt, player_pos, player_pos + _hit_center)
@@ -554,6 +563,10 @@ func resume() -> void:
 
 func restart() -> void:
 	get_tree().reload_current_scene()
+
+
+func to_lobby() -> void:
+	get_tree().change_scene_to_file("res://src/lobby/lobby.tscn")
 
 
 func _play_action(anim: String) -> void:

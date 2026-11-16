@@ -10,13 +10,16 @@
 
 ## Chơi
 
+Game mở vào **sảnh chờ** (kiếm sĩ, chỉ số, ải 1); Enter hoặc nút "Bắt đầu" để vào ải.
+
 | Phím | Tác dụng |
 |---|---|
-| WASD / mũi tên | di chuyển (đánh tự động) |
+| WASD / mũi tên / cần trái | di chuyển (kiếm tự chém quái gần nhất) |
 | chuột / 1–3 | chọn nâng cấp khi lên cấp |
-| Esc | tạm dừng |
+| Esc | tạm dừng (Tiếp tục / Chơi lại / Về sảnh) |
+| R / Enter | chơi lại khi thắng hoặc thua |
 
-(dự kiến, đợt 1)
+HUD: ngôi sao = cấp, tim = máu, đồng hồ = thời gian, đầu lâu = số quái đã hạ, đồng vàng = vàng.
 
 ```bash
 gamekit run          # hoặc: make run
