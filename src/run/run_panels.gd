@@ -37,7 +37,7 @@ func hide_all() -> void:
 
 
 func show_level_up(ids: Array[String]) -> void:
-	var root := _open("Lên cấp! Chọn một")
+	var root := _open("Lên cấp! Chọn một", false)
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 24)
@@ -59,6 +59,8 @@ func show_level_up(ids: Array[String]) -> void:
 		v.offset_top = 14
 		v.offset_bottom = -14
 		v.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		v.alignment = BoxContainer.ALIGNMENT_CENTER   # content centred top-bottom: cards with short text are not top-heavy
+		v.add_theme_constant_override("separation", 8)
 		b.add_child(v)
 		var head := HBoxContainer.new()
 		head.add_theme_constant_override("separation", 10)
@@ -82,7 +84,7 @@ func show_level_up(ids: Array[String]) -> void:
 		head.add_child(title)
 		v.add_child(head)
 		var tag := "Mới" if lv == 0 else "Cấp %d → %d" % [lv, lv + 1]
-		v.add_child(_label("%s   (tối đa %d)" % [tag, int(u.get("max_level", 1))], 14, BORDER))
+		v.add_child(_label("%s · tối đa %d" % [tag, int(u.get("max_level", 1))], 14, BORDER))
 		var d := _label(String(u.get("desc", "")), 16, MUTED)
 		d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		d.custom_minimum_size = Vector2(260, 0)
@@ -133,7 +135,9 @@ func _icon_value(icon: String, value: String) -> HBoxContainer:
 	return h
 
 
-func _open(title: String) -> VBoxContainer:
+## A modal: dimmed screen, centred column with the title. boxed puts the column
+## on a panel so it stays readable over a crowded field (pause, win, lose).
+func _open(title: String, boxed := true) -> VBoxContainer:
 	hide_all()
 	var dim := ColorRect.new()
 	dim.color = DIM
@@ -145,8 +149,19 @@ func _open(title: String) -> VBoxContainer:
 	dim.add_child(center)
 	var root := VBoxContainer.new()
 	root.alignment = BoxContainer.ALIGNMENT_CENTER
-	root.add_theme_constant_override("separation", 22)
-	center.add_child(root)
+	root.add_theme_constant_override("separation", 18)
+	if boxed:
+		var panel := PanelContainer.new()
+		var ps := _style(Color(0.09, 0.08, 0.13, 0.94))
+		ps.content_margin_left = 40
+		ps.content_margin_right = 40
+		ps.content_margin_top = 24
+		ps.content_margin_bottom = 28
+		panel.add_theme_stylebox_override("panel", ps)
+		center.add_child(panel)
+		panel.add_child(root)
+	else:
+		center.add_child(root)
 	var l := _label(title, 40, BORDER)
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	root.add_child(l)

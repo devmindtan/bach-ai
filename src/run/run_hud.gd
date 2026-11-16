@@ -29,50 +29,60 @@ func _fit() -> void:
 	size = get_viewport_rect().size
 
 
+## Every HUD element sits on one row: icons centred on ROW, text baselines
+## placed so the glyphs (digits, capitals) are centred on the same line.
+const ROW := 44.0
+const GLYPH_MID := 0.36   # baseline - this x font size = visual middle of digits/capitals
+
+
+func _baseline(center_y: float, sz: int) -> float:
+	return roundf(center_y + sz * GLYPH_MID)
+
+
 func _draw() -> void:
 	if run == null:
 		return
 	var font := ThemeDB.fallback_font
 	var w := size.x
-	# xp: thin bar across the top, gem at its left end
+	# xp: thin bar across the whole top edge
 	var frac := clampf(float(run.xp) / float(run.xp_needed()), 0.0, 1.0)
 	draw_rect(Rect2(0, 0, w, 10), BACK)
-	draw_rect(Rect2(28, 2, (w - 30) * frac, 6), XP_BAR)
-	UiIcons.draw(self, "gem", Vector2(14, 6), 1.0)
-	# level: star with the number on top
-	UiIcons.draw(self, "star", Vector2(32, 44), 3.0)
-	_centered(font, Vector2(32, 52), str(run.level), 20)
-	# hp: heart + bar with the number inside
+	draw_rect(Rect2(2, 2, (w - 4) * frac, 6), XP_BAR)
+	# level: star with the number in its middle
+	UiIcons.draw(self, "star", Vector2(32, ROW), 3.0)
+	_centered(font, Vector2(32, _baseline(ROW + 2, 18)), str(run.level), 18)
+	# hp: heart + bar with the number in its middle
 	var max_hp := float(run.stats["max_hp"])
-	UiIcons.draw(self, "heart", Vector2(78, 44), 2.0)
-	var bar := Rect2(96, 34, 200, 20)
+	UiIcons.draw(self, "heart", Vector2(78, ROW), 2.0)
+	var bar := Rect2(96, ROW - 10, 200, 20)
 	draw_rect(bar, BACK)
 	draw_rect(Rect2(bar.position + Vector2(2, 2), Vector2((bar.size.x - 4) * clampf(run.hp / max_hp, 0.0, 1.0), 16)), HP_BAR)
-	_centered(font, Vector2(bar.get_center().x, bar.end.y - 4), "%d / %d" % [ceili(run.hp), roundi(max_hp)], 14)
-	# clock: icon + elapsed, total smaller
+	_centered(font, Vector2(bar.get_center().x, _baseline(ROW, 14)), "%d / %d" % [ceili(run.hp), roundi(max_hp)], 14)
+	# clock: icon + elapsed, the total smaller on the same baseline
 	var t := int(run.clock)
 	var total := int(run.duration)
 	var clock := "%02d:%02d" % [t / 60, t % 60]
 	var cw := font.get_string_size(clock, HORIZONTAL_ALIGNMENT_LEFT, -1, 28).x
-	UiIcons.draw(self, "clock", Vector2(w * 0.5 - cw * 0.5 - 22, 42), 2.0)
-	_text(font, Vector2(w * 0.5 - cw * 0.5, 52), clock, 28)
-	_text(font, Vector2(w * 0.5 + cw * 0.5 + 8, 52), "/ %02d:%02d" % [total / 60, total % 60], 16, MUTED)
-	# kills and gold: icon + number, right-aligned pair
+	var cx := w * 0.5 - cw * 0.5
+	UiIcons.draw(self, "clock", Vector2(cx - 22, ROW), 2.0)
+	_text(font, Vector2(cx, _baseline(ROW, 28)), clock, 28)
+	_text(font, Vector2(cx + cw + 8, _baseline(ROW, 28)), "/ %02d:%02d" % [total / 60, total % 60], 16, MUTED)
+	# kills and gold: icon + number pairs, right-aligned
 	var gold := str(run.gold)
 	var kills := str(run.enemies.total_kills)
 	var gw := font.get_string_size(gold, HORIZONTAL_ALIGNMENT_LEFT, -1, 22).x
 	var kw := font.get_string_size(kills, HORIZONTAL_ALIGNMENT_LEFT, -1, 22).x
 	var x := w - 16 - gw
-	_text(font, Vector2(x, 52), gold, 22)
-	UiIcons.draw(self, "coin", Vector2(x - 20, 44), 2.0)
-	x -= 56 + kw
-	_text(font, Vector2(x, 52), kills, 22)
-	UiIcons.draw(self, "skull", Vector2(x - 20, 44), 2.0)
+	_text(font, Vector2(x, _baseline(ROW, 22)), gold, 22)
+	UiIcons.draw(self, "coin", Vector2(x - 22, ROW), 2.0)
+	x -= 60 + kw
+	_text(font, Vector2(x, _baseline(ROW, 22)), kills, 22)
+	UiIcons.draw(self, "skull", Vector2(x - 22, ROW), 2.0)
 
 
 func _centered(font: Font, baseline_center: Vector2, s: String, sz: int) -> void:
 	var sw := font.get_string_size(s, HORIZONTAL_ALIGNMENT_LEFT, -1, sz).x
-	var p := baseline_center - Vector2(sw * 0.5, 0)
+	var p := Vector2(roundf(baseline_center.x - sw * 0.5), baseline_center.y)
 	draw_string_outline(font, p, s, HORIZONTAL_ALIGNMENT_LEFT, -1, sz, 4, SHADOW)
 	draw_string(font, p, s, HORIZONTAL_ALIGNMENT_LEFT, -1, sz, TEXT)
 
