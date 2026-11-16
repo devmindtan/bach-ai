@@ -10,6 +10,7 @@ extends Node2D
 ##   --walk=X,Y      the demo walks in a fixed direction (shots of each view)
 ##   --god           the hero takes no damage (shots of the win screen)
 ##   --pause-at=T    open the pause panel at T seconds (shots)
+##   --offer=a,b,c   the first level-up offers these upgrade ids (shots of the cards)
 ##   --no-auto-pick  the demo stops at the first level-up panel (for shots)
 ##   --hitboxes      draw hit areas: effects (red while dealing damage), monster
 ##                   bodies, the player's body and pickup radius
@@ -80,6 +81,7 @@ var sim_steps := 1
 var bench := 0
 var show_hitboxes := false
 var auto_pick := true
+var offer: Array[String] = []   # forced cards for the first level-up (--offer)
 var forced_walk := Vector2.ZERO
 var pause_at := -1.0
 var god := false
@@ -195,6 +197,10 @@ func _parse_args() -> void:
 				if kv.size() == 2:
 					levels[kv[0]] = int(kv[1])
 			demo = true
+		elif a.begins_with("--offer="):
+			# Debug/shots: the first level-up offers these cards, e.g. --offer=earth_strike,haste,back_slash
+			for id in a.get_slice("=", 1).split(",", false):
+				offer.append(id)
 		elif a == "--no-auto-pick":
 			auto_pick = false
 		elif a == "--hitboxes":
@@ -509,6 +515,9 @@ func _gain_xp(amount: float) -> void:
 
 func _open_level_up() -> void:
 	choices = UpgradeRoller.roll(pool.get("upgrades", []), levels, 3, rng)
+	if not offer.is_empty():
+		choices = offer.duplicate()
+		offer.clear()
 	if choices.is_empty():
 		pending_levels = 0
 		hp = float(stats["max_hp"])
@@ -539,6 +548,68 @@ func upgrade(id: String) -> Dictionary:
 		if u.get("id") == id:
 			return u
 	return {}
+
+
+## What choosing upgrade [param id] changes, for the level-up card:
+## { "lines": [[label, now, next], ...], "milestones": [levels], "milestone": text for the
+## level about to be gained ("" when it is an ordinary level) }. Numbers come from
+## PlayerStats with the upgrade one level higher, so the card shows real values.
+func upgrade_preview(id: String) -> Dictionary:
+	var u := upgrade(id)
+	var lv := int(levels.get(id, 0))
+	var nxt := lv + 1
+	var max_lv := int(u.get("max_level", 1))
+	var after_levels := levels.duplicate()
+	after_levels[id] = nxt
+	var after := PlayerStats.compute(base_stats, pool.get("upgrades", []), after_levels)
+	var lines := []
+	var skills: Dictionary = pool.get("skills", {})
+	if u.get("kind") == "skill" and skills.has(id):
+		var sp: Dictionary = skills[id]
+		var dmg := func(st: Dictionary) -> float:
+			return float(st["damage"]) * float(sp.get("damage_mul", 1.0)) * PlayerStats.skill_mul(st, "skill_damage." + id)
+		var size := func(st: Dictionary) -> float:
+			return float(st.get("area", 1.0)) * float(sp.get("size_mul", 1.0)) * PlayerStats.skill_mul(st, "skill_area." + id)
+		lines.append(["Sát thương", "—" if lv == 0 else str(roundi(dmg.call(stats))), str(roundi(dmg.call(after)))])
+		if lv == 0 or not is_equal_approx(size.call(stats), size.call(after)):
+			lines.append(["Cỡ", "—" if lv == 0 else "×%.2f" % size.call(stats), "×%.2f" % size.call(after)])
+	else:
+		for key: String in u.get("effects", {}):
+			if key == "back_slash":
+				var ba: Dictionary = skills.get("blade_arc", {})
+				var pct := func(l: int) -> String:
+					return "—" if l <= 0 else "%d%%" % roundi(100.0 * (float(ba.get("back_damage_mul", 0.5)) + float(ba.get("back_damage_per_level", 0.25)) * (l - 1)))
+				lines.append(["Nhát chém sau", pct.call(lv), pct.call(nxt)])
+			else:
+				lines.append([STAT_LABEL.get(key, key), _fmt_stat(key, float(stats.get(key, 0.0))), _fmt_stat(key, float(after.get(key, 0.0)))])
+	# milestones: a new look (tier sprite) at a level, and the last level
+	var milestones := [max_lv]
+	var tiers: Array = skills.get(id, {}).get("tier_sprites", [])
+	for i in range(1, tiers.size()):
+		if tiers[i] != tiers[i - 1]:
+			milestones.append(i + 1)
+	var text := ""
+	if tiers.size() > 1 and nxt <= tiers.size() and (nxt == 1 or tiers[nxt - 1] != tiers[nxt - 2]):
+		text = "Bậc %s · hình mới" % ["I", "II", "III", "IV", "V"][mini(nxt, 5) - 1]
+	if nxt == max_lv:
+		text = (text + " · " if text != "" else "") + "Cấp tối đa"
+	return {"lines": lines, "milestones": milestones, "milestone": text, "level": lv, "max": max_lv}
+
+
+const STAT_LABEL := {"max_hp": "Máu tối đa", "damage": "Sát thương", "cooldown": "Hồi chiêu", "area": "Vùng đánh",
+	"move_speed": "Tốc độ chạy", "magnet": "Tầm hút", "regen": "Hồi máu", "armor": "Giáp"}
+
+
+static func _fmt_stat(key: String, v: float) -> String:
+	match key:
+		"cooldown":
+			return "%.2f s" % v
+		"area", "magnet":
+			return "×%.2f" % v
+		"regen":
+			return "%.1f/s" % v
+		_:
+			return str(roundi(v))
 
 
 func _recompute_stats() -> void:

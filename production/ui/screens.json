@@ -5,6 +5,7 @@
     { "name": "02-run-start", "title": "Vào ải (HUD)", "scene": "res://src/run/run.tscn", "frames": 240, "args": ["--demo", "--seed=1", "--sim-steps=2"] },
     { "name": "03-run-crowd", "title": "Giữa trận (HUD, số sát thương, thanh máu quái)", "scene": "res://src/run/run.tscn", "frames": 600, "args": ["--demo", "--seed=1", "--sim-steps=4"] },
     { "name": "04-level-up", "title": "Lên cấp (chọn 1 trong 3)", "scene": "res://src/run/run.tscn", "frames": 900, "args": ["--demo", "--seed=1", "--sim-steps=2", "--no-auto-pick"] },
+    { "name": "04b-level-up-milestones", "title": "Lên cấp: mốc bậc mới và cấp tối đa", "scene": "res://src/run/run.tscn", "frames": 900, "args": ["--seed=1", "--sim-steps=2", "--no-auto-pick", "--skills=earth_strike:1,haste:4", "--offer=earth_strike,haste,back_slash"] },
     { "name": "05-pause", "title": "Tạm dừng", "scene": "res://src/run/run.tscn", "frames": 300, "args": ["--demo", "--seed=1", "--sim-steps=4", "--pause-at=12"] },
     { "name": "06-lose", "title": "Thua", "scene": "res://src/run/run.tscn", "frames": 2300, "args": ["--demo", "--seed=1", "--sim-steps=8"] },
     { "name": "07-win", "title": "Vượt ải", "scene": "res://src/run/run.tscn", "frames": 2400, "args": ["--demo", "--seed=1", "--sim-steps=8", "--god"] }

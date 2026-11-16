@@ -138,7 +138,7 @@
       "id": "frost_nova",
       "kind": "skill",
       "name": "Frost Nova",
-      "desc": "Băng nổ bắn ra phía quái gần nhất; mỗi cấp +25% sát thương, +8% vùng. Bậc I-V theo cấp skill.",
+      "desc": "Băng nổ ở phía quái gần nhất. Mỗi cấp: +25% sát thương, +8% vùng, hình mạnh hơn.",
       "max_level": 5,
       "weight": 2,
       "effects": {
@@ -154,7 +154,7 @@
       "id": "earth_strike",
       "kind": "skill",
       "name": "Earth Strike",
-      "desc": "Đất nứt bắn ra phía quái gần nhất; mỗi cấp +25% sát thương, +8% vùng. Bậc I-V theo cấp skill.",
+      "desc": "Đất nứt ở phía quái gần nhất. Mỗi cấp: +25% sát thương, +8% vùng, hình mạnh hơn.",
       "max_level": 5,
       "weight": 2,
       "effects": {
