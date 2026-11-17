@@ -199,22 +199,34 @@ func _build_ui() -> void:
 		nxt.position = Vector2(PEDESTAL_X + 178, PEDESTAL_Y - 150)
 		nxt.custom_minimum_size = Vector2(52, 64)
 		menu.add_child(nxt)
-	var cname := _label(String(_class.get("name", "")), 40, TEXT)
+	var slot_now: Slot = Prefs.current().active_slot if _slot_mode else null
+	# slot mode: the slot's name big, "class · role" under it, then its progress
+	var cname := _label(slot_now.name if slot_now != null else String(_class.get("name", "")), 40, TEXT)
+	cname.clip_text = true
+	cname.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	cname.position = Vector2(PEDESTAL_X - 260, PEDESTAL_Y + 50)
 	cname.size = Vector2(520, 50)
 	cname.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	menu.add_child(cname)
-	var role := _label(String(_class.get("role", "")), 18, accent.lightened(0.35))
+	var role_txt := String(_class.get("role", ""))
+	if slot_now != null:
+		role_txt = "%s · %s" % [String(_class.get("name", "")), role_txt]
+	var role := _label(role_txt, 18, accent.lightened(0.35))
 	role.position = Vector2(PEDESTAL_X - 260, PEDESTAL_Y + 100)
 	role.size = Vector2(520, 26)
 	role.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	menu.add_child(role)
-	if _slot_mode and Prefs.current().active_slot != null:
-		var tag := _label("Nhân vật: %s" % Prefs.current().active_slot.name, 16, MUTED)
-		tag.position = Vector2(PEDESTAL_X - 260, PEDESTAL_Y + 130)
-		tag.size = Vector2(520, 24)
-		tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		menu.add_child(tag)
+	if slot_now != null:
+		# progress: highest stage won, gold, gems (stops before the stage card at x 440)
+		var prog := HBoxContainer.new()
+		prog.add_theme_constant_override("separation", 16)
+		prog.alignment = BoxContainer.ALIGNMENT_CENTER
+		prog.position = Vector2(PEDESTAL_X - 140, PEDESTAL_Y + 132)
+		prog.custom_minimum_size = Vector2(280, 26)
+		menu.add_child(prog)
+		for it in [["star", "Ải %d" % slot_now.best, "Ải cao nhất đã vượt"], ["coin", str(slot_now.gold), "Vàng"],
+				["gem", str(slot_now.gems), "Đá (gacha, đợt 5)"]]:
+			prog.add_child(_small_stat(it[0], it[1], it[2]))
 	else:
 		var dots := _label(" ".join(_class_ids.map(func(id: String) -> String: return "●" if _classes[id] == _class else "○")), 16, MUTED)
 		dots.position = Vector2(PEDESTAL_X - 260, PEDESTAL_Y + 130)
@@ -255,14 +267,35 @@ func _build_ui() -> void:
 		cv.add_child(_section("Chiêu khởi đầu", GOLD))
 		var u: Dictionary = ups.get(sid, {})
 		cv.add_child(_feature(sid, String(u.get("name", sid)), String(u.get("desc", "")), GOLD))
-	var skills := ups.values().filter(func(u: Dictionary) -> bool: return u.get("kind") == "skill")
-	cv.add_child(_section("Bộ chiêu (%d chiêu · %d thẻ chỉ số)" % [skills.size(), ups.size() - skills.size()], GOLD))
+	# unique (milestone) skills only once the slot owns them
+	var owned: Array[String] = slot_now.rewards() if slot_now != null else []
+	var ms := Milestones.load_default()
+	var owned_skills := ms.skills(owned)
+	var skills := ups.values().filter(func(u: Dictionary) -> bool:
+		return u.get("kind") == "skill" and (not bool(u.get("unique", false)) or owned_skills.has(String(u["id"]))))
+	var n_stat := ups.values().filter(func(u: Dictionary) -> bool: return u.get("kind") != "skill").size()
+	cv.add_child(_section("Bộ chiêu (%d chiêu · %d thẻ chỉ số)" % [skills.size(), n_stat], GOLD))
 	var icons := HFlowContainer.new()
 	icons.add_theme_constant_override("h_separation", 8)
 	icons.add_theme_constant_override("v_separation", 8)
 	cv.add_child(icons)
 	for u: Dictionary in skills:
 		icons.add_child(_icon_tile(String(u.get("icon", u["id"])), String(u.get("name", "")), String(u.get("desc", ""))))
+	if slot_now != null:
+		# milestone rewards of the slot (stages 10/20/30): one row, a hint while there are none
+		var mrow := HBoxContainer.new()
+		mrow.add_theme_constant_override("separation", 8)
+		cv.add_child(mrow)
+		var head := _section("Phần thưởng mốc", GOLD)
+		head.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		mrow.add_child(head)
+		if owned.is_empty():
+			var none := _label("vượt ải 10, 20, 30 lần đầu để chọn", 14, MUTED)
+			none.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			mrow.add_child(none)
+		for id: String in owned:
+			var inf := ms.info(id, pool.get("upgrades", []))
+			mrow.add_child(_icon_tile(String(inf["icon"]), String(inf["name"]), String(inf["desc"])))
 
 	# bottom: stage and start. The card must stop before the start button: with
 	# slot mode it also holds ‹/› and "Chọn ải", and used to run under the button.
@@ -338,7 +371,7 @@ func _build_ui() -> void:
 		claim.add_theme_font_size_override("font_size", 18)
 		claim.add_theme_stylebox_override("normal", _style(Color("4a3a10"), 8))
 		claim.add_theme_stylebox_override("hover", _style(Color("6a5218"), 8))
-		claim.position = Vector2(620, vp.y - BOTTOM_ROW - 58)
+		claim.position = Vector2(32, 116)   # the free space under the title, never over the class card
 		menu.add_child(claim)
 	if OS.get_cmdline_user_args().has("--lobby-settings"):   # shots of the settings page
 		_show_settings.call_deferred(root, menu)
@@ -353,6 +386,28 @@ func _build_ui() -> void:
 	var hint := _label("Enter: bắt đầu  ·  %s  ·  Trong trận: WASD di chuyển, Space lướt, Tab nhân vật, Esc tạm dừng" % tip, 14, MUTED)
 	hint.position = Vector2(32, vp.y - 30)
 	menu.add_child(hint)
+
+
+## A small icon + value (slot progress under the hero); the tooltip names it.
+func _small_stat(icon: String, value: String, tip: String) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	row.tooltip_text = tip
+	row.mouse_filter = Control.MOUSE_FILTER_STOP
+	var tex := TextureRect.new()
+	tex.texture = UiIcons.texture(icon)
+	tex.custom_minimum_size = Vector2(20, 20)
+	tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	tex.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	tex.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(tex)
+	var l := _label(value, 17, TEXT)
+	l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(l)
+	return row
 
 
 ## A stat tile: icon over the value, the name under it.
