@@ -266,11 +266,12 @@ func _build_ui() -> void:
 
 	# bottom: stage and start. The card must stop before the start button: with
 	# slot mode it also holds ‹/› and "Chọn ải", and used to run under the button.
-	var start_x := vp.x - 32 - 300
+	var start_x := vp.x - 32 - 280
 	var stage_left := 440.0
 	var stage_card := _card()
 	stage_card.position = Vector2(stage_left, vp.y - BOTTOM_ROW)
 	stage_card.custom_minimum_size = Vector2(maxf(240.0, start_x - 16.0 - stage_left), ROW_H)
+	stage_card.clip_contents = true
 	menu.add_child(stage_card)
 	var sh := HBoxContainer.new()
 	sh.add_theme_constant_override("separation", 8)
@@ -293,7 +294,23 @@ func _build_ui() -> void:
 	var sname := String(_stage.get("name", ""))
 	if sname == "" or sname == String(_stage.get("region", "")):
 		sname = String(_stage.get("region", "Ải %d" % _stage_n))
-	sh.add_child(_label("Ải %d · %s" % [_stage_n, sname], 18, GOLD))
+	var stage_col := VBoxContainer.new()
+	stage_col.add_theme_constant_override("separation", 0)
+	stage_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stage_col.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var stage_l := _label("Ải %d · %s" % [_stage_n, sname], 16, GOLD)
+	stage_l.clip_text = true
+	stage_l.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	stage_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	stage_col.add_child(stage_l)
+	var dur := int(_stage.get("duration", 0))
+	var sub_txt := "%02d:%02d" % [dur / 60, dur % 60]
+	if _stages.is_boss(_stage_n):
+		sub_txt += "  ·  BOSS"
+	var sub_l := _label(sub_txt, 13, MUTED)
+	sub_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	stage_col.add_child(sub_l)
+	sh.add_child(stage_col)
 	if _slot_mode:
 		var next_s := _arrow("›", func() -> void: switch_stage(1))
 		next_s.custom_minimum_size = Vector2(32, 40)
@@ -301,14 +318,10 @@ func _build_ui() -> void:
 		var limit := Prefs.current().active_slot.unlocked(_stages.count()) if Prefs.current().active_slot != null else _stages.count()
 		next_s.disabled = _stage_n >= limit
 		sh.add_child(next_s)
-	var dur := int(_stage.get("duration", 0))
-	sh.add_child(_stat("clock", "", "%02d:%02d" % [dur / 60, dur % 60]))
-	if _stages.is_boss(_stage_n):
-		sh.add_child(_label("BOSS", 18, Color("ffd36b")))
 	var start := _button("Bắt đầu  ▶", func() -> void:
 		Prefs.current().set_value("stage_target", _stage_n)
 		get_tree().change_scene_to_file(RUN_SCENE))
-	start.custom_minimum_size = Vector2(300, ROW_H)
+	start.custom_minimum_size = Vector2(280, ROW_H)
 	start.add_theme_font_size_override("font_size", 26)
 	start.add_theme_stylebox_override("normal", _style(accent.darkened(0.45), 8))
 	start.add_theme_stylebox_override("hover", _style(accent.darkened(0.25), 8))
