@@ -92,6 +92,8 @@ func _make_preview_slot() -> void:
 		if not d.has("class") or String(d["class"]) == hero:
 			if not s.profile.bag.has(id):
 				s.profile.add(id)
+				if String(d.get("rarity", "")) != "legendary":   # the legendary ones show the "MỚI" badge
+					s.profile.mark_seen(id)
 	active_slot = s
 	stage_target = 10
 
@@ -231,7 +233,12 @@ func apply() -> void:
 func current_scale() -> float:
 	if not is_inside_tree():
 		return 1.0
-	return fit_scale(Vector2(get_tree().root.size), scale)
+	var w := Vector2(get_tree().root.size)
+	for a in OS.get_cmdline_user_args():   # gamekit shots: the capture size, not the window the WM gave
+		if a.begins_with("--gk-size="):
+			var wh := a.get_slice("=", 1).split("x")
+			w = Vector2(float(wh[0]), float(wh[1]))
+	return fit_scale(w, scale)
 
 
 ## The canvas scale for a [param window] (pixels) and the chosen scale (0 = auto):

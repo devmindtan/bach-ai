@@ -26,13 +26,14 @@ static var _args_read := false
 ## Gives [param c] a tooltip. [param title] is required; the rest optional.
 static func attach(c: Control, title: String, body := "", accent := UiKit.GOLD, icon := "", kind := "") -> void:
 	c.tooltip_text = ""
-	c.set_meta("tip", {"title": title, "body": body, "accent": accent, "icon": icon, "kind": kind})
+	c.set_meta("tip", {"title": title, "body": body, "accent": accent, "icon": icon, "kind": kind,
+		"since": Time.get_ticks_msec()})
 	if c.mouse_filter == Control.MOUSE_FILTER_IGNORE:
 		c.mouse_filter = Control.MOUSE_FILTER_PASS
 	if not c.mouse_entered.is_connected(_hover.bind(c)):
 		c.mouse_entered.connect(_hover.bind(c))
 		c.mouse_exited.connect(_leave.bind(c))
-		c.focus_entered.connect(_show.bind(c))
+		c.focus_entered.connect(_focused.bind(c))
 		c.focus_exited.connect(_leave.bind(c))
 		c.tree_exiting.connect(_leave.bind(c))
 	if not _args_read:
@@ -50,6 +51,16 @@ static func attach(c: Control, title: String, body := "", accent := UiKit.GOLD, 
 			if not _forced_done and is_instance_valid(c) and c.is_inside_tree():
 				_forced_done = true
 				_show(c)).call_deferred()
+
+
+## Focus shows the tooltip when the player moves to the control, not when a screen
+## gives a control focus as it is built (that tooltip covered the paper doll).
+static func _focused(c: Control) -> void:
+	if not is_instance_valid(c) or not c.has_meta("tip"):
+		return
+	if Time.get_ticks_msec() - int(c.get_meta("tip").get("since", 0)) < 400:
+		return
+	_show(c)
 
 
 static func _hover(c: Control) -> void:

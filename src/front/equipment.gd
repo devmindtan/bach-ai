@@ -32,6 +32,9 @@ var _class := {}
 var _hero: SpriteSheet
 var _sel := "head"      # the chosen equipment slot
 var _view := ""         # the item shown in the detail column
+var _filter := "head"   # bag tab: "all" or a slot (follows the chosen slot)
+var _sort := "rarity"   # bag order: "rarity" (rarest first) or "new" (newest first)
+var _bag_scroll := 0    # keeps the bag's scroll position across rebuilds
 var _t := 0.0
 var _scroll := Vector2.ZERO
 var _layer: CanvasLayer
@@ -54,6 +57,11 @@ func _ready() -> void:
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--equip-slot="):
 			_sel = a.get_slice("=", 1)
+			_filter = _sel
+		elif a == "--equip-all":
+			_filter = "all"
+		elif a == "--equip-new":
+			_sort = "new"
 		elif a.begins_with("--equip-view="):
 			_view = a.get_slice("=", 1)
 	if _view == "":
@@ -204,6 +212,7 @@ func _slot_cell(slot: String, item: String) -> Control:
 		b.add_child(ic)
 	b.pressed.connect(func() -> void:
 		_sel = slot
+		_filter = slot
 		_view = _default_view()
 		_rebuild())
 	box.add_child(b)
@@ -217,6 +226,13 @@ func _slot_cell(slot: String, item: String) -> Control:
 
 
 # --- bag -----------------------------------------------------------------------
+# Inventory practice (design/ux/equipment.md): a few type tabs, a visible sort,
+# a badge on new items until seen, and an upgrade mark against what is worn.
+
+const TABS := [["all", "Tất cả"], ["head", "Đầu"], ["chest", "Ngực"], ["arms", "Tay"], ["legs", "Chân"], ["weapon", "Vũ khí"]]
+const ORDER := ["legendary", "epic", "rare", "common"]
+const MIXED := Color("f2c14e")
+
 
 func _bag(root: Control) -> void:
 	var panel := UiKit.panel(Color(0.09, 0.08, 0.13, 0.94), 16)
@@ -225,53 +241,144 @@ func _bag(root: Control) -> void:
 	panel.size = panel.custom_minimum_size
 	root.add_child(panel)
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 10)
+	v.add_theme_constant_override("separation", 8)
 	panel.add_child(v)
-	v.add_child(UiKit.label("Túi đồ · %s" % SLOT_NAME.get(_sel, _sel), 22, UiKit.TEXT))
-	var ids := _prof.choices(_cls, _sel)
+	var ids := _bag_ids()
+	var head := HBoxContainer.new()
+	v.add_child(head)
+	var title := UiKit.label("Túi đồ", 22, UiKit.TEXT)
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.add_child(title)
+	var count := UiKit.label("%d món" % ids.size(), 15, UiKit.MUTED)
+	count.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	head.add_child(count)
+	# type tabs
+	var tabs := HBoxContainer.new()
+	tabs.add_theme_constant_override("separation", 4)
+	v.add_child(tabs)
+	for t in TABS:
+		tabs.add_child(_pill(t[1], _filter == t[0], func() -> void:
+			_filter = t[0]
+			if t[0] != "all":
+				_sel = t[0]
+				_view = _default_view()
+			_bag_scroll = 0
+			_rebuild(), 56.0))
+	# sort, the active one highlighted
+	var sort := HBoxContainer.new()
+	sort.add_theme_constant_override("separation", 4)
+	v.add_child(sort)
+	var sl := UiKit.label("Xếp theo", 13, UiKit.MUTED)
+	sl.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	sort.add_child(sl)
+	for o in [["rarity", "Độ hiếm"], ["new", "Mới nhất"]]:
+		sort.add_child(_pill(o[1], _sort == o[0], func() -> void:
+			_sort = o[0]
+			_rebuild(), 84.0))
 	if ids.is_empty():
-		var none := UiKit.label("Chưa có đồ cho ô này. Thắng ải hoặc mở rương tinh anh để nhận thêm.", 15, UiKit.MUTED)
+		var none := UiKit.label("Chưa có đồ ở đây. Thắng ải hoặc mở rương tinh anh để nhận thêm.", 15, UiKit.MUTED)
 		none.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		none.custom_minimum_size = Vector2(350, 0)
 		v.add_child(none)
 		return
-	# the best first: legendary, epic, rare, common
-	var order := ["legendary", "epic", "rare", "common"]
-	ids.sort_custom(func(a: String, b: String) -> bool:
-		return order.find(String(_prof.defs.get(a, {}).get("rarity", "common"))) < order.find(String(_prof.defs.get(b, {}).get("rarity", "common"))))
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(356, 0)
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	v.add_child(scroll)
 	var list := VBoxContainer.new()
 	list.add_theme_constant_override("separation", 6)
-	v.add_child(list)
-	var worn := String(_prof.equipped(_cls).get(_sel, ""))
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(list)
 	for id: String in ids:
-		list.add_child(_bag_row(id, id == worn, _prof.bag.count(id)))
+		list.add_child(_bag_row(id))
+	scroll.scroll_vertical = _bag_scroll
+	scroll.get_v_scroll_bar().value_changed.connect(func(val: float) -> void: _bag_scroll = int(val))
 
 
-## One owned item: icon in its rarity frame, name in the rarity colour, rarity
-## and "đang mặc"; the viewed item has a white frame. A list, not an icon grid:
-## items of one slot look alike at 64 px.
-func _bag_row(id: String, worn: bool, copies: int) -> Button:
+## Owned items the class can wear in the current tab, in the current order
+## (the same item owned twice is one row with ×2).
+func _bag_ids() -> Array:
+	var ids := []
+	for slot: String in Profile.SLOTS:
+		if _filter == "all" or _filter == slot:
+			for id: Variant in _prof.choices(_cls, slot):
+				ids.append(String(id))
+	if _sort == "new":
+		ids.sort_custom(func(a: String, b: String) -> bool: return _prof.bag.rfind(a) > _prof.bag.rfind(b))
+	else:
+		ids.sort_custom(func(a: String, b: String) -> bool:
+			var ra := ORDER.find(String(_prof.defs.get(a, {}).get("rarity", "common")))
+			var rb := ORDER.find(String(_prof.defs.get(b, {}).get("rarity", "common")))
+			return ra < rb if ra != rb else String(_prof.defs.get(a, {}).get("name", a)) < String(_prof.defs.get(b, {}).get("name", b)))
+	return ids
+
+
+func _pill(text: String, on: bool, cb: Callable, w: float) -> Button:
+	var b := Button.new()
+	b.text = text
+	b.custom_minimum_size = Vector2(w, 30)
+	b.focus_mode = Control.FOCUS_ALL
+	b.add_theme_font_size_override("font_size", 14)
+	b.add_theme_color_override("font_color", UiKit.TEXT if on else UiKit.MUTED)
+	b.add_theme_stylebox_override("normal", UiKit.style(UiKit.PANEL_HOVER if on else UiKit.PANEL_DARK, 4, UiKit.GOLD if on else Color("3a3448"), 2 if on else 1))
+	for st in ["hover", "focus", "pressed"]:
+		b.add_theme_stylebox_override(st, UiKit.style(UiKit.PANEL_HOVER, 4, Color.WHITE, 2))
+	b.pressed.connect(cb)
+	return b
+
+
+## How item [param id] compares with what is worn in its slot: 1 better, -1 worse,
+## 0 mixed or equal, 2 when it is the worn one.
+func _verdict(id: String) -> int:
+	var slot := String(_prof.defs.get(id, {}).get("slot", ""))
+	var worn := _prof.equipped(_cls)
+	if String(worn.get(slot, "")) == id:
+		return 2
+	var after := worn.duplicate()
+	after[slot] = id
+	var a := _stats_with(worn)
+	var b := _stats_with(after)
+	var up := 0
+	var down := 0
+	for s in STATS:
+		var x := float(a.get(s[0], 0.0))
+		var y := float(b.get(s[0], 0.0))
+		if is_equal_approx(x, y):
+			continue
+		if (y < x) if s[3] else (y > x):
+			up += 1
+		else:
+			down += 1
+	return 1 if up > 0 and down == 0 else (-1 if down > 0 and up == 0 else 0)
+
+
+## One owned item: icon in its rarity frame, name in the rarity colour (×n),
+## a "MỚI" badge until seen, rarity (and slot in "Tất cả"), the short text, and on
+## the right "Đang mặc" or ▲ better / ▼ worse / ⇅ mixed against what is worn.
+func _bag_row(id: String) -> Button:
 	var d: Dictionary = _prof.defs.get(id, {})
 	var rarity := String(d.get("rarity", "common"))
 	var col: Color = RARITY.get(rarity, UiKit.TEXT)
 	var b := Button.new()
-	b.custom_minimum_size = Vector2(356, 64)
+	b.custom_minimum_size = Vector2(340, 76)   # room for the scroll bar on the right
 	b.focus_mode = Control.FOCUS_ALL
 	var on := id == _view
-	b.add_theme_stylebox_override("normal", UiKit.style(UiKit.PANEL_HOVER if on else UiKit.PANEL_DARK, 6, Color.WHITE if on else Color("4a4458"), 3 if on else 1))
+	var bg := Color(col, 0.10).blend(UiKit.PANEL_DARK) if not on else UiKit.PANEL_HOVER
+	b.add_theme_stylebox_override("normal", UiKit.style(bg, 6, Color.WHITE if on else Color(col, 0.55), 3 if on else 1))
 	for st in ["hover", "focus", "pressed"]:
 		b.add_theme_stylebox_override(st, UiKit.style(UiKit.PANEL_HOVER, 6, Color.WHITE, 3))
 	var h := HBoxContainer.new()
 	h.set_anchors_preset(Control.PRESET_FULL_RECT)
 	h.offset_left = 8
-	h.offset_right = -8
+	h.offset_right = -10
 	h.add_theme_constant_override("separation", 10)
 	h.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	b.add_child(h)
 	var box := UiKit.panel(UiKit.PANEL_DARK, 3, col)
 	box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	box.add_child(UiKit.icon(String(d.get("icon", id)), 40.0))
+	box.add_child(UiKit.icon(String(d.get("icon", id)), 44.0))
 	h.add_child(box)
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 0)
@@ -279,16 +386,65 @@ func _bag_row(id: String, worn: bool, copies: int) -> Button:
 	v.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	h.add_child(v)
+	var top := HBoxContainer.new()
+	top.add_theme_constant_override("separation", 6)
+	top.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	v.add_child(top)
+	var copies := _prof.bag.count(id)
 	var nl := UiKit.label(String(d.get("name", id)) + ("  ×%d" % copies if copies > 1 else ""), 17, col)
 	nl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	v.add_child(nl)
-	var ll := UiKit.label(String(RARITY_NAME.get(rarity, rarity)) + ("  ·  ✓ đang mặc" if worn else ""), 13, UP if worn else UiKit.MUTED)
+	nl.clip_text = true
+	nl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	nl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	top.add_child(nl)
+	if _prof.is_new(id):
+		top.add_child(_badge("MỚI", Color("f2c14e")))
+	var line := String(RARITY_NAME.get(rarity, rarity))
+	if _filter == "all":
+		line += "  ·  " + String(SLOT_NAME.get(String(d.get("slot", "")), ""))
+	var ll := UiKit.label(line, 13, UiKit.MUTED)
 	ll.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	v.add_child(ll)
+	var dl := UiKit.label(String(d.get("desc", "")), 13, UiKit.TEXT)
+	dl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	dl.clip_text = true
+	dl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	dl.custom_minimum_size.x = 190
+	v.add_child(dl)
+	var vd := _verdict(id)
+	var mark: Control
+	if vd == 2:
+		mark = _badge("Đang mặc", UP)
+	else:
+		var sym: String = {1: "▲", -1: "▼", 0: "⇅"}[vd]
+		var mcol: Color = {1: UP, -1: DOWN, 0: MIXED}[vd]
+		mark = UiKit.label(sym, 22, mcol)
+		Tip.attach(mark, {1: "Tốt hơn đồ đang mặc", -1: "Kém hơn đồ đang mặc", 0: "Có chỉ số hơn, có chỉ số kém"}[vd],
+			"So với món đang mặc ở ô %s." % SLOT_NAME.get(String(d.get("slot", "")), ""), mcol)
+	mark.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	h.add_child(mark)
 	b.pressed.connect(func() -> void:
 		_view = id
+		_sel = String(d.get("slot", _sel))
 		_rebuild())
 	return b
+
+
+## A small rounded label (MỚI, Đang mặc).
+func _badge(text: String, col: Color) -> PanelContainer:
+	var p := PanelContainer.new()
+	var sb := UiKit.style(Color(col, 0.18), 0, col, 1)
+	sb.content_margin_left = 6
+	sb.content_margin_right = 6
+	sb.content_margin_top = 1
+	sb.content_margin_bottom = 1
+	p.add_theme_stylebox_override("panel", sb)
+	p.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var l := UiKit.label(text, 12, col)
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	p.add_child(l)
+	return p
 
 
 # --- detail ----------------------------------------------------------------------
@@ -308,6 +464,9 @@ func _detail(root: Control) -> void:
 		v.add_child(l)
 		return
 	var d: Dictionary = _prof.defs[_view]
+	if _prof.is_new(_view):   # looked at: no longer new (the bag shows it on the next rebuild)
+		_prof.mark_seen(_view)
+		Prefs.current().save_profile()
 	var rarity := String(d.get("rarity", "common"))
 	var head := HBoxContainer.new()
 	head.add_theme_constant_override("separation", 12)
