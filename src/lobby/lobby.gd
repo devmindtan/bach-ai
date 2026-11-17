@@ -7,7 +7,7 @@ extends Node2D
 const DATA := "res://assets/data/"
 const SPRITES := "res://assets/sprites/custom/"
 const RUN_SCENE := "res://src/run/run.tscn"
-const STAGE_FILE := "waves/stage_001.json"
+const STAGES_PATH := "res://assets/data/stages.json"
 const HERO_SCALE := 6.0
 
 const GOLD := Color("c9a65a")
@@ -20,12 +20,15 @@ const SHADOW := Color(0, 0, 0, 0.7)
 var _hero: SpriteSheet
 var _class: Dictionary
 var _stage: Dictionary
+var _stages: Stages
+var _stage_n := 1
 var _t := 0.0
 var _scroll := Vector2.ZERO
 var _layer: CanvasLayer
 var _classes := {}
 var _class_ids: Array[String] = []
 var _dirty_stats := false   # equipment changed: rebuild the menu when the panel closes
+var _slot_mode := false       # true when using a character slot (phase 3)
 
 
 func _ready() -> void:
@@ -33,8 +36,24 @@ func _ready() -> void:
 	for id: String in _classes:
 		if not id.begins_with("_"):
 			_class_ids.append(id)
-	_stage = GameData.load_json(DATA + STAGE_FILE)
-	_load_class(Prefs.current().hero)
+	_stages = Stages.load_default()
+	var prefs := Prefs.current()
+	if not prefs.is_fixed():
+		prefs.ensure_slots()
+		if prefs.active_slot == null:
+			var all := prefs.slot_store().list()
+			for e: Dictionary in all:
+				if e.get("slot") != null:
+					prefs.select_slot(String(e["id"]))
+					break
+		if prefs.active_slot != null:
+			_slot_mode = true
+			prefs.hero = prefs.active_slot.cls
+			prefs.stage_target = clampi(prefs.stage_target, 1, prefs.active_slot.unlocked(_stages.count()))
+	_stage_n = prefs.stage_target if _slot_mode else 1
+	_stage_n = clampi(_stage_n, 1, _stages.count())
+	_stage = _stages.load_stage(_stage_n)
+	_load_class(prefs.hero)
 	_build_ui()
 	get_viewport().size_changed.connect(func() -> void:
 		if _layer != null:
@@ -53,11 +72,29 @@ func _load_class(id: String) -> void:
 
 
 ## Next / previous class (step +1 / -1): saved for the run, the menu rebuilt.
+## In slot mode the class is fixed (design/progression.md).
 func switch_class(step: int) -> void:
+	if _slot_mode:
+		return
 	var i := _class_ids.find(Prefs.current().hero)
 	var id := _class_ids[posmod(i + step, _class_ids.size())]
 	Prefs.current().set_value("hero", id)
 	_load_class(id)
+	if _layer != null:
+		_layer.queue_free()
+	_build_ui()
+
+
+func switch_stage(step: int) -> void:
+	var prefs := Prefs.current()
+	var max_n := _stages.count()
+	if _slot_mode and prefs.active_slot != null:
+		max_n = prefs.active_slot.unlocked(_stages.count())
+	_stage_n = clampi(_stage_n + step, 1, max_n)
+	prefs.stage_target = _stage_n
+	if not prefs.is_fixed():
+		prefs.set_value("stage", _stage_n) # persisted in settings; slot unlocked limits it
+	_stage = _stages.load_stage(_stage_n)
 	if _layer != null:
 		_layer.queue_free()
 	_build_ui()
@@ -152,14 +189,15 @@ func _build_ui() -> void:
 		top.add_child(b)
 
 	# hero stage (drawn in _draw): arrows either side, name and role under it
-	var prev := _arrow("‹", func() -> void: switch_class(-1))
-	prev.position = Vector2(PEDESTAL_X - 230, PEDESTAL_Y - 150)
-	prev.custom_minimum_size = Vector2(52, 64)
-	menu.add_child(prev)
-	var nxt := _arrow("›", func() -> void: switch_class(1))
-	nxt.position = Vector2(PEDESTAL_X + 178, PEDESTAL_Y - 150)
-	nxt.custom_minimum_size = Vector2(52, 64)
-	menu.add_child(nxt)
+	if not _slot_mode:
+		var prev := _arrow("‹", func() -> void: switch_class(-1))
+		prev.position = Vector2(PEDESTAL_X - 230, PEDESTAL_Y - 150)
+		prev.custom_minimum_size = Vector2(52, 64)
+		menu.add_child(prev)
+		var nxt := _arrow("›", func() -> void: switch_class(1))
+		nxt.position = Vector2(PEDESTAL_X + 178, PEDESTAL_Y - 150)
+		nxt.custom_minimum_size = Vector2(52, 64)
+		menu.add_child(nxt)
 	var cname := _label(String(_class.get("name", "")), 40, TEXT)
 	cname.position = Vector2(PEDESTAL_X - 260, PEDESTAL_Y + 50)
 	cname.size = Vector2(520, 50)
@@ -219,19 +257,35 @@ func _build_ui() -> void:
 		icons.add_child(_icon_tile(String(u.get("icon", u["id"])), String(u.get("name", "")), String(u.get("desc", ""))))
 
 	# bottom: stage and start
-	var stage := _card()
-	# stage card and start button share one row: same top, same height
-	stage.position = Vector2(620, vp.y - BOTTOM_ROW)
-	stage.custom_minimum_size = Vector2(0, ROW_H)
-	menu.add_child(stage)
+	var stage_card := _card()
+	stage_card.position = Vector2(620, vp.y - BOTTOM_ROW)
+	stage_card.custom_minimum_size = Vector2(0, ROW_H)
+	menu.add_child(stage_card)
 	var sh := HBoxContainer.new()
 	sh.add_theme_constant_override("separation", 10)
 	sh.alignment = BoxContainer.ALIGNMENT_CENTER
-	stage.add_child(sh)
-	sh.add_child(_label("Ải %d · %s" % [int(_stage.get("number", 1)), String(_stage.get("name", ""))], 22, GOLD))
+	stage_card.add_child(sh)
+	if _slot_mode:
+		var prev_s := _arrow("‹", func() -> void: switch_stage(-1))
+		prev_s.custom_minimum_size = Vector2(36, 40)
+		prev_s.add_theme_font_size_override("font_size", 22)
+		sh.add_child(prev_s)
+	var sname := String(_stage.get("name", ""))
+	if sname == "" or sname == String(_stage.get("region", "")):
+		sname = String(_stage.get("region", "Ải %d" % _stage_n))
+	sh.add_child(_label("Ải %d · %s" % [_stage_n, sname], 22, GOLD))
+	if _slot_mode:
+		var next_s := _arrow("›", func() -> void: switch_stage(1))
+		next_s.custom_minimum_size = Vector2(36, 40)
+		next_s.add_theme_font_size_override("font_size", 22)
+		sh.add_child(next_s)
 	var dur := int(_stage.get("duration", 0))
 	sh.add_child(_stat("clock", "", "%02d:%02d" % [dur / 60, dur % 60]))
-	var start := _button("Bắt đầu  ▶", func() -> void: get_tree().change_scene_to_file(RUN_SCENE))
+	if _stages.is_boss(_stage_n):
+		sh.add_child(_label("BOSS", 18, Color("ffd36b")))
+	var start := _button("Bắt đầu  ▶", func() -> void:
+		Prefs.current().stage_target = _stage_n
+		get_tree().change_scene_to_file(RUN_SCENE))
 	start.custom_minimum_size = Vector2(300, ROW_H)
 	start.add_theme_font_size_override("font_size", 26)
 	start.add_theme_stylebox_override("normal", _style(accent.darkened(0.45), 8))
@@ -240,6 +294,17 @@ func _build_ui() -> void:
 	start.position = Vector2(vp.x - 32 - 300, vp.y - BOTTOM_ROW)
 	menu.add_child(start)
 	start.call_deferred("grab_focus")
+
+	# Pending milestone reward (slot): claim without entering a run.
+	if _slot_mode and Prefs.current().active_slot != null and not Prefs.current().active_slot.pending.is_empty():
+		var slot: Slot = Prefs.current().active_slot
+		var claim := _button("Nhận phần thưởng mốc ải %d" % int(slot.pending[0]), func() -> void: _show_milestone_claim(root, menu, slot, int(slot.pending[0])))
+		claim.custom_minimum_size = Vector2(360, 46)
+		claim.add_theme_font_size_override("font_size", 18)
+		claim.add_theme_stylebox_override("normal", _style(Color("4a3a10"), 8))
+		claim.add_theme_stylebox_override("hover", _style(Color("6a5218"), 8))
+		claim.position = Vector2(620, vp.y - BOTTOM_ROW - 58)
+		menu.add_child(claim)
 	if OS.get_cmdline_user_args().has("--lobby-settings"):   # shots of the settings page
 		_show_settings.call_deferred(root, menu)
 	if OS.get_cmdline_user_args().has("--lobby-gear"):       # shots of the equipment page
@@ -345,9 +410,77 @@ const SLOT_NAME := {"head": "Đầu", "chest": "Ngực", "arms": "Tay", "legs": 
 const RARITY := {"common": Color("e8e2d0"), "rare": Color("6fb7ff"), "epic": Color("c38df5")}
 
 
-## Equipment of the chosen class: one row per slot (what is worn, its effect) with
-## "Đổi" cycling through the fitting items in the bag (and empty); the total at the
-## bottom. Saved at once (Prefs.save_profile).
+## Pick a pending milestone reward for [param slot] at stage [param ms].
+func _show_milestone_claim(root: Control, menu: Control, slot: Slot, ms: int) -> void:
+	menu.visible = false
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.add_child(center)
+	var card := PanelContainer.new()
+	card.add_theme_stylebox_override("panel", _style(Color(0.09, 0.08, 0.13, 0.96), 24))
+	center.add_child(card)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 14)
+	col.custom_minimum_size = Vector2(860, 0)
+	card.add_child(col)
+	col.add_child(_label("Phần thưởng mốc ải %d" % ms, 32, GOLD))
+	col.add_child(_label("Chọn 1 trong 3 phần thưởng vĩnh viễn cho %s." % slot.name, 16, MUTED))
+	var milestones := Milestones.load_default()
+	var offers: Array[String] = milestones.offers(ms, slot.cls)
+	var pool := GameData.load_json(DATA + String(_classes.get(slot.cls, {}).get("upgrades", "")))
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 14)
+	col.add_child(row)
+	for oid: String in offers:
+		var info: Dictionary = milestones.info(oid, pool.get("upgrades", []))
+		var b := Button.new()
+		b.custom_minimum_size = Vector2(260, 200)
+		b.add_theme_stylebox_override("normal", _style(PANEL, 12))
+		b.add_theme_stylebox_override("hover", _style(PANEL_HOVER, 12))
+		b.add_theme_stylebox_override("pressed", _style(PANEL_HOVER, 12))
+		var vb := VBoxContainer.new()
+		vb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		vb.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 12)
+		vb.add_theme_constant_override("separation", 6)
+		b.add_child(vb)
+		var tex := TextureRect.new()
+		tex.texture = UiIcons.texture(String(info.get("icon", info.get("id", ""))))
+		tex.custom_minimum_size = Vector2(48, 48)
+		tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tex.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		tex.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		vb.add_child(tex)
+		var nm := _label(String(info.get("name", "")), 20, GOLD)
+		nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		vb.add_child(nm)
+		var kinds: Dictionary = {"skill": "Chiêu độc nhất", "passive": "Nội tại", "rule": "Luật"}
+		var kl := _label(String(kinds.get(String(info.get("kind", "")), "")), 14, MUTED)
+		kl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		vb.add_child(kl)
+		var dl := _label(String(info.get("desc", "")), 14, TEXT)
+		dl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		dl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		vb.add_child(dl)
+		b.pressed.connect(func() -> void:
+			slot.choose_milestone(ms, oid)
+			Prefs.current().slot_store().save(slot)
+			center.queue_free()
+			menu.visible = true
+			_layer.queue_free()
+			_build_ui())
+		row.add_child(b)
+	var back := _button("Để sau", func() -> void:
+		center.queue_free()
+		menu.visible = true)
+	back.custom_minimum_size = Vector2(220, 44)
+	back.add_theme_font_size_override("font_size", 18)
+	col.add_child(back)
+
+
+## Equipment of the chosen class: one row per slot (what is worn, its effect) and
+## a picker to equip/unequip any fitting item in the bag; the total at the bottom.
 func _show_equipment(root: Control, menu: Control) -> void:
 	menu.visible = false
 	var center := CenterContainer.new()
@@ -358,7 +491,7 @@ func _show_equipment(root: Control, menu: Control) -> void:
 	center.add_child(card)
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 10)
-	col.custom_minimum_size = Vector2(620, 0)
+	col.custom_minimum_size = Vector2(700, 0)
 	card.add_child(col)
 	var cls := Prefs.current().hero
 	var prof := Prefs.current().profile()
@@ -373,14 +506,14 @@ func _show_equipment(root: Control, menu: Control) -> void:
 		for c in rows.get_children():
 			c.queue_free()
 		for slot: String in Profile.SLOTS:
-			rows.add_child(_gear_row(prof, cls, slot, refresh))
+			rows.add_child(_gear_row(root, prof, cls, slot, refresh))
 		var parts := []
 		for slot: String in prof.equipped(cls):
 			parts.append(String(prof.defs.get(prof.equipped(cls)[slot], {}).get("desc", "")))
 		total.text = "Tổng: " + (" · ".join(parts) if not parts.is_empty() else "chưa mặc gì.")
 	refresh.call()
 	col.add_child(total)
-	col.add_child(_label("Thắng ải để nhận thêm trang bị; rương của quái tinh anh đôi khi cũng có.", 13, MUTED))
+	col.add_child(_label("Thắng ải hoặc mở rương tinh anh để nhận thêm trang bị. Bấm “Chọn” để mặc/bỏ.", 13, MUTED))
 	var back := _button("Quay lại", func() -> void:
 		center.queue_free()
 		menu.visible = true
@@ -392,7 +525,7 @@ func _show_equipment(root: Control, menu: Control) -> void:
 	back.call_deferred("grab_focus")
 
 
-func _gear_row(prof: Profile, cls: String, slot: String, refresh: Callable) -> PanelContainer:
+func _gear_row(root: Control, prof: Profile, cls: String, slot: String, refresh: Callable) -> PanelContainer:
 	var p := PanelContainer.new()
 	p.add_theme_stylebox_override("panel", _style(Color("231d30"), 8))
 	var h := HBoxContainer.new()
@@ -414,29 +547,85 @@ func _gear_row(prof: Profile, cls: String, slot: String, refresh: Callable) -> P
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 0)
 	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	v.alignment = BoxContainer.ALIGNMENT_CENTER   # the row's line: slot name, icon, item, button
+	v.alignment = BoxContainer.ALIGNMENT_CENTER
 	h.add_child(v)
 	v.add_child(_label(String(d.get("name", "Trống")), 18, RARITY.get(String(d.get("rarity", "common")), TEXT) if id != "" else MUTED))
 	if id != "":
 		v.add_child(_label(String(d.get("desc", "")), 13, MUTED))
 	var choices := prof.choices(cls, slot)
-	var b := _button("Đổi (%d)" % choices.size(), func() -> void:
-		# next fitting item, then empty, then the first again
-		var opts: Array = choices.duplicate()
-		opts.append("")
-		var nxt: String = opts[(opts.find(id) + 1) % opts.size()]
-		if nxt == "":
-			prof.unequip(cls, slot)
-		else:
-			prof.equip(cls, nxt)
-		Prefs.current().save_profile()
-		refresh.call()
-		_dirty_stats = true)
-	b.custom_minimum_size = Vector2(110, 40)
+	var b := _button("Chọn (%d)" % choices.size(), func() -> void:
+		_show_gear_picker(root, prof, cls, slot, refresh))
+	b.custom_minimum_size = Vector2(120, 40)
 	b.add_theme_font_size_override("font_size", 16)
-	b.disabled = choices.is_empty()
+	b.disabled = choices.is_empty() and id == ""
 	h.add_child(b)
 	return p
+
+
+## Pick one of the owned items for [param slot] (or unequip). Saved immediately.
+func _show_gear_picker(root: Control, prof: Profile, cls: String, slot: String, refresh: Callable) -> void:
+	var overlay := ColorRect.new()
+	overlay.color = Color(0, 0, 0, 0.55)
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.add_child(overlay)
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.add_child(center)
+	var card := PanelContainer.new()
+	card.add_theme_stylebox_override("panel", _style(Color(0.11, 0.1, 0.16, 0.98), 18))
+	center.add_child(card)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 8)
+	col.custom_minimum_size = Vector2(520, 0)
+	card.add_child(col)
+	var worn_id := String(prof.equipped(cls).get(slot, ""))
+	col.add_child(_label("Chọn trang bị · %s" % String(SLOT_NAME.get(slot, slot)), 24, GOLD))
+	var opts: Array = prof.choices(cls, slot).duplicate()
+	if not opts.has("") and worn_id != "":
+		pass
+	# list owned choices, then unequip
+	for item_id: String in opts:
+		var d: Dictionary = prof.defs.get(item_id, {})
+		var row := Button.new()
+		row.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		row.custom_minimum_size = Vector2(500, 52)
+		row.add_theme_stylebox_override("normal", _style(Color("231d30"), 8))
+		row.add_theme_stylebox_override("hover", _style(PANEL_HOVER, 8))
+		row.add_theme_stylebox_override("pressed", _style(PANEL_HOVER, 8))
+		var mark := " ✓" if item_id == worn_id else ""
+		row.text = "  %s%s  —  %s" % [String(d.get("name", item_id)), mark, String(d.get("desc", ""))]
+		row.add_theme_font_size_override("font_size", 18)
+		row.add_theme_color_override("font_color", RARITY.get(String(d.get("rarity", "common")), TEXT))
+		row.pressed.connect(func() -> void:
+			prof.equip(cls, item_id)
+			Prefs.current().save_profile()
+			_dirty_stats = true
+			overlay.queue_free()
+			refresh.call())
+		col.add_child(row)
+	if worn_id != "":
+		var off := Button.new()
+		off.text = "  Bỏ trang bị"
+		off.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		off.custom_minimum_size = Vector2(500, 46)
+		off.add_theme_font_size_override("font_size", 18)
+		off.add_theme_stylebox_override("normal", _style(Color("231d30"), 8))
+		off.add_theme_stylebox_override("hover", _style(PANEL_HOVER, 8))
+		off.add_theme_stylebox_override("pressed", _style(PANEL_HOVER, 8))
+		off.pressed.connect(func() -> void:
+			prof.unequip(cls, slot)
+			Prefs.current().save_profile()
+			_dirty_stats = true
+			overlay.queue_free()
+			refresh.call())
+		col.add_child(off)
+	if opts.is_empty() and worn_id == "":
+		col.add_child(_label("Chưa có trang bị cho ô này. Thắng ải hoặc mở rương tinh anh để nhận.", 15, MUTED))
+	var close := _button("Đóng", func() -> void: overlay.queue_free())
+	close.custom_minimum_size = Vector2(220, 44)
+	close.add_theme_font_size_override("font_size", 18)
+	col.add_child(close)
+	close.call_deferred("grab_focus")
 
 
 func _arrow(text: String, cb: Callable) -> Button:

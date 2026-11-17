@@ -182,6 +182,13 @@ func kind_of(id: String) -> int:
 	return kind_ids.find(id)
 
 
+## Multiplies every kind's base hp and damage (stage difficulty scaling).
+func scale_kinds(hp_m: float, dmg_m: float) -> void:
+	for k in k_hp.size():
+		k_hp[k] *= hp_m
+		k_damage[k] *= dmg_m
+
+
 ## Adds one monster at [param p]; returns false when the run is at max_enemies.
 func spawn(id: String, p: Vector2) -> bool:
 	var k := kind_of(id)

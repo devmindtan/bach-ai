@@ -634,7 +634,11 @@ func show_settings() -> void:
 ## damage with its share as a bar, hits, kills, damage per second), damage taken
 ## and hp healed; the two buttons on one row.
 func show_end(won: bool) -> void:
-	var root := _open("Vượt ải!" if won else "Thất bại")
+	var title := "Vượt ải!" if won else "Thất bại"
+	var rr: Dictionary = run.run_result if "run_result" in run else {}
+	if not rr.is_empty():
+		title = "Vượt ải %d!" % int(rr.get("stage", 0)) if won else "Thất bại · Ải %d" % int(rr.get("stage", 0))
+	var root := _open(title)
 	var t := int(run.clock)
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -644,6 +648,16 @@ func show_end(won: bool) -> void:
 	row.add_child(_icon_value("skull", str(run.enemies.total_kills)))
 	row.add_child(_icon_value("coin", str(run.gold)))
 	root.add_child(row)
+	if not rr.is_empty():
+		var parts := PackedStringArray()
+		if won:
+			parts.append("Vàng +%d (ải) +%d (nhặt)" % [int(rr.get("stage_gold", 0)), int(rr.get("collected", 0))])
+			parts.append("Đá +%d%s" % [int(rr.get("gems", 0)), " (lần đầu)" if bool(rr.get("first", false)) else ""])
+		else:
+			parts.append("Giữ lại vàng nhặt: +%d" % int(rr.get("collected", 0)))
+		var reward_l := _label(" · ".join(parts), 17, BORDER if won else MUTED)
+		reward_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		root.add_child(reward_l)
 	var report: Array = run.damage_report()
 	if not report.is_empty():
 		root.add_child(_damage_table(report))
@@ -663,14 +677,72 @@ func show_end(won: bool) -> void:
 		roundi(total), roundi(run.damage_taken), roundi(run.healed)], 14, MUTED)
 	foot.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	root.add_child(foot)
+
 	var buttons := HBoxContainer.new()
 	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
 	buttons.add_theme_constant_override("separation", 16)
 	root.add_child(buttons)
 	var again := _button("Chơi lại (R)", func() -> void: run.restart())
+	var lobby_b := _button("Về sảnh", func() -> void: run.to_lobby())
+	var next_b: Button = null
+	if won and bool(rr.get("next", false)):
+		next_b = _button("Ải tiếp ▶", func() -> void: run.next_stage())
 	buttons.add_child(again)
-	buttons.add_child(_button("Về sảnh", func() -> void: run.to_lobby()))
-	again.call_deferred("grab_focus")
+	if next_b != null:
+		next_b.disabled = int(rr.get("milestone", 0)) > 0
+		buttons.add_child(next_b)
+	buttons.add_child(lobby_b)
+
+	# Milestone choice on first clear of a boss stage.
+	if won and int(rr.get("milestone", 0)) > 0 and run.playing_slot != null and run.milestones != null:
+		var ms := int(rr["milestone"])
+		root.add_child(_label("Phần thưởng mốc ải %d · chọn 1 trong 3 (vĩnh viễn)" % ms, 20, MILESTONE))
+		var choices := HBoxContainer.new()
+		choices.alignment = BoxContainer.ALIGNMENT_CENTER
+		choices.add_theme_constant_override("separation", 12)
+		root.add_child(choices)
+		var offers: Array[String] = run.milestones.offers(ms, run.class_id)
+		for oid: String in offers:
+			var info: Dictionary = run.milestones.info(oid, run.pool.get("upgrades", []))
+			var cb := _milestone_choice(info, func() -> void:
+				run.choose_milestone_reward(ms, oid)
+				show_end(true))
+			choices.add_child(cb)
+		again.call_deferred("grab_focus")
+	elif next_b != null:
+		next_b.call_deferred("grab_focus")
+	else:
+		again.call_deferred("grab_focus")
+
+
+func _milestone_choice(info: Dictionary, pick: Callable) -> Button:
+	var b := Button.new()
+	b.custom_minimum_size = Vector2(260, 160)
+	b.add_theme_stylebox_override("normal", _style(CARD))
+	b.add_theme_stylebox_override("hover", _style(CARD_HOVER))
+	b.add_theme_stylebox_override("pressed", _style(CARD_HOVER))
+	b.add_theme_stylebox_override("focus", _style(CARD_HOVER))
+	var vb := VBoxContainer.new()
+	vb.add_theme_constant_override("separation", 6)
+	vb.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 10)
+	vb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.add_child(vb)
+	var ic := _icon(String(info.get("icon", info.get("id", ""))), 40)
+	ic.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	vb.add_child(ic)
+	var nm := _label(String(info.get("name", "")), 18, MILESTONE)
+	nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vb.add_child(nm)
+	var kinds: Dictionary = {"skill": "Chiêu độc nhất", "passive": "Nội tại", "rule": "Luật"}
+	var kind := _label(String(kinds.get(String(info.get("kind", "")), "")), 13, MUTED)
+	kind.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vb.add_child(kind)
+	var d := _label(String(info.get("desc", "")), 13, TEXT)
+	d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	d.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vb.add_child(d)
+	b.pressed.connect(pick)
+	return b
 
 
 const DMG_BAR := 150.0

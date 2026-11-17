@@ -27,7 +27,12 @@ const DATA := "res://assets/data/"
 const SPRITES := "res://assets/sprites/custom/"
 const STEP := 1.0 / 60.0
 var class_id := "knight"   # Prefs.current().hero (the lobby choice, or --class=)
-var stage_number := 1        # --stage=N (stage select comes in phase 3)
+var stage_number := 1        # --stage=N or from the active slot
+var _stage_arg_set := false
+var _rewards_arg := false
+var stages: Stages
+var playing_slot: Slot
+var run_result: Dictionary = {}
 var _boss_dead := false
 var _delayed: Array = []
 var profile: Profile                # equipment (Prefs.current().profile())
@@ -145,18 +150,27 @@ func _ready() -> void:
 	_parse_args()
 	RunInput.register()
 	cfg = GameData.load_json(DATA + "run_config.json")
+	stages = Stages.load_default()
+	milestones = Milestones.load_default()
+	var prefs := Prefs.current()
+	if prefs.active_slot != null and not prefs.is_fixed():
+		playing_slot = prefs.active_slot
+		if not _stage_arg_set:
+			stage_number = clampi(prefs.stage_target, 1, stages.count())
+		if not _rewards_arg:
+			rewards.clear()
+			for id: String in playing_slot.rewards():
+				rewards.append(id)
+	stage_number = clampi(stage_number, 1, stages.count())
+	stage = stages.load_stage(stage_number)
+	duration = float(stage.get("duration", 300.0))
+	var monsters := GameData.load_json(DATA + "monsters.json")
 	var classes := GameData.load_json(DATA + "classes.json")
-	class_id = Prefs.current().hero
+	class_id = String(playing_slot.cls) if playing_slot != null and not prefs.is_fixed() else prefs.hero
 	if not classes.has(class_id):
 		class_id = "knight"
 	class_data = classes.get(class_id, {})
 	pool = GameData.load_json(DATA + String(class_data.get("upgrades", "")))
-	milestones = Milestones.load_default()
-	stage = GameData.load_json(DATA + "waves/stage_%03d.json" % stage_number)
-	if stage.is_empty():
-		stage = GameData.load_json(DATA + "waves/stage_001.json")
-	var monsters := GameData.load_json(DATA + "monsters.json")
-	duration = float(stage.get("duration", 300.0))
 	_sprite_scale = float(cfg.get("world", {}).get("sprite_scale", 2))
 	_arena_half = float(cfg.get("world", {}).get("arena_half", 1400.0))
 	xp_curve = XpCurve.from_config(cfg.get("xp", {}))
@@ -200,6 +214,7 @@ func _ready() -> void:
 		hero_sheet.compose_layers()
 
 	enemies = Enemies.new(monsters, cfg, sheets, rng.seed)
+	enemies.scale_kinds(stages.hp_mul(stage_number), stages.damage_mul(stage_number))
 	for k in enemies.k_hp.size():
 		enemies.k_hp[k] *= monster_hp_mul
 	enemies.vs_status_mul = passive_vs_status()
@@ -212,7 +227,7 @@ func _ready() -> void:
 		buffs.ground.append({"id": _ground_buffs[k], "pos": Vector2(120.0 + 70.0 * k, -60.0), "age": 0.0})
 	waves = WaveScheduler.new(stage.get("waves", []))
 	base_stats = class_data.get("stats", {})
-	profile = Prefs.current().profile()
+	profile = playing_slot.profile if playing_slot != null else prefs.profile()
 	for id in _gear:
 		profile.add(id)
 		profile.equip(class_id, id)
@@ -274,6 +289,7 @@ func _parse_args() -> void:
 				_gear.append(id)
 		elif a.begins_with("--stage="):
 			stage_number = maxi(1, int(a.get_slice("=", 1)))
+			_stage_arg_set = true
 		elif a.begins_with("--dash-at="):
 			dash_at = float(a.get_slice("=", 1))
 		elif a == "--god":
@@ -299,6 +315,7 @@ func _parse_args() -> void:
 				offer.append(id)
 		elif a.begins_with("--rewards="):
 			# Debug/shots/tests: milestone rewards the slot owns, e.g. --rewards=earthquake,bloodthirst
+			_rewards_arg = true
 			for id in a.get_slice("=", 1).split(",", false):
 				rewards.append(id)
 		elif a == "--no-auto-pick":
@@ -1271,6 +1288,24 @@ func xp_needed() -> int:
 	return xp_curve.xp_to_next(level)
 
 
+func _finish(won: bool) -> void:
+	var prefs := Prefs.current()
+	run_result = {"won": won, "stage": stage_number, "collected": gold, "stage_gold": 0, "gems": 0, "first": false, "milestone": 0}
+	if playing_slot != null and stages != null and not prefs.is_fixed():
+		if won:
+			var r := playing_slot.record_win(stage_number, stages)
+			playing_slot.gold += gold   # coins picked up in the run, on top of stage gold
+			run_result["stage_gold"] = int(r.get("gold", 0))
+			run_result["gems"] = int(r.get("gems", 0))
+			run_result["first"] = bool(r.get("first", false))
+			run_result["milestone"] = int(r.get("milestone", 0))
+		else:
+			playing_slot.gold += gold   # Thua: chỉ giữ vàng đã nhặt
+		prefs.slot_store().save(playing_slot)
+	run_result["next"] = won and stage_number < (stages.count() if stages != null else 30)
+	run_result["pending"] = playing_slot.pending.duplicate() if playing_slot != null else []
+
+
 func _die() -> void:
 	if try_undying():
 		print("Undying: back up at %.0f hp" % hp)
@@ -1279,6 +1314,7 @@ func _die() -> void:
 	state = State.DEAD
 	_end_t = 0.0
 	_set_anim("death")
+	_finish(false)
 	print("Run over: lost at %.1fs, level %d, kills %d" % [clock, level, enemies.total_kills])
 	_panels.show_end(false)
 
@@ -1288,6 +1324,7 @@ func _win() -> void:
 	pickups.pull_all()
 	if bool(cfg.get("rewards", {}).get("win_item", false)):
 		_win_item()
+	_finish(true)
 	print("Run over: won, level %d, kills %d, gold %d" % [level, enemies.total_kills, gold])
 	_panels.show_end(true)
 
@@ -1318,6 +1355,20 @@ func resume() -> void:
 
 func restart() -> void:
 	get_tree().reload_current_scene()
+
+
+func next_stage() -> void:
+	var prefs := Prefs.current()
+	prefs.stage_target = clampi(stage_number + 1, 1, stages.count() if stages != null else 30)
+	get_tree().reload_current_scene()
+
+
+func choose_milestone_reward(stage_n: int, reward_id: String) -> void:
+	if playing_slot == null:
+		return
+	if playing_slot.choose_milestone(stage_n, reward_id):
+		Prefs.current().slot_store().save(playing_slot)
+		run_result["pending"] = playing_slot.pending.duplicate()
 
 
 func to_lobby() -> void:

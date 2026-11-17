@@ -22,8 +22,11 @@ var scale := 0                      # 0 = auto, else 1..3
 var damage_numbers := true
 var monster_hp := true
 var hero := "knight"                # the class chosen in the lobby (classes.json id)
+var stage_target := 1               # the stage the lobby will start
 var _fixed := false
 var _profile: Profile                 # screenshots / tests: defaults, never touch the window
+var _store: SlotStore                 # character slots (user://slots, phase 3)
+var active_slot: Slot                 # the slot in play; null in fixed/test mode unless set
 
 static var _default: Prefs
 
@@ -62,9 +65,11 @@ func is_fixed() -> bool:
 	return _fixed
 
 
-## The player's profile (equipment), loaded once; a fresh one when fixed. The first
-## visit gets the starter items (items.json "starter"), worn by every class.
+## The player's profile (equipment): the active slot's when playing progression,
+## else the legacy profile (tests/shots). The first visit gets starter items.
 func profile() -> Profile:
+	if active_slot != null:
+		return active_slot.profile
 	if _profile == null:
 		var items := GameData.load_json("res://assets/data/items.json")
 		var defs: Dictionary = items.get("equipment", {}).duplicate()
@@ -81,9 +86,56 @@ func profile() -> Profile:
 	return _profile
 
 
+## Saves the active slot's profile (phase 3) or the legacy profile.
 func save_profile() -> void:
-	if not _fixed and _profile != null:
+	if _fixed:
+		return
+	if active_slot != null and _store != null:
+		_store.save(active_slot)
+	elif _profile != null:
 		_profile.save()
+
+
+## Slot store and migration from the old single profile (design/progression.md).
+func slot_store() -> SlotStore:
+	if _store == null:
+		var items := GameData.load_json("res://assets/data/items.json")
+		var defs: Dictionary = items.get("equipment", {}).duplicate()
+		defs.erase("_doc")
+		_store = SlotStore.new(defs)
+	return _store
+
+
+## Loads slots once: migrates user://profile.json into slot 1 on the first visit.
+func ensure_slots() -> void:
+	if _fixed:
+		return
+	var store := slot_store()
+	if not store.list().is_empty():
+		return
+	var s := store.create("Nhân vật 1", hero)
+	if s == null:
+		return
+	if FileAccess.file_exists(Profile.PATH):
+		var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(Profile.PATH))
+		if data is Dictionary:
+			s.profile.from_dict(data)
+			store.save(s)
+	if active_slot == null:
+		active_slot = s
+		hero = s.cls
+		stage_target = s.unlocked(Stages.load_default().count())
+
+
+func select_slot(id: String) -> bool:
+	ensure_slots()
+	var e: Dictionary = slot_store().load_slot(id)
+	if e.get("slot") == null:
+		return false
+	active_slot = e["slot"]
+	hero = active_slot.cls
+	stage_target = mini(maxi(stage_target, 1), active_slot.unlocked(Stages.load_default().count()))
+	return true
 
 
 ## Changes one setting, saves and applies it.
@@ -128,6 +180,7 @@ func _load() -> void:
 	damage_numbers = bool(cfg.get_value("hud", "damage_numbers", damage_numbers))
 	monster_hp = bool(cfg.get_value("hud", "monster_hp", monster_hp))
 	hero = String(cfg.get_value("game", "hero", hero))
+	stage_target = maxi(1, int(cfg.get_value("game", "stage", stage_target)))
 
 
 func _save() -> void:
@@ -137,4 +190,5 @@ func _save() -> void:
 	cfg.set_value("hud", "damage_numbers", damage_numbers)
 	cfg.set_value("hud", "monster_hp", monster_hp)
 	cfg.set_value("game", "hero", hero)
+	cfg.set_value("game", "stage", stage_target)
 	cfg.save(PATH)
