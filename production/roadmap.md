@@ -88,6 +88,11 @@ theo thời gian. Còn: rung màn/khựng khi chí mạng (chưa có chí mạng
 **Xong khi:** mỗi class có thể chơi trọn một lượt với ít nhất 3 hướng build khác nhau (ghi lại 3 build mẫu); boss có 2 đòn.
 
 ## Đợt 3: Tiến trình ải 1–30 + slot nhân vật · cỡ M
+**Trạng thái (2026-11-17):** xong phần làm (`design/progression.md`). 30 ải / 3 vùng có màu nền riêng, công thức
+tăng độ khó (đường cong ở dashboard, tab Ải), slot nhân vật (tối đa 4, file hỏng không làm mất slot khác), màn
+chọn ải, phần thưởng thắng (vàng, đá), phần thưởng mốc 10/20/30 (6 chiêu độc nhất có bậc I–V, 3 nội tại mới,
+3 luật mới). Còn: chơi thử ải 1–30 với 2 class để chỉnh hệ số (`stages.json` → `scale`); loài quái và boss riêng
+từng vùng (đợt 6, hiện các vùng dùng chung thạch nhầy / dơi / yêu tinh / Vua Thạch Nhầy).
 **Câu hỏi:** độ khó tăng có đều không, người chơi có muốn "thêm một ải nữa" không?
 - `stages.json` + công thức scale (máu/sát thương/mật độ quái theo ải, loài quái theo vùng, boss mỗi 10 ải); ghi đè tay khi cần.
 - Màn chọn ải (1 → ải cao nhất đã mở), màn kết quả (vàng, đá gacha, điểm kỹ năng nhận được).
