@@ -159,29 +159,143 @@ func _upgrade_card(i: int, id: String) -> Button:
 
 ## One pip per level: owned = filled, the level this pick gives = bright with a
 ## ring, locked = dark; milestone levels (new tier look, last level) are diamonds.
-func _draw_pips(c: Control, owned: int, max_level: int, milestones: Array, accent: Color) -> void:
+func _draw_pips(c: Control, owned: int, max_level: int, milestones: Array, accent: Color, show_next := true) -> void:
 	var x := 0.0
 	for l in range(1, max_level + 1):
-		var col := accent if l <= owned else (Color.WHITE if l == owned + 1 else PIP_LOCKED)
+		var nxt := show_next and l == owned + 1
+		var col := accent if l <= owned else (Color.WHITE if nxt else PIP_LOCKED)
 		var cx := x + 9.0
 		if milestones.has(l):
 			var pts := PackedVector2Array([Vector2(cx, 0), Vector2(cx + 9, 9), Vector2(cx, 18), Vector2(cx - 9, 9)])
 			c.draw_colored_polygon(pts, col)
-			var ring := MILESTONE if l == owned + 1 else PIP_EDGE
+			var ring := MILESTONE if nxt else PIP_EDGE
 			c.draw_polyline(PackedVector2Array([pts[0], pts[1], pts[2], pts[3], pts[0]]), ring, 2.0)
 		else:
 			c.draw_rect(Rect2(x + 1, 4, 16, 10), col)
-			c.draw_rect(Rect2(x + 1, 4, 16, 10), MILESTONE if l == owned + 1 else PIP_EDGE, false, 2.0)
+			c.draw_rect(Rect2(x + 1, 4, 16, 10), MILESTONE if nxt else PIP_EDGE, false, 2.0)
 		x += 24.0
 
 
+## Pause: actions on the left; on the right the cards taken this run as a compact
+## icon grid (skills, then stats), so a build of dozens of cards still fits. Each
+## tile shows its level as a badge and a bar; maxed cards get a gold frame. The
+## line under the grid names the hovered / focused card with its level and text.
 func show_pause() -> void:
 	var root := _open("Tạm dừng")
+	var body := HBoxContainer.new()
+	body.add_theme_constant_override("separation", 32)
+	root.add_child(body)
+	var actions := VBoxContainer.new()
+	actions.add_theme_constant_override("separation", 12)
+	actions.custom_minimum_size = Vector2(240, 0)
+	body.add_child(actions)
 	var go_on := _button("Tiếp tục (Esc)", func() -> void: run.resume())
-	root.add_child(go_on)
+	actions.add_child(go_on)
 	go_on.call_deferred("grab_focus")
-	root.add_child(_button("Chơi lại", func() -> void: run.restart()))
-	root.add_child(_button("Về sảnh", func() -> void: run.to_lobby()))
+	actions.add_child(_button("Cài đặt", func() -> void: show_settings()))
+	actions.add_child(_button("Chơi lại", func() -> void: run.restart()))
+	actions.add_child(_button("Về sảnh", func() -> void: run.to_lobby()))
+	var owned: Array = run.owned_upgrades()
+	var cards := VBoxContainer.new()
+	cards.add_theme_constant_override("separation", 6)
+	cards.custom_minimum_size = Vector2(OWNED_COLUMNS * (OWNED_TILE + 6) - 6, 0)
+	body.add_child(cards)
+	cards.add_child(_label("Thẻ đã chọn (%d)" % owned.size(), 18, BORDER))
+	if owned.is_empty():
+		cards.add_child(_label("Chưa chọn thẻ nào.", 15, MUTED))
+		return
+	var info := RichTextLabel.new()
+	info.bbcode_enabled = true
+	info.fit_content = true
+	info.scroll_active = false
+	info.custom_minimum_size = Vector2(0, 44)
+	info.add_theme_font_size_override("normal_font_size", 14)
+	info.add_theme_font_size_override("bold_font_size", 16)
+	info.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for group in [[true, "Chiêu"], [false, "Chỉ số"]]:
+		var items := owned.filter(func(o: Dictionary) -> bool: return o["skill"] == group[0])
+		if items.is_empty():
+			continue
+		var accent := BORDER if group[0] else STAT_ACCENT
+		cards.add_child(_label("%s · %d" % [group[1], items.size()], 13, accent))
+		var grid := GridContainer.new()
+		grid.columns = OWNED_COLUMNS
+		grid.add_theme_constant_override("h_separation", 6)
+		grid.add_theme_constant_override("v_separation", 6)
+		cards.add_child(grid)
+		for o: Dictionary in items:
+			grid.add_child(_owned_tile(o, info))
+	cards.add_child(info)
+	_show_owned_info(info, owned[0])
+
+
+const OWNED_TILE := 52
+const OWNED_COLUMNS := 8
+
+
+## One owned card as a square icon tile: level badge bottom-right, a level bar
+## along the bottom edge, gold frame when maxed. Hover or focus fills the info line.
+func _owned_tile(o: Dictionary, info: RichTextLabel) -> Button:
+	var accent := BORDER if o["skill"] else STAT_ACCENT
+	var lv: int = o["level"]
+	var mx: int = o["max"]
+	var maxed := lv >= mx
+	var frame := MILESTONE if maxed else PIP_EDGE
+	var b := Button.new()
+	b.custom_minimum_size = Vector2(OWNED_TILE, OWNED_TILE)
+	b.focus_mode = Control.FOCUS_ALL
+	b.add_theme_stylebox_override("normal", _style(Color("1d1828"), frame))
+	b.add_theme_stylebox_override("hover", _style(CARD_HOVER, Color.WHITE))
+	b.add_theme_stylebox_override("focus", _style(CARD_HOVER, Color.WHITE))
+	b.add_theme_stylebox_override("pressed", _style(CARD_HOVER, Color.WHITE))
+	var icon := TextureRect.new()
+	icon.texture = UiIcons.texture(o["id"])
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	icon.position = Vector2(6, 4)
+	icon.size = Vector2(32, 32)
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.add_child(icon)
+	var over := Control.new()
+	over.set_anchors_preset(Control.PRESET_FULL_RECT)
+	over.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	over.draw.connect(func() -> void: _draw_owned_badge(over, lv, mx, accent, maxed))
+	b.add_child(over)
+	b.tooltip_text = "%s  %d/%d" % [o["name"], lv, mx]
+	b.mouse_entered.connect(func() -> void: _show_owned_info(info, o))
+	b.focus_entered.connect(func() -> void: _show_owned_info(info, o))
+	return b
+
+
+func _draw_owned_badge(c: Control, lv: int, mx: int, accent: Color, maxed: bool) -> void:
+	var font := ThemeDB.fallback_font
+	var sz := 13
+	var s := str(lv)   # maxed: gold number and gold frame
+	var w := font.get_string_size(s, HORIZONTAL_ALIGNMENT_LEFT, -1, sz).x
+	var r := Rect2(OWNED_TILE - w - 10, OWNED_TILE - 24, w + 8, 16)
+	c.draw_rect(r, Color(0.05, 0.04, 0.08, 0.9))
+	c.draw_string(font, Vector2(r.position.x + 4, roundf(r.get_center().y + sz * 0.36)), s,
+		HORIZONTAL_ALIGNMENT_LEFT, -1, sz, MILESTONE if maxed else TEXT)
+	# level bar: one segment per level along the bottom edge
+	var x0 := 4.0
+	var bw := OWNED_TILE - 8.0
+	var seg := bw / mx
+	for l in mx:
+		var col := (MILESTONE if maxed else accent) if l < lv else PIP_EDGE.darkened(0.45)
+		c.draw_rect(Rect2(x0 + l * seg, OWNED_TILE - 7, maxf(1.0, seg - 1.0), 3), col)
+
+
+func _show_owned_info(info: RichTextLabel, o: Dictionary) -> void:
+	var accent := BORDER if o["skill"] else STAT_ACCENT
+	info.text = "[b][color=#%s]%s[/color][/b]  [color=#%s]Cấp %d/%d[/color]\n[color=#%s]%s[/color]" % [
+		TEXT.to_html(false), o["name"], accent.to_html(false), o["level"], o["max"],
+		MUTED.to_html(false), o.get("desc", "")]
+
+
+func show_settings() -> void:
+	var root := _open("")
+	root.add_child(SettingsPanel.build(func() -> void: show_pause()))
 
 
 func show_end(won: bool) -> void:
@@ -241,9 +355,10 @@ func _open(title: String, boxed := true) -> VBoxContainer:
 		panel.add_child(root)
 	else:
 		center.add_child(root)
-	var l := _label(title, 40, BORDER)
-	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	root.add_child(l)
+	if title != "":
+		var l := _label(title, 40, BORDER)
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		root.add_child(l)
 	return root
 
 

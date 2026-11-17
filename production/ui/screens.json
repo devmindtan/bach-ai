@@ -2,11 +2,13 @@
   "_doc": "The game's current screens. `gamekit ui-shots bach-ai` captures each one into production/ui/<name>.png (overwriting) and the studio dashboard shows exactly this set. Re-run after any change the player can see, then commit production/ui. scene empty = main scene; frames = 60 per second of game time (times --sim-steps).",
   "screens": [
     { "name": "01-lobby", "title": "Sảnh chờ", "scene": "", "frames": 90, "args": [] },
+    { "name": "01b-lobby-settings", "title": "Cài đặt (ở sảnh)", "scene": "", "frames": 30, "args": ["--lobby-settings"] },
     { "name": "02-run-start", "title": "Vào ải (HUD)", "scene": "res://src/run/run.tscn", "frames": 240, "args": ["--demo", "--seed=1", "--sim-steps=2"] },
     { "name": "03-run-crowd", "title": "Giữa trận (HUD, số sát thương, thanh máu quái)", "scene": "res://src/run/run.tscn", "frames": 600, "args": ["--demo", "--seed=1", "--sim-steps=4"] },
     { "name": "04-level-up", "title": "Lên cấp (chọn 1 trong 3)", "scene": "res://src/run/run.tscn", "frames": 900, "args": ["--demo", "--seed=1", "--sim-steps=2", "--no-auto-pick"] },
     { "name": "04b-level-up-milestones", "title": "Lên cấp: mốc bậc mới và cấp tối đa", "scene": "res://src/run/run.tscn", "frames": 900, "args": ["--seed=1", "--sim-steps=2", "--no-auto-pick", "--skills=earth_strike:1,haste:4", "--offer=earth_strike,haste,back_slash"] },
-    { "name": "05-pause", "title": "Tạm dừng", "scene": "res://src/run/run.tscn", "frames": 300, "args": ["--demo", "--seed=1", "--sim-steps=4", "--pause-at=12"] },
+    { "name": "05-pause", "title": "Tạm dừng (thẻ đã chọn, dạng lưới gọn)", "scene": "res://src/run/run.tscn", "frames": 300, "args": ["--demo", "--seed=1", "--sim-steps=4", "--pause-at=12", "--skills=blade_arc:5,back_slash:2,whirlwind:2,earth_strike:4,frost_nova:1,sharpen:2,haste:5,reach:3,vitality:1,swift:2,magnet:1,regen:3"] },
+    { "name": "05b-settings", "title": "Cài đặt (trong trận)", "scene": "res://src/run/run.tscn", "frames": 300, "args": ["--demo", "--seed=1", "--sim-steps=4", "--pause-at=12", "--pause-view=settings"] },
     { "name": "06-lose", "title": "Thua", "scene": "res://src/run/run.tscn", "frames": 2300, "args": ["--demo", "--seed=1", "--sim-steps=8"] },
     { "name": "07-win", "title": "Vượt ải", "scene": "res://src/run/run.tscn", "frames": 2400, "args": ["--demo", "--seed=1", "--sim-steps=8", "--god"] }
   ]

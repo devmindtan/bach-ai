@@ -22,6 +22,7 @@ var _class: Dictionary
 var _stage: Dictionary
 var _t := 0.0
 var _scroll := Vector2.ZERO
+var _layer: CanvasLayer
 
 
 func _ready() -> void:
@@ -32,6 +33,10 @@ func _ready() -> void:
 	if _hero != null and not _hero.layer_names().is_empty():
 		_hero.compose_layers()   # equipment will pass its layers here
 	_build_ui()
+	get_viewport().size_changed.connect(func() -> void:
+		if _layer != null:
+			_layer.queue_free()
+		_build_ui())
 
 
 func _process(delta: float) -> void:
@@ -59,6 +64,7 @@ func _draw() -> void:
 func _build_ui() -> void:
 	var layer := CanvasLayer.new()
 	add_child(layer)
+	_layer = layer
 	var root := Control.new()
 	root.size = get_viewport_rect().size
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -105,14 +111,50 @@ func _build_ui() -> void:
 
 	var start := _button("Bắt đầu", func() -> void: get_tree().change_scene_to_file(RUN_SCENE))
 	col.add_child(start)
-	col.add_child(_button("Thoát", func() -> void: get_tree().quit()))
+	# settings and quit share one row so the column stays short
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	col.add_child(row)
+	for b in [_button("Cài đặt", func() -> void: _show_settings(root, col)),
+			_button("Thoát", func() -> void: get_tree().quit())]:
+		b.custom_minimum_size.x = 0
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(b)
+	if OS.get_cmdline_user_args().has("--lobby-settings"):   # shots of the settings page
+		_show_settings.call_deferred(root, col)
 	start.call_deferred("grab_focus")
+	_keep_above.call_deferred(col, vp.y - HINT_SPACE)
 
 	var hint := _label("Enter: bắt đầu  ·  WASD / mũi tên: di chuyển  ·  Esc: tạm dừng", 16, MUTED)
 	hint.position = Vector2(0, vp.y - 40)
 	hint.size = Vector2(vp.x, 24)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	root.add_child(hint)
+
+
+const HINT_SPACE := 56.0   # the key hint line at the bottom of the screen
+
+
+## Once laid out, lift the column so its bottom stays above `bottom`
+## (a button added to it once ran off the screen, over the key hint).
+func _keep_above(col: Control, bottom: float) -> void:
+	col.position.y = minf(col.position.y, bottom - col.get_combined_minimum_size().y)
+
+
+## Settings over the lobby: the menu column hides, the shared settings panel
+## shows centred on a card; "Quay lại" brings the menu back.
+func _show_settings(root: Control, menu: Control) -> void:
+	menu.visible = false
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.add_child(center)
+	var card := PanelContainer.new()
+	var st := _style(Color(0.09, 0.08, 0.13, 0.95), 24)
+	card.add_theme_stylebox_override("panel", st)
+	center.add_child(card)
+	card.add_child(SettingsPanel.build(func() -> void:
+		center.queue_free()
+		menu.visible = true))
 
 
 func _stat(icon: String, label: String, value: String) -> HBoxContainer:

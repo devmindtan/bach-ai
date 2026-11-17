@@ -9,6 +9,7 @@ extends Node2D
 ##   --sim-steps=N   simulate N fixed steps per frame (fast-forward for shots)
 ##   --walk=X,Y      the demo walks in a fixed direction (shots of each view)
 ##   --god           the hero takes no damage (shots of the win screen)
+##   --pause-view=settings  with --pause-at, open the settings page (shots)
 ##   --pause-at=T    open the pause panel at T seconds (shots)
 ##   --offer=a,b,c   the first level-up offers these upgrade ids (shots of the cards)
 ##   --no-auto-pick  the demo stops at the first level-up panel (for shots)
@@ -84,6 +85,7 @@ var auto_pick := true
 var offer: Array[String] = []   # forced cards for the first level-up (--offer)
 var forced_walk := Vector2.ZERO
 var pause_at := -1.0
+var pause_view := ""   # "settings": the --pause-at pause opens the settings page (shots)
 var god := false
 var _bench_frames := 0
 var _bench_tick_us: PackedInt64Array = []
@@ -150,7 +152,8 @@ func _ready() -> void:
 	waves = WaveScheduler.new(stage.get("waves", []))
 	base_stats = class_data.get("stats", {})
 	for sk: String in class_data.get("start_skills", {}):
-		levels[sk] = int(class_data["start_skills"][sk])
+		# keep a higher level forced by --skills
+		levels[sk] = maxi(int(levels.get(sk, 0)), int(class_data["start_skills"][sk]))
 	_recompute_stats()
 	hp = float(stats.get("max_hp", 100.0))
 
@@ -184,6 +187,8 @@ func _parse_args() -> void:
 			seeded = true
 		elif a == "--god":
 			god = true
+		elif a.begins_with("--pause-view="):
+			pause_view = a.get_slice("=", 1)
 		elif a.begins_with("--pause-at="):
 			pause_at = float(a.get_slice("=", 1))
 		elif a.begins_with("--walk="):
@@ -230,8 +235,7 @@ func _process(delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("pause"):
 		if state == State.PLAYING:
-			state = State.PAUSED
-			_panels.show_pause()
+			open_pause()
 		elif state == State.PAUSED:
 			resume()
 	elif state == State.LEVEL_UP:
@@ -259,8 +263,9 @@ func _tick(dt: float) -> void:
 	clock += dt
 	if pause_at >= 0.0 and clock >= pause_at:
 		pause_at = -1.0
-		state = State.PAUSED
-		_panels.show_pause()
+		open_pause()
+		if pause_view == "settings":
+			_panels.show_settings()
 		return
 	_move_player(dt)
 	_spawn(clock - dt, clock)
@@ -636,6 +641,25 @@ func _win() -> void:
 	_panels.show_end(true)
 
 
+## Pauses the run and shows the pause menu (Esc, or the HUD's gear button).
+func open_pause() -> void:
+	if state != State.PLAYING:
+		return
+	state = State.PAUSED
+	_panels.show_pause()
+
+
+## The upgrades taken so far, in card-pool order: [{id, name, level, max}].
+func owned_upgrades() -> Array:
+	var out := []
+	for u: Dictionary in pool.get("upgrades", []):
+		var lv := int(levels.get(u["id"], 0))
+		if lv > 0:
+			out.append({"id": u["id"], "name": u.get("name", u["id"]), "level": lv, "max": int(u.get("max_level", 1)),
+				"skill": u.get("kind") == "skill", "desc": String(u.get("desc", ""))})
+	return out
+
+
 func resume() -> void:
 	_panels.hide_all()
 	state = State.PLAYING
@@ -711,8 +735,10 @@ func _draw() -> void:
 		var sh: SpriteSheet = fx["sheet"]
 		var t := fmod(float(fx["t"]), sh.duration(fx["anim"])) if fx["anim"] == "spin" else float(fx["t"])
 		sh.draw(self, fx["anim"], t, _fx_pos(fx), float(fx["scale"]))
-	_draw_monster_hp(view)
-	_draw_damage_numbers(view)
+	if Prefs.current().monster_hp:
+		_draw_monster_hp(view)
+	if Prefs.current().damage_numbers:
+		_draw_damage_numbers(view)
 	if show_hitboxes:
 		_draw_hitboxes(view)
 	# hp bar under the hero

@@ -14,12 +14,14 @@ const MUTED := Color("b9b2a0")
 const SHADOW := Color(0, 0, 0, 0.7)
 
 var run: Node
+var _gear: TextureButton
 
 
 func _ready() -> void:
 	# a Control under a CanvasLayer has no parent rect: size it to the viewport
 	# (anchors alone left it 0x0, so panels and the HUD were laid out at the corner)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_make_gear()
 	_fit()
 	get_viewport().size_changed.connect(_fit)
 
@@ -27,6 +29,25 @@ func _ready() -> void:
 func _fit() -> void:
 	position = Vector2.ZERO
 	size = get_viewport_rect().size
+	if _gear != null:
+		_gear.position = Vector2(size.x - 44, ROW - 16)
+
+
+## The settings button (gear) at the right end of the HUD row: opens the pause menu.
+func _make_gear() -> void:
+	_gear = TextureButton.new()
+	_gear.texture_normal = UiIcons.texture("gear")
+	_gear.ignore_texture_size = true
+	_gear.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	_gear.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_gear.custom_minimum_size = Vector2(32, 32)
+	_gear.size = Vector2(32, 32)
+	_gear.tooltip_text = "Tạm dừng / Cài đặt (Esc)"
+	_gear.focus_mode = Control.FOCUS_NONE
+	_gear.mouse_entered.connect(func() -> void: _gear.modulate = Color(1.25, 1.25, 1.25))
+	_gear.mouse_exited.connect(func() -> void: _gear.modulate = Color.WHITE)
+	_gear.pressed.connect(func() -> void: run.open_pause())
+	add_child(_gear)
 
 
 ## Every HUD element sits on one row: icons centred on ROW, text baselines
@@ -72,7 +93,7 @@ func _draw() -> void:
 	var kills := str(run.enemies.total_kills)
 	var gw := font.get_string_size(gold, HORIZONTAL_ALIGNMENT_LEFT, -1, 22).x
 	var kw := font.get_string_size(kills, HORIZONTAL_ALIGNMENT_LEFT, -1, 22).x
-	var x := w - 16 - gw
+	var x := w - 60 - gw   # the gear button sits at the right end
 	_text(font, Vector2(x, _baseline(ROW, 22)), gold, 22)
 	UiIcons.draw(self, "coin", Vector2(x - 22, ROW), 2.0)
 	x -= 60 + kw
