@@ -28,6 +28,7 @@ const STEP := 1.0 / 60.0
 var class_id := "knight"   # Prefs.current().hero (the lobby choice, or --class=)
 var stage_number := 1        # --stage=N (stage select comes in phase 3)
 var _boss_dead := false
+var _delayed: Array = []   # self casts waiting for their pulse (count > 1)
 var _chest_open := false   # the next level-up panel comes from a chest
 var _chest_sprite := "chest"
 
@@ -523,6 +524,17 @@ func _skills(dt: float) -> void:
 			var sprite := String(s.get("sprite", "sword-slash"))
 			_aim()
 			_add_fx(sprite, _slash_anim(attack_dir), sc, dmg, -1.0, null, "blade_arc")
+			# amount: one more slash at each next nearest monster's side
+			var extra := int(stats.get("amount", 0.0))
+			if extra > 0:
+				var done := [attack_dir]
+				for i in enemies.nearest_n(player_pos + _hit_center, extra + 4):
+					var d2 := slash_dir(enemies.center_of(i) - (player_pos + _hit_center))
+					if not done.has(d2):
+						done.append(d2)
+						_add_fx(sprite, _slash_anim(d2), sc, dmg, -1.0, null, "blade_arc")
+						if done.size() > extra:
+							break
 			var back := int(levels.get("back_slash", 0))
 			if back > 0:
 				var mul := float(s.get("back_damage_mul", 0.5)) + float(s.get("back_damage_per_level", 0.25)) * (back - 1)
@@ -532,7 +544,7 @@ func _skills(dt: float) -> void:
 		if _whirl_left > 0.0:
 			_whirl_left -= dt
 			var dur := float(w.get("duration", 0.9))
-			var ticks := maxi(1, int(w.get("ticks", 3)))
+			var ticks := maxi(1, int(w.get("ticks", 3)) + int(stats.get("amount", 0.0)))
 			var due := int(floor((dur - maxf(_whirl_left, 0.0)) / dur * ticks)) + 1
 			while _whirl_ticks_done < mini(due, ticks):
 				_whirl_ticks_done += 1
@@ -558,6 +570,17 @@ func _skills(dt: float) -> void:
 	# Data-driven skills (skills.<id>.cast in upgrades_<class>.json): nearest / self /
 	# random / wave. blade_arc and whirlwind above have their own timing; "active"
 	# (the dash) is cast by the player.
+	var di := 0
+	while di < _delayed.size():
+		var dc: Dictionary = _delayed[di]
+		dc["t"] = float(dc["t"]) - dt
+		if float(dc["t"]) <= 0.0:
+			var fx := _add_fx(dc["sprite"], dc["anim"], dc["sc"], dc["dmg"], -1.0, player_pos + _hit_center, dc["sid"], dc["kb"])
+			if bool(dc["under"]) and not fx.is_empty():
+				fx["under"] = true
+			_delayed.remove_at(di)
+		else:
+			di += 1
 	for sid: String in skills:
 		var ts: Dictionary = skills[sid]
 		var how := String(ts.get("cast", ""))
@@ -592,9 +615,8 @@ func _skill_sprite(sid: String, ts: Dictionary) -> String:
 ## How many casts at the current level (skills.<id>.count per level, default 1).
 func _skill_count(sid: String, ts: Dictionary) -> int:
 	var c: Array = ts.get("count", [])
-	if c.is_empty():
-		return 1
-	return maxi(1, int(c[clampi(int(levels.get(sid, 1)) - 1, 0, c.size() - 1)]))
+	var base := 1 if c.is_empty() else maxi(1, int(c[clampi(int(levels.get(sid, 1)) - 1, 0, c.size() - 1)]))
+	return base + int(stats.get("amount", 0.0))   # the amount cards add one to every skill
 
 
 func _cast(sid: String, ts: Dictionary, how: String) -> void:
@@ -609,12 +631,20 @@ func _cast(sid: String, ts: Dictionary, how: String) -> void:
 		to_target = (enemies.center_of(target_i) - center).normalized()
 	match how:
 		"nearest":
-			var p := center + to_target * float(ts.get("cast_range", 140.0))
-			_add_fx(sprite, String(ts.get("anim", "burst")), sc, dmg, -1.0, p, sid, kb)
+			# one burst toward each of the nearest monsters (count: more of them)
+			var n := _skill_count(sid, ts)
+			var targets := enemies.nearest_n(center, n)
+			if targets.is_empty():
+				targets = [-1]
+			for k in mini(n, targets.size()):
+				var dir := to_target if int(targets[k]) < 0 else (enemies.center_of(targets[k]) - center).normalized()
+				var p := center + dir * float(ts.get("cast_range", 140.0))
+				_add_fx(sprite, String(ts.get("anim", "burst")), sc, dmg, -1.0, p, sid, kb)
 		"self":
-			var fx := _add_fx(sprite, String(ts.get("anim", "burst")), sc, dmg, -1.0, center, sid, kb)
-			if bool(ts.get("under_hero", false)) and not fx.is_empty():
-				fx["under"] = true
+			# count: pulses 0.25 s apart
+			for k in _skill_count(sid, ts):
+				_delayed.append({"t": 0.25 * k, "sid": sid, "sprite": sprite, "sc": sc, "dmg": dmg, "kb": kb,
+					"anim": String(ts.get("anim", "burst")), "under": bool(ts.get("under_hero", false))})
 		"random":
 			var pool_i := enemies.living_within(center, float(ts.get("cast_range", 300.0)))
 			for k in _skill_count(sid, ts):
@@ -807,7 +837,8 @@ func skill_info() -> Array:
 				var e: Dictionary = effects[key]
 				if touches.has(key):
 					var t: String = ("%+d%%" % roundi(float(e["mul"]) * vl * 100.0)) if e.has("mul") else signed(float(e["add"]) * vl)
-					sources.append({"id": v["id"], "name": v.get("name", v["id"]), "level": vl, "what": touches[key], "text": t})
+					sources.append({"id": v["id"], "name": v.get("name", v["id"]), "level": vl, "what": touches[key], "text": t,
+						"pct": float(e.get("mul", 0.0)) * vl * 100.0})
 				elif key == "back_slash" and id == "blade_arc":
 					var ba: Dictionary = pool.get("skills", {}).get("blade_arc", {})
 					var pct := float(ba.get("back_damage_mul", 0.5)) + float(ba.get("back_damage_per_level", 0.25)) * (vl - 1)
@@ -815,7 +846,7 @@ func skill_info() -> Array:
 		out.append({"id": id, "name": u.get("name", id), "level": lv, "max": int(u.get("max_level", 1)),
 			"damage": skill_damage(id), "cooldown": skill_cooldown(id), "size": skill_size(id),
 			"base_damage": skill_damage(id, plain), "base_cooldown": skill_cooldown(id, plain), "sources": sources,
-			"statuses": on_hit(id)})
+			"statuses": on_hit(id), "count": _skill_count(id, pool.get("skills", {}).get(id, {}))})
 	return out
 
 
@@ -972,6 +1003,15 @@ func upgrade_preview(id: String) -> Dictionary:
 		lines.append(["Sát thương", "—" if lv == 0 else str(roundi(dmg.call(stats))), str(roundi(dmg.call(after)))])
 		if lv == 0 or not is_equal_approx(size.call(stats), size.call(after)):
 			lines.append(["Cỡ", "—" if lv == 0 else "×%.2f" % size.call(stats), "×%.2f" % size.call(after)])
+		# more casts at this level (count grows for dense hordes)
+		var now_n := 0 if lv == 0 else _skill_count(id, sp)
+		levels[id] = nxt
+		var next_n := _skill_count(id, sp)
+		levels[id] = lv
+		if lv == 0:
+			levels.erase(id)
+		if next_n != now_n and (lv > 0 or next_n > 1):
+			lines.append(["Số lượng", "—" if lv == 0 else str(now_n), str(next_n)])
 	else:
 		for key: String in u.get("effects", {}):
 			if key == "back_slash":
@@ -1002,7 +1042,7 @@ func upgrade_preview(id: String) -> Dictionary:
 	return {"lines": lines, "milestones": milestones, "milestone": text, "level": lv, "max": max_lv}
 
 
-const STAT_LABEL := {"max_hp": "Máu tối đa", "damage": "Sát thương", "cooldown": "Hồi chiêu", "area": "Vùng đánh",
+const STAT_LABEL := {"max_hp": "Máu tối đa", "damage": "Sát thương", "cooldown": "Hồi chiêu", "area": "Vùng đánh", "amount": "Số lượng",
 	"move_speed": "Tốc độ chạy", "magnet": "Tầm hút", "regen": "Hồi máu", "armor": "Giáp"}
 
 

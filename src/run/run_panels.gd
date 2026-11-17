@@ -453,10 +453,10 @@ func _stat_card_row(o: Dictionary) -> HBoxContainer:
 	return h
 
 
-const CHARACTER_STATS := ["max_hp", "damage", "cooldown", "area", "move_speed", "regen", "magnet", "armor"]
+const CHARACTER_STATS := ["max_hp", "damage", "cooldown", "area", "amount", "move_speed", "regen", "magnet", "armor"]
 ## Icon for each stat (ui-icons), used on the sheet and in source chips.
 const STAT_ICON := {"max_hp": "heart", "damage": "sword", "cooldown": "haste", "area": "reach",
-	"move_speed": "boot", "regen": "regen", "magnet": "magnet", "armor": "shield"}
+	"move_speed": "boot", "regen": "regen", "magnet": "magnet", "armor": "shield", "amount": "extra_strike"}
 const WHAT_ICON := {"Sát thương": "sword", "Hồi chiêu": "haste", "Vùng": "reach", "Nhát sau": "back_slash"}
 
 
@@ -499,8 +499,10 @@ func _indent(c: Control) -> MarginContainer:
 	return m
 
 
-## One skill: icon; name and level pips; damage / cooldown / size as icon chips
-## (class-only value muted); the cards changing it as chips.
+## One skill, kept readable however many cards touch it (user 2026-11-17: the
+## per-card chips were a mess): icon, name and level pips; one line of the real
+## numbers (damage, cooldown, size, amount; the class-only value on hover); one
+## line of the total change per stat (each card's share on hover); its statuses.
 func _skill_row(si: Dictionary) -> PanelContainer:
 	var card := PanelContainer.new()
 	var st := _style(CARD, BORDER)
@@ -513,13 +515,12 @@ func _skill_row(si: Dictionary) -> PanelContainer:
 	icon.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	h.add_child(icon)
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 4)
+	v.add_theme_constant_override("separation", 5)
 	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	h.add_child(v)
 	var head := HBoxContainer.new()
 	head.add_theme_constant_override("separation", 12)
-	var nl := _label(String(si["name"]), 17, TEXT)
-	head.add_child(nl)
+	head.add_child(_label(String(si["name"]), 17, TEXT))
 	var pips := Control.new()
 	var lv: int = si["level"]
 	var mx: int = si["max"]
@@ -529,35 +530,42 @@ func _skill_row(si: Dictionary) -> PanelContainer:
 	pips.draw.connect(func() -> void: _draw_pips(pips, lv, mx, [mx], BORDER, false))
 	head.add_child(pips)
 	v.add_child(head)
+	# the real numbers
 	var nums := HBoxContainer.new()
-	nums.add_theme_constant_override("separation", 18)
-	nums.add_child(_chip(["sword"], "%d" % roundi(si["damage"]), "Sát thương (gốc %d)" % roundi(si["base_damage"]),
-		GAIN if roundi(si["damage"]) != roundi(si["base_damage"]) else TEXT, 15, "gốc %d" % roundi(si["base_damage"])))
-	nums.add_child(_chip(["haste"], "%.2f s" % si["cooldown"], "Hồi chiêu (gốc %.2f s)" % si["base_cooldown"],
-		GAIN if not is_equal_approx(si["cooldown"], si["base_cooldown"]) else TEXT, 15, "gốc %.2f" % si["base_cooldown"]))
-	nums.add_child(_chip(["reach"], "×%.2f" % si["size"], "Vùng", GAIN if not is_equal_approx(si["size"], 1.0) else TEXT, 15))
+	nums.add_theme_constant_override("separation", 20)
+	nums.add_child(_chip(["sword"], "%d" % roundi(si["damage"]), "Sát thương (gốc %d)" % roundi(si["base_damage"]), TEXT, 16))
+	nums.add_child(_chip(["haste"], "%.2f s" % si["cooldown"], "Hồi chiêu (gốc %.2f s)" % si["base_cooldown"], TEXT, 16))
+	nums.add_child(_chip(["reach"], "×%.2f" % si["size"], "Vùng", TEXT, 16))
+	if int(si.get("count", 1)) > 1:
+		nums.add_child(_chip([], "×%d" % int(si["count"]), "Số lượng mỗi lần ra chiêu", MILESTONE, 16, "lần"))
 	v.add_child(nums)
-	var chips := HFlowContainer.new()
-	chips.add_theme_constant_override("h_separation", 12)
-	chips.add_theme_constant_override("v_separation", 2)
+	# total change per stat; each card / buff on hover
+	var tot := {}
+	var tips := {}
+	var other := []
 	for p: Dictionary in si["sources"]:
-		# a stat card's icon already says which stat it changes; a skill card needs the second icon
-		var icons := [String(p["id"])]
-		if run.upgrade(String(p["id"])).get("kind") == "skill":
-			icons.append(String(WHAT_ICON.get(p["what"], "star")))
-		chips.add_child(_chip(icons, String(p["text"]),
-			"%s cấp %d: %s %s" % [p["name"], p["level"], p["what"], p["text"]]))
-	if not si["sources"].is_empty():
-		v.add_child(chips)
-	# statuses this skill puts on monsters now (statuses.json)
+		var w := String(p["what"])
+		if w in ["Sát thương", "Hồi chiêu", "Vùng"]:
+			tot[w] = float(tot.get(w, 0.0)) + float(p.get("pct", 0.0))
+			tips[w] = String(tips.get(w, "")) + "%s %s: %s\n" % [p["name"], "" if not run.buff_def(String(p["id"])).is_empty() else "cấp %d" % p["level"], p["text"]]
+		else:
+			other.append("%s %s" % [w, p["text"]])
+	if not tot.is_empty() or not other.is_empty():
+		var mods := HFlowContainer.new()
+		mods.add_theme_constant_override("h_separation", 16)
+		for w in ["Sát thương", "Hồi chiêu", "Vùng"]:
+			if tot.has(w):
+				var col := GAIN if (float(tot[w]) > 0.0) != (w == "Hồi chiêu") else Color("ff8a8a")
+				mods.add_child(_chip([String(WHAT_ICON[w])], "%s %+d%%" % [w, roundi(float(tot[w]))], String(tips[w]).strip_edges(), col, 13))
+		for o: String in other:
+			mods.add_child(_label(o, 13, MUTED))
+		v.add_child(mods)
 	if not si.get("statuses", []).is_empty():
 		var st_row := HFlowContainer.new()
 		st_row.add_theme_constant_override("h_separation", 12)
 		for e: Dictionary in si["statuses"]:
 			var sd: Dictionary = run.status_defs.get(String(e.get("status", "")), {})
-			var secs := ""
-			if e.has("time"):
-				secs = "%.1f s" % float(e["time"])
+			var secs := ("%.1f s" % float(e["time"])) if e.has("time") else ""
 			st_row.add_child(_chip([String(e.get("status", ""))], "%s %s" % [sd.get("name", e.get("status", "")), secs], String(sd.get("desc", "")), Color("ffb08a"), 13))
 		v.add_child(st_row)
 	return card

@@ -65,7 +65,7 @@ func test_wave_and_column_counts_follow_the_level() -> void:
 	var r := _run({"blade_arc": 1, "cleave_wave": 3, "holy_column": 5})
 	var sk: Dictionary = r.pool["skills"]
 	_check(r._skill_count("cleave_wave", sk["cleave_wave"]) == 2, "cleave wave 3: front + back")
-	_check(r._skill_count("holy_column", sk["holy_column"]) == 3, "holy column 5: three columns")
+	_check(r._skill_count("holy_column", sk["holy_column"]) == 4, "holy column 5: four columns (counts grow for dense hordes)")
 	r.levels["cleave_wave"] = 1
 	_check(r._skill_count("cleave_wave", sk["cleave_wave"]) == 1, "cleave wave 1: one wave")
 	r.free()

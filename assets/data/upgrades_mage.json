@@ -1,5 +1,5 @@
 {
-  "_doc": "Mage level-up pool. kind skill = an attack the run uses; stat = a modifier. effects apply per level: add (flat) or mul (+fraction). weight = roll weight. skills.<id>.cast says how the run casts it: nearest (burst cast_range px toward the nearest monster), self (burst on the hero), random (count[level-1] bursts on random monsters within cast_range), wave (anim_prefix + direction, flies at speed px/s through monsters, count[level-1] directions: nearest, opposite, then the two others), active (player-triggered: the dash; sprite = the hero, anim = its animation). tier_sprites pick the sprite by level. under_hero = the effect is drawn behind the hero (ground effects around it, e.g. the stomp). on_hit = statuses the skill puts on monsters it hits (assets/data/statuses.json), each from a skill level. projectile = flies at speed px/s for duration s toward the nearest monster (count fan out 12 deg); it hits when its fly hitbox (from the sprite) touches a monster: explode = the impact animation hitbox deals the damage, else the fly hitbox does and it pierces pierce more monsters; impact = its hit animation. icon = borrow another card icon.",
+  "_doc": "Mage level-up pool. kind skill = an attack the run uses; stat = a modifier. effects apply per level: add (flat) or mul (+fraction). weight = roll weight. skills.<id>.cast says how the run casts it: nearest (burst cast_range px toward the nearest monster), self (burst on the hero), random (count[level-1] bursts on random monsters within cast_range), wave (anim_prefix + direction, flies at speed px/s through monsters, count[level-1] directions: nearest, opposite, then the two others), active (player-triggered: the dash; sprite = the hero, anim = its animation). tier_sprites pick the sprite by level. under_hero = the effect is drawn behind the hero (ground effects around it, e.g. the stomp). on_hit = statuses the skill puts on monsters it hits (assets/data/statuses.json), each from a skill level. projectile = flies at speed px/s for duration s toward the nearest monster (count fan out 12 deg); it hits when its fly hitbox (from the sprite) touches a monster: explode = the impact animation hitbox deals the damage, else the fly hitbox does and it pierces pierce more monsters; impact = its hit animation. icon = borrow another card icon. count = casts per level (more targets / waves / pulses); the \"amount\" stat (amount cards) adds one to every skill: blade slashes the next nearest monsters, whirlwind gets more ticks, self casts pulse again 0.25 s apart, nearest casts hit the next nearest monsters.",
   "upgrades": [
     {
       "id": "arcane_bolt",
@@ -18,7 +18,7 @@
       "id": "fireball",
       "kind": "skill",
       "name": "Cầu lửa",
-      "desc": "Ném cầu lửa nổ khi chạm quái, gây bỏng vùng nổ. Mỗi cấp: +25% sát thương, +10% vùng nổ.",
+      "desc": "Ném cầu lửa nổ khi chạm quái, gây bỏng vùng nổ. Mỗi cấp: +25% sát thương, +10% vùng nổ. Cấp 3: 2 quả; cấp 4: 3 quả.",
       "max_level": 5,
       "weight": 2,
       "effects": {
@@ -34,7 +34,7 @@
       "id": "frost_nova",
       "kind": "skill",
       "name": "Băng nổ",
-      "desc": "Băng nổ ở phía quái gần nhất, làm chậm quái. Mỗi cấp: +25% sát thương, +8% vùng, hình mạnh hơn; cấp 3: đóng băng.",
+      "desc": "Băng nổ ở phía quái gần nhất, làm chậm quái. Mỗi cấp: +25% sát thương, +8% vùng, hình mạnh hơn; cấp 3: đóng băng. Cấp 2: nổ ở 2 quái; cấp 4: 3 quái; cấp 5: 4 quái.",
       "max_level": 5,
       "weight": 2,
       "effects": {
@@ -63,7 +63,7 @@
       "id": "thunder_javelin",
       "kind": "skill",
       "name": "Giáo sấm",
-      "desc": "Phóng giáo sấm xuyên qua mọi quái trên đường. Mỗi cấp: +20% sát thương; cấp 3: giật điện.",
+      "desc": "Phóng giáo sấm xuyên qua mọi quái trên đường. Mỗi cấp: +20% sát thương; cấp 3: giật điện. Cấp 3: 2 giáo; cấp 5: 3 giáo.",
       "max_level": 5,
       "weight": 2,
       "effects": {
@@ -76,7 +76,7 @@
       "id": "meteor",
       "kind": "skill",
       "name": "Mưa thiên thạch",
-      "desc": "Thiên thạch rơi xuống quái ngẫu nhiên, gây bỏng. Mỗi cấp: +25% sát thương; cấp 4: 2 viên.",
+      "desc": "Thiên thạch rơi xuống quái ngẫu nhiên, gây bỏng. Mỗi cấp: +25% sát thương; Cấp 2: 2 viên; cấp 4: 3 viên; cấp 5: 4 viên.",
       "max_level": 5,
       "weight": 2,
       "effects": {
@@ -111,7 +111,6 @@
       "desc": "+15% sát thương mọi phép.",
       "max_level": 5,
       "weight": 4,
-      "icon": "sharpen",
       "effects": {
         "damage": {
           "mul": 0.15
@@ -125,7 +124,6 @@
       "desc": "-10% thời gian hồi của mọi chiêu.",
       "max_level": 5,
       "weight": 4,
-      "icon": "haste",
       "effects": {
         "cooldown": {
           "mul": -0.1
@@ -139,7 +137,6 @@
       "desc": "+15% vùng phép.",
       "max_level": 5,
       "weight": 3,
-      "icon": "reach",
       "effects": {
         "area": {
           "mul": 0.15
@@ -205,10 +202,22 @@
       "desc": "+2 giáp: mỗi đòn của quái trừ đi 2 sát thương.",
       "max_level": 5,
       "weight": 3,
-      "icon": "toughness",
       "effects": {
         "armor": {
           "add": 2.0
+        }
+      }
+    },
+    {
+      "id": "multicast",
+      "kind": "stat",
+      "name": "Đa phép",
+      "desc": "+1 số lượng mọi phép: thêm tia, thêm cầu lửa, thêm sét, thêm thiên thạch, thêm lần nổ băng.",
+      "max_level": 3,
+      "weight": 2,
+      "effects": {
+        "amount": {
+          "add": 1.0
         }
       }
     }
@@ -266,7 +275,14 @@
         }
       ],
       "duration": 1.5,
-      "explode": true
+      "explode": true,
+      "count": [
+        1,
+        1,
+        2,
+        3,
+        3
+      ]
     },
     "frost_nova": {
       "sprite": "frost-nova-i",
@@ -295,6 +311,13 @@
           "status": "freeze",
           "time": 1.2
         }
+      ],
+      "count": [
+        1,
+        2,
+        2,
+        3,
+        4
       ]
     },
     "lightning": {
@@ -314,10 +337,10 @@
       "cast_range": 320.0,
       "count": [
         1,
-        1,
         2,
         2,
-        3
+        3,
+        4
       ],
       "on_hit": [
         {
@@ -355,7 +378,14 @@
           "radius": 80.0
         }
       ],
-      "duration": 1.25
+      "duration": 1.25,
+      "count": [
+        1,
+        1,
+        2,
+        2,
+        3
+      ]
     },
     "meteor": {
       "sprite": "meteor-fall",
@@ -374,10 +404,10 @@
       "cast_range": 340.0,
       "count": [
         1,
-        1,
-        1,
         2,
-        2
+        2,
+        3,
+        4
       ],
       "on_hit": [
         {

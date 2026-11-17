@@ -571,6 +571,19 @@ func nearest(p: Vector2, max_dist: float) -> int:
 	return best
 
 
+## The [param n] living monsters nearest to [param p] (body edge), closest first.
+func nearest_n(p: Vector2, n: int) -> Array[int]:
+	var all := []
+	for i in count:
+		if state[i] != DYING:
+			all.append([center_of(i).distance_to(p) - k_radius[kind[i]], i])
+	all.sort_custom(func(a: Array, b: Array) -> bool: return a[0] < b[0])
+	var out: Array[int] = []
+	for k in mini(n, all.size()):
+		out.append(int(all[k][1]))
+	return out
+
+
 ## Clears the hit buffers (call after turning them into damage numbers).
 func drain_hits() -> void:
 	hit_pos.clear()
