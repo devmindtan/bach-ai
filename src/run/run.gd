@@ -30,7 +30,9 @@ var class_id := "knight"   # Prefs.current().hero (the lobby choice, or --class=
 var stage_number := 1        # --stage=N or from the active slot
 var _stage_arg_set := false
 var _rewards_arg := false
+var _shot_end := 0            # --shot-end=N: show the win screen with a milestone choice (shots)
 var stages: Stages
+var stage_ground: Dictionary = {}
 var playing_slot: Slot
 var run_result: Dictionary = {}
 var _boss_dead := false
@@ -163,6 +165,7 @@ func _ready() -> void:
 				rewards.append(id)
 	stage_number = clampi(stage_number, 1, stages.count())
 	stage = stages.load_stage(stage_number)
+	stage_ground = stages.ground(stage_number)
 	duration = float(stage.get("duration", 300.0))
 	var monsters := GameData.load_json(DATA + "monsters.json")
 	var classes := GameData.load_json(DATA + "classes.json")
@@ -250,6 +253,18 @@ func _ready() -> void:
 	_panels.run = self
 	layer.add_child(_panels)
 
+	# Shot-only: show the end screen with a pending milestone choice.
+	if _shot_end > 0:
+		state = State.WON
+		var fake := Slot.new(profile.defs)
+		fake.cls = class_id
+		fake.pending.append(_shot_end)
+		playing_slot = fake
+		run_result = {"won": true, "stage": _shot_end, "collected": 0, "stage_gold": 0, "gems": 0,
+			"first": true, "milestone": _shot_end, "pending": [_shot_end], "next": true, "best": _shot_end}
+		_panels.show_end(true)
+		return
+
 	# Khởi đầu thần tốc: pick cards before the first monster shows up.
 	if _start_picks > 0:
 		pending_levels += _start_picks
@@ -313,6 +328,8 @@ func _parse_args() -> void:
 			# Debug/shots: the first level-up offers these cards, e.g. --offer=earth_strike,haste,back_slash
 			for id in a.get_slice("=", 1).split(",", false):
 				offer.append(id)
+		elif a.begins_with("--shot-end="):
+			_shot_end = maxi(1, int(a.get_slice("=", 1)))
 		elif a.begins_with("--rewards="):
 			# Debug/shots/tests: milestone rewards the slot owns, e.g. --rewards=earthquake,bloodthirst
 			_rewards_arg = true
@@ -1304,6 +1321,7 @@ func _finish(won: bool) -> void:
 		prefs.slot_store().save(playing_slot)
 	run_result["next"] = won and stage_number < (stages.count() if stages != null else 30)
 	run_result["pending"] = playing_slot.pending.duplicate() if playing_slot != null else []
+	run_result["best"] = playing_slot.best if playing_slot != null else 0
 
 
 func _die() -> void:
@@ -1359,7 +1377,7 @@ func restart() -> void:
 
 func next_stage() -> void:
 	var prefs := Prefs.current()
-	prefs.stage_target = clampi(stage_number + 1, 1, stages.count() if stages != null else 30)
+	prefs.set_value("stage_target", clampi(stage_number + 1, 1, stages.count() if stages != null else 30))
 	get_tree().reload_current_scene()
 
 
@@ -1367,8 +1385,12 @@ func choose_milestone_reward(stage_n: int, reward_id: String) -> void:
 	if playing_slot == null:
 		return
 	if playing_slot.choose_milestone(stage_n, reward_id):
-		Prefs.current().slot_store().save(playing_slot)
+		if not Prefs.current().is_fixed():
+			Prefs.current().slot_store().save(playing_slot)
 		run_result["pending"] = playing_slot.pending.duplicate()
+		# the choice is done; the end screen must not offer it again
+		if int(run_result.get("milestone", 0)) == stage_n:
+			run_result["milestone"] = 0
 
 
 func to_lobby() -> void:
@@ -1409,7 +1431,7 @@ func _set_anim(anim: String) -> void:
 
 func _draw() -> void:
 	var view := Rect2(_camera.position - get_viewport_rect().size * 0.5, get_viewport_rect().size).grow(64.0)
-	RunGround.draw(self, view, _arena_half)
+	RunGround.draw(self, view, _arena_half, stage_ground)
 	var gem: SpriteSheet = sheets.get(_gem_sprite)
 	var coin: SpriteSheet = sheets.get(_coin_sprite)
 	for i in pickups.count:

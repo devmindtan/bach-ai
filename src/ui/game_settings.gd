@@ -17,16 +17,21 @@ signal changed
 const PATH := "user://settings.cfg"
 const BASE := Vector2i(1280, 720)   # the design size; auto scale = how many whole times it fits
 
+## Paths are variables so headless tests can point them at a temporary folder.
+var settings_path := PATH
+
 var fullscreen := false
 var scale := 0                      # 0 = auto, else 1..3
 var damage_numbers := true
 var monster_hp := true
 var hero := "knight"                # the class chosen in the lobby (classes.json id)
+var slot_id := ""                   # the selected character slot ("" = legacy profile)
 var stage_target := 1               # the stage the lobby will start
 var _fixed := false
 var _profile: Profile                 # screenshots / tests: defaults, never touch the window
 var _store: SlotStore                 # character slots (user://slots, phase 3)
 var active_slot: Slot                 # the slot in play; null in fixed/test mode unless set
+var _ensuring_slots := false          # guards select_slot <-> ensure_slots recursion
 
 static var _default: Prefs
 
@@ -108,33 +113,50 @@ func slot_store() -> SlotStore:
 
 ## Loads slots once: migrates user://profile.json into slot 1 on the first visit.
 func ensure_slots() -> void:
-	if _fixed:
+	if _fixed or _ensuring_slots:
 		return
+	_ensuring_slots = true
 	var store := slot_store()
-	if not store.list().is_empty():
-		return
-	var s := store.create("Nhân vật 1", hero)
-	if s == null:
-		return
-	if FileAccess.file_exists(Profile.PATH):
-		var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(Profile.PATH))
-		if data is Dictionary:
-			s.profile.from_dict(data)
-			store.save(s)
-	if active_slot == null:
-		active_slot = s
-		hero = s.cls
-		stage_target = s.unlocked(Stages.load_default().count())
+	var all := store.list()
+	if all.is_empty():
+		var s := store.create("Nhân vật 1", hero)
+		if s != null:
+			if FileAccess.file_exists(Profile.PATH):
+				var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(Profile.PATH))
+				if data is Dictionary:
+					s.profile.from_dict(data)
+					store.save(s)
+			all = store.list()
+	# keep the slot chosen last time, else the first readable one
+	var chosen := ""
+	for e: Dictionary in all:
+		if String(e["id"]) == slot_id and e.get("slot") != null:
+			chosen = slot_id
+		if chosen == "" and e.get("slot") != null:
+			chosen = String(e["id"])
+	_ensuring_slots = false
+	if chosen != "":
+		_apply_slot(chosen)
+	elif active_slot == null:
+		stage_target = clampi(stage_target, 1, Stages.load_default().count())
 
 
 func select_slot(id: String) -> bool:
 	ensure_slots()
+	return _apply_slot(id)
+
+
+## Sets the active slot without re-entering ensure_slots (which may call this).
+func _apply_slot(id: String) -> bool:
 	var e: Dictionary = slot_store().load_slot(id)
 	if e.get("slot") == null:
 		return false
 	active_slot = e["slot"]
+	slot_id = id
 	hero = active_slot.cls
-	stage_target = mini(maxi(stage_target, 1), active_slot.unlocked(Stages.load_default().count()))
+	stage_target = clampi(stage_target, 1, active_slot.unlocked(Stages.load_default().count()))
+	if not _fixed:
+		_save()
 	return true
 
 
@@ -173,13 +195,14 @@ func _fit_scale() -> void:
 
 func _load() -> void:
 	var cfg := ConfigFile.new()
-	if cfg.load(PATH) != OK:
+	if cfg.load(settings_path) != OK:
 		return
 	fullscreen = bool(cfg.get_value("display", "fullscreen", fullscreen))
 	scale = clampi(int(cfg.get_value("display", "scale", scale)), 0, 3)
 	damage_numbers = bool(cfg.get_value("hud", "damage_numbers", damage_numbers))
 	monster_hp = bool(cfg.get_value("hud", "monster_hp", monster_hp))
 	hero = String(cfg.get_value("game", "hero", hero))
+	slot_id = String(cfg.get_value("game", "slot", slot_id))
 	stage_target = maxi(1, int(cfg.get_value("game", "stage", stage_target)))
 
 
@@ -190,5 +213,6 @@ func _save() -> void:
 	cfg.set_value("hud", "damage_numbers", damage_numbers)
 	cfg.set_value("hud", "monster_hp", monster_hp)
 	cfg.set_value("game", "hero", hero)
+	cfg.set_value("game", "slot", slot_id)
 	cfg.set_value("game", "stage", stage_target)
-	cfg.save(PATH)
+	cfg.save(settings_path)

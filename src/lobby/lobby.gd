@@ -91,9 +91,7 @@ func switch_stage(step: int) -> void:
 	if _slot_mode and prefs.active_slot != null:
 		max_n = prefs.active_slot.unlocked(_stages.count())
 	_stage_n = clampi(_stage_n + step, 1, max_n)
-	prefs.stage_target = _stage_n
-	if not prefs.is_fixed():
-		prefs.set_value("stage", _stage_n) # persisted in settings; slot unlocked limits it
+	prefs.set_value("stage_target", _stage_n) # persisted in settings; slot unlocked limits it
 	_stage = _stages.load_stage(_stage_n)
 	if _layer != null:
 		_layer.queue_free()
@@ -117,7 +115,7 @@ func _draw() -> void:
 	var size := get_viewport_rect().size
 	var view := Rect2(_scroll, size)
 	draw_set_transform(-_scroll)
-	RunGround.draw(self, view.grow(64.0), 1.0e9)
+	RunGround.draw(self, view.grow(64.0), 1.0e9, _stages.ground(_stage_n) if _stages != null else {})
 	draw_set_transform(Vector2.ZERO)
 	draw_rect(Rect2(Vector2.ZERO, size), Color(0.02, 0.03, 0.05, 0.55))
 	# darker bands top and bottom frame the screen
@@ -180,10 +178,13 @@ func _build_ui() -> void:
 	menu.add_child(sub)
 	var top := HBoxContainer.new()
 	top.add_theme_constant_override("separation", 10)
-	top.position = Vector2(vp.x - 32 - 3 * 140 - 20, 26)
+	var top_buttons := [_button("Nhân vật", func() -> void: _show_slots(root, menu)),
+		_button("Trang bị", func() -> void: _show_equipment(root, menu)),
+		_button("Cài đặt", func() -> void: _show_settings(root, menu)),
+		_button("Thoát", func() -> void: get_tree().quit())]
+	top.position = Vector2(vp.x - 32 - top_buttons.size() * 140 - (top_buttons.size() - 1) * 10, 26)
 	menu.add_child(top)
-	for b in [_button("Trang bị", func() -> void: _show_equipment(root, menu)), _button("Cài đặt", func() -> void: _show_settings(root, menu)),
-			_button("Thoát", func() -> void: get_tree().quit())]:
+	for b in top_buttons:
 		b.custom_minimum_size = Vector2(140, 42)
 		b.add_theme_font_size_override("font_size", 18)
 		top.add_child(b)
@@ -265,6 +266,14 @@ func _build_ui() -> void:
 	sh.add_theme_constant_override("separation", 10)
 	sh.alignment = BoxContainer.ALIGNMENT_CENTER
 	stage_card.add_child(sh)
+	var pick_stage := Button.new()
+	pick_stage.text = "Chọn ải"
+	pick_stage.custom_minimum_size = Vector2(110, 42)
+	pick_stage.add_theme_font_size_override("font_size", 16)
+	pick_stage.add_theme_stylebox_override("normal", _style(PANEL, 6))
+	pick_stage.add_theme_stylebox_override("hover", _style(PANEL_HOVER, 6))
+	pick_stage.pressed.connect(func() -> void: _show_stage_select(root, menu))
+	sh.add_child(pick_stage)
 	if _slot_mode:
 		var prev_s := _arrow("‹", func() -> void: switch_stage(-1))
 		prev_s.custom_minimum_size = Vector2(36, 40)
@@ -284,7 +293,7 @@ func _build_ui() -> void:
 	if _stages.is_boss(_stage_n):
 		sh.add_child(_label("BOSS", 18, Color("ffd36b")))
 	var start := _button("Bắt đầu  ▶", func() -> void:
-		Prefs.current().stage_target = _stage_n
+		Prefs.current().set_value("stage_target", _stage_n)
 		get_tree().change_scene_to_file(RUN_SCENE))
 	start.custom_minimum_size = Vector2(300, ROW_H)
 	start.add_theme_font_size_override("font_size", 26)
@@ -309,6 +318,10 @@ func _build_ui() -> void:
 		_show_settings.call_deferred(root, menu)
 	if OS.get_cmdline_user_args().has("--lobby-gear"):       # shots of the equipment page
 		_show_equipment.call_deferred(root, menu)
+	if OS.get_cmdline_user_args().has("--lobby-slots"):      # shots of the slot page
+		_show_slots.call_deferred(root, menu)
+	if OS.get_cmdline_user_args().has("--lobby-stages"):     # shots of the stage grid
+		_show_stage_select.call_deferred(root, menu)
 
 	var hint := _label("Enter: bắt đầu  ·  ← / →: đổi class  ·  Trong trận: WASD di chuyển, Space lướt, Tab nhân vật, Esc tạm dừng", 14, MUTED)
 	hint.position = Vector2(32, vp.y - 30)
@@ -410,6 +423,239 @@ const SLOT_NAME := {"head": "Đầu", "chest": "Ngực", "arms": "Tay", "legs": 
 const RARITY := {"common": Color("e8e2d0"), "rare": Color("6fb7ff"), "epic": Color("c38df5")}
 
 
+## Stage select: a grid of 3 regions x 10 stages (design/progression.md). Locked
+## cells are dim with a lock, cleared ones show ✓, boss/milestone cells have a
+## gold frame, and the playable frontier is highlighted.
+func _show_stage_select(root: Control, menu: Control) -> void:
+	menu.visible = false
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.add_child(center)
+	var card := PanelContainer.new()
+	card.add_theme_stylebox_override("panel", _style(Color(0.09, 0.08, 0.13, 0.97), 20))
+	center.add_child(card)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 8)
+	card.add_child(col)
+	col.add_child(_label("Chọn ải", 30, GOLD))
+	col.add_child(_label("Vượt ải để mở ải tiếp theo; ải 10/20/30 là ải boss, thưởng mốc vĩnh viễn.", 14, MUTED))
+	var prefs := Prefs.current()
+	var best := prefs.active_slot.best if _slot_mode and prefs.active_slot != null else 0
+	var unlocked := mini(best + 1, _stages.count())
+	var regions: Array = _stages.regions()
+	for r: Dictionary in regions:
+		var from := int(r.get("from", 1))
+		var to := int(r.get("to", 10))
+		col.add_child(_label(String(r.get("name", "Vùng")), 18, GOLD))
+		var grid := HBoxContainer.new()
+		grid.add_theme_constant_override("separation", 6)
+		col.add_child(grid)
+		for n in range(from, to + 1):
+			var b := Button.new()
+			b.custom_minimum_size = Vector2(64, 56)
+			b.add_theme_font_size_override("font_size", 20)
+			var locked := n > unlocked
+			var cleared := _slot_mode and prefs.active_slot != null and prefs.active_slot.won(n)
+			var boss := _stages.is_boss(n)
+			if n == _stage_n:
+				b.text = str(n)
+				b.add_theme_stylebox_override("normal", _style(Color("4a5a2a"), 6))
+			elif locked:
+				b.text = "×"
+				b.add_theme_stylebox_override("normal", _style(Color("1d1828"), 6))
+			elif cleared:
+				b.text = "✓ %d" % n
+				b.add_theme_stylebox_override("normal", _style(Color("23402a"), 6))
+			else:
+				b.text = str(n)
+				b.add_theme_stylebox_override("normal", _style(PANEL, 6))
+			if boss:
+				b.add_theme_stylebox_override("normal", _style(Color("4a3a10") if not locked else Color("2a2218"), 6))
+			b.disabled = locked
+			var tip := "Ải %d" % n
+			if boss:
+				tip += " · BOSS · thưởng mốc"
+			b.tooltip_text = tip
+			b.pressed.connect(func() -> void:
+				_stage_n = n
+				prefs.set_value("stage_target", n)
+				_stage = _stages.load_stage(n)
+				center.queue_free()
+				menu.visible = true
+				_layer.queue_free()
+				_build_ui())
+			grid.add_child(b)
+	var back := _button("Quay lại", func() -> void:
+		center.queue_free()
+		menu.visible = true)
+	back.custom_minimum_size = Vector2(220, 44)
+	back.add_theme_font_size_override("font_size", 18)
+	col.add_child(back)
+	back.call_deferred("grab_focus")
+
+
+## Character slots: play / rename / delete / create (design/progression.md).
+func _show_slots(root: Control, menu: Control) -> void:
+	menu.visible = false
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.add_child(center)
+	var card := PanelContainer.new()
+	card.add_theme_stylebox_override("panel", _style(Color(0.09, 0.08, 0.13, 0.97), 22))
+	center.add_child(card)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 12)
+	col.custom_minimum_size = Vector2(940, 0)
+	card.add_child(col)
+	col.add_child(_label("Nhân vật", 32, GOLD))
+	var prefs := Prefs.current()
+	var store := prefs.slot_store()
+	var body := VBoxContainer.new()
+	body.add_theme_constant_override("separation", 10)
+	col.add_child(body)
+	var refresh := func() -> void: pass
+	refresh = func() -> void:
+		for c in body.get_children():
+			c.queue_free()
+		var entries := store.list()
+		if entries.is_empty():
+			body.add_child(_label("Chưa có nhân vật. Tạo một nhân vật để bắt đầu.", 16, MUTED))
+		for e: Dictionary in entries:
+			var id := String(e["id"])
+			var s: Slot = e["slot"]
+			if s == null:
+				var broken := PanelContainer.new()
+				broken.add_theme_stylebox_override("panel", _style(Color("3a2020"), 10))
+				var bl := _label("Slot %s: không đọc được (%s) — chỉ có thể xoá." % [id, String(e["error"])], 16, Color("ff9a9a"))
+				broken.add_child(bl)
+				var bd := Button.new()
+				bd.text = "Xóa"
+				bd.add_theme_stylebox_override("normal", _style(PANEL, 8))
+				bd.pressed.connect(func() -> void:
+					store.delete(id)
+					refresh.call())
+				broken.add_child(bd)
+				body.add_child(broken)
+				continue
+			body.add_child(_slot_row(s, id, store, refresh))
+		# create row: name + class
+		var make := HBoxContainer.new()
+		make.add_theme_constant_override("separation", 10)
+		var name_edit := LineEdit.new()
+		name_edit.placeholder_text = "Tên nhân vật"
+		name_edit.custom_minimum_size = Vector2(220, 44)
+		make.add_child(name_edit)
+		var class_pick := OptionButton.new()
+		for cid: String in _class_ids:
+			class_pick.add_item(String(_classes[cid].get("name", cid)))
+		make.add_child(class_pick)
+		var make_b := Button.new()
+		make_b.text = "Tạo mới"
+		make_b.custom_minimum_size = Vector2(150, 44)
+		make_b.add_theme_stylebox_override("normal", _style(PANEL, 8))
+		make_b.pressed.connect(func() -> void:
+			var cls := _class_ids[clampi(class_pick.selected, 0, _class_ids.size() - 1)]
+			var n := name_edit.text.strip_edges()
+			if n == "":
+				n = "Nhân vật %d" % (store.list().size() + 1)
+			var created := store.create(n, cls)
+			if created == null:
+				make_b.tooltip_text = "Đã đầy 4 slot."
+				return
+			prefs.select_slot(created.id)
+			_slot_mode = true
+			_stage_n = 1
+			_stage = _stages.load_stage(1)
+			refresh.call())
+		make.add_child(make_b)
+		if store.list().size() >= 4:
+			make_b.disabled = true
+			name_edit.disabled = true
+			class_pick.disabled = true
+		body.add_child(make)
+	var back := _button("Quay lại", func() -> void:
+		center.queue_free()
+		menu.visible = true
+		_layer.queue_free()
+		_build_ui())
+	back.custom_minimum_size = Vector2(220, 46)
+	back.add_theme_font_size_override("font_size", 18)
+	col.add_child(back)
+	refresh.call()
+	back.call_deferred("grab_focus")
+
+
+func _slot_row(s: Slot, id: String, store: SlotStore, refresh: Callable) -> PanelContainer:
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", _style(PANEL, 10))
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 4)
+	p.add_child(v)
+	var active := Prefs.current().active_slot != null and Prefs.current().active_slot.id == id
+	var head := HBoxContainer.new()
+	head.add_theme_constant_override("separation", 10)
+	v.add_child(head)
+	head.add_child(_label(("● " if active else "○ ") + s.name, 22, GOLD if active else TEXT))
+	head.add_child(_label(String(_classes.get(s.cls, {}).get("name", s.cls)), 16, MUTED))
+	v.add_child(_label("Ải cao nhất: %d  ·  Vàng: %d  ·  Đá: %d" % [s.best, s.gold, s.gems], 15, MUTED))
+	var rw := s.rewards()
+	var rw_names: Array[String] = []
+	var ms := Milestones.load_default()
+	var pool := GameData.load_json(DATA + String(_classes.get(s.cls, {}).get("upgrades", "")))
+	for rid: String in rw:
+		rw_names.append(String(ms.info(rid, pool.get("upgrades", [])).get("name", rid)))
+	var pending_names := PackedStringArray()
+	for x: Variant in s.pending:
+		pending_names.append(str(x))
+	var mtext := "Mốc: " + (", ".join(rw_names) if not rw_names.is_empty() else "chưa có")
+	if not s.pending.is_empty():
+		mtext += "  ·  Chờ chọn: " + ", ".join(pending_names)
+	v.add_child(_label(mtext, 14, MUTED))
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	v.add_child(row)
+	var edit := LineEdit.new()
+	edit.text = s.name
+	edit.custom_minimum_size = Vector2(200, 38)
+	row.add_child(edit)
+	var rename := Button.new()
+	rename.text = "Đổi tên"
+	rename.add_theme_stylebox_override("normal", _style(PANEL, 6))
+	rename.pressed.connect(func() -> void:
+		s.name = edit.text.strip_edges()
+		if s.name == "":
+			s.name = id
+		store.save(s)
+		refresh.call())
+	row.add_child(rename)
+	var play := Button.new()
+	play.text = "Chọn" if not active else "Đang chơi"
+	play.disabled = active
+	play.add_theme_stylebox_override("normal", _style(PANEL, 6))
+	play.pressed.connect(func() -> void:
+		Prefs.current().select_slot(id)
+		_slot_mode = true
+		_stage_n = clampi(Prefs.current().stage_target, 1, s.unlocked(_stages.count()))
+		_stage = _stages.load_stage(_stage_n)
+		refresh.call())
+	row.add_child(play)
+	var del := Button.new()
+	del.text = "Xóa"
+	del.add_theme_stylebox_override("normal", _style(Color("4a2424"), 6))
+	del.pressed.connect(func() -> void:
+		store.delete(id)
+		if Prefs.current().active_slot != null and Prefs.current().active_slot.id == id:
+			Prefs.current().active_slot = null
+			Prefs.current().slot_id = ""
+			for e2: Dictionary in store.list():
+				if e2.get("slot") != null:
+					Prefs.current().select_slot(String(e2["id"]))
+					break
+		refresh.call())
+	row.add_child(del)
+	return p
+
+
 ## Pick a pending milestone reward for [param slot] at stage [param ms].
 func _show_milestone_claim(root: Control, menu: Control, slot: Slot, ms: int) -> void:
 	menu.visible = false
@@ -435,14 +681,18 @@ func _show_milestone_claim(root: Control, menu: Control, slot: Slot, ms: int) ->
 	for oid: String in offers:
 		var info: Dictionary = milestones.info(oid, pool.get("upgrades", []))
 		var b := Button.new()
-		b.custom_minimum_size = Vector2(260, 200)
+		b.custom_minimum_size = Vector2(270, 210)
 		b.add_theme_stylebox_override("normal", _style(PANEL, 12))
 		b.add_theme_stylebox_override("hover", _style(PANEL_HOVER, 12))
 		b.add_theme_stylebox_override("pressed", _style(PANEL_HOVER, 12))
 		var vb := VBoxContainer.new()
 		vb.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		vb.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 12)
-		vb.add_theme_constant_override("separation", 6)
+		vb.set_anchors_preset(Control.PRESET_FULL_RECT)
+		vb.offset_left = 12
+		vb.offset_top = 10
+		vb.offset_right = -12
+		vb.offset_bottom = -10
+		vb.add_theme_constant_override("separation", 4)
 		b.add_child(vb)
 		var tex := TextureRect.new()
 		tex.texture = UiIcons.texture(String(info.get("icon", info.get("id", ""))))
@@ -459,13 +709,16 @@ func _show_milestone_claim(root: Control, menu: Control, slot: Slot, ms: int) ->
 		var kl := _label(String(kinds.get(String(info.get("kind", "")), "")), 14, MUTED)
 		kl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		vb.add_child(kl)
-		var dl := _label(String(info.get("desc", "")), 14, TEXT)
+		var dl := _label(String(info.get("desc", "")), 12, TEXT)
 		dl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		dl.custom_minimum_size = Vector2(246, 88)
 		dl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		dl.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		vb.add_child(dl)
 		b.pressed.connect(func() -> void:
 			slot.choose_milestone(ms, oid)
-			Prefs.current().slot_store().save(slot)
+			if not Prefs.current().is_fixed():
+				Prefs.current().slot_store().save(slot)
 			center.queue_free()
 			menu.visible = true
 			_layer.queue_free()

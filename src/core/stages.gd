@@ -62,6 +62,17 @@ func region(n: int) -> Dictionary:
 	return all.back() if not all.is_empty() else {}
 
 
+## All regions, in stage order (the grid of 3 vùng × 10 ải).
+func regions() -> Array:
+	return data.get("regions", [])
+
+
+## The palette a stage's region draws its floor with (stages.json "ground").
+func ground(n: int) -> Dictionary:
+	var r := region(n)
+	return r.get("ground", {})
+
+
 ## The wave file stage [param n] plays: waves/stage_NNN.json when it exists, else
 ## its region's waves (boss stages: boss_waves).
 func waves_path(n: int) -> String:

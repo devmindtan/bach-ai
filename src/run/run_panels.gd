@@ -694,7 +694,8 @@ func show_end(won: bool) -> void:
 	buttons.add_child(lobby_b)
 
 	# Milestone choice on first clear of a boss stage.
-	if won and int(rr.get("milestone", 0)) > 0 and run.playing_slot != null and run.milestones != null:
+	var pending: Array = rr.get("pending", [])
+	if won and int(rr.get("milestone", 0)) > 0 and pending.has(int(rr["milestone"])) and run.playing_slot != null and run.milestones != null:
 		var ms := int(rr["milestone"])
 		root.add_child(_label("Phần thưởng mốc ải %d · chọn 1 trong 3 (vĩnh viễn)" % ms, 20, MILESTONE))
 		var choices := HBoxContainer.new()
@@ -717,14 +718,18 @@ func show_end(won: bool) -> void:
 
 func _milestone_choice(info: Dictionary, pick: Callable) -> Button:
 	var b := Button.new()
-	b.custom_minimum_size = Vector2(260, 160)
+	b.custom_minimum_size = Vector2(270, 210)
 	b.add_theme_stylebox_override("normal", _style(CARD))
 	b.add_theme_stylebox_override("hover", _style(CARD_HOVER))
 	b.add_theme_stylebox_override("pressed", _style(CARD_HOVER))
 	b.add_theme_stylebox_override("focus", _style(CARD_HOVER))
 	var vb := VBoxContainer.new()
-	vb.add_theme_constant_override("separation", 6)
-	vb.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 10)
+	vb.set_anchors_preset(Control.PRESET_FULL_RECT)
+	vb.offset_left = 12
+	vb.offset_top = 10
+	vb.offset_right = -12
+	vb.offset_bottom = -10
+	vb.add_theme_constant_override("separation", 4)
 	vb.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	b.add_child(vb)
 	var ic := _icon(String(info.get("icon", info.get("id", ""))), 40)
@@ -737,9 +742,11 @@ func _milestone_choice(info: Dictionary, pick: Callable) -> Button:
 	var kind := _label(String(kinds.get(String(info.get("kind", "")), "")), 13, MUTED)
 	kind.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vb.add_child(kind)
-	var d := _label(String(info.get("desc", "")), 13, TEXT)
+	var d := _label(String(info.get("desc", "")), 12, TEXT)
 	d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	d.custom_minimum_size = Vector2(246, 88)   # wrap inside the card instead of spilling out
 	d.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	d.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	vb.add_child(d)
 	b.pressed.connect(pick)
 	return b
