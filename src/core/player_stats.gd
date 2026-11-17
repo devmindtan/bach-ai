@@ -43,3 +43,33 @@ static func compute(base: Dictionary, pool: Array, levels: Dictionary) -> Dictio
 ## Multiplier for a per-skill key (e.g. "skill_damage.whirlwind"), 1 when absent.
 static func skill_mul(stats: Dictionary, key: String) -> float:
 	return float(stats.get(key, 1.0))
+
+
+## Where every stat comes from, for the character sheet:
+## { stat: { "base": float, "final": float, "parts": [ {"id", "name", "level",
+##   "add": float (total for the level) or "mul": float (e.g. -0.4 = -40%)} ] } }.
+## Only stats that exist in the base or that a chosen upgrade touches are listed.
+## "final" is the same value compute() returns.
+static func breakdown(base: Dictionary, pool: Array, levels: Dictionary) -> Dictionary:
+	var final := compute(base, pool, levels)
+	var out := {}
+	for k: String in final:
+		out[k] = {"base": float(base.get(k, 0.0 if not k.contains(".") else 1.0)), "final": float(final[k]), "parts": []}
+	for u: Variant in pool:
+		if not u is Dictionary:
+			continue
+		var lv := int(levels.get(u.get("id", ""), 0))
+		if lv <= 0:
+			continue
+		var effects: Dictionary = u.get("effects", {})
+		for stat: String in effects:
+			if not out.has(stat):
+				continue
+			var e: Dictionary = effects[stat]
+			var part := {"id": u.get("id", ""), "name": u.get("name", u.get("id", "")), "level": lv}
+			if e.has("add"):
+				part["add"] = float(e["add"]) * lv
+			if e.has("mul"):
+				part["mul"] = float(e["mul"]) * lv
+			out[stat]["parts"].append(part)
+	return out

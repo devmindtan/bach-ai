@@ -57,6 +57,11 @@ var hp_bar_time := 2.0
 var kill_pos := PackedVector2Array()
 var kill_xp := PackedFloat32Array()
 var total_kills := 0
+## Per damage source (skill id, "" when unnamed), for the end-of-run table:
+## damage actually dealt (overkill not counted), hits, kills.
+var damage_by := {}
+var hits_by := {}
+var kills_by := {}
 
 var spawn_ring := Vector2(760, 860)
 var despawn_distance := 1300.0
@@ -270,7 +275,7 @@ func _velocity(i: int, k: int, dir: Vector2, dist: float, delta: float) -> Vecto
 ## Damages every living monster whose body overlaps [param hb] (a skill
 ## effect's SpriteHitbox, placed where the effect is drawn). Knockback pushes
 ## away from the hitbox centre. Returns how many were hit.
-func hit_box(hb: SpriteHitbox, damage: float, knockback := 140.0) -> int:
+func hit_box(hb: SpriteHitbox, damage: float, knockback := 140.0, source := "") -> int:
 	_query.clear()
 	_hash.query(hb.center, hb.radius + 32.0, _query)
 	for j in range(_hashed_count, count):   # spawned since the hash was built
@@ -284,29 +289,31 @@ func hit_box(hb: SpriteHitbox, damage: float, knockback := 140.0) -> int:
 			continue
 		hits += 1
 		var d := c - hb.center
-		_damage(i, damage, d.normalized() * knockback if d.length_squared() > 1.0 else Vector2.ZERO)
+		_damage(i, damage, d.normalized() * knockback if d.length_squared() > 1.0 else Vector2.ZERO, source)
 	return hits
 
 
 ## Arc area around [param center] (half angle in radians; PI = full circle).
 ## Convenience for tests and effects without a sprite.
 func hit_arc(center: Vector2, facing: Vector2, radius: float, half_angle: float, damage: float,
-		knockback := 140.0) -> int:
+		knockback := 140.0, source := "") -> int:
 	var hb := SpriteHitbox.new()
 	hb.shape = "arc" if half_angle < PI else "circle"
 	hb.center = center
 	hb.radius = radius
 	hb.dir = facing.normalized()
 	hb.half_angle = half_angle
-	return hit_box(hb, damage, knockback)
+	return hit_box(hb, damage, knockback, source)
 
 
 ## Damages every living monster within [param radius] of [param center].
-func hit_circle(center: Vector2, radius: float, damage: float, knockback := 90.0) -> int:
-	return hit_arc(center, Vector2.RIGHT, radius, PI, damage, knockback)
+func hit_circle(center: Vector2, radius: float, damage: float, knockback := 90.0, source := "") -> int:
+	return hit_arc(center, Vector2.RIGHT, radius, PI, damage, knockback, source)
 
 
-func _damage(i: int, amount: float, kb: Vector2) -> void:
+func _damage(i: int, amount: float, kb: Vector2, source := "") -> void:
+	damage_by[source] = float(damage_by.get(source, 0.0)) + minf(amount, maxf(0.0, hp[i]))
+	hits_by[source] = int(hits_by.get(source, 0)) + 1
 	hp[i] -= amount
 	flash[i] = HURT_FLASH
 	hp_show[i] = hp_bar_time
@@ -319,6 +326,7 @@ func _damage(i: int, amount: float, kb: Vector2) -> void:
 		timer[i] = 0.0
 		anim_t[i] = 0.0
 		total_kills += 1
+		kills_by[source] = int(kills_by.get(source, 0)) + 1
 		kill_pos.append(pos[i])
 		kill_xp.append(k_xp[kind[i]])
 

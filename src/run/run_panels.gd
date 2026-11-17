@@ -192,6 +192,7 @@ func show_pause() -> void:
 	var go_on := _button("Tiếp tục (Esc)", func() -> void: run.resume())
 	actions.add_child(go_on)
 	go_on.call_deferred("grab_focus")
+	actions.add_child(_button("Nhân vật (Tab)", func() -> void: show_character()))
 	actions.add_child(_button("Cài đặt", func() -> void: show_settings()))
 	actions.add_child(_button("Chơi lại", func() -> void: run.restart()))
 	actions.add_child(_button("Về sảnh", func() -> void: run.to_lobby()))
@@ -288,9 +289,118 @@ func _draw_owned_badge(c: Control, lv: int, mx: int, accent: Color, maxed: bool)
 
 func _show_owned_info(info: RichTextLabel, o: Dictionary) -> void:
 	var accent := BORDER if o["skill"] else STAT_ACCENT
+	var body := String(o.get("desc", ""))
+	if o["skill"]:
+		for si: Dictionary in run.skill_info():
+			if si["id"] == o["id"]:
+				body = "Sát thương %d · Hồi chiêu %.2f s · Vùng ×%.2f" % [roundi(si["damage"]), si["cooldown"], si["size"]]
+	else:
+		body = run.card_effect_text(o["id"])
 	info.text = "[b][color=#%s]%s[/color][/b]  [color=#%s]Cấp %d/%d[/color]\n[color=#%s]%s[/color]" % [
 		TEXT.to_html(false), o["name"], accent.to_html(false), o["level"], o["max"],
-		MUTED.to_html(false), o.get("desc", "")]
+		MUTED.to_html(false), body]
+
+
+## Character sheet: every stat with where it comes from (class base + each card),
+## and every skill with its real damage / cooldown / size and the cards changing it.
+func show_character() -> void:
+	var root := _open("Nhân vật")
+	var body := HBoxContainer.new()
+	body.add_theme_constant_override("separation", 36)
+	root.add_child(body)
+	# stats
+	var left := VBoxContainer.new()
+	left.add_theme_constant_override("separation", 6)
+	left.custom_minimum_size = Vector2(360, 0)
+	body.add_child(left)
+	left.add_child(_label("%s · Cấp %d" % [run.class_data.get("name", ""), run.level], 20, BORDER))
+	var bd: Dictionary = PlayerStats.breakdown(run.base_stats, run.pool.get("upgrades", []), run.levels)
+	for key: String in CHARACTER_STATS:
+		# a stat at 0 that no card touches (armour before equipment) is noise
+		if bd.has(key) and (not bd[key]["parts"].is_empty() or not is_zero_approx(float(bd[key]["final"]))):
+			left.add_child(_stat_row(key, bd[key]))
+	# skills
+	var right := VBoxContainer.new()
+	right.add_theme_constant_override("separation", 10)
+	right.custom_minimum_size = Vector2(520, 0)
+	body.add_child(right)
+	right.add_child(_label("Chiêu thức", 20, BORDER))
+	for si: Dictionary in run.skill_info():
+		right.add_child(_skill_row(si))
+	var back := _button("Quay lại (Esc)", func() -> void: show_pause())
+	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	root.add_child(back)
+	back.call_deferred("grab_focus")
+
+
+const CHARACTER_STATS := ["max_hp", "damage", "cooldown", "area", "move_speed", "regen", "magnet", "armor"]
+
+
+## One stat: name and final value on a line, then "gốc X" and each card's share.
+func _stat_row(key: String, b: Dictionary) -> VBoxContainer:
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 0)
+	var head := HBoxContainer.new()
+	var name := _label(String(run.STAT_LABEL.get(key, key)), 16, TEXT)
+	name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.add_child(name)
+	var changed: bool = not b["parts"].is_empty()
+	head.add_child(_label(run._fmt_stat(key, float(b["final"])), 16, GAIN if changed else TEXT))
+	v.add_child(head)
+	var bits := ["gốc %s" % run._fmt_stat(key, float(b["base"]))]
+	for part: Dictionary in b["parts"]:
+		var amount: String = ("%+d%%" % roundi(float(part["mul"]) * 100.0)) if part.has("mul") else run.signed(float(part["add"]))
+		bits.append("%s %d: %s" % [part["name"], part["level"], amount])
+	var src := _label("  ·  ".join(bits), 12, MUTED)
+	src.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	src.custom_minimum_size = Vector2(360, 0)
+	v.add_child(src)
+	return v
+
+
+## One skill: icon, name and level; real numbers (with the class-only value);
+## the cards that change it.
+func _skill_row(si: Dictionary) -> PanelContainer:
+	var card := PanelContainer.new()
+	var st := _style(CARD, BORDER)
+	st.set_content_margin_all(10)
+	card.add_theme_stylebox_override("panel", st)
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 12)
+	card.add_child(h)
+	var icon := TextureRect.new()
+	icon.texture = UiIcons.texture(si["id"])
+	icon.custom_minimum_size = Vector2(40, 40)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	icon.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	h.add_child(icon)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 2)
+	h.add_child(v)
+	var head := RichTextLabel.new()
+	head.bbcode_enabled = true
+	head.fit_content = true
+	head.scroll_active = false
+	head.autowrap_mode = TextServer.AUTOWRAP_OFF
+	head.custom_minimum_size = Vector2(440, 0)
+	head.add_theme_font_size_override("normal_font_size", 14)
+	head.add_theme_font_size_override("bold_font_size", 16)
+	head.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	head.text = "[b]%s[/b]  [color=#%s]Cấp %d/%d[/color]\n%s" % [si["name"], BORDER.to_html(false), si["level"], si["max"],
+		"Sát thương [b][color=#%s]%d[/color][/b] [color=#%s](gốc %d)[/color]   Hồi chiêu [b][color=#%s]%.2f s[/color][/b] [color=#%s](gốc %.2f)[/color]   Vùng [b]×%.2f[/b]" % [
+			GAIN.to_html(false), roundi(si["damage"]), MUTED.to_html(false), roundi(si["base_damage"]),
+			GAIN.to_html(false), si["cooldown"], MUTED.to_html(false), si["base_cooldown"], si["size"]]]
+	v.add_child(head)
+	var bits := []
+	for p: Dictionary in si["sources"]:
+		bits.append("%s %d: %s %s" % [p["name"], p["level"], p["what"], p["text"]])
+	var src := _label("  ·  ".join(bits) if not bits.is_empty() else "Chưa có thẻ nào tác động.", 12, MUTED)
+	src.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	src.custom_minimum_size = Vector2(440, 0)
+	v.add_child(src)
+	return card
 
 
 func show_settings() -> void:
@@ -298,6 +408,9 @@ func show_settings() -> void:
 	root.add_child(SettingsPanel.build(func() -> void: show_pause()))
 
 
+## Win / lose: time, level, kills, gold; then the damage table (each skill's
+## damage with its share as a bar, hits, kills, damage per second), damage taken
+## and hp healed; the two buttons on one row.
 func show_end(won: bool) -> void:
 	var root := _open("Vượt ải!" if won else "Thất bại")
 	var t := int(run.clock)
@@ -309,10 +422,82 @@ func show_end(won: bool) -> void:
 	row.add_child(_icon_value("skull", str(run.enemies.total_kills)))
 	row.add_child(_icon_value("coin", str(run.gold)))
 	root.add_child(row)
+	var report: Array = run.damage_report()
+	if not report.is_empty():
+		root.add_child(_damage_table(report))
+	var total := 0.0
+	for r: Dictionary in report:
+		total += float(r["damage"])
+	var foot := _label("Tổng sát thương %d  ·  Sát thương nhận %d  ·  Máu đã hồi %d" % [
+		roundi(total), roundi(run.damage_taken), roundi(run.healed)], 14, MUTED)
+	foot.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	root.add_child(foot)
+	var buttons := HBoxContainer.new()
+	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
+	buttons.add_theme_constant_override("separation", 16)
+	root.add_child(buttons)
 	var again := _button("Chơi lại (R)", func() -> void: run.restart())
-	root.add_child(again)
-	root.add_child(_button("Về sảnh", func() -> void: run.to_lobby()))
+	buttons.add_child(again)
+	buttons.add_child(_button("Về sảnh", func() -> void: run.to_lobby()))
 	again.call_deferred("grab_focus")
+
+
+const DMG_BAR := 150.0
+
+
+func _damage_table(report: Array) -> GridContainer:
+	var g := GridContainer.new()
+	g.columns = 6
+	g.add_theme_constant_override("h_separation", 18)
+	g.add_theme_constant_override("v_separation", 6)
+	for h in ["Chiêu", "Sát thương", "%", "Trúng", "Hạ", "DPS"]:
+		var l := _label(h, 13, MUTED)
+		if h != "Chiêu":
+			l.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		g.add_child(l)
+	var top := maxf(1.0, float(report[0]["damage"]))
+	for r: Dictionary in report:
+		var name := HBoxContainer.new()
+		name.add_theme_constant_override("separation", 8)
+		var icon := TextureRect.new()
+		icon.texture = UiIcons.texture(r["id"])
+		icon.custom_minimum_size = Vector2(24, 24)
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		name.add_child(icon)
+		var nl := _label(String(r["name"]), 15, TEXT)
+		nl.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		name.add_child(nl)
+		g.add_child(name)
+		# damage: bar scaled to the top row, number at its right
+		var dmg := HBoxContainer.new()
+		dmg.add_theme_constant_override("separation", 8)
+		var bar := Control.new()
+		bar.custom_minimum_size = Vector2(DMG_BAR, 24)
+		var frac := float(r["damage"]) / top
+		bar.draw.connect(func() -> void:
+			bar.draw_rect(Rect2(0, 8, DMG_BAR, 8), PIP_LOCKED)
+			bar.draw_rect(Rect2(0, 8, roundf(DMG_BAR * frac), 8), BORDER))
+		dmg.add_child(bar)
+		var dl := _label(_big(float(r["damage"])), 15, TEXT)
+		dl.custom_minimum_size = Vector2(56, 0)
+		dl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		dl.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		dmg.add_child(dl)
+		g.add_child(dmg)
+		for v in ["%d%%" % roundi(float(r["share"]) * 100.0), str(r["hits"]), str(r["kills"]), "%.1f" % float(r["dps"])]:
+			var l := _label(v, 15, TEXT)
+			l.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+			l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			l.custom_minimum_size = Vector2(44, 0)
+			g.add_child(l)
+	return g
+
+
+## 1234 -> "1234", 12345 -> "12.3k".
+static func _big(v: float) -> String:
+	return str(roundi(v)) if v < 10000.0 else "%.1fk" % (v / 1000.0)
 
 
 func _icon_value(icon: String, value: String) -> HBoxContainer:

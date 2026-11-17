@@ -135,3 +135,17 @@ func test_nearest_finds_far_monster_when_unbounded() -> void:
 	_settle(e)
 	_check(e.nearest(Vector2.ZERO, INF) == 1, "the monster 400 px away is the nearest")
 	_check(e.nearest(Vector2.ZERO, 100.0) == -1, "none within 100 px")
+
+
+func test_damage_is_recorded_per_source_capped_at_hp() -> void:
+	var e := _enemies()
+	e.spawn("blob", Vector2(50, 0))   # 18 hp
+	e.spawn("blob", Vector2(-50, 0))
+	_settle(e)
+	e.hit_arc(Vector2.ZERO, Vector2.RIGHT, 70.0, deg_to_rad(70.0), 10.0, 0.0, "blade_arc")
+	e.hit_circle(Vector2.ZERO, 80.0, 30.0, 0.0, "frost_nova")
+	_check(is_equal_approx(float(e.damage_by.get("blade_arc", 0.0)), 10.0), "blade: 10 dealt, got %s" % e.damage_by.get("blade_arc"))
+	# frost hits both: 8 left on the first (overkill not counted) + 18 on the second
+	_check(is_equal_approx(float(e.damage_by.get("frost_nova", 0.0)), 26.0), "frost: 8 + 18 dealt, got %s" % e.damage_by.get("frost_nova"))
+	_check(int(e.hits_by.get("frost_nova", 0)) == 2, "frost hit twice")
+	_check(int(e.kills_by.get("frost_nova", 0)) == 2 and int(e.kills_by.get("blade_arc", 0)) == 0, "both kills go to frost")

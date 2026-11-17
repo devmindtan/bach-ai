@@ -9,7 +9,7 @@ extends Node2D
 ##   --sim-steps=N   simulate N fixed steps per frame (fast-forward for shots)
 ##   --walk=X,Y      the demo walks in a fixed direction (shots of each view)
 ##   --god           the hero takes no damage (shots of the win screen)
-##   --pause-view=settings  with --pause-at, open the settings page (shots)
+##   --pause-view=settings|character  with --pause-at, open that page (shots)
 ##   --pause-at=T    open the pause panel at T seconds (shots)
 ##   --offer=a,b,c   the first level-up offers these upgrade ids (shots of the cards)
 ##   --no-auto-pick  the demo stops at the first level-up panel (for shots)
@@ -85,8 +85,10 @@ var auto_pick := true
 var offer: Array[String] = []   # forced cards for the first level-up (--offer)
 var forced_walk := Vector2.ZERO
 var pause_at := -1.0
-var pause_view := ""   # "settings": the --pause-at pause opens the settings page (shots)
+var pause_view := ""   # "settings" / "character": the --pause-at pause opens that page (shots)
 var god := false
+var damage_taken := 0.0   # end-of-run table
+var healed := 0.0
 var _bench_frames := 0
 var _bench_tick_us: PackedInt64Array = []
 var _bench_frame_us: PackedInt64Array = []
@@ -238,6 +240,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			open_pause()
 		elif state == State.PAUSED:
 			resume()
+	elif event.is_action_pressed("character"):
+		if state == State.PLAYING:
+			open_pause()
+			_panels.show_character()
+		elif state == State.PAUSED:
+			resume()
 	elif state == State.LEVEL_UP:
 		for i in 3:
 			if event.is_action_pressed("choose_%d" % (i + 1)) and i < choices.size():
@@ -266,6 +274,8 @@ func _tick(dt: float) -> void:
 		open_pause()
 		if pause_view == "settings":
 			_panels.show_settings()
+		elif pause_view == "character":
+			_panels.show_character()
 		return
 	_move_player(dt)
 	_spawn(clock - dt, clock)
@@ -273,7 +283,9 @@ func _tick(dt: float) -> void:
 	if contact > 0.0 and invuln <= 0.0 and bench == 0 and not god:
 		_take_hit(contact)
 	invuln = maxf(0.0, invuln - dt)
+	var before := hp
 	hp = minf(float(stats["max_hp"]), hp + float(stats.get("regen", 0.0)) * dt)
+	healed += maxf(0.0, hp - before)
 	_skills(dt)
 	_drops()
 	var got := pickups.step(dt, player_pos + _hit_center, float(stats.get("magnet", 1.0)))
@@ -340,7 +352,9 @@ func _spawn(t0: float, t1: float) -> void:
 
 
 func _take_hit(amount: float) -> void:
-	hp -= maxf(1.0, amount - float(stats.get("armor", 0.0)))
+	var taken := maxf(1.0, amount - float(stats.get("armor", 0.0)))
+	hp -= taken
+	damage_taken += taken
 	invuln = float(cfg.get("player", {}).get("hit_invuln", 0.6))
 	_play_action("hurt")
 
@@ -360,23 +374,20 @@ func _drops() -> void:
 
 func _skills(dt: float) -> void:
 	var skills: Dictionary = pool.get("skills", {})
-	var area := float(stats.get("area", 1.0))
 	if levels.get("blade_arc", 0) > 0:
 		var s: Dictionary = skills["blade_arc"]
 		_blade_cd -= dt
 		if _blade_cd <= 0.0:
-			_blade_cd = float(stats["cooldown"]) * float(s.get("cooldown_mul", 1.0))
-			var dmg := float(stats["damage"]) * float(s.get("damage_mul", 1.0)) \
-				* PlayerStats.skill_mul(stats, "skill_damage.blade_arc")
-			var sc := _sprite_scale * area * float(s.get("size_mul", 1.0)) \
-				* PlayerStats.skill_mul(stats, "skill_area.blade_arc")
+			_blade_cd = skill_cooldown("blade_arc")
+			var dmg := skill_damage("blade_arc")
+			var sc := _sprite_scale * skill_size("blade_arc")
 			var sprite := String(s.get("sprite", "sword-slash"))
 			_aim()
-			_add_fx(sprite, _slash_anim(attack_dir), sc, dmg)
+			_add_fx(sprite, _slash_anim(attack_dir), sc, dmg, -1.0, null, "blade_arc")
 			var back := int(levels.get("back_slash", 0))
 			if back > 0:
 				var mul := float(s.get("back_damage_mul", 0.5)) + float(s.get("back_damage_per_level", 0.25)) * (back - 1)
-				_add_fx(sprite, _slash_anim(-attack_dir), sc, dmg * mul)
+				_add_fx(sprite, _slash_anim(-attack_dir), sc, dmg * mul, -1.0, null, "back_slash")
 	if levels.get("whirlwind", 0) > 0:
 		var w: Dictionary = skills["whirlwind"]
 		if _whirl_left > 0.0:
@@ -386,22 +397,19 @@ func _skills(dt: float) -> void:
 			var due := int(floor((dur - maxf(_whirl_left, 0.0)) / dur * ticks)) + 1
 			while _whirl_ticks_done < mini(due, ticks):
 				_whirl_ticks_done += 1
-				var dmg := float(stats["damage"]) * float(w.get("damage_mul", 0.6)) \
-					* PlayerStats.skill_mul(stats, "skill_damage.whirlwind")
+				var dmg := skill_damage("whirlwind")
 				for fx in _fx:
 					if fx["anim"] == "spin":
 						var hb := SpriteHitbox.of(fx["sheet"], "spin", player_pos + _hit_center, float(fx["scale"]))
 						if hb != null:
-							enemies.hit_box(hb, dmg, 90.0)
+							enemies.hit_box(hb, dmg, 90.0, "whirlwind")
 		else:
 			_whirl_cd -= dt
 			if _whirl_cd <= 0.0:
-				var haste := float(stats["cooldown"]) / maxf(0.01, float(base_stats.get("cooldown", 1.0)))
-				_whirl_cd = float(w.get("cooldown", 3.0)) * haste
+				_whirl_cd = skill_cooldown("whirlwind")
 				_whirl_left = float(w.get("duration", 0.9))
 				_whirl_ticks_done = 0
-				var sc := _sprite_scale * area * float(w.get("size_mul", 1.0)) \
-					* PlayerStats.skill_mul(stats, "skill_area.whirlwind")
+				var sc := _sprite_scale * skill_size("whirlwind")
 				_add_fx(String(w.get("sprite", "whirlwind")), "spin", sc, 0.0, _whirl_left)
 
 
@@ -424,12 +432,9 @@ func _skills(dt: float) -> void:
 		var cd_left := float(_tier_cd.get(tid, 0.0)) - dt
 		_tier_cd[tid] = cd_left
 		if cd_left <= 0.0:
-			var haste := float(stats["cooldown"]) / maxf(0.01, float(base_stats.get("cooldown", 1.0)))
-			_tier_cd[tid] = float(ts.get("cooldown", 3.5)) * haste
-			var dmg := float(stats["damage"]) * float(ts.get("damage_mul", 1.0)) \
-				* PlayerStats.skill_mul(stats, "skill_damage." + tid)
-			var sc := _sprite_scale * area * float(ts.get("size_mul", 1.0)) \
-				* PlayerStats.skill_mul(stats, "skill_area." + tid)
+			_tier_cd[tid] = skill_cooldown(tid)
+			var dmg := skill_damage(tid)
+			var sc := _sprite_scale * skill_size(tid)
 			var cdir := attack_dir
 			var target_i := enemies.nearest(player_pos + _hit_center, INF)
 			if target_i >= 0:
@@ -438,7 +443,126 @@ func _skills(dt: float) -> void:
 				cdir = Vector2.RIGHT
 			var cast_range := float(ts.get("cast_range", 140.0))
 			var cast_pos := player_pos + _hit_center + cdir.normalized() * cast_range
-			_add_fx(sprite, "burst", sc, dmg, -1.0, cast_pos)
+			_add_fx(sprite, "burst", sc, dmg, -1.0, cast_pos, tid)
+
+
+## Skill numbers, shared by casting, the HUD and the character sheet so they never
+## disagree. [param st] defaults to the current stats (pass others for previews).
+func skill_damage(id: String, st: Dictionary = {}) -> float:
+	if st.is_empty():
+		st = stats
+	var sp: Dictionary = pool.get("skills", {}).get(id, {})
+	return float(st.get("damage", 0.0)) * float(sp.get("damage_mul", 1.0)) * PlayerStats.skill_mul(st, "skill_damage." + id)
+
+
+## Size multiplier of a skill's effect (area stat x skill size x per-skill area).
+func skill_size(id: String, st: Dictionary = {}) -> float:
+	if st.is_empty():
+		st = stats
+	var sp: Dictionary = pool.get("skills", {}).get(id, {})
+	return float(st.get("area", 1.0)) * float(sp.get("size_mul", 1.0)) * PlayerStats.skill_mul(st, "skill_area." + id)
+
+
+## Seconds between casts. A skill with its own "cooldown" scales it by the class
+## cooldown stat relative to its base (so -10% haste is -10% here too); the basic
+## attack uses the cooldown stat itself (times "cooldown_mul").
+func skill_cooldown(id: String, st: Dictionary = {}) -> float:
+	if st.is_empty():
+		st = stats
+	var sp: Dictionary = pool.get("skills", {}).get(id, {})
+	if sp.has("cooldown"):
+		var haste := float(st.get("cooldown", 1.0)) / maxf(0.01, float(base_stats.get("cooldown", 1.0)))
+		return float(sp["cooldown"]) * haste
+	return float(st.get("cooldown", 1.0)) * float(sp.get("cooldown_mul", 1.0))
+
+
+## Cooldown shown on the HUD: [seconds left, cooldown, active]. active = the skill
+## is running now (whirlwind spinning).
+func cooldown_state(id: String) -> Array:
+	var total := skill_cooldown(id)
+	match id:
+		"blade_arc":
+			return [maxf(0.0, _blade_cd), total, false]
+		"whirlwind":
+			return [0.0 if _whirl_left > 0.0 else maxf(0.0, _whirl_cd), total, _whirl_left > 0.0]
+		_:
+			return [maxf(0.0, float(_tier_cd.get(id, 0.0))), total, false]
+
+
+## End-of-run table, one row per damage source, most damage first:
+## [{id, name, damage, share (0..1), hits, kills, dps}]. The back slash is its own row.
+func damage_report() -> Array:
+	var rows := []
+	var total := 0.0
+	for k: String in enemies.damage_by:
+		total += float(enemies.damage_by[k])
+	for k: String in enemies.damage_by:
+		var d := float(enemies.damage_by[k])
+		var u := upgrade(k)
+		rows.append({"id": k, "name": u.get("name", k if k != "" else "Khác"), "damage": d,
+			"share": d / total if total > 0.0 else 0.0, "hits": int(enemies.hits_by.get(k, 0)),
+			"kills": int(enemies.kills_by.get(k, 0)), "dps": d / maxf(1.0, clock)})
+	rows.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a["damage"] > b["damage"])
+	return rows
+
+
+## What a card does right now, in numbers, for the pause menu: one line per
+## effect, e.g. "Hồi chiêu -40% (0.54 s) · áp lên: Chém kiếm, Lốc xoáy".
+func card_effect_text(id: String) -> String:
+	var u := upgrade(id)
+	var lv := int(levels.get(id, 0))
+	var parts := []
+	var owned_skills := skill_info().map(func(si: Dictionary) -> String: return String(si["name"]))
+	for key: String in u.get("effects", {}):
+		var e: Dictionary = u["effects"][key]
+		if key == "back_slash":
+			var ba: Dictionary = pool.get("skills", {}).get("blade_arc", {})
+			var pct := float(ba.get("back_damage_mul", 0.5)) + float(ba.get("back_damage_per_level", 0.25)) * (lv - 1)
+			parts.append("Nhát chém sau %d%% sát thương của Chém kiếm" % roundi(pct * 100.0))
+			continue
+		var amount: String = ("%+d%%" % roundi(float(e["mul"]) * lv * 100.0)) if e.has("mul") else signed(float(e["add"]) * lv)
+		if key.begins_with("skill_damage.") or key.begins_with("skill_area."):
+			parts.append("%s %s" % ["Sát thương" if key.begins_with("skill_damage.") else "Vùng", amount])
+			continue
+		var line := "%s %s (hiện %s)" % [STAT_LABEL.get(key, key), amount, _fmt_stat(key, float(stats.get(key, 0.0)))]
+		if key in ["damage", "cooldown", "area"] and not owned_skills.is_empty():
+			line += " · áp lên: " + ", ".join(owned_skills)
+		parts.append(line)
+	return "\n".join(parts)
+
+
+## Owned skills (kind "skill"), pool order: {id, name, level, max, damage, cooldown,
+## size, base_damage, base_cooldown, sources}. sources = the cards changing this
+## skill: [{id, name, level, what, text}], e.g. what "Hồi chiêu", text "-20%".
+func skill_info() -> Array:
+	var out := []
+	var plain := PlayerStats.compute(base_stats, [], {})   # class stats, no cards
+	for u: Dictionary in pool.get("upgrades", []):
+		var id := String(u["id"])
+		var lv := int(levels.get(id, 0))
+		if u.get("kind") != "skill" or lv <= 0:
+			continue
+		var touches := {"damage": "Sát thương", "cooldown": "Hồi chiêu", "area": "Vùng",
+			"skill_damage." + id: "Sát thương", "skill_area." + id: "Vùng"}
+		var sources := []
+		for v: Dictionary in pool.get("upgrades", []):
+			var vl := int(levels.get(v["id"], 0))
+			if vl <= 0:
+				continue
+			var effects: Dictionary = v.get("effects", {})
+			for key: String in effects:
+				var e: Dictionary = effects[key]
+				if touches.has(key):
+					var t: String = ("%+d%%" % roundi(float(e["mul"]) * vl * 100.0)) if e.has("mul") else signed(float(e["add"]) * vl)
+					sources.append({"id": v["id"], "name": v.get("name", v["id"]), "level": vl, "what": touches[key], "text": t})
+				elif key == "back_slash" and id == "blade_arc":
+					var ba: Dictionary = pool.get("skills", {}).get("blade_arc", {})
+					var pct := float(ba.get("back_damage_mul", 0.5)) + float(ba.get("back_damage_per_level", 0.25)) * (vl - 1)
+					sources.append({"id": v["id"], "name": v.get("name", v["id"]), "level": vl, "what": "Nhát sau", "text": "%d%%" % roundi(pct * 100.0)})
+		out.append({"id": id, "name": u.get("name", id), "level": lv, "max": int(u.get("max_level", 1)),
+			"damage": skill_damage(id), "cooldown": skill_cooldown(id), "size": skill_size(id),
+			"base_damage": skill_damage(id, plain), "base_cooldown": skill_cooldown(id, plain), "sources": sources})
+	return out
 
 
 func _aim() -> void:
@@ -472,13 +596,13 @@ func _slash_anim(d: Vector2) -> String:
 ## shields, orbiting states). When [param world_pos] is given it is placed there
 ## in the world instead (projectiles / cast-out AOE). When [param damage] > 0 it
 ## hits once, on the animation's active frames, through the sprite hitbox.
-func _add_fx(sprite: String, anim: String, sc: float, damage: float, life := -1.0, world_pos: Variant = null) -> void:
+func _add_fx(sprite: String, anim: String, sc: float, damage: float, life := -1.0, world_pos: Variant = null, source := "") -> void:
 	var sheet: SpriteSheet = sheets.get(sprite)
 	if sheet == null:
 		return
 	_fx.append({"sheet": sheet, "anim": anim, "t": 0.0, "scale": sc, "damage": damage, "done": damage <= 0.0,
 		"life": life if life > 0.0 else sheet.duration(anim),
-		"pos": world_pos, "follow": world_pos == null})
+		"pos": world_pos, "follow": world_pos == null, "source": source})
 
 
 
@@ -498,7 +622,7 @@ func _step_fx(dt: float) -> void:
 			if hb == null:
 				fx["done"] = true
 			elif hb.is_active(float(fx["t"])):
-				enemies.hit_box(hb, float(fx["damage"]))
+				enemies.hit_box(hb, float(fx["damage"]), 140.0, String(fx.get("source", "")))
 				fx["done"] = true
 		if float(fx["t"]) >= float(fx["life"]):
 			_fx.remove_at(i)
@@ -603,6 +727,12 @@ func upgrade_preview(id: String) -> Dictionary:
 
 const STAT_LABEL := {"max_hp": "Máu tối đa", "damage": "Sát thương", "cooldown": "Hồi chiêu", "area": "Vùng đánh",
 	"move_speed": "Tốc độ chạy", "magnet": "Tầm hút", "regen": "Hồi máu", "armor": "Giáp"}
+
+
+## "+20", "-0.5", "+1.5": a signed amount without a trailing ".0".
+static func signed(v: float) -> String:
+	var t := ("%+.1f" % v)
+	return t.trim_suffix(".0")
 
 
 static func _fmt_stat(key: String, v: float) -> String:

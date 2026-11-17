@@ -99,6 +99,61 @@ func _draw() -> void:
 	x -= 60 + kw
 	_text(font, Vector2(x, _baseline(ROW, 22)), kills, 22)
 	UiIcons.draw(self, "skull", Vector2(x - 22, ROW), 2.0)
+	_draw_skill_bar(font)
+
+
+
+const SLOT := 48.0
+const SLOT_GAP := 8.0
+const SLOT_BOTTOM := 18.0   # gap under the bar
+const COOL := Color(0.02, 0.02, 0.05, 0.72)
+const ACTIVE := Color("ffd36b")
+
+
+## Owned skills along the bottom centre: icon in a slot, a dark sweep for the
+## cooldown left (clockwise from 12 o'clock), seconds left on longer cooldowns,
+## gold frame while the skill is running (whirlwind spinning).
+func _draw_skill_bar(font: Font) -> void:
+	var skills: Array = run.skill_info()
+	if skills.is_empty():
+		return
+	var w := skills.size() * SLOT + (skills.size() - 1) * SLOT_GAP
+	var x := roundf(size.x * 0.5 - w * 0.5)
+	var y := size.y - SLOT_BOTTOM - SLOT
+	for si: Dictionary in skills:
+		var r := Rect2(x, y, SLOT, SLOT)
+		var cd: Array = run.cooldown_state(si["id"])
+		draw_rect(r, BACK)
+		var tex := UiIcons.texture(si["id"])
+		if tex != null:
+			draw_texture_rect(tex, Rect2(r.position + Vector2(8, 8), Vector2(32, 32)), false)
+		var left := float(cd[0])
+		var total := maxf(0.01, float(cd[1]))
+		if left > 0.0:
+			_draw_sweep(r.grow(-2), clampf(left / total, 0.0, 1.0))
+			if total >= 1.5:
+				var t := ("%.1f" % left) if left < 10.0 else str(ceili(left))
+				_centered(font, Vector2(r.get_center().x, _baseline(r.get_center().y, 16)), t, 16)
+		var border := ACTIVE if bool(cd[2]) else (MUTED if left > 0.0 else TEXT)
+		draw_rect(r, border, false, 2.0)
+		x += SLOT + SLOT_GAP
+
+
+## Dark sector over [param r] covering [param frac] of a turn, clockwise from the top.
+func _draw_sweep(r: Rect2, frac: float) -> void:
+	if frac >= 0.999:
+		draw_rect(r, COOL)
+		return
+	var c := r.get_center()
+	var half := r.size * 0.5
+	var pts := PackedVector2Array([c])
+	var steps := maxi(2, ceili(frac * 64.0))
+	for i in steps + 1:
+		var ang := -PI * 0.5 + TAU * frac * float(i) / float(steps)
+		var d := Vector2(cos(ang), sin(ang))
+		var k := minf(half.x / maxf(absf(d.x), 0.0001), half.y / maxf(absf(d.y), 0.0001))
+		pts.append(c + d * k)
+	draw_colored_polygon(pts, COOL)
 
 
 func _centered(font: Font, baseline_center: Vector2, s: String, sz: int) -> void:

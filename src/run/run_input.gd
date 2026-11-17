@@ -18,6 +18,7 @@ static func register() -> void:
 	_add("choose_2", [KEY_2, KEY_KP_2], [JOY_BUTTON_Y], [])
 	_add("choose_3", [KEY_3, KEY_KP_3], [JOY_BUTTON_B], [])
 	_add("restart", [KEY_R, KEY_ENTER], [JOY_BUTTON_A], [])
+	_add("character", [KEY_TAB, KEY_C], [JOY_BUTTON_BACK], [])
 
 
 static func _add(action: String, keys: Array, buttons: Array, axes: Array) -> void:
