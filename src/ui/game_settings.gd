@@ -32,6 +32,7 @@ var _profile: Profile                 # screenshots / tests: defaults, never tou
 var _store: SlotStore                 # character slots (user://slots, phase 3)
 var active_slot: Slot                 # the slot in play; null in fixed/test mode unless set
 var _ensuring_slots := false          # guards select_slot <-> ensure_slots recursion
+var _force_slots := false             # --force-slots: in-memory slot for shots of slot mode
 
 static var _default: Prefs
 
@@ -53,6 +54,8 @@ func _ready() -> void:
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--gk-"):
 			_fixed = true
+		elif a == "--force-slots":
+			_force_slots = true
 		elif a.begins_with("--class="):   # shots / tests: play this class
 			forced_hero = a.get_slice("=", 1)
 	if DisplayServer.get_name() == "headless":
@@ -61,8 +64,24 @@ func _ready() -> void:
 		_load()
 	if forced_hero != "":
 		hero = forced_hero
+	if _fixed and _force_slots:
+		_make_preview_slot()
 	apply()
 	get_tree().root.size_changed.connect(_fit_scale)
+
+
+## An in-memory slot for shots of slot mode (never saved: fixed mode blocks writes).
+func _make_preview_slot() -> void:
+	var s := SlotStore.new_slot("Nhân vật 1", hero, slot_store().defs)
+	s.id = "slot1"
+	s.best = 9
+	s.gold = 140
+	s.gems = 52
+	s.wins["10"] = 2
+	s.milestones["10"] = "earthquake"
+	s.profile.equip(hero, "iron_helm")
+	active_slot = s
+	stage_target = 10
 
 
 ## True for screenshots and tests: nothing is read from or written to disk.

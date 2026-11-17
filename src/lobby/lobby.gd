@@ -46,10 +46,10 @@ func _ready() -> void:
 				if e.get("slot") != null:
 					prefs.select_slot(String(e["id"]))
 					break
-		if prefs.active_slot != null:
-			_slot_mode = true
-			prefs.hero = prefs.active_slot.cls
-			prefs.stage_target = clampi(prefs.stage_target, 1, prefs.active_slot.unlocked(_stages.count()))
+	if prefs.active_slot != null:
+		_slot_mode = true
+		prefs.hero = prefs.active_slot.cls
+		prefs.stage_target = clampi(prefs.stage_target, 1, prefs.active_slot.unlocked(_stages.count()))
 	_stage_n = prefs.stage_target if _slot_mode else 1
 	_stage_n = clampi(_stage_n, 1, _stages.count())
 	_stage = _stages.load_stage(_stage_n)
@@ -209,11 +209,18 @@ func _build_ui() -> void:
 	role.size = Vector2(520, 26)
 	role.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	menu.add_child(role)
-	var dots := _label(" ".join(_class_ids.map(func(id: String) -> String: return "●" if _classes[id] == _class else "○")), 16, MUTED)
-	dots.position = Vector2(PEDESTAL_X - 260, PEDESTAL_Y + 130)
-	dots.size = Vector2(520, 24)
-	dots.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	menu.add_child(dots)
+	if _slot_mode and Prefs.current().active_slot != null:
+		var tag := _label("Nhân vật: %s" % Prefs.current().active_slot.name, 16, MUTED)
+		tag.position = Vector2(PEDESTAL_X - 260, PEDESTAL_Y + 130)
+		tag.size = Vector2(520, 24)
+		tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		menu.add_child(tag)
+	else:
+		var dots := _label(" ".join(_class_ids.map(func(id: String) -> String: return "●" if _classes[id] == _class else "○")), 16, MUTED)
+		dots.position = Vector2(PEDESTAL_X - 260, PEDESTAL_Y + 130)
+		dots.size = Vector2(520, 24)
+		dots.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		menu.add_child(dots)
 
 	# right: the class card (stats, passive, starting skill, skill set)
 	var card := _card()
@@ -257,36 +264,42 @@ func _build_ui() -> void:
 	for u: Dictionary in skills:
 		icons.add_child(_icon_tile(String(u.get("icon", u["id"])), String(u.get("name", "")), String(u.get("desc", ""))))
 
-	# bottom: stage and start
+	# bottom: stage and start. The card must stop before the start button: with
+	# slot mode it also holds ‹/› and "Chọn ải", and used to run under the button.
+	var start_x := vp.x - 32 - 300
+	var stage_left := 440.0
 	var stage_card := _card()
-	stage_card.position = Vector2(620, vp.y - BOTTOM_ROW)
-	stage_card.custom_minimum_size = Vector2(0, ROW_H)
+	stage_card.position = Vector2(stage_left, vp.y - BOTTOM_ROW)
+	stage_card.custom_minimum_size = Vector2(maxf(240.0, start_x - 16.0 - stage_left), ROW_H)
 	menu.add_child(stage_card)
 	var sh := HBoxContainer.new()
-	sh.add_theme_constant_override("separation", 10)
+	sh.add_theme_constant_override("separation", 8)
 	sh.alignment = BoxContainer.ALIGNMENT_CENTER
 	stage_card.add_child(sh)
 	var pick_stage := Button.new()
 	pick_stage.text = "Chọn ải"
-	pick_stage.custom_minimum_size = Vector2(110, 42)
-	pick_stage.add_theme_font_size_override("font_size", 16)
+	pick_stage.custom_minimum_size = Vector2(96, 42)
+	pick_stage.add_theme_font_size_override("font_size", 15)
 	pick_stage.add_theme_stylebox_override("normal", _style(PANEL, 6))
 	pick_stage.add_theme_stylebox_override("hover", _style(PANEL_HOVER, 6))
 	pick_stage.pressed.connect(func() -> void: _show_stage_select(root, menu))
 	sh.add_child(pick_stage)
 	if _slot_mode:
 		var prev_s := _arrow("‹", func() -> void: switch_stage(-1))
-		prev_s.custom_minimum_size = Vector2(36, 40)
+		prev_s.custom_minimum_size = Vector2(32, 40)
 		prev_s.add_theme_font_size_override("font_size", 22)
+		prev_s.disabled = _stage_n <= 1
 		sh.add_child(prev_s)
 	var sname := String(_stage.get("name", ""))
 	if sname == "" or sname == String(_stage.get("region", "")):
 		sname = String(_stage.get("region", "Ải %d" % _stage_n))
-	sh.add_child(_label("Ải %d · %s" % [_stage_n, sname], 22, GOLD))
+	sh.add_child(_label("Ải %d · %s" % [_stage_n, sname], 18, GOLD))
 	if _slot_mode:
 		var next_s := _arrow("›", func() -> void: switch_stage(1))
-		next_s.custom_minimum_size = Vector2(36, 40)
+		next_s.custom_minimum_size = Vector2(32, 40)
 		next_s.add_theme_font_size_override("font_size", 22)
+		var limit := Prefs.current().active_slot.unlocked(_stages.count()) if Prefs.current().active_slot != null else _stages.count()
+		next_s.disabled = _stage_n >= limit
 		sh.add_child(next_s)
 	var dur := int(_stage.get("duration", 0))
 	sh.add_child(_stat("clock", "", "%02d:%02d" % [dur / 60, dur % 60]))
@@ -300,7 +313,7 @@ func _build_ui() -> void:
 	start.add_theme_stylebox_override("normal", _style(accent.darkened(0.45), 8))
 	start.add_theme_stylebox_override("hover", _style(accent.darkened(0.25), 8))
 	start.add_theme_stylebox_override("focus", _style(accent.darkened(0.25), 8))
-	start.position = Vector2(vp.x - 32 - 300, vp.y - BOTTOM_ROW)
+	start.position = Vector2(start_x, vp.y - BOTTOM_ROW)
 	menu.add_child(start)
 	start.call_deferred("grab_focus")
 
@@ -323,7 +336,8 @@ func _build_ui() -> void:
 	if OS.get_cmdline_user_args().has("--lobby-stages"):     # shots of the stage grid
 		_show_stage_select.call_deferred(root, menu)
 
-	var hint := _label("Enter: bắt đầu  ·  ← / →: đổi class  ·  Trong trận: WASD di chuyển, Space lướt, Tab nhân vật, Esc tạm dừng", 14, MUTED)
+	var tip := "Chọn ải / đổi nhân vật ở thanh dưới" if _slot_mode else "← / →: đổi class"
+	var hint := _label("Enter: bắt đầu  ·  %s  ·  Trong trận: WASD di chuyển, Space lướt, Tab nhân vật, Esc tạm dừng" % tip, 14, MUTED)
 	hint.position = Vector2(32, vp.y - 30)
 	menu.add_child(hint)
 
@@ -457,8 +471,9 @@ func _show_stage_select(root: Control, menu: Control) -> void:
 			var locked := n > unlocked
 			var cleared := _slot_mode and prefs.active_slot != null and prefs.active_slot.won(n)
 			var boss := _stages.is_boss(n)
+			var mark := "✓ " if cleared else ""
 			if n == _stage_n:
-				b.text = str(n)
+				b.text = mark + str(n)
 				b.add_theme_stylebox_override("normal", _style(Color("4a5a2a"), 6))
 			elif locked:
 				b.text = "×"
