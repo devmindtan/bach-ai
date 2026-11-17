@@ -1,0 +1,17 @@
+{
+  "_doc": "Statuses a hit can put on a monster (Enemies.apply_status). A skill lists them in skills.<id>.on_hit (upgrades_<class>.json) with from = the skill level that adds it and the numbers: time (s), mul (slow: speed x; shock: x hit damage per jump), dps_mul (bleed / burn: x hit damage per second, ticks every 0.5 s, credited to the skill), chain / radius (shock). sprite = Sprite Lab status sprite drawn on the monster: at body (body centre), head (above it), feet (its anchor). tint = colour laid over the monster while it lasts.",
+  "statuses": {
+    "slow": { "name": "Làm chậm", "sprite": "status-slow", "at": "feet", "tint": "#a8c8ff",
+              "desc": "Quái đi chậm lại." },
+    "stun": { "name": "Choáng", "sprite": "status-stun", "at": "head",
+              "desc": "Quái đứng yên và không gây sát thương khi chạm." },
+    "freeze": { "name": "Đóng băng", "sprite": "status-freeze", "at": "body", "tint": "#b8ecff",
+                "desc": "Quái bị băng giữ chặt: đứng yên, không gây sát thương khi chạm." },
+    "bleed": { "name": "Chảy máu", "sprite": "status-bleed", "at": "body",
+               "desc": "Quái mất máu mỗi 0,5 giây." },
+    "burn": { "name": "Bỏng", "sprite": "status-burn", "at": "body", "tint": "#ffc0a0",
+              "desc": "Quái cháy, mất máu mỗi 0,5 giây." },
+    "shock": { "name": "Giật điện", "sprite": "status-shock", "at": "body",
+               "desc": "Tia điện lan sang các quái gần nhất." }
+  }
+}

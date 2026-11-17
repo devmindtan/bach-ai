@@ -1,11 +1,11 @@
 {
-  "_doc": "Knight level-up pool. kind skill = an attack the run uses; stat = a modifier. effects apply per level: add (flat) or mul (+fraction). weight = roll weight. skills.<id>.cast says how the run casts it: nearest (burst cast_range px toward the nearest monster), self (burst on the hero), random (count[level-1] bursts on random monsters within cast_range), wave (anim_prefix + direction, flies at speed px/s through monsters, count[level-1] directions: nearest, opposite, then the two others), active (player-triggered: the dash; sprite = the hero, anim = its animation). tier_sprites pick the sprite by level. frost_nova moved out: it is a mage skill. under_hero = the effect is drawn behind the hero (ground effects around it, e.g. the stomp).",
+  "_doc": "Knight level-up pool. kind skill = an attack the run uses; stat = a modifier. effects apply per level: add (flat) or mul (+fraction). weight = roll weight. skills.<id>.cast says how the run casts it: nearest (burst cast_range px toward the nearest monster), self (burst on the hero), random (count[level-1] bursts on random monsters within cast_range), wave (anim_prefix + direction, flies at speed px/s through monsters, count[level-1] directions: nearest, opposite, then the two others), active (player-triggered: the dash; sprite = the hero, anim = its animation). tier_sprites pick the sprite by level. frost_nova moved out: it is a mage skill. under_hero = the effect is drawn behind the hero (ground effects around it, e.g. the stomp). on_hit = statuses the skill puts on monsters it hits (assets/data/statuses.json), each from a skill level.",
   "upgrades": [
     {
       "id": "blade_arc",
       "kind": "skill",
       "name": "Chém kiếm",
-      "desc": "Tự chém một nhát kiếm ngắn về phía quái gần nhất. Mỗi cấp: +20% sát thương.",
+      "desc": "Tự chém một nhát kiếm ngắn về phía quái gần nhất. Mỗi cấp: +20% sát thương. Cấp 4: gây chảy máu.",
       "max_level": 5,
       "weight": 3,
       "effects": {
@@ -31,7 +31,7 @@
       "id": "whirlwind",
       "kind": "skill",
       "name": "Lốc xoáy",
-      "desc": "Định kỳ xoáy kiếm quanh người. Mỗi cấp: +25% sát thương, +10% vùng.",
+      "desc": "Định kỳ xoáy kiếm quanh người. Mỗi cấp: +25% sát thương, +10% vùng. Cấp 3: làm chậm quái trúng đòn.",
       "max_level": 5,
       "weight": 3,
       "effects": {
@@ -138,7 +138,7 @@
       "id": "earth_strike",
       "kind": "skill",
       "name": "Đất nứt",
-      "desc": "Đất nứt ở phía quái gần nhất. Mỗi cấp: +25% sát thương, +8% vùng, hình mạnh hơn.",
+      "desc": "Đất nứt ở phía quái gần nhất. Mỗi cấp: +25% sát thương, +8% vùng, hình mạnh hơn. Làm chậm quái; cấp 4: thêm choáng.",
       "max_level": 5,
       "weight": 2,
       "effects": {
@@ -154,7 +154,7 @@
       "id": "ground_slam",
       "kind": "skill",
       "name": "Dậm đất",
-      "desc": "Định kỳ dậm xuống đất quanh người, đẩy lùi quái. Mỗi cấp: +25% sát thương, +8% vùng, hình mạnh hơn.",
+      "desc": "Định kỳ dậm xuống đất quanh người, đẩy lùi quái. Mỗi cấp: +25% sát thương, +8% vùng, hình mạnh hơn. Cấp 3: gây choáng.",
       "max_level": 5,
       "weight": 2,
       "effects": {
@@ -170,7 +170,7 @@
       "id": "cleave_wave",
       "kind": "skill",
       "name": "Sóng kiếm",
-      "desc": "Phóng sóng kiếm bay xuyên qua quái về phía quái gần nhất. Mỗi cấp: +20% sát thương; cấp 3: thêm sóng phía sau; cấp 5: thêm sóng lên và xuống.",
+      "desc": "Phóng sóng kiếm bay xuyên qua quái về phía quái gần nhất. Mỗi cấp: +20% sát thương; cấp 3: thêm sóng phía sau; cấp 5: thêm sóng lên và xuống. Gây chảy máu.",
       "max_level": 5,
       "weight": 2,
       "effects": {
@@ -183,7 +183,7 @@
       "id": "holy_column",
       "kind": "skill",
       "name": "Cột thánh quang",
-      "desc": "Cột sáng giáng xuống quái ngẫu nhiên gần đó. Mỗi cấp: +20% sát thương; cấp 3: 2 cột; cấp 5: 3 cột.",
+      "desc": "Cột sáng giáng xuống quái ngẫu nhiên gần đó. Mỗi cấp: +20% sát thương; cấp 3: 2 cột; cấp 5: 3 cột. Cấp 2: gây bỏng.",
       "max_level": 5,
       "weight": 2,
       "effects": {
@@ -196,7 +196,7 @@
       "id": "dash",
       "kind": "skill",
       "name": "Lướt",
-      "desc": "Bấm Space / Shift (tay cầm RB) để lướt theo hướng đang đi: không bị trúng đòn khi lướt, chém quái trên đường. Mỗi cấp: -12% hồi lướt, +20% sát thương.",
+      "desc": "Bấm Space / Shift (tay cầm RB) để lướt theo hướng đang đi: không bị trúng đòn khi lướt, chém quái trên đường. Mỗi cấp: -12% hồi lướt, +20% sát thương. Cấp 3: gây choáng.",
       "max_level": 5,
       "weight": 2,
       "effects": {
@@ -229,7 +229,15 @@
       "cooldown_mul": 1.0,
       "size_mul": 1.0,
       "back_damage_mul": 0.5,
-      "back_damage_per_level": 0.25
+      "back_damage_per_level": 0.25,
+      "on_hit": [
+        {
+          "from": 4,
+          "status": "bleed",
+          "dps_mul": 0.15,
+          "time": 2.0
+        }
+      ]
     },
     "whirlwind": {
       "sprite": "whirlwind",
@@ -237,7 +245,15 @@
       "size_mul": 1.5,
       "cooldown": 3.2,
       "duration": 0.9,
-      "ticks": 3
+      "ticks": 3,
+      "on_hit": [
+        {
+          "from": 3,
+          "status": "slow",
+          "mul": 0.6,
+          "time": 1.0
+        }
+      ]
     },
     "earth_strike": {
       "sprite": "earth-strike-i",
@@ -252,7 +268,20 @@
       "size_mul": 1.0,
       "cooldown": 3.5,
       "cast_range": 140.0,
-      "cast": "nearest"
+      "cast": "nearest",
+      "on_hit": [
+        {
+          "from": 1,
+          "status": "slow",
+          "mul": 0.5,
+          "time": 1.5
+        },
+        {
+          "from": 4,
+          "status": "stun",
+          "time": 0.5
+        }
+      ]
     },
     "ground_slam": {
       "sprite": "stomp-i",
@@ -269,7 +298,14 @@
       "size_mul": 1.0,
       "cooldown": 4.0,
       "knockback": 260.0,
-      "under_hero": true
+      "under_hero": true,
+      "on_hit": [
+        {
+          "from": 3,
+          "status": "stun",
+          "time": 0.6
+        }
+      ]
     },
     "cleave_wave": {
       "sprite": "cleave-wave",
@@ -286,7 +322,15 @@
         2,
         4
       ],
-      "rehit": 0.25
+      "rehit": 0.25,
+      "on_hit": [
+        {
+          "from": 1,
+          "status": "bleed",
+          "dps_mul": 0.2,
+          "time": 3.0
+        }
+      ]
     },
     "holy_column": {
       "sprite": "holy-column",
@@ -302,6 +346,14 @@
         2,
         2,
         3
+      ],
+      "on_hit": [
+        {
+          "from": 2,
+          "status": "burn",
+          "dps_mul": 0.25,
+          "time": 2.0
+        }
       ]
     },
     "dash": {
@@ -312,7 +364,14 @@
       "cooldown": 3.0,
       "distance": 130.0,
       "time": 0.18,
-      "hit_radius": 26.0
+      "hit_radius": 26.0,
+      "on_hit": [
+        {
+          "from": 3,
+          "status": "stun",
+          "time": 0.4
+        }
+      ]
     }
   }
 }

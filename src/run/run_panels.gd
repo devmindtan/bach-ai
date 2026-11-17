@@ -531,6 +531,17 @@ func _skill_row(si: Dictionary) -> PanelContainer:
 			"%s cấp %d: %s %s" % [p["name"], p["level"], p["what"], p["text"]]))
 	if not si["sources"].is_empty():
 		v.add_child(chips)
+	# statuses this skill puts on monsters now (statuses.json)
+	if not si.get("statuses", []).is_empty():
+		var st_row := HFlowContainer.new()
+		st_row.add_theme_constant_override("h_separation", 12)
+		for e: Dictionary in si["statuses"]:
+			var sd: Dictionary = run.status_defs.get(String(e.get("status", "")), {})
+			var secs := ""
+			if e.has("time"):
+				secs = "%.1f s" % float(e["time"])
+			st_row.add_child(_chip([String(e.get("status", ""))], "%s %s" % [sd.get("name", e.get("status", "")), secs], String(sd.get("desc", "")), Color("ffb08a"), 13))
+		v.add_child(st_row)
 	return card
 
 

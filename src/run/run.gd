@@ -10,6 +10,7 @@ extends Node2D
 ##   --walk=X,Y      the demo walks in a fixed direction (shots of each view)
 ##   --god           the hero takes no damage (shots of the win screen)
 ##   --dash-at=T     dash at T seconds (needs the dash card, e.g. --skills=dash:1)
+##   --monster-hp=N  monsters have N x hp (shots of statuses)
 ##   --pause-view=settings|character  with --pause-at, open that page (shots)
 ##   --pause-at=T    open the pause panel at T seconds (shots)
 ##   --offer=a,b,c   the first level-up offers these upgrade ids (shots of the cards)
@@ -89,6 +90,8 @@ var pause_at := -1.0
 var pause_view := ""   # "settings" / "character": the --pause-at pause opens that page (shots)
 var god := false
 var buffs: Buffs
+var status_defs := {}        # statuses.json "statuses"
+var _shock_fx: Array = []    # [{a, b, t}] shock arcs being drawn
 var _buff_defs := {}
 var _forced_buffs: Array[String] = []   # --buff=a,b (shots)
 var _ground_buffs: Array[String] = []   # --buff-ground=a,b (shots)
@@ -99,6 +102,7 @@ var _dash_hit_half := false
 var _dash_from := Vector2.ZERO
 var _dash_trail := 0.0      # afterimages stay this long after the dash
 var dash_at := -1.0          # --dash-at=T (shots)
+var monster_hp_mul := 1.0    # --monster-hp=N (shots: monsters live long enough to show statuses)
 var damage_taken := 0.0   # end-of-run table
 var healed := 0.0
 var _bench_frames := 0
@@ -145,6 +149,9 @@ func _ready() -> void:
 	_coin_sprite = String(items.get("pickups", {}).get("gold", {}).get("sprite", "gold-coin"))
 	var names: Array[String] = [String(class_data.get("sprite", "swordsman")), _gem_sprite, _coin_sprite]
 	_buff_defs = items.get("buffs", {})
+	status_defs = GameData.load_json(DATA + "statuses.json").get("statuses", {})
+	for st: String in status_defs:
+		names.append(String(status_defs[st].get("sprite", "")))
 	for b: String in _buff_defs:
 		names.append(String(_buff_defs[b].get("sprite", b)))
 		if _buff_defs[b].has("aura"):
@@ -166,6 +173,8 @@ func _ready() -> void:
 		hero_sheet.compose_layers()
 
 	enemies = Enemies.new(monsters, cfg, sheets, rng.seed)
+	for k in enemies.k_hp.size():
+		enemies.k_hp[k] *= monster_hp_mul
 	_update_body()
 	pickups = Pickups.new(cfg.get("pickups", {}), 400)
 	buffs = Buffs.new(_buff_defs, cfg.get("buffs", {}), rng.seed + 7)
@@ -217,6 +226,8 @@ func _parse_args() -> void:
 			# Debug/shots: these buffs lie on the ground near the start
 			for id in a.get_slice("=", 1).split(",", false):
 				_ground_buffs.append(id)
+		elif a.begins_with("--monster-hp="):
+			monster_hp_mul = maxf(0.01, float(a.get_slice("=", 1)))
 		elif a.begins_with("--dash-at="):
 			dash_at = float(a.get_slice("=", 1))
 		elif a == "--god":
@@ -325,6 +336,7 @@ func _tick(dt: float) -> void:
 	hp = minf(float(stats["max_hp"]), hp + float(stats.get("regen", 0.0)) * dt)
 	healed += maxf(0.0, hp - before)
 	_skills(dt)
+	_drain_shocks(dt)
 	_drops()
 	var got := pickups.step(dt, player_pos + _hit_center, float(stats.get("magnet", 1.0)))
 	gold += int(got.y)
@@ -400,9 +412,9 @@ func _dash_step(dt: float) -> void:
 	var back := _dash_dir * dist * 0.25
 	if not _dash_hit_half and _dash_left <= total * 0.5:
 		_dash_hit_half = true
-		enemies.hit_circle(player_pos + _hit_center - back, r, skill_damage("dash"), 120.0, "dash")
+		enemies.hit_circle(player_pos + _hit_center - back, r, skill_damage("dash"), 120.0, "dash", on_hit("dash"))
 	elif _dash_left <= 0.0:
-		enemies.hit_circle(player_pos + _hit_center - back, r, skill_damage("dash"), 120.0, "dash")
+		enemies.hit_circle(player_pos + _hit_center - back, r, skill_damage("dash"), 120.0, "dash", on_hit("dash"))
 
 
 ## Demo / bench movement: walk to the nearest monster (so the sweep has
@@ -490,7 +502,7 @@ func _skills(dt: float) -> void:
 					if fx["anim"] == "spin":
 						var hb := SpriteHitbox.of(fx["sheet"], "spin", player_pos + _hit_center, float(fx["scale"]))
 						if hb != null:
-							enemies.hit_box(hb, dmg, 90.0, "whirlwind")
+							enemies.hit_box(hb, dmg, 90.0, "whirlwind", on_hit("whirlwind"))
 		else:
 			_whirl_cd -= dt
 			if _whirl_cd <= 0.0:
@@ -517,6 +529,17 @@ func _skills(dt: float) -> void:
 		if cd_left <= 0.0:
 			_tier_cd[sid] = skill_cooldown(sid)
 			_cast(sid, ts, how)
+
+
+## Statuses skill [param sid] puts on what it hits at its current level
+## (skills.<id>.on_hit entries whose "from" level is reached).
+func on_hit(sid: String) -> Array:
+	var out := []
+	var lv := int(levels.get(sid, 0))
+	for e: Dictionary in pool.get("skills", {}).get(sid, {}).get("on_hit", []):
+		if lv >= int(e.get("from", 1)):
+			out.append(e)
+	return out
 
 
 ## Sprite of a skill at its current level (tier_sprites I-V, else "sprite").
@@ -696,7 +719,8 @@ func skill_info() -> Array:
 					sources.append({"id": v["id"], "name": v.get("name", v["id"]), "level": vl, "what": "Nhát sau", "text": "%d%%" % roundi(pct * 100.0)})
 		out.append({"id": id, "name": u.get("name", id), "level": lv, "max": int(u.get("max_level", 1)),
 			"damage": skill_damage(id), "cooldown": skill_cooldown(id), "size": skill_size(id),
-			"base_damage": skill_damage(id, plain), "base_cooldown": skill_cooldown(id, plain), "sources": sources})
+			"base_damage": skill_damage(id, plain), "base_cooldown": skill_cooldown(id, plain), "sources": sources,
+			"statuses": on_hit(id)})
 	return out
 
 
@@ -740,7 +764,8 @@ func _add_fx(sprite: String, anim: String, sc: float, damage: float, life := -1.
 		return {}
 	var fx := {"sheet": sheet, "anim": anim, "t": 0.0, "scale": sc, "damage": damage, "done": damage <= 0.0,
 		"life": life if life > 0.0 else sheet.duration(anim),
-		"pos": world_pos, "follow": world_pos == null, "source": source, "kb": knockback}
+		"pos": world_pos, "follow": world_pos == null, "source": source, "kb": knockback,
+		"effects": on_hit(source)}
 	_fx.append(fx)
 	return fx
 
@@ -764,7 +789,7 @@ func _step_fx(dt: float) -> void:
 			if hb == null:
 				fx["done"] = true
 			elif hb.is_active(float(fx["t"])) and float(fx.get("hit_wait", 0.0)) <= 0.0:
-				enemies.hit_box(hb, float(fx["damage"]), float(fx.get("kb", 140.0)), String(fx.get("source", "")))
+				enemies.hit_box(hb, float(fx["damage"]), float(fx.get("kb", 140.0)), String(fx.get("source", "")), fx.get("effects", []))
 				if fx.has("rehit"):
 					fx["hit_wait"] = float(fx["rehit"])
 				else:
@@ -866,6 +891,13 @@ func upgrade_preview(id: String) -> Dictionary:
 	var text := ""
 	if tiers.size() > 1 and nxt <= tiers.size() and (nxt == 1 or tiers[nxt - 1] != tiers[nxt - 2]):
 		text = "Bậc %s · hình mới" % ["I", "II", "III", "IV", "V"][mini(nxt, 5) - 1]
+	# a level that adds a status (on_hit "from") is a milestone too
+	for e: Dictionary in skills.get(id, {}).get("on_hit", []):
+		var f := int(e.get("from", 1))
+		if not milestones.has(f):
+			milestones.append(f)
+		if f == nxt:
+			text = (text + " · " if text != "" else "") + "Thêm: " + String(status_defs.get(String(e.get("status", "")), {}).get("name", e.get("status", "")))
 	if nxt == max_lv:
 		text = (text + " · " if text != "" else "") + "Cấp tối đa"
 	return {"lines": lines, "milestones": milestones, "milestone": text, "level": lv, "max": max_lv}
@@ -912,12 +944,14 @@ func effect_levels() -> Dictionary:
 	return out
 
 
-## Icon for a card or a buff id: ui-icons, else the buff badge's first frame.
+## Icon for a card, buff or status id: ui-icons, else the first frame of the
+## buff badge / status sprite.
 func icon_texture(id: String) -> Texture2D:
 	var t := UiIcons.texture(id)
-	if t != null or buff_def(id).is_empty():
+	if t != null:
 		return t
-	var sh: SpriteSheet = sheets.get(String(buff_def(id).get("sprite", "")))
+	var sprite := String(buff_def(id).get("sprite", status_defs.get(id, {}).get("sprite", "")))
+	var sh: SpriteSheet = sheets.get(sprite)
 	if sh == null:
 		return null
 	var at := AtlasTexture.new()
@@ -1032,7 +1066,7 @@ func _draw() -> void:
 				continue
 			var k := enemies.kind[i]
 			var a := enemies.anim_of(i)
-			var tint := Color(1.0, 0.55, 0.55) if enemies.flash[i] > 0.0 else Color.WHITE
+			var tint := Color(1.0, 0.55, 0.55) if enemies.flash[i] > 0.0 else _status_tint(i)
 			if enemies.state[i] == Enemies.WINDUP:
 				tint = Color(1.0, 0.8, 0.5)
 			enemies.k_sheet[k].draw(self, a[0], a[1], enemies.pos[i], enemies.k_scale[k],
@@ -1046,6 +1080,7 @@ func _draw() -> void:
 		_draw_dash_trail(hero)
 		hero.draw(self, _anim, _anim_t, player_pos, _sprite_scale, face_left, tint)
 		_draw_auras("front")
+	_draw_statuses(view)
 	_draw_fx(false)
 	if Prefs.current().monster_hp:
 		_draw_monster_hp(view)
@@ -1087,6 +1122,63 @@ func _draw_fx(under: bool) -> void:
 		var sh: SpriteSheet = fx["sheet"]
 		var t := fmod(float(fx["t"]), sh.duration(fx["anim"])) if fx["anim"] == "spin" else float(fx["t"])
 		sh.draw(self, fx["anim"], t, _fx_pos(fx), float(fx["scale"]))
+
+
+func _drain_shocks(dt: float) -> void:
+	var i := 0
+	while i < _shock_fx.size():
+		_shock_fx[i]["t"] = float(_shock_fx[i]["t"]) + dt
+		if float(_shock_fx[i]["t"]) > 0.18:
+			_shock_fx.remove_at(i)
+		else:
+			i += 1
+	var l := enemies.shock_lines
+	for k in range(0, l.size() - 1, 2):
+		_shock_fx.append({"a": l[k], "b": l[k + 1], "t": 0.0})
+	enemies.shock_lines.clear()
+
+
+## Status sprites on monsters (statuses.json "at": body / head / feet) and the
+## shock arcs. Drawn over the monsters, under the skill effects.
+func _draw_statuses(view: Rect2) -> void:
+	for i in enemies.count:
+		if enemies.state[i] == Enemies.DYING or not view.has_point(enemies.pos[i]):
+			continue
+		for st in enemies.statuses_of(i):
+			var d: Dictionary = status_defs.get(st, {})
+			var sh: SpriteSheet = sheets.get(String(d.get("sprite", "")))
+			if sh == null:
+				continue
+			var r := enemies.k_radius[enemies.kind[i]]
+			var p := enemies.center_of(i)
+			match String(d.get("at", "body")):
+				"head":
+					p.y -= r + 10.0
+				"feet":
+					p = enemies.pos[i] + Vector2(0, -6)
+			sh.draw(self, "loop", clock + i * 0.17, p, _sprite_scale)
+	for s in _shock_fx:
+		var a: Vector2 = s["a"]
+		var b: Vector2 = s["b"]
+		var pts := PackedVector2Array([a])
+		for k in range(1, 5):
+			var q := a.lerp(b, k / 5.0)
+			pts.append(q + (b - a).orthogonal().normalized() * (6.0 if k % 2 else -6.0))
+		pts.append(b)
+		draw_polyline(pts, Color("fff6a0"), 2.0)
+		var sk: SpriteSheet = sheets.get(String(status_defs.get("shock", {}).get("sprite", "")))
+		if sk != null:
+			sk.draw(self, "loop", float(s["t"]), b, _sprite_scale)
+
+
+## Tint of monster [param i] from its statuses (freeze / burn / slow), or white.
+func _status_tint(i: int) -> Color:
+	for st in ["freeze", "burn", "slow"]:
+		var ok: bool = (st == "freeze" and enemies.freeze_t[i] > 0.0) or (st == "burn" and enemies.burn_t[i] > 0.0) \
+			or (st == "slow" and enemies.slow_t[i] > 0.0)
+		if ok and status_defs.get(st, {}).has("tint"):
+			return Color(String(status_defs[st]["tint"]))
+	return Color.WHITE
 
 
 ## Afterimages of the hero along the dash path (the camera follows the hero, so

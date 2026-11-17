@@ -33,6 +33,21 @@ var anim_t := PackedFloat32Array()
 var phase := PackedFloat32Array()
 var flip := PackedByteArray()          # 1 = drawn mirrored (player is to the left)
 var hp_show := PackedFloat32Array()    # seconds the hp bar stays visible (set on every hit)
+# statuses (assets/data/statuses.json): seconds left and strength
+var slow_t := PackedFloat32Array()
+var slow_mul := PackedFloat32Array()   # speed multiplier while slowed
+var stun_t := PackedFloat32Array()     # stunned: no movement, timers stop
+var freeze_t := PackedFloat32Array()   # frozen: same as stunned, drawn in ice
+var bleed_t := PackedFloat32Array()
+var bleed_dps := PackedFloat32Array()
+var burn_t := PackedFloat32Array()
+var burn_dps := PackedFloat32Array()
+var dot_wait := PackedFloat32Array()   # time to the next damage-over-time tick
+var bleed_src := PackedStringArray()
+var burn_src := PackedStringArray()
+const DOT_TICK := 0.5
+## Shock arcs since the last drain (pairs of points, for the run to draw).
+var shock_lines := PackedVector2Array()
 
 # per kind (index = kind id)
 var kind_ids: Array[String] = []
@@ -101,6 +116,10 @@ func _init(monsters: Dictionary, cfg: Dictionary, sheets: Dictionary, seed_value
 	phase.resize(capacity)
 	flip.resize(capacity)
 	hp_show.resize(capacity)
+	for a: Variant in [slow_t, slow_mul, stun_t, freeze_t, bleed_t, bleed_dps, burn_t, burn_dps, dot_wait]:
+		a.resize(capacity)
+	bleed_src.resize(capacity)
+	burn_src.resize(capacity)
 	hp_bar_time = float(cfg.get("ui", {}).get("hp_bar_time", 2.0))
 	var behaviours := {"chase": CHASE, "swarm": SWARM, "charge": CHARGE}
 	var world_scale := float(world.get("sprite_scale", 2))
@@ -155,6 +174,15 @@ func spawn(id: String, p: Vector2) -> bool:
 	phase[i] = _rng.randf() * TAU
 	flip[i] = 0
 	hp_show[i] = 0.0
+	slow_t[i] = 0.0
+	slow_mul[i] = 1.0
+	stun_t[i] = 0.0
+	freeze_t[i] = 0.0
+	bleed_t[i] = 0.0
+	bleed_dps[i] = 0.0
+	burn_t[i] = 0.0
+	burn_dps[i] = 0.0
+	dot_wait[i] = DOT_TICK
 	return true
 
 
@@ -185,6 +213,8 @@ func step(delta: float, player_pos: Vector2, player_center: Vector2) -> float:
 		anim_t[i] += delta
 		flash[i] = maxf(0.0, flash[i] - delta)
 		hp_show[i] = maxf(0.0, hp_show[i] - delta)
+		if state[i] != DYING:
+			_step_status(i, delta)
 		if state[i] == DYING:
 			timer[i] += delta
 			if timer[i] >= k_death_time[kind[i]]:
@@ -211,7 +241,8 @@ func step(delta: float, player_pos: Vector2, player_center: Vector2) -> float:
 			continue
 		var dir := to_player / dist if dist > 0.001 else Vector2.ZERO
 		flip[n] = 1 if to_player.x < 0.0 else 0
-		var vel := _velocity(n, k, dir, dist, delta)
+		var stopped := stun_t[n] > 0.0 or freeze_t[n] > 0.0
+		var vel := Vector2.ZERO if stopped else _velocity(n, k, dir, dist, delta) * (slow_mul[n] if slow_t[n] > 0.0 else 1.0)
 		# separation: push away from overlapping neighbours (same cell block)
 		var r := k_radius[k]
 		_query.clear()
@@ -233,7 +264,7 @@ func step(delta: float, player_pos: Vector2, player_center: Vector2) -> float:
 		knock[n] = knock[n] * maxf(0.0, 1.0 - KNOCKBACK_DECAY * delta)
 		pos[n] += (vel + knock[n]) * delta
 		pos[n] = pos[n].clamp(Vector2(-arena_half, -arena_half), Vector2(arena_half, arena_half))
-		if (center_of(n) - player_center).length() < r + player_hit_radius:
+		if not stopped and (center_of(n) - player_center).length() < r + player_hit_radius:
 			contact = maxf(contact, k_damage[k])
 	return contact
 
@@ -275,7 +306,7 @@ func _velocity(i: int, k: int, dir: Vector2, dist: float, delta: float) -> Vecto
 ## Damages every living monster whose body overlaps [param hb] (a skill
 ## effect's SpriteHitbox, placed where the effect is drawn). Knockback pushes
 ## away from the hitbox centre. Returns how many were hit.
-func hit_box(hb: SpriteHitbox, damage: float, knockback := 140.0, source := "") -> int:
+func hit_box(hb: SpriteHitbox, damage: float, knockback := 140.0, source := "", effects: Array = []) -> int:
 	_query.clear()
 	_hash.query(hb.center, hb.radius + 32.0, _query)
 	for j in range(_hashed_count, count):   # spawned since the hash was built
@@ -290,25 +321,27 @@ func hit_box(hb: SpriteHitbox, damage: float, knockback := 140.0, source := "") 
 		hits += 1
 		var d := c - hb.center
 		_damage(i, damage, d.normalized() * knockback if d.length_squared() > 1.0 else Vector2.ZERO, source)
+		for e: Dictionary in effects:
+			apply_status(i, String(e.get("status", "")), e, damage, source)
 	return hits
 
 
 ## Arc area around [param center] (half angle in radians; PI = full circle).
 ## Convenience for tests and effects without a sprite.
 func hit_arc(center: Vector2, facing: Vector2, radius: float, half_angle: float, damage: float,
-		knockback := 140.0, source := "") -> int:
+		knockback := 140.0, source := "", effects: Array = []) -> int:
 	var hb := SpriteHitbox.new()
 	hb.shape = "arc" if half_angle < PI else "circle"
 	hb.center = center
 	hb.radius = radius
 	hb.dir = facing.normalized()
 	hb.half_angle = half_angle
-	return hit_box(hb, damage, knockback, source)
+	return hit_box(hb, damage, knockback, source, effects)
 
 
 ## Damages every living monster within [param radius] of [param center].
-func hit_circle(center: Vector2, radius: float, damage: float, knockback := 90.0, source := "") -> int:
-	return hit_arc(center, Vector2.RIGHT, radius, PI, damage, knockback, source)
+func hit_circle(center: Vector2, radius: float, damage: float, knockback := 90.0, source := "", effects: Array = []) -> int:
+	return hit_arc(center, Vector2.RIGHT, radius, PI, damage, knockback, source, effects)
 
 
 func _damage(i: int, amount: float, kb: Vector2, source := "") -> void:
@@ -329,6 +362,86 @@ func _damage(i: int, amount: float, kb: Vector2, source := "") -> void:
 		kills_by[source] = int(kills_by.get(source, 0)) + 1
 		kill_pos.append(pos[i])
 		kill_xp.append(k_xp[kind[i]])
+
+
+## Puts status [param status] on monster [param i]. [param p] holds its numbers
+## (statuses.json / a skill's on_hit): time, mul (slow speed), dps_mul (bleed /
+## burn: x hit damage per second), chain / mul / radius (shock). Re-applying keeps
+## the longer time and the stronger effect. Damage over time is credited to
+## [param source].
+func apply_status(i: int, status: String, p: Dictionary, hit_damage: float, source: String) -> void:
+	if i < 0 or i >= count or state[i] == DYING:
+		return
+	var t := float(p.get("time", 1.0))
+	match status:
+		"slow":
+			slow_t[i] = maxf(slow_t[i], t)
+			slow_mul[i] = minf(slow_mul[i] if slow_t[i] > t else 1.0, float(p.get("mul", 0.5)))
+		"stun":
+			stun_t[i] = maxf(stun_t[i], t)
+		"freeze":
+			freeze_t[i] = maxf(freeze_t[i], t)
+		"bleed":
+			bleed_t[i] = maxf(bleed_t[i], t)
+			bleed_dps[i] = maxf(bleed_dps[i], hit_damage * float(p.get("dps_mul", 0.2)))
+			bleed_src[i] = source
+		"burn":
+			burn_t[i] = maxf(burn_t[i], t)
+			burn_dps[i] = maxf(burn_dps[i], hit_damage * float(p.get("dps_mul", 0.3)))
+			burn_src[i] = source
+		"shock":
+			_shock(i, hit_damage * float(p.get("mul", 0.5)), int(p.get("chain", 2)), float(p.get("radius", 90.0)), source)
+
+
+## Status timers and damage over time for one living monster.
+func _step_status(i: int, delta: float) -> void:
+	slow_t[i] = maxf(0.0, slow_t[i] - delta)
+	if slow_t[i] <= 0.0:
+		slow_mul[i] = 1.0
+	stun_t[i] = maxf(0.0, stun_t[i] - delta)
+	freeze_t[i] = maxf(0.0, freeze_t[i] - delta)
+	if bleed_t[i] <= 0.0 and burn_t[i] <= 0.0:
+		dot_wait[i] = DOT_TICK
+		return
+	dot_wait[i] -= delta
+	if dot_wait[i] > 0.0:
+		return
+	dot_wait[i] += DOT_TICK
+	if bleed_t[i] > 0.0:
+		_damage(i, bleed_dps[i] * DOT_TICK, Vector2.ZERO, bleed_src[i])
+	if burn_t[i] > 0.0 and state[i] != DYING:
+		_damage(i, burn_dps[i] * DOT_TICK, Vector2.ZERO, burn_src[i])
+	bleed_t[i] = maxf(0.0, bleed_t[i] - DOT_TICK)
+	burn_t[i] = maxf(0.0, burn_t[i] - DOT_TICK)
+
+
+## Shock arcs from monster [param i] to the [param chain] nearest others within
+## [param radius] for [param damage] each.
+func _shock(i: int, damage: float, chain: int, radius: float, source: String) -> void:
+	var from := center_of(i)
+	var near := []
+	for j in count:
+		if j != i and state[j] != DYING:
+			var d := center_of(j).distance_to(from)
+			if d <= radius:
+				near.append([d, j])
+	near.sort_custom(func(a: Array, b: Array) -> bool: return a[0] < b[0])
+	for k in mini(chain, near.size()):
+		var j: int = near[k][1]
+		shock_lines.append(from)
+		shock_lines.append(center_of(j))
+		_damage(j, damage, Vector2.ZERO, source)
+
+
+## Status names on monster [param i] (for drawing): slow, stun, freeze, bleed, burn.
+func statuses_of(i: int) -> Array[String]:
+	var out: Array[String] = []
+	if slow_t[i] > 0.0: out.append("slow")
+	if stun_t[i] > 0.0: out.append("stun")
+	if freeze_t[i] > 0.0: out.append("freeze")
+	if bleed_t[i] > 0.0: out.append("bleed")
+	if burn_t[i] > 0.0: out.append("burn")
+	return out
 
 
 ## Index of the living monster whose body is nearest to [param p] within
@@ -414,4 +527,15 @@ func _remove(i: int) -> void:
 		phase[i] = phase[last]
 		flip[i] = flip[last]
 		hp_show[i] = hp_show[last]
+		slow_t[i] = slow_t[last]
+		slow_mul[i] = slow_mul[last]
+		stun_t[i] = stun_t[last]
+		freeze_t[i] = freeze_t[last]
+		bleed_t[i] = bleed_t[last]
+		bleed_dps[i] = bleed_dps[last]
+		burn_t[i] = burn_t[last]
+		burn_dps[i] = burn_dps[last]
+		dot_wait[i] = dot_wait[last]
+		bleed_src[i] = bleed_src[last]
+		burn_src[i] = burn_src[last]
 	count = last
