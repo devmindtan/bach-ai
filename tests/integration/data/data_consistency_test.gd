@@ -206,3 +206,28 @@ func test_stages_shift_to_stronger_monsters_over_time() -> void:
 			return hp / maxf(0.001, n)
 		_check(avg_hp.call(dur * 0.9) > avg_hp.call(dur * 0.25) * 1.3,
 			"%s: late spawns are not stronger (avg hp %.1f early, %.1f late)" % [f, avg_hp.call(dur * 0.25), avg_hp.call(dur * 0.9)])
+
+
+## A flying skill (cast wave / projectile) moves its sprite itself, so it must fly a
+## sprite made for flight: "fly_" animations (the art holds still, a hitbox per
+## direction), never a strike's "sweep_" / "slash_" ones, whose art moves inside the
+## frame. (2026-11-17: Sóng kiếm flew the cleave-wave strike; the hitbox, one box
+## over all frames, sat off the blade.)
+func test_flying_skills_use_flight_animations() -> void:
+	var classes := GameData.load_json(DATA + "classes.json")
+	for cid: String in classes:
+		if cid.begins_with("_"):
+			continue
+		var pool := GameData.load_json(DATA + String(classes[cid].get("upgrades", "")))
+		for sk: String in pool.get("skills", {}):
+			var p: Dictionary = pool["skills"][sk]
+			if not ["wave", "projectile"].has(String(p.get("cast", ""))):
+				continue
+			var prefix := String(p.get("anim_prefix", "fly_"))
+			_check(prefix == "fly_", "%s flies '%s' animations: a flying skill needs a flight sprite (fly_*)" % [sk, prefix])
+			for n: Variant in p.get("tier_sprites", [p.get("sprite", "")]):
+				var meta := GameData.load_json(SPRITES + String(n) + "/" + String(n) + ".json")
+				var has_fly := false
+				for a: Dictionary in meta.get("animations", []):
+					has_fly = has_fly or String(a.get("name", "")).begins_with("fly_")
+				_check(has_fly, "%s: sprite %s has no fly_ animations" % [sk, n])
