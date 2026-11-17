@@ -75,6 +75,10 @@ sát thương cuối trận, cài đặt, 4 buff ngẫu nhiên (`design/buffs.md
 **Xong khi:** chơi trọn 5 phút không lỗi; 500 quái ≥ 60 fps (có số đo); ảnh chụp đầu lượt, giữa lượt, màn lên cấp, thắng, thua; ít nhất một người chơi thử trả lời câu hỏi của đợt.
 
 ## Đợt 2: Độ sâu build · cỡ L
+**Trạng thái (2026-11-17):** xong phần làm. Kiếm sĩ 7 chiêu + 9 thẻ, Pháp sư 7 chiêu + 8 thẻ, nội tại mỗi class
+(`design/classes.md`), debuff lên quái (`design/statuses.md`), quái tinh anh + rương, boss Vua Thạch Nhầy ở ải 10
+(`--stage=10` tới khi có chọn ải ở đợt 3), bậc hình I–V cho mọi chiêu có hình, đạn bay 16 hướng, quái yếu thưa dần
+theo thời gian. Còn: rung màn/khựng khi chí mạng (chưa có chí mạng), ghi 3 build mẫu mỗi class khi chơi thử.
 **Câu hỏi:** hai lượt cùng class có ra hai build khác nhau thật không?
 - Class **Pháp sư** (tầm xa: fireball, frost-shard…).
 - Mỗi class: ~8 chiêu chủ động + ~8 nội tại, mỗi cái tối đa cấp 5; thẻ hiển thị cấp hiện tại → kế tiếp; (tiến hoá chiêu: để đợt 6).
