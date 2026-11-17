@@ -210,7 +210,8 @@ func step(delta: float, player_pos: Vector2, player_center: Vector2) -> float:
 	#    swap-moves the last slot, so it must happen before the hash is built.
 	var i := 0
 	while i < count:
-		anim_t[i] += delta
+		if freeze_t[i] <= 0.0:   # frozen in ice: the animation stops
+			anim_t[i] += delta
 		flash[i] = maxf(0.0, flash[i] - delta)
 		hp_show[i] = maxf(0.0, hp_show[i] - delta)
 		if state[i] != DYING:

@@ -11,6 +11,7 @@ extends Node2D
 ##   --god           the hero takes no damage (shots of the win screen)
 ##   --dash-at=T     dash at T seconds (needs the dash card, e.g. --skills=dash:1)
 ##   --monster-hp=N  monsters have N x hp (shots of statuses)
+##   --status-all=a,b  every 0.5 s put these statuses on every monster (shots)
 ##   --pause-view=settings|character  with --pause-at, open that page (shots)
 ##   --pause-at=T    open the pause panel at T seconds (shots)
 ##   --offer=a,b,c   the first level-up offers these upgrade ids (shots of the cards)
@@ -103,6 +104,8 @@ var _dash_from := Vector2.ZERO
 var _dash_trail := 0.0      # afterimages stay this long after the dash
 var dash_at := -1.0          # --dash-at=T (shots)
 var monster_hp_mul := 1.0    # --monster-hp=N (shots: monsters live long enough to show statuses)
+var _status_all: Array[String] = []   # --status-all=a,b (shots: every monster gets these statuses)
+var _status_all_t := 0.0
 var damage_taken := 0.0   # end-of-run table
 var healed := 0.0
 var _bench_frames := 0
@@ -226,6 +229,9 @@ func _parse_args() -> void:
 			# Debug/shots: these buffs lie on the ground near the start
 			for id in a.get_slice("=", 1).split(",", false):
 				_ground_buffs.append(id)
+		elif a.begins_with("--status-all="):
+			for st in a.get_slice("=", 1).split(",", false):
+				_status_all.append(st)
 		elif a.begins_with("--monster-hp="):
 			monster_hp_mul = maxf(0.01, float(a.get_slice("=", 1)))
 		elif a.begins_with("--dash-at="):
@@ -336,6 +342,14 @@ func _tick(dt: float) -> void:
 	hp = minf(float(stats["max_hp"]), hp + float(stats.get("regen", 0.0)) * dt)
 	healed += maxf(0.0, hp - before)
 	_skills(dt)
+	if not _status_all.is_empty():
+		_status_all_t -= dt
+		if _status_all_t <= 0.0:
+			_status_all_t = 0.5
+			for i in enemies.count:
+				for st in _status_all:
+					if st != "shock" or i % 6 == 0:
+						enemies.apply_status(i, st, {"time": 1.0, "mul": 0.5, "dps_mul": 0.01, "chain": 2, "radius": 120.0}, 1.0, "test")
 	_drain_shocks(dt)
 	_drops()
 	var got := pickups.step(dt, player_pos + _hit_center, float(stats.get("magnet", 1.0)))
@@ -1149,14 +1163,12 @@ func _draw_statuses(view: Rect2) -> void:
 			var sh: SpriteSheet = sheets.get(String(d.get("sprite", "")))
 			if sh == null:
 				continue
+			# status sprites are made for a body of radius 8 px: scale to this monster
 			var r := enemies.k_radius[enemies.kind[i]]
 			var p := enemies.center_of(i)
-			match String(d.get("at", "body")):
-				"head":
-					p.y -= r + 10.0
-				"feet":
-					p = enemies.pos[i] + Vector2(0, -6)
-			sh.draw(self, "loop", clock + i * 0.17, p, _sprite_scale)
+			if String(d.get("at", "body")) == "head":
+				p.y -= r
+			sh.draw(self, "loop", clock + i * 0.17, p, r / 8.0)
 	for s in _shock_fx:
 		var a: Vector2 = s["a"]
 		var b: Vector2 = s["b"]
@@ -1165,7 +1177,9 @@ func _draw_statuses(view: Rect2) -> void:
 			var q := a.lerp(b, k / 5.0)
 			pts.append(q + (b - a).orthogonal().normalized() * (6.0 if k % 2 else -6.0))
 		pts.append(b)
-		draw_polyline(pts, Color("fff6a0"), 2.0)
+		draw_polyline(pts, Color(0.5, 0.9, 1.0, 0.35), 6.0)   # glow
+		draw_polyline(pts, Color("fff6a0"), 3.0)
+		draw_polyline(pts, Color.WHITE, 1.0)
 		var sk: SpriteSheet = sheets.get(String(status_defs.get("shock", {}).get("sprite", "")))
 		if sk != null:
 			sk.draw(self, "loop", float(s["t"]), b, _sprite_scale)
@@ -1173,9 +1187,9 @@ func _draw_statuses(view: Rect2) -> void:
 
 ## Tint of monster [param i] from its statuses (freeze / burn / slow), or white.
 func _status_tint(i: int) -> Color:
-	for st in ["freeze", "burn", "slow"]:
+	for st in ["freeze", "burn", "bleed", "slow"]:
 		var ok: bool = (st == "freeze" and enemies.freeze_t[i] > 0.0) or (st == "burn" and enemies.burn_t[i] > 0.0) \
-			or (st == "slow" and enemies.slow_t[i] > 0.0)
+			or (st == "bleed" and enemies.bleed_t[i] > 0.0) or (st == "slow" and enemies.slow_t[i] > 0.0)
 		if ok and status_defs.get(st, {}).has("tint"):
 			return Color(String(status_defs[st]["tint"]))
 	return Color.WHITE
