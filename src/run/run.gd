@@ -260,7 +260,8 @@ func _ready() -> void:
 		fake.cls = class_id
 		fake.pending.append(_shot_end)
 		playing_slot = fake
-		run_result = {"won": true, "stage": _shot_end, "collected": 0, "stage_gold": 0, "gems": 0,
+		var rw := Stages.load_default().rewards(_shot_end, true)   # what a first win of that stage gives
+		run_result = {"won": true, "stage": _shot_end, "collected": 0, "stage_gold": int(rw["gold"]), "gems": int(rw["gems"]),
 			"first": true, "milestone": _shot_end, "pending": [_shot_end], "next": true, "best": _shot_end}
 		_panels.show_end(true)
 		return

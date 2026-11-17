@@ -74,11 +74,12 @@ func _ready() -> void:
 func _make_preview_slot() -> void:
 	var s := SlotStore.new_slot("Nhân vật 1", hero, slot_store().defs)
 	s.id = "slot1"
-	s.best = 9
-	s.gold = 140
-	s.gems = 52
-	s.wins["10"] = 2
-	s.milestones["10"] = "earthquake"
+	# progress as record_win leaves it after winning stages 1-10 (stage 10 twice)
+	var st := Stages.load_default()
+	for n in range(1, 11):
+		s.record_win(n, st)
+	s.record_win(10, st)
+	s.choose_milestone(10, "earthquake" if hero == "knight" else "void_orb")
 	s.profile.equip(hero, "iron_helm")
 	active_slot = s
 	stage_target = 10
