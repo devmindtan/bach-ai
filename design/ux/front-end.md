@@ -18,7 +18,9 @@ thiết kế theo các game cùng loại, không đoán.
 
 ```text
 Mở game → Màn tiêu đề ──Tiếp tục──────────────→ Sảnh chuẩn bị (nhân vật chơi lần trước)
-                      └─Chọn nhân vật → Màn chọn nhân vật ──Chơi──→ Sảnh chuẩn bị → Trận → Kết quả → Sảnh
+                      └─Chọn nhân vật → Màn chọn nhân vật ──Chơi──→ Sảnh chuẩn bị
+Sảnh chuẩn bị ──Trang bị──→ Màn trang bị (design/ux/equipment.md)
+              └─Chọn ải ▶─→ Màn chọn ải / chế độ (design/ux/stage-select.md) ──Bắt đầu──→ Trận → Kết quả → Sảnh
                                            └─ + Tạo nhân vật (chọn class, đặt tên)
 ```
 
@@ -52,8 +54,9 @@ Mở game → Màn tiêu đề ──Tiếp tục──────────�
 
 ## Sảnh chuẩn bị (`src/lobby/lobby.tscn`)
 
-- Là nơi chuẩn bị cho nhân vật đã chọn: trang bị, chọn ải, Bắt đầu.
-- Thanh trên: **Nhân vật** (về màn chọn nhân vật), **Trang bị**, **Cài đặt**, **Menu chính**.
+- Là nơi chuẩn bị cho nhân vật đã chọn: xem chỉ số, nội tại, bộ chiêu; nút **Trang bị** (màn trang bị) và
+  **Chọn ải ▶** (nút chính, mở màn chọn ải / chế độ). Không còn thẻ ải và nút Bắt đầu ở sảnh.
+- Thanh trên: **Nhân vật** (về màn chọn nhân vật), **Cài đặt**, **Menu chính**.
 - Không có mũi tên đổi class, không có trang quản lý slot (đã chuyển sang màn chọn nhân vật).
 - Không có nhân vật nào (file bị xoá) → chuyển sang màn chọn nhân vật.
 
