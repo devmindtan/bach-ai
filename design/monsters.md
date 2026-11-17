@@ -46,3 +46,10 @@ Mắt hư không (ranged), Bóng ma (ghost, nhanh), Kỵ sĩ bóng tối (charge
 
 Mỗi quái: `gamekit art new <tên> --size N` → `gen.py` (silhouette trước, ASCII map tay cho đầu/mặt) → `gamekit art run` →
 xem preview + `gamekit art shot <tên> sheet|move` → `gamekit art promote <tên> bach-ai` khi đạt.
+
+## Nhịp xuất hiện trong một ải (2026-11-17)
+
+Quái yếu (slime, dơi) lên đỉnh ở khoảng giữa ải rồi **thưa dần**, quái mạnh (goblin, rồi quái mới của các vùng sau)
+**tăng dần tới cuối ải**; quái tinh anh xuất hiện theo mốc. Trong dữ liệu, một quái có thể có nhiều dòng `waves` nối
+nhau (lên rồi xuống). Test `test_stages_shift_to_stronger_monsters_over_time` chặn: quái yếu nhất phải xuống dưới
+60% đỉnh của nó trong 20% thời gian cuối, và máu trung bình của quái sinh ra cuối ải phải cao hơn đầu ải ≥ 30%.

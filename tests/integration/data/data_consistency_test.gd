@@ -161,3 +161,48 @@ func test_every_upgrade_has_a_card_icon() -> void:
 			# a card may borrow another card's icon with "icon"
 			var icon_id := String(u.get("icon", u["id"]))
 			_check(icons.has_animation(icon_id), "upgrade %s has no icon '%s' in ui-icons (draw it in Sprite Lab)" % [u["id"], icon_id])
+
+
+## User 2026-11-17: as time passes the early monsters thin out and stronger ones
+## take over. In every stage the weakest normal monster spawns, over the last 20%
+## of the stage, at under 60% of its own peak rate, and the average hp of what
+## spawns late is clearly higher than early.
+func test_stages_shift_to_stronger_monsters_over_time() -> void:
+	var monsters := GameData.load_json(DATA + "monsters.json")
+	for f in DirAccess.get_files_at(DATA + "waves"):
+		if not f.ends_with(".json"):
+			continue
+		var stage := GameData.load_json(DATA + "waves/" + f)
+		var dur := float(stage.get("duration", 300.0))
+		var waves: Array = stage.get("waves", [])
+		var rates := func(t: float) -> Dictionary:
+			var r := {}
+			for w: Dictionary in waves:
+				var id := String(w.get("monster", ""))
+				if id.ends_with("@elite") or bool(monsters.get(id, {}).get("boss", false)):
+					continue
+				r[id] = float(r.get(id, 0.0)) + WaveScheduler.rate_at(w, t)
+			return r
+		var weakest := ""
+		for id: String in rates.call(dur * 0.5):
+			if weakest == "" or float(monsters[id]["hp"]) < float(monsters[weakest]["hp"]):
+				weakest = id
+		var peak := 0.0
+		var late := 0.0
+		for k in 101:
+			var t := dur * k / 100.0
+			var r: float = rates.call(t).get(weakest, 0.0)
+			peak = maxf(peak, r)
+			if t >= dur * 0.8:
+				late = maxf(late, r)
+		_check(late < peak * 0.6, "%s: weakest %s still spawns at %.2f/s late (peak %.2f/s); thin it out" % [f, weakest, late, peak])
+		var avg_hp := func(t: float) -> float:
+			var n := 0.0
+			var hp := 0.0
+			var r: Dictionary = rates.call(t)
+			for id: String in r:
+				n += float(r[id])
+				hp += float(r[id]) * float(monsters[id]["hp"])
+			return hp / maxf(0.001, n)
+		_check(avg_hp.call(dur * 0.9) > avg_hp.call(dur * 0.25) * 1.3,
+			"%s: late spawns are not stronger (avg hp %.1f early, %.1f late)" % [f, avg_hp.call(dur * 0.25), avg_hp.call(dur * 0.9)])
