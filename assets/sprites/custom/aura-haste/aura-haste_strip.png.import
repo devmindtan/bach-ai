@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cwd58kux7etcm"
-path="res://.godot/imported/heal-bloom.png-fcc0c293405aa4bec6aa55b128e4c263.ctex"
+uid="uid://d057dgssuncvy"
+path="res://.godot/imported/aura-haste_strip.png-6ece3ca2d8290fb66d1ba530e09a15ed.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/custom/heal-bloom/heal-bloom.png"
-dest_files=["res://.godot/imported/heal-bloom.png-fcc0c293405aa4bec6aa55b128e4c263.ctex"]
+source_file="res://assets/sprites/custom/aura-haste/aura-haste_strip.png"
+dest_files=["res://.godot/imported/aura-haste_strip.png-6ece3ca2d8290fb66d1ba530e09a15ed.ctex"]
 
 [params]
 

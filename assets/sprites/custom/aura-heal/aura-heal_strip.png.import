@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cey5eb1cudjjw"
-path="res://.godot/imported/arcane-empower_strip.png-e80b391ab2e2f7b7c3e16e9944a08e67.ctex"
+uid="uid://dpfyadocrlw8n"
+path="res://.godot/imported/aura-heal_strip.png-f5334cd55a4fbf1c17ed02c9a08179c5.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/custom/arcane-empower/arcane-empower_strip.png"
-dest_files=["res://.godot/imported/arcane-empower_strip.png-e80b391ab2e2f7b7c3e16e9944a08e67.ctex"]
+source_file="res://assets/sprites/custom/aura-heal/aura-heal_strip.png"
+dest_files=["res://.godot/imported/aura-heal_strip.png-f5334cd55a4fbf1c17ed02c9a08179c5.ctex"]
 
 [params]
 

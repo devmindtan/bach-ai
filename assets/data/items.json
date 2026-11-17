@@ -1,5 +1,5 @@
 {
-  "_doc": "Every item in the game. pickups: dropped in a run and collected by walking near (pickups.radius x magnet in run_config.json). buffs: temporary buffs that appear at random near the player (timing in run_config.json buffs) and run for duration s once walked onto; effects work like upgrade effects (PlayerStats), invulnerable blocks all damage, color = HUD timer bar; aura = status sprite drawn around the hero meanwhile (behind the hero; aura_at feet: at its feet, body: at the body centre). equipment: worn items, one per slot (head, chest, arms, legs, weapon); empty until the gear phase. Read by src/run/run.gd and the studio dashboard (tab Vat pham).",
+  "_doc": "Every item in the game. pickups: dropped in a run and collected by walking near (pickups.radius x magnet in run_config.json). buffs: temporary buffs that appear at random near the player (timing in run_config.json buffs) and run for duration s once walked onto; effects work like upgrade effects (PlayerStats), invulnerable blocks all damage, color = HUD timer bar; aura = status sprite drawn around the hero meanwhile (made for the hero: same 48 px frame and feet anchor, each buff in its own zone so auras never overlap; aura_layer back = behind the hero, front = over it, drawn in this order so the shield bubble comes last). equipment: worn items, one per slot (head, chest, arms, legs, weapon); empty until the gear phase. Read by src/run/run.gd and the studio dashboard (tab Vat pham).",
   "pickups": {
     "xp_gem": { "name": "Ngọc kinh nghiệm", "sprite": "exp-gem",
                 "desc": "Rơi khi hạ quái; giá trị bằng kinh nghiệm của quái đó. Nhặt đủ thì lên cấp và chọn 1 trong 3 thẻ." },
@@ -7,16 +7,16 @@
               "desc": "Có tỉ lệ rơi thêm khi hạ quái. Tích lũy qua các lượt chơi." }
   },
   "buffs": {
-    "haste_rune": { "name": "Rune tốc độ", "sprite": "haste-rune-pickup", "aura": "haste-rune", "color": "#f2c040", "aura_at": "feet", "duration": 8.0,
+    "haste_rune": { "name": "Rune tốc độ", "sprite": "haste-rune-pickup", "aura": "aura-haste", "color": "#f2c040", "aura_layer": "back", "duration": 8.0,
                     "effects": { "move_speed": { "mul": 0.4 }, "cooldown": { "mul": -0.3 } },
                     "desc": "Trong 8 giây: tốc độ chạy +40%, hồi chiêu −30%." },
-    "power_orb": { "name": "Ngọc sức mạnh", "sprite": "arcane-empower-pickup", "aura": "arcane-empower", "color": "#b47cf0", "aura_at": "body", "duration": 8.0,
+    "power_orb": { "name": "Ngọc sức mạnh", "sprite": "arcane-empower-pickup", "aura": "aura-power", "color": "#b47cf0", "aura_layer": "front", "duration": 8.0,
                    "effects": { "damage": { "mul": 0.5 } },
                    "desc": "Trong 8 giây: sát thương mọi đòn +50%." },
-    "heal_bloom": { "name": "Hoa hồi phục", "sprite": "heal-bloom-pickup", "aura": "heal-bloom", "color": "#6fd66a", "aura_at": "feet", "duration": 6.0,
+    "heal_bloom": { "name": "Hoa hồi phục", "sprite": "heal-bloom-pickup", "aura": "aura-heal", "color": "#6fd66a", "aura_layer": "front", "duration": 6.0,
                     "effects": { "regen": { "add": 6.0 } },
                     "desc": "Trong 6 giây: hồi 6 máu mỗi giây." },
-    "magnetic_shield": { "name": "Khiên từ", "sprite": "magnetic-shield-pickup", "aura": "magnetic-shield", "color": "#6fc3ff", "aura_at": "body", "duration": 6.0,
+    "magnetic_shield": { "name": "Khiên từ", "sprite": "magnetic-shield-pickup", "aura": "aura-shield", "color": "#6fc3ff", "aura_layer": "front", "duration": 6.0,
                          "effects": { "magnet": { "mul": 3.0 } }, "invulnerable": true,
                          "desc": "Trong 6 giây: miễn mọi sát thương, tầm hút vật phẩm ×4." }
   },

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cbksdtbh1gesh"
-path="res://.godot/imported/haste-rune_strip.png-3708c3fc754f0637fe3a34a7f2d3b15f.ctex"
+uid="uid://br2iwk5b2cbsl"
+path="res://.godot/imported/aura-haste.png-9d5c18f9c4bbbdacb249987bfb9ef973.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/custom/haste-rune/haste-rune_strip.png"
-dest_files=["res://.godot/imported/haste-rune_strip.png-3708c3fc754f0637fe3a34a7f2d3b15f.ctex"]
+source_file="res://assets/sprites/custom/aura-haste/aura-haste.png"
+dest_files=["res://.godot/imported/aura-haste.png-9d5c18f9c4bbbdacb249987bfb9ef973.ctex"]
 
 [params]
 

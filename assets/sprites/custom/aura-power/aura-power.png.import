@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bia78npbtd73o"
-path="res://.godot/imported/arcane-empower.png-f46fbc930849cda35c9ec9412a9ce7c3.ctex"
+uid="uid://v5h2p0mgeg22"
+path="res://.godot/imported/aura-power.png-6901e6c4bbb4093f9c1b4c801bc5b75e.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/custom/arcane-empower/arcane-empower.png"
-dest_files=["res://.godot/imported/arcane-empower.png-f46fbc930849cda35c9ec9412a9ce7c3.ctex"]
+source_file="res://assets/sprites/custom/aura-power/aura-power.png"
+dest_files=["res://.godot/imported/aura-power.png-6901e6c4bbb4093f9c1b4c801bc5b75e.ctex"]
 
 [params]
 

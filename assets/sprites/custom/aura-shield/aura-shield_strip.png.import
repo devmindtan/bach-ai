@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cuu7sprmks5g0"
-path="res://.godot/imported/magnetic-shield.png-973c53537bdfa535e1ac926c7a14ad09.ctex"
+uid="uid://qwb8cfa116hv"
+path="res://.godot/imported/aura-shield_strip.png-5a99ec3883cc402fe313f19c055e99ba.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/custom/magnetic-shield/magnetic-shield.png"
-dest_files=["res://.godot/imported/magnetic-shield.png-973c53537bdfa535e1ac926c7a14ad09.ctex"]
+source_file="res://assets/sprites/custom/aura-shield/aura-shield_strip.png"
+dest_files=["res://.godot/imported/aura-shield_strip.png-5a99ec3883cc402fe313f19c055e99ba.ctex"]
 
 [params]
 

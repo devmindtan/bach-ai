@@ -922,8 +922,9 @@ func _draw() -> void:
 	if hero != null:
 		var blink := invuln > 0.0 and state == State.PLAYING and int(invuln * 20.0) % 2 == 0
 		var tint := Color(1, 1, 1, 0.45) if blink else Color.WHITE
-		_draw_auras()   # behind the hero: an aura over the body hid the hero (2026-11-17)
+		_draw_auras("back")
 		hero.draw(self, _anim, _anim_t, player_pos, _sprite_scale, face_left, tint)
+		_draw_auras("front")
 	for fx in _fx:
 		var sh: SpriteSheet = fx["sheet"]
 		var t := fmod(float(fx["t"]), sh.duration(fx["anim"])) if fx["anim"] == "spin" else float(fx["t"])
@@ -973,17 +974,21 @@ func _draw_ground_buffs(view: Rect2) -> void:
 			sh.draw(self, "idle", float(g["age"]), p, _sprite_scale)
 
 
-## The aura of each running buff, drawn behind the hero: at its feet
-## (aura_at "feet") or centred on its body ("body").
-func _draw_auras() -> void:
-	for id: String in buffs.active:
+## The aura of each running buff on [param layer] ("back" behind the hero,
+## "front" over it). Auras use the hero's frame and feet anchor, so they are drawn
+## at the hero's position and scale; each buff owns a zone (feet, sides, above the
+## head, a bubble round the whole hero), in items.json order (shield last).
+func _draw_auras(layer: String) -> void:
+	for id: String in _buff_defs:
+		if not buffs.is_active(id):
+			continue
 		var d := buff_def(id)
-		var at := String(d.get("aura_at", "body"))
+		if String(d.get("aura_layer", "front")) != layer:
+			continue
 		var sh: SpriteSheet = sheets.get(String(d.get("aura", "")))
 		if sh == null or not sh.has_animation("loop"):
 			continue
-		var p := player_pos if at == "feet" else player_pos + _hit_center
-		sh.draw(self, "loop", clock, p, _sprite_scale)
+		sh.draw(self, "loop", clock, player_pos, _sprite_scale)
 
 
 func _draw_damage_numbers(view: Rect2) -> void:
