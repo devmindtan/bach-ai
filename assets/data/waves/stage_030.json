@@ -1,0 +1,17 @@
+{
+  "_doc": "Boss stage of Đầm Lầy Độc (stage 30): Vua Thạch Nhầy at 120 s with many marsh elites. The boss's hp is scaled by the stage like every monster (stages.json scale). Won when the boss dies (or at duration).",
+  "name": "Hang Vua Thạch Nhầy",
+  "duration": 300.0,
+  "waves": [
+    { "monster": "slime", "t_from": 0, "t_to": 100, "rate": 1.8, "rate_end": 3.0 },
+    { "monster": "slime", "t_from": 100, "t_to": 300, "rate": 3.0, "rate_end": 0.4 },
+    { "monster": "bat", "t_from": 0, "t_to": 120, "rate": 1.2, "rate_end": 3.0 },
+    { "monster": "bat", "t_from": 120, "t_to": 300, "rate": 3.0, "rate_end": 0.8 },
+    { "monster": "goblin", "t_from": 15, "t_to": 300, "rate": 1.2, "rate_end": 4.2 },
+    { "monster": "goblin@elite", "t_from": 40, "t_to": 40, "burst": 3 },
+    { "monster": "bat@elite", "t_from": 90, "t_to": 90, "burst": 3 },
+    { "monster": "king_slime", "t_from": 120, "t_to": 120, "burst": 1 },
+    { "monster": "goblin@elite", "t_from": 170, "t_to": 170, "burst": 3 },
+    { "monster": "slime@elite", "t_from": 240, "t_to": 240, "burst": 3 }
+  ]
+}

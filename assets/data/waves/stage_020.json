@@ -1,0 +1,16 @@
+{
+  "_doc": "Boss stage of Rừng Âm U (stage 20): Vua Thạch Nhầy at 120 s with forest elites around it. The boss's hp is scaled by the stage like every monster (stages.json scale). Won when the boss dies (or at duration).",
+  "name": "Hang Vua Thạch Nhầy",
+  "duration": 300.0,
+  "waves": [
+    { "monster": "slime", "t_from": 0, "t_to": 120, "rate": 1.5, "rate_end": 3.5 },
+    { "monster": "slime", "t_from": 120, "t_to": 300, "rate": 3.5, "rate_end": 0.6 },
+    { "monster": "bat", "t_from": 10, "t_to": 140, "rate": 1.0, "rate_end": 3.2 },
+    { "monster": "bat", "t_from": 140, "t_to": 300, "rate": 3.2, "rate_end": 1.0 },
+    { "monster": "goblin", "t_from": 30, "t_to": 300, "rate": 0.8, "rate_end": 3.8 },
+    { "monster": "goblin@elite", "t_from": 60, "t_to": 60, "burst": 2 },
+    { "monster": "bat@elite", "t_from": 100, "t_to": 100, "burst": 2 },
+    { "monster": "king_slime", "t_from": 120, "t_to": 120, "burst": 1 },
+    { "monster": "goblin@elite", "t_from": 200, "t_to": 200, "burst": 2 }
+  ]
+}
