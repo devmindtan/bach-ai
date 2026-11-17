@@ -108,6 +108,7 @@ func _draw() -> void:
 	_text(font, Vector2(x, _baseline(ROW, 22)), kills, 22)
 	UiIcons.draw(self, "skull", Vector2(x - 22, ROW), 2.0)
 	_draw_skill_bar(font)
+	_draw_boss_bar(font)
 
 
 
@@ -116,6 +117,24 @@ const SLOT_GAP := 8.0
 const SLOT_BOTTOM := 18.0   # gap under the bar
 const COOL := Color(0.02, 0.02, 0.05, 0.72)
 const ACTIVE := Color("ffd36b")
+
+
+## The boss's name and hp under the clock while one is alive.
+func _draw_boss_bar(font: Font) -> void:
+	var i: int = run.enemies.boss_index()
+	if i < 0:
+		return
+	var k: int = run.enemies.kind[i]
+	var w := 520.0
+	var bar := Rect2(roundf(size.x * 0.5 - w * 0.5), ROW + 40, w, 16)
+	var name := String(run.enemies.k_extra[k].get("name", run.enemies.kind_ids[k]))
+	_centered(font, Vector2(size.x * 0.5, bar.position.y - 6), name, 18)
+	draw_rect(bar.grow(2), Color(0.05, 0.03, 0.05, 0.9))
+	var frac := clampf(run.enemies.hp[i] / run.enemies.k_hp[k], 0.0, 1.0)
+	draw_rect(Rect2(bar.position, Vector2(bar.size.x * frac, bar.size.y)), Color("b0203a"))
+	draw_rect(Rect2(bar.position, Vector2(bar.size.x * frac, 4)), Color("ff6a7a"))
+	for f in [0.25, 0.5, 0.75]:   # split marks
+		draw_rect(Rect2(bar.position.x + bar.size.x * f - 1, bar.position.y, 2, bar.size.y), Color(0, 0, 0, 0.6))
 
 
 ## The class passive's icon after the hp bar: dim while it waits for its

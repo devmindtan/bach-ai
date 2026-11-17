@@ -4,7 +4,7 @@ extends RefCounted
 
 const DATA := "res://assets/data/"
 const SPRITES := "res://assets/sprites/custom/"
-const BEHAVIOURS := ["chase", "swarm", "charge"]
+const BEHAVIOURS := ["chase", "swarm", "charge", "boss_slime"]
 
 var failures: Array[String] = []
 
@@ -44,13 +44,17 @@ func test_classes_reference_existing_pools_and_sprites() -> void:
 
 func test_waves_reference_existing_monsters() -> void:
 	var monsters := GameData.load_json(DATA + "monsters.json")
-	var stage := GameData.load_json(DATA + "waves/stage_001.json")
-	_check(float(stage.get("duration", 0)) > 0.0, "stage_001 has no duration")
 	var used := {}
-	for w: Dictionary in stage.get("waves", []):
-		var m := String(w.get("monster", ""))
-		used[m] = true
-		_check(monsters.has(m), "wave monster %s not in monsters.json" % m)
+	for f in DirAccess.get_files_at(DATA + "waves"):
+		if not f.ends_with(".json"):
+			continue
+		var stage := GameData.load_json(DATA + "waves/" + f)
+		_check(float(stage.get("duration", 0)) > 0.0, "%s has no duration" % f)
+		for w: Dictionary in stage.get("waves", []):
+			# "<id>@elite" spawns the elite of <id> (run_config.json elite)
+			var m := String(w.get("monster", "")).trim_suffix("@elite")
+			used[m] = true
+			_check(monsters.has(m), "%s: wave monster %s not in monsters.json" % [f, m])
 	for m: String in monsters:
 		if m.begins_with("_"):
 			continue

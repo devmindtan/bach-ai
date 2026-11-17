@@ -9,6 +9,7 @@ extends Node2D
 ##   --sim-steps=N   simulate N fixed steps per frame (fast-forward for shots)
 ##   --walk=X,Y      the demo walks in a fixed direction (shots of each view)
 ##   --god           the hero takes no damage (shots of the win screen)
+##   --stage=N       play waves/stage_00N.json (stage 10: Vua Slime)
 ##   --dash-at=T     dash at T seconds (needs the dash card, e.g. --skills=dash:1)
 ##   --monster-hp=N  monsters have N x hp (shots of statuses)
 ##   --status-all=a,b  every 0.5 s put these statuses on every monster (shots)
@@ -25,7 +26,10 @@ const DATA := "res://assets/data/"
 const SPRITES := "res://assets/sprites/custom/"
 const STEP := 1.0 / 60.0
 var class_id := "knight"   # Prefs.current().hero (the lobby choice, or --class=)
-const STAGE_FILE := "waves/stage_001.json"
+var stage_number := 1        # --stage=N (stage select comes in phase 3)
+var _boss_dead := false
+var _chest_open := false   # the next level-up panel comes from a chest
+var _chest_sprite := "chest"
 
 enum State { PLAYING, LEVEL_UP, PAUSED, DEAD, WON }
 
@@ -134,7 +138,9 @@ func _ready() -> void:
 		class_id = "knight"
 	class_data = classes.get(class_id, {})
 	pool = GameData.load_json(DATA + String(class_data.get("upgrades", "")))
-	stage = GameData.load_json(DATA + STAGE_FILE)
+	stage = GameData.load_json(DATA + "waves/stage_%03d.json" % stage_number)
+	if stage.is_empty():
+		stage = GameData.load_json(DATA + "waves/stage_001.json")
 	var monsters := GameData.load_json(DATA + "monsters.json")
 	duration = float(stage.get("duration", 300.0))
 	_sprite_scale = float(cfg.get("world", {}).get("sprite_scale", 2))
@@ -153,7 +159,8 @@ func _ready() -> void:
 	var items := GameData.load_json(DATA + "items.json")
 	_gem_sprite = String(items.get("pickups", {}).get("xp_gem", {}).get("sprite", "exp-gem"))
 	_coin_sprite = String(items.get("pickups", {}).get("gold", {}).get("sprite", "gold-coin"))
-	var names: Array[String] = [String(class_data.get("sprite", "swordsman")), _gem_sprite, _coin_sprite]
+	_chest_sprite = String(items.get("pickups", {}).get("chest", {}).get("sprite", "chest"))
+	var names: Array[String] = [String(class_data.get("sprite", "swordsman")), _gem_sprite, _coin_sprite, _chest_sprite, "stomp-i"]
 	_buff_defs = items.get("buffs", {})
 	status_defs = GameData.load_json(DATA + "statuses.json").get("statuses", {})
 	for st: String in status_defs:
@@ -238,6 +245,8 @@ func _parse_args() -> void:
 				_status_all.append(st)
 		elif a.begins_with("--monster-hp="):
 			monster_hp_mul = maxf(0.01, float(a.get_slice("=", 1)))
+		elif a.begins_with("--stage="):
+			stage_number = maxi(1, int(a.get_slice("=", 1)))
 		elif a.begins_with("--dash-at="):
 			dash_at = float(a.get_slice("=", 1))
 		elif a == "--god":
@@ -360,11 +369,19 @@ func _tick(dt: float) -> void:
 	gold += int(got.y)
 	if got.x > 0.0:
 		_gain_xp(got.x)
+	if pickups.chests > 0 and state == State.PLAYING:   # a chest from an elite: one extra pick
+		pickups.chests -= 1
+		pending_levels += 1
+		_chest_open = true
+		_open_level_up()
+	for p in enemies.slams:   # boss landings: a dust ring where it hit the ground
+		_add_fx("stomp-i", "burst", _sprite_scale * 1.6, 0.0, -1.0, p)
+	enemies.slams.clear()
 	_step_fx(dt)
 	_step_damage_numbers(dt)
 	if hp <= 0.0:
 		_die()
-	elif clock >= duration and bench == 0:
+	elif (clock >= duration or _boss_dead) and bench == 0:
 		_win()
 
 
@@ -483,6 +500,10 @@ func _drops() -> void:
 	var gold_chance := float(cfg.get("pickups", {}).get("gold_chance", 0.1))
 	for i in enemies.kill_pos.size():
 		pickups.drop(Pickups.GEM, enemies.kill_pos[i], enemies.kill_xp[i])
+		if enemies.kill_elite[i] == 1:
+			pickups.drop(Pickups.CHEST, enemies.kill_pos[i] + Vector2(-10, 0), 1.0)
+		if enemies.kill_boss[i] == 1:
+			_boss_dead = true
 		if rng.randf() < gold_chance:
 			pickups.drop(Pickups.COIN, enemies.kill_pos[i] + Vector2(10, 0), 1.0)
 	enemies.drain_kills()
@@ -881,7 +902,8 @@ func _open_level_up() -> void:
 		return
 	state = State.LEVEL_UP
 	_demo_pick_t = 0.0
-	_panels.show_level_up(choices)
+	_panels.show_level_up(choices, "Rương báu! Chọn một" if _chest_open else "Lên cấp! Chọn một")
+	_chest_open = false
 
 
 ## Applies choice [param index] of the open level-up and continues the run.
@@ -1116,7 +1138,11 @@ func _draw() -> void:
 	for i in pickups.count:
 		if view.has_point(pickups.pos[i]):
 			var sh := gem if pickups.kind[i] == Pickups.GEM else coin
-			sh.draw(self, "idle", clock + i * 0.13, pickups.pos[i], _sprite_scale)
+			if pickups.kind[i] == Pickups.CHEST:
+				sh = sheets.get(_chest_sprite)
+			if sh != null:
+				sh.draw(self, "idle", clock + i * 0.13, pickups.pos[i], _sprite_scale)
+	_draw_boss_warnings()
 	_draw_ground_buffs(view)
 	# dying monsters under the living ones
 	for pass_dying in [true, false]:
@@ -1128,6 +1154,12 @@ func _draw() -> void:
 			var tint := Color(1.0, 0.55, 0.55) if enemies.flash[i] > 0.0 else _status_tint(i)
 			if enemies.state[i] == Enemies.WINDUP:
 				tint = Color(1.0, 0.8, 0.5)
+			if enemies.k_elite[k] == 1:   # elite: a gold halo under it
+				var hr := enemies.k_radius[k]
+				var hc := enemies.center_of(i)
+				draw_arc(hc + Vector2(0, hr * 0.6), hr * 1.1, 0.0, TAU, 32, Color(1.0, 0.82, 0.3, 0.45 + 0.25 * sin(clock * 5.0)), 3.0)
+				if tint == Color.WHITE:
+					tint = Color(1.0, 0.92, 0.75)
 			enemies.k_sheet[k].draw(self, a[0], a[1], enemies.pos[i], enemies.k_scale[k],
 				enemies.flip[i] == 1, tint)
 	var hero: SpriteSheet = sheets.get(String(class_data.get("sprite", "swordsman")))
@@ -1268,6 +1300,16 @@ func _status_tint(i: int) -> Color:
 		if ok and status_defs.get(st, {}).has("tint"):
 			return Color(String(status_defs[st]["tint"]))
 	return Color.WHITE
+
+
+## Red circles where a boss is about to land (its slam reach), filling up as the
+## landing nears.
+func _draw_boss_warnings() -> void:
+	for w in enemies.boss_telegraphs():
+		var p: Vector2 = w[0]
+		var r: float = w[1]
+		draw_circle(p, r, Color(0.9, 0.1, 0.1, 0.16))
+		draw_arc(p, r, 0.0, TAU, 48, Color(1.0, 0.3, 0.3, 0.8), 2.0)
 
 
 ## Afterimages of the hero along the dash path (the camera follows the hero, so

@@ -45,8 +45,8 @@ func hide_all() -> void:
 ## pips (owned / the one you get / still locked, milestones drawn as diamonds),
 ## the milestone reached by this pick, the real before -> after numbers, and the
 ## description. Content reads top-down from the top of the card.
-func show_level_up(ids: Array[String]) -> void:
-	var root := _open("Lên cấp! Chọn một", false)
+func show_level_up(ids: Array[String], title := "Lên cấp! Chọn một") -> void:
+	var root := _open(title, false)
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 20)

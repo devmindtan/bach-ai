@@ -1,0 +1,13 @@
+{
+  "_doc": "Stage 10: the Vua Thạch Nhầy boss (king_slime). Same wave rules as stage_001; the boss comes at 120 s and the stage is won when it dies (or at duration).",
+  "number": 10,
+  "name": "Hang Vua Thạch Nhầy",
+  "duration": 300.0,
+  "waves": [
+    { "monster": "slime", "t_from": 0, "t_to": 300, "rate": 1.5, "rate_end": 4.0 },
+    { "monster": "bat", "t_from": 20, "t_to": 300, "rate": 0.8, "rate_end": 3.0 },
+    { "monster": "goblin", "t_from": 40, "t_to": 300, "rate": 0.5, "rate_end": 1.6 },
+    { "monster": "goblin@elite", "t_from": 60, "t_to": 60, "burst": 2 },
+    { "monster": "king_slime", "t_from": 120, "t_to": 120, "burst": 1 }
+  ]
+}

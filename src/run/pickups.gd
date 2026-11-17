@@ -8,7 +8,7 @@ extends RefCounted
 ##   p.drop(Pickups.GEM, pos, 3.0)
 ##   var got := p.step(delta, player_center, magnet_mul)   # Vector2(xp, gold)
 
-enum { GEM, COIN }
+enum { GEM, COIN, CHEST }
 
 var count := 0
 var capacity := 0
@@ -20,6 +20,7 @@ var pulled := PackedByteArray()
 var radius := 70.0
 var magnet_speed := 520.0
 var collect_radius := 14.0
+var chests := 0   # chests collected and not yet opened (the run opens one per extra pick)
 
 
 func _init(cfg: Dictionary, p_capacity := 400) -> void:
@@ -66,6 +67,8 @@ func step(delta: float, player_center: Vector2, magnet_mul: float) -> Vector2:
 		if l <= collect_radius:
 			if kind[i] == GEM:
 				got.x += value[i]
+			elif kind[i] == CHEST:
+				chests += 1
 			else:
 				got.y += value[i]
 			_remove(i)

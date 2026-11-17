@@ -11,7 +11,7 @@ extends RefCounted
 ##   e.hit_circle(center, 80.0, 12.0)                           # kills land in kill_pos / kill_xp
 
 enum { MOVE, WINDUP, DASH, DYING }
-enum { CHASE, SWARM, CHARGE }
+enum { CHASE, SWARM, CHARGE, BOSS_SLIME }
 
 const HURT_FLASH := 0.12
 const KNOCKBACK_DECAY := 10.0
@@ -62,6 +62,8 @@ var k_scale := PackedFloat32Array()
 var k_center := PackedVector2Array()     # body centre relative to the anchor point (facing right)
 var k_death_time := PackedFloat32Array()
 var k_extra: Array[Dictionary] = []
+var k_elite := PackedByteArray()    # 1 = an elite kind ("<id>@elite", run_config "elite")
+var k_boss := PackedByteArray()     # 1 = a boss (HUD bar, the stage is won when it dies)
 
 # hits since the last drain_hits() (the run shows them as damage numbers)
 var hit_pos := PackedVector2Array()
@@ -71,6 +73,10 @@ var hp_bar_time := 2.0
 # kills since the last drain_kills() (the run turns them into gems)
 var kill_pos := PackedVector2Array()
 var kill_xp := PackedFloat32Array()
+var kill_elite := PackedByteArray()   # 1 = the kill was an elite (drops a chest)
+var kill_boss := PackedByteArray()
+## Boss landings since the last drain (positions, for the run to draw the dust).
+var slams := PackedVector2Array()
 var total_kills := 0
 ## Per damage source (skill id, "" when unnamed), for the end-of-run table:
 ## damage actually dealt (overkill not counted), hits, kills.
@@ -90,6 +96,8 @@ var _push := 60.0
 var _query := PackedInt32Array()
 var _rng := RandomNumberGenerator.new()
 var _time := 0.0
+var _target := Vector2.ZERO   # the player position this step (boss jump targets)
+var _slam_i := -1
 
 
 func _init(monsters: Dictionary, cfg: Dictionary, sheets: Dictionary, seed_value := 0) -> void:
@@ -122,32 +130,46 @@ func _init(monsters: Dictionary, cfg: Dictionary, sheets: Dictionary, seed_value
 	bleed_src.resize(capacity)
 	burn_src.resize(capacity)
 	hp_bar_time = float(cfg.get("ui", {}).get("hp_bar_time", 2.0))
-	var behaviours := {"chase": CHASE, "swarm": SWARM, "charge": CHARGE}
 	var world_scale := float(world.get("sprite_scale", 2))
+	var elite: Dictionary = cfg.get("elite", {})
 	for id: String in monsters:
 		if id.begins_with("_"):
 			continue
 		var m: Dictionary = monsters[id]
-		var sheet: SpriteSheet = sheets.get(String(m.get("sprite", id)))
-		kind_ids.append(id)
-		k_sheet.append(sheet)
-		k_behaviour.append(behaviours.get(String(m.get("behaviour", "chase")), CHASE))
-		k_hp.append(float(m.get("hp", 10.0)))
-		k_damage.append(float(m.get("damage", 5.0)))
-		k_speed.append(float(m.get("speed", 50.0)))
-		k_xp.append(float(m.get("xp", 1.0)))
-		var sc := float(m.get("scale", world_scale))
-		k_scale.append(sc)
-		# body circle measured from the sprite's pixels (json "body"), never typed in data
-		var body := SpriteHitbox.body(sheet, Vector2.ZERO, sc)
-		if body == null:
-			push_error("Enemies: sprite of %s has no body circle; regenerate it in Sprite Lab" % id)
-			body = SpriteHitbox.new()
-			body.radius = 8.0 * sc
-		k_radius.append(body.radius)
-		k_center.append(body.center)
-		k_death_time.append(sheet.duration("death") if sheet != null and sheet.has_animation("death") else 0.4)
-		k_extra.append(m)
+		_register(id, m, sheets.get(String(m.get("sprite", id))), world_scale, {})
+		# every monster also has an elite kind, spawned by waves as "<id>@elite"
+		if not elite.is_empty() and not bool(m.get("boss", false)):
+			_register(id + "@elite", m, sheets.get(String(m.get("sprite", id))), world_scale, elite)
+
+
+const BEHAVIOURS := {"chase": CHASE, "swarm": SWARM, "charge": CHARGE, "boss_slime": BOSS_SLIME}
+
+
+## One monster kind; [param elite] = multipliers (hp_mul, damage_mul, scale_mul,
+## xp_mul), empty for a normal kind.
+func _register(id: String, m: Dictionary, sheet: SpriteSheet, world_scale: float, elite: Dictionary) -> void:
+	var is_elite := not elite.is_empty()
+	kind_ids.append(id)
+	k_sheet.append(sheet)
+	k_behaviour.append(BEHAVIOURS.get(String(m.get("behaviour", "chase")), CHASE))
+	k_hp.append(float(m.get("hp", 10.0)) * float(elite.get("hp_mul", 1.0)))
+	k_damage.append(float(m.get("damage", 5.0)) * float(elite.get("damage_mul", 1.0)))
+	k_speed.append(float(m.get("speed", 50.0)) * float(elite.get("speed_mul", 1.0)))
+	k_xp.append(float(m.get("xp", 1.0)) * float(elite.get("xp_mul", 1.0)))
+	var sc := float(m.get("scale", world_scale)) * float(elite.get("scale_mul", 1.0))
+	k_scale.append(sc)
+	# body circle measured from the sprite's pixels (json "body"), never typed in data
+	var body := SpriteHitbox.body(sheet, Vector2.ZERO, sc)
+	if body == null:
+		push_error("Enemies: sprite of %s has no body circle; regenerate it in Sprite Lab" % id)
+		body = SpriteHitbox.new()
+		body.radius = 8.0 * sc
+	k_radius.append(body.radius)
+	k_center.append(body.center)
+	k_death_time.append(sheet.duration("death") if sheet != null and sheet.has_animation("death") else 0.4)
+	k_extra.append(m)
+	k_elite.append(1 if is_elite else 0)
+	k_boss.append(1 if bool(m.get("boss", false)) else 0)
 
 
 ## Kind index of a monster id, or -1.
@@ -207,6 +229,7 @@ func center_of(i: int) -> Vector2:
 ## contact damage a living monster deals this frame (0 when none touches).
 func step(delta: float, player_pos: Vector2, player_center: Vector2) -> float:
 	_time += delta
+	_target = player_pos
 	# 1. timers, and remove monsters whose death animation is over. Removal
 	#    swap-moves the last slot, so it must happen before the hash is built.
 	var i := 0
@@ -244,7 +267,12 @@ func step(delta: float, player_pos: Vector2, player_center: Vector2) -> float:
 		var dir := to_player / dist if dist > 0.001 else Vector2.ZERO
 		flip[n] = 1 if to_player.x < 0.0 else 0
 		var stopped := stun_t[n] > 0.0 or freeze_t[n] > 0.0
+		_slam_i = -1
 		var vel := Vector2.ZERO if stopped else _velocity(n, k, dir, dist, delta) * (slow_mul[n] if slow_t[n] > 0.0 else 1.0)
+		if _slam_i == n:   # a boss landed: its slam hits a player within reach
+			var reach := k_radius[k] * float(k_extra[k].get("slam_reach", 2.5))
+			if (pos[n] + vel * delta).distance_to(player_center) < reach + player_hit_radius:
+				contact = maxf(contact, float(k_extra[k].get("slam_damage", k_damage[k])))
 		# separation: push away from overlapping neighbours (same cell block)
 		var r := k_radius[k]
 		_query.clear()
@@ -301,8 +329,68 @@ func _velocity(i: int, k: int, dir: Vector2, dist: float, delta: float) -> Vecto
 						anim_t[i] = 0.0
 						return Vector2.ZERO
 			return dir * speed
+		BOSS_SLIME:
+			return _boss_slime(i, k, dir, speed, delta)
 		_:
 			return dir * speed
+
+
+## Vua Slime: crawls after the player; every jump_every s it winds up (windup s,
+## the target is where the player is then: dash_dir holds it), jumps there in
+## jump_time s and lands: a slam at the landing (slams; the step turns it into
+## contact damage for a player within slam_reach x its body radius).
+func _boss_slime(i: int, k: int, dir: Vector2, speed: float, delta: float) -> Vector2:
+	var e: Dictionary = k_extra[k]
+	match state[i]:
+		WINDUP:
+			timer[i] -= delta
+			if timer[i] <= 0.0:
+				state[i] = DASH
+				var jt := float(e.get("jump_time", 0.6))
+				timer[i] = jt
+				dash_dir[i] = (dash_dir[i] - pos[i]) / jt   # target -> velocity
+				anim_t[i] = 0.0
+			return Vector2.ZERO
+		DASH:
+			timer[i] -= delta
+			if timer[i] <= 0.0:
+				state[i] = MOVE
+				charge_cd[i] = float(e.get("jump_every", 5.0))
+				slams.append(pos[i] + dash_dir[i] * delta)
+				_slam_i = i
+			return dash_dir[i]
+		_:
+			charge_cd[i] -= delta
+			if charge_cd[i] <= 0.0:
+				state[i] = WINDUP
+				timer[i] = float(e.get("windup", 0.9))
+				dash_dir[i] = _target
+				anim_t[i] = 0.0
+				return Vector2.ZERO
+	return dir * speed
+
+
+## Index of the first living boss, or -1.
+func boss_index() -> int:
+	for i in count:
+		if k_boss[kind[i]] == 1 and state[i] != DYING:
+			return i
+	return -1
+
+
+## Where a boss will land (WINDUP: the chosen spot; DASH: its course end) and the
+## slam reach, for the run to draw the warning circle: [[pos, reach], ...].
+func boss_telegraphs() -> Array:
+	var out := []
+	for i in count:
+		if k_behaviour[kind[i]] != BOSS_SLIME or state[i] == DYING:
+			continue
+		var reach := k_radius[kind[i]] * float(k_extra[kind[i]].get("slam_reach", 2.5))
+		if state[i] == WINDUP:
+			out.append([dash_dir[i], reach])
+		elif state[i] == DASH:
+			out.append([pos[i] + dash_dir[i] * maxf(0.0, timer[i]), reach])
+	return out
 
 
 ## Damages every living monster whose body overlaps [param hb] (a skill
@@ -355,6 +443,7 @@ func hit_circle(center: Vector2, radius: float, damage: float, knockback := 90.0
 
 
 func _damage(i: int, amount: float, kb: Vector2, source := "") -> void:
+	var hp_before := hp[i]
 	if vs_status_mul > 0.0 and (slow_t[i] > 0.0 or stun_t[i] > 0.0 or freeze_t[i] > 0.0 or bleed_t[i] > 0.0 or burn_t[i] > 0.0):
 		amount *= 1.0 + vs_status_mul
 	damage_by[source] = float(damage_by.get(source, 0.0)) + minf(amount, maxf(0.0, hp[i]))
@@ -364,14 +453,17 @@ func _damage(i: int, amount: float, kb: Vector2, source := "") -> void:
 	hp_show[i] = hp_bar_time
 	hit_pos.append(center_of(i) - Vector2(0.0, k_radius[kind[i]]))
 	hit_val.append(amount)
-	if state[i] != DASH:
+	if state[i] != DASH and k_boss[kind[i]] == 0:   # bosses are not knocked back
 		knock[i] += kb
+	_split(i, hp_before)
 	if hp[i] <= 0.0:
 		state[i] = DYING
 		timer[i] = 0.0
 		anim_t[i] = 0.0
 		total_kills += 1
 		kills_by[source] = int(kills_by.get(source, 0)) + 1
+		kill_elite.append(k_elite[kind[i]])
+		kill_boss.append(k_boss[kind[i]])
 		kill_pos.append(pos[i])
 		kill_xp.append(k_xp[kind[i]])
 
@@ -489,6 +581,24 @@ func drain_hits() -> void:
 func drain_kills() -> void:
 	kill_pos.clear()
 	kill_xp.clear()
+	kill_elite.clear()
+	kill_boss.clear()
+
+
+## A monster with split_at (fractions of its hp) spawns split_count split_into
+## monsters around it each time a hit takes its hp across one of them.
+func _split(i: int, hp_before: float) -> void:
+	var e: Dictionary = k_extra[kind[i]]
+	if not e.has("split_at"):
+		return
+	var full := k_hp[kind[i]]
+	for f: Variant in e["split_at"]:
+		var line := float(f) * full
+		if hp_before > line and hp[i] <= line:
+			var n := int(e.get("split_count", 4))
+			for k in n:
+				var a := TAU * k / n + phase[i]
+				spawn(String(e.get("split_into", "slime")), pos[i] + Vector2(cos(a), sin(a)) * (k_radius[kind[i]] + 12.0))
 
 
 ## Indices of living monsters whose centre is within [param radius] of [param p].
