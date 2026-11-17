@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dptx80nsl0tee"
-path="res://.godot/imported/ground-slam-ii_strip.png-126de0025521b8375371ec6720d6f3f0.ctex"
+uid="uid://dva41tnm4eduw"
+path="res://.godot/imported/stomp-iii_strip.png-2280f620170e72239c9e3105745ddfa2.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/custom/ground-slam-ii/ground-slam-ii_strip.png"
-dest_files=["res://.godot/imported/ground-slam-ii_strip.png-126de0025521b8375371ec6720d6f3f0.ctex"]
+source_file="res://assets/sprites/custom/stomp-iii/stomp-iii_strip.png"
+dest_files=["res://.godot/imported/stomp-iii_strip.png-2280f620170e72239c9e3105745ddfa2.ctex"]
 
 [params]
 

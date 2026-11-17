@@ -1,37 +1,37 @@
 {
-  "frames": 10,
+  "frames": 8,
   "frame_size": [
-    72,
-    72
+    88,
+    88
   ],
-  "fps": 14.0,
+  "fps": 16.0,
   "loop": false,
   "anchor": [
-    36.0,
-    36.0
+    43.5,
+    43.5
   ],
   "anchor_source": "explicit",
   "animations": [
     {
       "name": "burst",
       "start": 0,
-      "frames": 10,
-      "fps": 14.0,
+      "frames": 8,
+      "fps": 16.0,
       "loop": false,
       "hitbox": {
         "shape": "circle",
         "center": [
-          36.0,
-          36.0
+          43.5,
+          43.5
         ],
         "active": [
           2,
-          6
+          5
         ],
-        "radius": 35.0,
-        "inner": 0.0
+        "radius": 41.0,
+        "inner": 7.0
       }
     }
   ],
-  "source": "sprite-lab/sprites/ground-slam-iv"
+  "source": "sprite-lab/sprites/stomp-v"
 }

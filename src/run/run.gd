@@ -550,7 +550,9 @@ func _cast(sid: String, ts: Dictionary, how: String) -> void:
 			var p := center + to_target * float(ts.get("cast_range", 140.0))
 			_add_fx(sprite, String(ts.get("anim", "burst")), sc, dmg, -1.0, p, sid, kb)
 		"self":
-			_add_fx(sprite, String(ts.get("anim", "burst")), sc, dmg, -1.0, center, sid, kb)
+			var fx := _add_fx(sprite, String(ts.get("anim", "burst")), sc, dmg, -1.0, center, sid, kb)
+			if bool(ts.get("under_hero", false)) and not fx.is_empty():
+				fx["under"] = true
 		"random":
 			var pool_i := enemies.living_within(center, float(ts.get("cast_range", 300.0)))
 			for k in _skill_count(sid, ts):
@@ -1040,13 +1042,11 @@ func _draw() -> void:
 		var blink := invuln > 0.0 and state == State.PLAYING and int(invuln * 20.0) % 2 == 0
 		var tint := Color(1, 1, 1, 0.45) if blink else Color.WHITE
 		_draw_auras("back")
+		_draw_fx(true)
 		_draw_dash_trail(hero)
 		hero.draw(self, _anim, _anim_t, player_pos, _sprite_scale, face_left, tint)
 		_draw_auras("front")
-	for fx in _fx:
-		var sh: SpriteSheet = fx["sheet"]
-		var t := fmod(float(fx["t"]), sh.duration(fx["anim"])) if fx["anim"] == "spin" else float(fx["t"])
-		sh.draw(self, fx["anim"], t, _fx_pos(fx), float(fx["scale"]))
+	_draw_fx(false)
 	if Prefs.current().monster_hp:
 		_draw_monster_hp(view)
 	if Prefs.current().damage_numbers:
@@ -1076,6 +1076,17 @@ func _step_damage_numbers(dt: float) -> void:
 		_num_t[_num_next] = 0.0
 		_num_next = (_num_next + 1) % _num_t.size()
 	enemies.drain_hits()
+
+
+## Skill effects; [param under] = only those drawn behind the hero (ground
+## effects such as the stomp), else the rest, over it.
+func _draw_fx(under: bool) -> void:
+	for fx in _fx:
+		if bool(fx.get("under", false)) != under:
+			continue
+		var sh: SpriteSheet = fx["sheet"]
+		var t := fmod(float(fx["t"]), sh.duration(fx["anim"])) if fx["anim"] == "spin" else float(fx["t"])
+		sh.draw(self, fx["anim"], t, _fx_pos(fx), float(fx["scale"]))
 
 
 ## Afterimages of the hero along the dash path (the camera follows the hero, so
