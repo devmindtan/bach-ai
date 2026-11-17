@@ -303,34 +303,136 @@ func _show_owned_info(info: RichTextLabel, o: Dictionary) -> void:
 
 ## Character sheet: every stat with where it comes from (class base + each card),
 ## and every skill with its real damage / cooldown / size and the cards changing it.
+## Character sheet over the whole screen (it was a small box that got crowded
+## with many buffs, 2026-11-17): a header (title, class and level, back), then
+## three columns that each scroll on their own: stats with their sources, skills
+## with their real numbers, running buffs and the stat cards taken.
 func show_character() -> void:
-	var root := _open("Nhân vật")
+	hide_all()
+	var dim := ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.72)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(dim)
+	_box = dim
+	var panel := PanelContainer.new()
+	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	panel.offset_left = 16
+	panel.offset_top = 16
+	panel.offset_right = -16
+	panel.offset_bottom = -16
+	var ps := _style(Color(0.09, 0.08, 0.13, 0.96))
+	ps.set_content_margin_all(20)
+	panel.add_theme_stylebox_override("panel", ps)
+	dim.add_child(panel)
+	var root := VBoxContainer.new()
+	root.add_theme_constant_override("separation", 14)
+	panel.add_child(root)
+	# header
+	var head := HBoxContainer.new()
+	head.add_theme_constant_override("separation", 16)
+	root.add_child(head)
+	var title := _label("Nhân vật", 32, BORDER)
+	head.add_child(title)
+	var sub := _label("%s · Cấp %d" % [run.class_data.get("name", ""), run.level], 18, TEXT)
+	sub.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	sub.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.add_child(sub)
+	var back := _button("Quay lại (Esc)", func() -> void: show_pause())
+	back.custom_minimum_size = Vector2(200, 40)
+	head.add_child(back)
+	back.call_deferred("grab_focus")
+	# three scrolling columns
 	var body := HBoxContainer.new()
-	body.add_theme_constant_override("separation", 36)
+	body.add_theme_constant_override("separation", 24)
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	root.add_child(body)
-	# stats
-	var left := VBoxContainer.new()
-	left.add_theme_constant_override("separation", 6)
-	left.custom_minimum_size = Vector2(360, 0)
-	body.add_child(left)
-	left.add_child(_label("%s · Cấp %d" % [run.class_data.get("name", ""), run.level], 20, BORDER))
+	var stats_col := _column(body, "Chỉ số", 330.0, false)
 	var bd: Dictionary = PlayerStats.breakdown(run.base_stats, run.effect_pool(), run.effect_levels())
 	for key: String in CHARACTER_STATS:
 		# a stat at 0 that no card touches (armour before equipment) is noise
 		if bd.has(key) and (not bd[key]["parts"].is_empty() or not is_zero_approx(float(bd[key]["final"]))):
-			left.add_child(_stat_row(key, bd[key]))
-	# skills
-	var right := VBoxContainer.new()
-	right.add_theme_constant_override("separation", 10)
-	right.custom_minimum_size = Vector2(520, 0)
-	body.add_child(right)
-	right.add_child(_label("Chiêu thức", 20, BORDER))
+			stats_col.add_child(_stat_row(key, bd[key]))
+	var skills_col := _column(body, "Chiêu thức", 0.0, true)
 	for si: Dictionary in run.skill_info():
-		right.add_child(_skill_row(si))
-	var back := _button("Quay lại (Esc)", func() -> void: show_pause())
-	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	root.add_child(back)
-	back.call_deferred("grab_focus")
+		skills_col.add_child(_skill_row(si))
+	var side := _column(body, "Buff đang có", 300.0, false)
+	if run.buffs.active.is_empty():
+		side.add_child(_label("Không có buff nào.", 14, MUTED))
+	for id: String in run.buffs.active:
+		side.add_child(_buff_row(id))
+	var cards_title := _label("Thẻ chỉ số", 20, BORDER)
+	side.add_child(cards_title)
+	var any := false
+	for o: Dictionary in run.owned_upgrades():
+		if not o["skill"]:
+			side.add_child(_stat_card_row(o))
+			any = true
+	if not any:
+		side.add_child(_label("Chưa chọn thẻ chỉ số nào.", 14, MUTED))
+
+
+## A titled column inside a ScrollContainer (vertical scroll only); returns the
+## VBox to fill. width 0 = take the remaining space.
+func _column(parent: Container, title: String, width: float, expand: bool) -> VBoxContainer:
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 8)
+	if width > 0.0:
+		col.custom_minimum_size = Vector2(width, 0)
+	if expand:
+		col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	parent.add_child(col)
+	col.add_child(_label(title, 20, BORDER))
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	col.add_child(scroll)
+	# room on the right so the scroll bar does not touch the cards
+	var pad := MarginContainer.new()
+	pad.add_theme_constant_override("margin_right", 14)
+	pad.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(pad)
+	var inner := VBoxContainer.new()
+	inner.add_theme_constant_override("separation", 10)
+	inner.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	pad.add_child(inner)
+	return inner
+
+
+## A running buff: badge, name, seconds left, what it does.
+func _buff_row(id: String) -> HBoxContainer:
+	var d: Dictionary = run.buff_def(id)
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 10)
+	var ic := _icon(id, 28)
+	ic.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	h.add_child(ic)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 0)
+	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	h.add_child(v)
+	v.add_child(_label("%s  ·  còn %d s" % [d.get("name", id), ceili(run.buffs.time_left(id))], 15, Color(d.get("color", "f2ecd8"))))
+	var desc := _label(String(d.get("desc", "")), 12, MUTED)
+	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	v.add_child(desc)
+	return h
+
+
+## A stat card taken: icon, name and level, what it does now in numbers.
+func _stat_card_row(o: Dictionary) -> HBoxContainer:
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 10)
+	var ic := _icon(String(o["id"]), 24)
+	ic.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	h.add_child(ic)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 0)
+	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	h.add_child(v)
+	v.add_child(_label("%s  ·  %d/%d" % [o["name"], o["level"], o["max"]], 15, STAT_ACCENT))
+	var t := _label(run.card_effect_text(String(o["id"])), 12, MUTED)
+	t.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	v.add_child(t)
+	return h
 
 
 const CHARACTER_STATS := ["max_hp", "damage", "cooldown", "area", "move_speed", "regen", "magnet", "armor"]
