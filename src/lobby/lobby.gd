@@ -268,7 +268,9 @@ func _build_ui() -> void:
 		var u: Dictionary = ups.get(sid, {})
 		cv.add_child(_feature(sid, String(u.get("name", sid)), String(u.get("desc", "")), GOLD))
 	# unique (milestone) skills only once the slot owns them
-	var owned: Array[String] = slot_now.rewards() if slot_now != null else []
+	var owned: Array[String] = []   # not "x if c else []": an untyped [] into Array[String] is a runtime error
+	if slot_now != null:
+		owned = slot_now.rewards()
 	var ms := Milestones.load_default()
 	var owned_skills := ms.skills(owned)
 	var skills := ups.values().filter(func(u: Dictionary) -> bool:
