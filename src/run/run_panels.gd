@@ -347,6 +347,24 @@ func show_character() -> void:
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	root.add_child(body)
 	var stats_col := _column(body, "Chỉ số", 330.0, false)
+	var pv: Dictionary = run.passive()
+	if not pv.is_empty():
+		var ph := HBoxContainer.new()
+		ph.add_theme_constant_override("separation", 10)
+		var pic := _icon(String(pv.get("id", "")), 32)
+		pic.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		ph.add_child(pic)
+		var pvv := VBoxContainer.new()
+		pvv.add_theme_constant_override("separation", 0)
+		pvv.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		ph.add_child(pvv)
+		var on: bool = run.passive_active() or not pv.has("hp_below")
+		pvv.add_child(_label("Nội tại: %s%s" % [pv.get("name", ""), "  ·  đang bật" if on and pv.has("hp_below") else ""], 15,
+			Color(String(run.class_data.get("color", "ffd36b"))).lightened(0.3)))
+		var pd := _label(String(pv.get("desc", "")), 12, MUTED)
+		pd.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		pvv.add_child(pd)
+		stats_col.add_child(ph)
 	var bd: Dictionary = PlayerStats.breakdown(run.base_stats, run.effect_pool(), run.effect_levels())
 	for key: String in CHARACTER_STATS:
 		# a stat at 0 that no card touches (armour before equipment) is noise

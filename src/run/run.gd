@@ -181,6 +181,7 @@ func _ready() -> void:
 	enemies = Enemies.new(monsters, cfg, sheets, rng.seed)
 	for k in enemies.k_hp.size():
 		enemies.k_hp[k] *= monster_hp_mul
+	enemies.vs_status_mul = passive_vs_status()
 	_update_body()
 	pickups = Pickups.new(cfg.get("pickups", {}), 400)
 	buffs = Buffs.new(_buff_defs, cfg.get("buffs", {}), rng.seed + 7)
@@ -469,7 +470,7 @@ func _spawn(t0: float, t1: float) -> void:
 
 
 func _take_hit(amount: float) -> void:
-	var taken := maxf(1.0, amount - float(stats.get("armor", 0.0)))
+	var taken := maxf(1.0, (amount - float(stats.get("armor", 0.0))) * damage_taken_mul())
 	hp -= taken
 	damage_taken += taken
 	invuln = float(cfg.get("player", {}).get("hit_invuln", 0.6))
@@ -636,7 +637,33 @@ func skill_damage(id: String, st: Dictionary = {}) -> float:
 	if st.is_empty():
 		st = stats
 	var sp: Dictionary = pool.get("skills", {}).get(id, {})
-	return float(st.get("damage", 0.0)) * float(sp.get("damage_mul", 1.0)) * PlayerStats.skill_mul(st, "skill_damage." + id)
+	var dmg := float(st.get("damage", 0.0)) * float(sp.get("damage_mul", 1.0)) * PlayerStats.skill_mul(st, "skill_damage." + id)
+	if passive_active():
+		dmg *= 1.0 + float(class_data.get("passive", {}).get("damage_mul", 0.0))
+	return dmg
+
+
+## The class passive (classes.json "passive"), {} when none.
+func passive() -> Dictionary:
+	return class_data.get("passive", {})
+
+
+## True while a low-hp passive is on (hp under passive.hp_below of max).
+func passive_active() -> bool:
+	var p := passive()
+	if not p.has("hp_below") or stats.is_empty():
+		return false
+	return hp > 0.0 and hp < float(stats.get("max_hp", 1.0)) * float(p["hp_below"])
+
+
+## Multiplier on damage the hero takes (passive taken_mul while active).
+func damage_taken_mul() -> float:
+	return 1.0 + float(passive().get("taken_mul", 0.0)) if passive_active() else 1.0
+
+
+## Extra damage against monsters that have a status (passive vs_status_mul).
+func passive_vs_status() -> float:
+	return float(passive().get("vs_status_mul", 0.0))
 
 
 ## Size multiplier of a skill's effect (area stat x skill size x per-skill area).

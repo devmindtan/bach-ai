@@ -1,5 +1,5 @@
 {
-  "_doc": "Character classes. stats are the level-1 base (cooldown is a x multiplier on every skill's own cooldown); upgrades list the pool rolled on level-up (upgrades_<class>.json). The body circle comes from the sprite json 'body'.",
+  "_doc": "Character classes. role = a short tag for the lobby; color = the class colour (lobby rune ring, accents); passive = the class's own trait (design/classes.md): hp_below + damage_mul + taken_mul (when hp is low), vs_status_mul (more damage to monsters with a status). stats are the level-1 base (cooldown is a x multiplier on every skill's own cooldown); upgrades list the pool rolled on level-up (upgrades_<class>.json). The body circle comes from the sprite json 'body'.",
   "knight": {
     "name": "Kiếm sĩ",
     "sprite": "swordsman",
@@ -12,6 +12,13 @@
       "regen": 0.0,
       "armor": 0.0,
       "magnet": 1.0
+    },
+    "role": "Cận chiến · Lì đòn",
+    "color": "#d94a4a",
+    "passive": {
+      "id": "unyielding", "name": "Bất khuất",
+      "desc": "Khi máu dưới 30%: +25% sát thương, nhận ít hơn 30% sát thương.",
+      "hp_below": 0.3, "damage_mul": 0.25, "taken_mul": -0.3
     },
     "start_skills": {
       "blade_arc": 1
@@ -30,6 +37,13 @@
       "regen": 0.0,
       "armor": 0.0,
       "magnet": 1.1
+    },
+    "role": "Tầm xa · Phép thuật",
+    "color": "#8b5cf6",
+    "passive": {
+      "id": "elemental_resonance", "name": "Cộng hưởng nguyên tố",
+      "desc": "Quái đang bị làm chậm, choáng, đóng băng, chảy máu hoặc bỏng nhận thêm 20% sát thương.",
+      "vs_status_mul": 0.2
     },
     "start_skills": {
       "arcane_bolt": 1

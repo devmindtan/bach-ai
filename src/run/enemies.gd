@@ -81,7 +81,8 @@ var kills_by := {}
 var spawn_ring := Vector2(760, 860)
 var despawn_distance := 1300.0
 var arena_half := 1400.0
-var player_hit_radius := 14.0   # set by the run from the class sprite's body
+var player_hit_radius := 14.0
+var vs_status_mul := 0.0        # class passive: extra damage taken by monsters with a status   # set by the run from the class sprite's body
 
 var _hash: SpatialHash
 var _hashed_count := 0
@@ -354,6 +355,8 @@ func hit_circle(center: Vector2, radius: float, damage: float, knockback := 90.0
 
 
 func _damage(i: int, amount: float, kb: Vector2, source := "") -> void:
+	if vs_status_mul > 0.0 and (slow_t[i] > 0.0 or stun_t[i] > 0.0 or freeze_t[i] > 0.0 or bleed_t[i] > 0.0 or burn_t[i] > 0.0):
+		amount *= 1.0 + vs_status_mul
 	damage_by[source] = float(damage_by.get(source, 0.0)) + minf(amount, maxf(0.0, hp[i]))
 	hits_by[source] = int(hits_by.get(source, 0)) + 1
 	hp[i] -= amount

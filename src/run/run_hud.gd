@@ -85,6 +85,7 @@ func _draw() -> void:
 	draw_rect(bar, BACK)
 	draw_rect(Rect2(bar.position + Vector2(2, 2), Vector2((bar.size.x - 4) * clampf(run.hp / max_hp, 0.0, 1.0), 16)), HP_BAR)
 	_centered(font, Vector2(bar.get_center().x, _baseline(ROW, 14)), "%d / %d" % [ceili(run.hp), roundi(max_hp)], 14)
+	_draw_passive(Vector2(bar.end.x + 22, ROW))
 	_draw_buffs(font, Vector2(bar.position.x, ROW + 32))
 	# clock: icon + elapsed, the total smaller on the same baseline
 	var t := int(run.clock)
@@ -115,6 +116,23 @@ const SLOT_GAP := 8.0
 const SLOT_BOTTOM := 18.0   # gap under the bar
 const COOL := Color(0.02, 0.02, 0.05, 0.72)
 const ACTIVE := Color("ffd36b")
+
+
+## The class passive's icon after the hp bar: dim while it waits for its
+## condition (Bất khuất: hp under 30%), bright with a frame while it is on.
+func _draw_passive(c: Vector2) -> void:
+	var pv: Dictionary = run.passive()
+	if pv.is_empty():
+		return
+	var tex := UiIcons.texture(String(pv.get("id", "")))
+	if tex == null:
+		return
+	var on: bool = run.passive_active() or not pv.has("hp_below")
+	var r := Rect2(c - Vector2(13, 13), Vector2(26, 26))
+	if on:
+		var col := Color(String(run.class_data.get("color", "ffd36b")))
+		draw_rect(r.grow(3), Color(col, 0.35 + 0.25 * sin(run.clock * 6.0)))
+	draw_texture_rect(tex, r, false, Color.WHITE if on else Color(1, 1, 1, 0.4))
 
 
 ## Running buffs under the hp bar: the badge, a time bar under it, seconds
