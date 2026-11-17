@@ -28,7 +28,9 @@ static func build(on_back: Callable) -> VBoxContainer:
 		func() -> void: Prefs.current().set_value("fullscreen", not Prefs.current().fullscreen))
 	_row(col, "Tỉ lệ hiển thị", func() -> String:
 			var s: String = SCALE_NAMES[Prefs.current().scale]
-			return s + (" (×%d)" % Prefs.current().current_scale() if Prefs.current().scale == 0 else ""),
+			var k := Prefs.current().current_scale()
+			var shown := ("%d" % roundi(k)) if is_equal_approx(k, roundf(k)) else ("%.2f" % k)
+			return s + (" (×%s)" % shown if Prefs.current().scale == 0 else ""),
 		func() -> void: Prefs.current().set_value("scale", (Prefs.current().scale + 1) % SCALE_NAMES.size()))
 	_row(col, "Số sát thương", func() -> String: return "Hiện" if Prefs.current().damage_numbers else "Ẩn",
 		func() -> void: Prefs.current().set_value("damage_numbers", not Prefs.current().damage_numbers))

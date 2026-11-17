@@ -228,13 +228,23 @@ func apply() -> void:
 
 
 ## The whole-number scale in use now.
-func current_scale() -> int:
-	if scale > 0:
-		return scale
+func current_scale() -> float:
 	if not is_inside_tree():
-		return 1
-	var w := get_tree().root.size
-	return maxi(1, mini(w.x / BASE.x, w.y / BASE.y))
+		return 1.0
+	return fit_scale(Vector2(get_tree().root.size), scale)
+
+
+## The canvas scale for a [param window] (pixels) and the chosen scale (0 = auto):
+## a whole number while the 1280x720 design fits (sharp pixels), the chosen one
+## when it fits; below 1 when the window is smaller than the design, so screens
+## always lay out on 1280x720 units (a 692-high window piled the lobby's card onto
+## its buttons, 2026-11-17).
+static func fit_scale(window: Vector2, chosen: int) -> float:
+	var fit := minf(window.x / float(BASE.x), window.y / float(BASE.y))
+	if fit < 1.0:
+		return fit
+	var whole := floorf(fit)
+	return float(chosen) if chosen > 0 and float(chosen) <= whole else whole
 
 
 func _fit_scale() -> void:
