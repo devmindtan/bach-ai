@@ -23,7 +23,7 @@
     { "name": "05b-settings", "title": "Cài đặt (trong trận)", "scene": "res://src/run/run.tscn", "frames": 300, "args": ["--demo", "--seed=1", "--sim-steps=4", "--pause-at=12", "--pause-view=settings"] },
     { "name": "06-lose", "title": "Thua", "scene": "res://src/run/run.tscn", "frames": 2300, "args": ["--demo", "--seed=1", "--sim-steps=8"] },
     { "name": "07-win", "title": "Vượt ải", "scene": "res://src/run/run.tscn", "frames": 2400, "args": ["--demo", "--seed=1", "--sim-steps=8", "--god"] },
-    { "name": "08-milestone", "title": "Thưởng mốc ải 10 (chọn 1 trong 3)", "scene": "res://src/run/run.tscn", "frames": 60, "args": ["--shot-end=10", "--class=knight"] },
+    { "name": "08-milestone", "title": "Mốc cấp 10: chọn 1 trong 3 phần thưởng (chỉ trong trận)", "scene": "res://src/run/run.tscn", "frames": 40, "args": ["--class=mage", "--seed=1", "--milestone=10"] },
     { "name": "09-stage-20", "title": "Ải 20: nền Rừng Âm U", "scene": "res://src/run/run.tscn", "frames": 60, "args": ["--stage=20", "--demo", "--seed=1"] }
   ]
 }

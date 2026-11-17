@@ -85,7 +85,6 @@ func _make_preview_slot() -> void:
 	for n in range(1, 11):
 		s.record_win(n, st)
 	s.record_win(10, st)
-	s.choose_milestone(10, "earthquake" if hero == "knight" else "void_orb")
 	s.profile.equip(hero, "iron_helm")
 	active_slot = s
 	stage_target = 10

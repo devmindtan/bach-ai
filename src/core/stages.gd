@@ -47,7 +47,7 @@ func rate_mul(n: int) -> float:
 	return minf(maxf(1.0, _k("rate_max")), 1.0 + _k("rate_lin") * float(maxi(0, n - 1)))
 
 
-## Every boss_every-th stage has a boss and is a milestone.
+## Every boss_every-th stage has a boss.
 func is_boss(n: int) -> bool:
 	var every := int(data.get("boss_every", 10))
 	return every > 0 and n % every == 0

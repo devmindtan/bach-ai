@@ -1,5 +1,5 @@
 {
-  "_doc": "Knight level-up pool. kind skill = an attack the run uses; stat = a modifier. effects apply per level: add (flat) or mul (+fraction). weight = roll weight. skills.<id>.cast says how the run casts it: nearest (one burst on each of the count nearest monsters; at_target puts its damage area on the monster instead of the art anchor, anim_prefix picks the direction animation), self (burst on the hero), random (count[level-1] bursts on random monsters within cast_range), wave (anim_prefix + direction, flies at speed px/s through monsters, count[level-1] directions: nearest, opposite, then the two others), active (player-triggered: the dash; sprite = the hero, anim = its animation). tier_sprites pick the sprite by level. frost_nova moved out: it is a mage skill. under_hero = the effect is drawn behind the hero (ground effects around it, e.g. the stomp). on_hit = statuses the skill puts on monsters it hits (assets/data/statuses.json), each from a skill level. count = casts per level (more targets / waves / pulses); the \"amount\" stat (amount cards) adds one to every skill: blade slashes the next nearest monsters, whirlwind gets more ticks, self casts pulse again 0.25 s apart, nearest casts hit the next nearest monsters. unique = a milestone skill (milestones.json): never offered as a card until the slot owns it; the run starts it at level 1.",
+  "_doc": "Knight level-up pool. kind skill = an attack the run uses; stat = a modifier. effects apply per level: add (flat) or mul (+fraction). weight = roll weight. skills.<id>.cast says how the run casts it: nearest (one burst on each of the count nearest monsters; at_target puts its damage area on the monster instead of the art anchor, anim_prefix picks the direction animation), self (burst on the hero), random (count[level-1] bursts on random monsters within cast_range), wave (anim_prefix + direction, flies at speed px/s through monsters, count[level-1] directions: nearest, opposite, then the two others), active (player-triggered: the dash; sprite = the hero, anim = its animation). tier_sprites pick the sprite by level. frost_nova moved out: it is a mage skill. under_hero = the effect is drawn behind the hero (ground effects around it, e.g. the stomp). on_hit = statuses the skill puts on monsters it hits (assets/data/statuses.json), each from a skill level. count = casts per level (more targets / waves / pulses); the \"amount\" stat (amount cards) adds one to every skill: blade slashes the next nearest monsters, whirlwind gets more ticks, self casts pulse again 0.25 s apart, nearest casts hit the next nearest monsters. unique = a level milestone skill (milestones.json): never offered as a card until it is picked at level 10/20/30 of a run; it starts at level 1 then.",
   "upgrades": [
     {
       "id": "blade_arc",
@@ -213,7 +213,7 @@
       "kind": "skill",
       "unique": true,
       "name": "Địa chấn",
-      "desc": "Chiêu độc nhất (mốc ải 10). Đất nứt dưới quái ngẫu nhiên quanh bạn, choáng 0,6 giây. Mỗi cấp: +25% sát thương, +8% vùng. Cấp 2: 2 chỗ nứt; cấp 4: 3; cấp 5: 4.",
+      "desc": "Chiêu độc nhất (mốc cấp 10). Đất nứt dưới quái ngẫu nhiên quanh bạn, choáng 0,6 giây. Mỗi cấp: +25% sát thương, +8% vùng. Cấp 2: 2 chỗ nứt; cấp 4: 3; cấp 5: 4.",
       "max_level": 5,
       "weight": 2,
       "effects": {
@@ -230,7 +230,7 @@
       "kind": "skill",
       "unique": true,
       "name": "Thái dương xạ",
-      "desc": "Chiêu độc nhất (mốc ải 20). Bắn tia nắng xuyên qua 5 quái, gây bỏng. Mỗi cấp: +25% sát thương. Cấp 3: 2 tia; cấp 5: 3 tia.",
+      "desc": "Chiêu độc nhất (mốc cấp 20). Bắn tia nắng xuyên qua 5 quái, gây bỏng. Mỗi cấp: +25% sát thương. Cấp 3: 2 tia; cấp 5: 3 tia.",
       "max_level": 5,
       "weight": 2,
       "effects": {
@@ -244,7 +244,7 @@
       "kind": "skill",
       "unique": true,
       "name": "Búa thần",
-      "desc": "Chiêu độc nhất (mốc ải 30). Búa thần giáng xuống quái gần nhất, sát thương lớn, choáng 1 giây. Mỗi cấp: +30% sát thương, +10% vùng. Cấp 2: 2 búa; cấp 4: 3; cấp 5: 4.",
+      "desc": "Chiêu độc nhất (mốc cấp 30). Búa thần giáng xuống quái gần nhất, sát thương lớn, choáng 1 giây. Mỗi cấp: +30% sát thương, +10% vùng. Cấp 2: 2 búa; cấp 4: 3; cấp 5: 4.",
       "max_level": 5,
       "weight": 2,
       "effects": {

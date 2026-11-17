@@ -1,7 +1,7 @@
 extends Node2D
 ## The preparation lobby of the chosen character (design/ux/front-end.md): the hero
 ## on its pedestal with its progress, the class card (stats with equipment, passive,
-## skills, milestone rewards), equipment, stage choice and Start. Characters are
+## skills, level milestones), equipment, stage choice and Start. Characters are
 ## chosen on the character screen (src/front/characters.tscn): "Nhân vật" and Esc go
 ## there, "Menu chính" goes to the title. Without a character it opens that screen.
 
@@ -245,14 +245,10 @@ func _build_ui() -> void:
 		cv.add_child(_section("Chiêu khởi đầu", GOLD))
 		var u: Dictionary = ups.get(sid, {})
 		cv.add_child(_feature(sid, String(u.get("name", sid)), String(u.get("desc", "")), GOLD))
-	# unique (milestone) skills only once the slot owns them
-	var owned: Array[String] = []   # not "x if c else []": an untyped [] into Array[String] is a runtime error
-	if slot_now != null:
-		owned = slot_now.rewards()
-	var ms := Milestones.load_default()
-	var owned_skills := ms.skills(owned)
+	# unique skills are not in the card set: they come from the level milestones
 	var skills := ups.values().filter(func(u: Dictionary) -> bool:
-		return u.get("kind") == "skill" and (not bool(u.get("unique", false)) or owned_skills.has(String(u["id"]))))
+		return u.get("kind") == "skill" and not bool(u.get("unique", false)))
+	var uniques := ups.values().filter(func(u: Dictionary) -> bool: return bool(u.get("unique", false)))
 	var n_stat := ups.values().filter(func(u: Dictionary) -> bool: return u.get("kind") != "skill").size()
 	cv.add_child(_section("Bộ chiêu (%d chiêu · %d thẻ chỉ số)" % [skills.size(), n_stat], GOLD))
 	var icons := HFlowContainer.new()
@@ -261,21 +257,18 @@ func _build_ui() -> void:
 	cv.add_child(icons)
 	for u: Dictionary in skills:
 		icons.add_child(_icon_tile(String(u.get("icon", u["id"])), String(u.get("name", "")), String(u.get("desc", ""))))
-	if slot_now != null:
-		# milestone rewards of the slot (stages 10/20/30): one row, a hint while there are none
-		var mrow := HBoxContainer.new()
-		mrow.add_theme_constant_override("separation", 8)
-		cv.add_child(mrow)
-		var head := _section("Phần thưởng mốc", GOLD)
-		head.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		mrow.add_child(head)
-		if owned.is_empty():
-			var none := _label("vượt ải 10, 20, 30 lần đầu để chọn", 14, MUTED)
-			none.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-			mrow.add_child(none)
-		for id: String in owned:
-			var inf := ms.info(id, pool.get("upgrades", []))
-			mrow.add_child(_icon_tile(String(inf["icon"]), String(inf["name"]), String(inf["desc"])))
+	# level milestones: what the class can pick at levels 10/20/30 of a run
+	var mrow := HBoxContainer.new()
+	mrow.add_theme_constant_override("separation", 8)
+	cv.add_child(mrow)
+	var head := _section("Mốc cấp 10 · 20 · 30", GOLD)
+	head.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	mrow.add_child(head)
+	for u: Dictionary in uniques:
+		mrow.add_child(_icon_tile(String(u.get("icon", u["id"])), String(u.get("name", "")), String(u.get("desc", ""))))
+	var note := _label("chọn trong trận", 14, MUTED)
+	note.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	mrow.add_child(note)
 
 	# bottom: stage and start. The card must stop before the start button: with
 	# slot mode it also holds ‹/› and "Chọn ải", and used to run under the button.
@@ -343,16 +336,6 @@ func _build_ui() -> void:
 	menu.add_child(start)
 	start.call_deferred("grab_focus")
 
-	# Pending milestone reward (slot): claim without entering a run.
-	if _slot_mode and Prefs.current().active_slot != null and not Prefs.current().active_slot.pending.is_empty():
-		var slot: Slot = Prefs.current().active_slot
-		var claim := _button("Nhận phần thưởng mốc ải %d" % int(slot.pending[0]), func() -> void: _show_milestone_claim(root, menu, slot, int(slot.pending[0])))
-		claim.custom_minimum_size = Vector2(360, 46)
-		claim.add_theme_font_size_override("font_size", 18)
-		claim.add_theme_stylebox_override("normal", _style(Color("4a3a10"), 8))
-		claim.add_theme_stylebox_override("hover", _style(Color("6a5218"), 8))
-		claim.position = Vector2(32, 116)   # the free space under the title, never over the class card
-		menu.add_child(claim)
 	if OS.get_cmdline_user_args().has("--lobby-settings"):   # shots of the settings page
 		_show_settings.call_deferred(root, menu)
 	if OS.get_cmdline_user_args().has("--lobby-gear"):       # shots of the equipment page
@@ -484,7 +467,7 @@ const RARITY := {"common": Color("e8e2d0"), "rare": Color("6fb7ff"), "epic": Col
 
 
 ## Stage select: a grid of 3 regions x 10 stages (design/progression.md). Locked
-## cells are dim with a lock, cleared ones show ✓, boss/milestone cells have a
+## cells are dim with a lock, cleared ones show ✓, boss cells have a
 ## gold frame, and the playable frontier is highlighted.
 func _show_stage_select(root: Control, menu: Control) -> void:
 	menu.visible = false
@@ -499,7 +482,7 @@ func _show_stage_select(root: Control, menu: Control) -> void:
 	col.add_theme_constant_override("separation", 8)
 	card.add_child(col)
 	col.add_child(_label("Chọn ải", 30, GOLD))
-	col.add_child(_label("Vượt ải để mở ải tiếp theo; ải 10/20/30 là ải boss, thưởng mốc vĩnh viễn.", 14, MUTED))
+	col.add_child(_label("Vượt ải để mở ải tiếp theo; ải 10, 20, 30 có boss.", 14, MUTED))
 	var prefs := Prefs.current()
 	var best := prefs.active_slot.best if _slot_mode and prefs.active_slot != null else 0
 	var unlocked := mini(best + 1, _stages.count())
@@ -518,7 +501,7 @@ func _show_stage_select(root: Control, menu: Control) -> void:
 			b.disabled = locked
 			var tip := "Ải %d" % n
 			if _stages.is_boss(n):
-				tip += " · BOSS · thưởng mốc"
+				tip += " · BOSS"
 			if locked:
 				tip += " (vượt ải %d để mở)" % (n - 1)
 			b.tooltip_text = tip
@@ -531,7 +514,7 @@ func _show_stage_select(root: Control, menu: Control) -> void:
 				_layer.queue_free()
 				_build_ui())
 			grid.add_child(b)
-	col.add_child(_label("✓ đã vượt  ·  viền vàng + đầu lâu: ải boss, thưởng mốc  ·  mờ: chưa mở", 13, MUTED))
+	col.add_child(_label("✓ đã vượt  ·  viền vàng + đầu lâu: ải boss  ·  mờ: chưa mở", 13, MUTED))
 	var back := _button("Quay lại", func() -> void:
 		center.queue_free()
 		menu.visible = true)
@@ -539,83 +522,6 @@ func _show_stage_select(root: Control, menu: Control) -> void:
 	back.add_theme_font_size_override("font_size", 18)
 	col.add_child(back)
 	back.call_deferred("grab_focus")
-
-
-## Pick a pending milestone reward for [param slot] at stage [param ms].
-func _show_milestone_claim(root: Control, menu: Control, slot: Slot, ms: int) -> void:
-	menu.visible = false
-	var center := CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	root.add_child(center)
-	_dim(center)
-	var card := PanelContainer.new()
-	card.add_theme_stylebox_override("panel", _style(Color(0.09, 0.08, 0.13, 0.96), 24))
-	center.add_child(card)
-	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 14)
-	col.custom_minimum_size = Vector2(860, 0)
-	card.add_child(col)
-	col.add_child(_label("Phần thưởng mốc ải %d" % ms, 32, GOLD))
-	col.add_child(_label("Chọn 1 trong 3 phần thưởng vĩnh viễn cho %s." % slot.name, 16, MUTED))
-	var milestones := Milestones.load_default()
-	var offers: Array[String] = milestones.offers(ms, slot.cls)
-	var pool := GameData.load_json(DATA + String(_classes.get(slot.cls, {}).get("upgrades", "")))
-	var row := HBoxContainer.new()
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 14)
-	col.add_child(row)
-	for oid: String in offers:
-		var info: Dictionary = milestones.info(oid, pool.get("upgrades", []))
-		var b := Button.new()
-		b.custom_minimum_size = Vector2(270, 210)
-		b.add_theme_stylebox_override("normal", _style(PANEL, 12))
-		b.add_theme_stylebox_override("hover", _style(PANEL_HOVER, 12))
-		b.add_theme_stylebox_override("pressed", _style(PANEL_HOVER, 12))
-		var vb := VBoxContainer.new()
-		vb.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		vb.set_anchors_preset(Control.PRESET_FULL_RECT)
-		vb.offset_left = 12
-		vb.offset_top = 10
-		vb.offset_right = -12
-		vb.offset_bottom = -10
-		vb.add_theme_constant_override("separation", 4)
-		b.add_child(vb)
-		var tex := TextureRect.new()
-		tex.texture = UiIcons.texture(String(info.get("icon", info.get("id", ""))))
-		tex.custom_minimum_size = Vector2(48, 48)
-		tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		tex.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		tex.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		vb.add_child(tex)
-		var nm := _label(String(info.get("name", "")), 20, GOLD)
-		nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		vb.add_child(nm)
-		var kinds: Dictionary = {"skill": "Chiêu độc nhất", "passive": "Nội tại", "rule": "Luật"}
-		var kl := _label(String(kinds.get(String(info.get("kind", "")), "")), 14, MUTED)
-		kl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		vb.add_child(kl)
-		var dl := _label(String(info.get("desc", "")), 12, TEXT)
-		dl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		dl.custom_minimum_size = Vector2(246, 88)
-		dl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		dl.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		vb.add_child(dl)
-		b.pressed.connect(func() -> void:
-			slot.choose_milestone(ms, oid)
-			if not Prefs.current().is_fixed():
-				Prefs.current().slot_store().save(slot)
-			center.queue_free()
-			menu.visible = true
-			_layer.queue_free()
-			_build_ui())
-		row.add_child(b)
-	var back := _button("Để sau", func() -> void:
-		center.queue_free()
-		menu.visible = true)
-	back.custom_minimum_size = Vector2(220, 44)
-	back.add_theme_font_size_override("font_size", 18)
-	col.add_child(back)
 
 
 ## Equipment of the chosen class: one row per slot (what is worn, its effect) and

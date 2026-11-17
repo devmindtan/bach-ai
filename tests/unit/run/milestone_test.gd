@@ -2,7 +2,7 @@ extends RefCounted
 ## Unit tests for the milestone rewards in a run (design/progression.md): each
 ## reward the slot owns has its effect — unique skills start at level 1, the
 ## passives (Khát máu / Hộ thể / Bất tử) and the rules (Song kích / Thêm lựa
-## chọn / Khởi đầu thần tốc).
+## chọn / Bứt tốc), and levels 10/20/30 of a run queue the pick.
 
 const Run := preload("res://src/run/run.gd")
 
@@ -133,12 +133,34 @@ func test_wide_choice_offers_four_cards() -> void:
 	r.free()
 
 
-func test_head_start_picks_two_cards_before_the_run() -> void:
-	var plain := _run("knight", {}, [])
-	_check(plain._start_picks == 0, "no free picks normally")
-	var r := _run("knight", {}, ["head_start"])
-	_check(r._start_picks == 2, "Khởi đầu thần tốc: 2 free picks, got %d" % r._start_picks)
-	plain.free()
+func test_head_start_gives_two_picks_at_once() -> void:
+	var r := _run("knight", {}, [])
+	r.pending_levels = 0
+	r.take_milestone("head_start")
+	_check(r.pending_levels == 2, "Bứt tốc: 2 card picks at once, got %d" % r.pending_levels)
+	r.free()
+
+
+# --- level milestones in a run ------------------------------------------------
+
+func test_level_10_20_30_queue_their_pick_once() -> void:
+	var r := _run("mage", {}, [])
+	r._queue_milestones(8, 11)
+	_check(r._ms_queue == [10], "passing level 10 queues it, got %s" % [r._ms_queue])
+	r._queue_milestones(9, 10)
+	_check(r._ms_queue == [10], "not twice")
+	r._queue_milestones(19, 31)
+	_check(r._ms_queue == [10, 20, 30], "a big jump queues each, got %s" % [r._ms_queue])
+	r._queue_milestones(1, 9)
+	_check(r._ms_queue.size() == 3, "levels below 10 queue nothing")
+	r.free()
+
+
+func test_take_milestone_starts_a_unique_skill_for_this_run() -> void:
+	var r := _run("mage", {"arcane_bolt": 1}, [])
+	_check(int(r.levels.get("void_orb", 0)) == 0, "no unique skill before the pick")
+	r.take_milestone("void_orb")
+	_check(int(r.levels.get("void_orb", 0)) == 1 and r.rewards.has("void_orb"), "Cầu hư không at level 1 after the pick")
 	r.free()
 
 

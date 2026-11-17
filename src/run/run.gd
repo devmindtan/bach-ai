@@ -16,7 +16,8 @@ extends Node2D
 ##   --pause-view=settings|character  with --pause-at, open that page (shots)
 ##   --pause-at=T    open the pause panel at T seconds (shots)
 ##   --offer=a,b,c   the first level-up offers these upgrade ids (shots of the cards)
-##   --rewards=a,b   milestone rewards the slot owns (shots/tests: design/progression.md)
+##   --rewards=a,b   start with these level milestone rewards (shots/tests: design/progression.md)
+##   --milestone=N   open the level-N milestone pick at the start (shots)
 ##   --no-auto-pick  the demo stops at the first level-up panel (for shots)
 ##   --hitboxes      draw hit areas: effects (red while dealing damage), monster
 ##                   bodies, the player's body and pickup radius
@@ -30,7 +31,6 @@ var class_id := "knight"   # Prefs.current().hero (the lobby choice, or --class=
 var stage_number := 1        # --stage=N or from the active slot
 var _stage_arg_set := false
 var _rewards_arg := false
-var _shot_end := 0            # --shot-end=N: show the win screen with a milestone choice (shots)
 var stages: Stages
 var stage_ground: Dictionary = {}
 var playing_slot: Slot
@@ -54,13 +54,15 @@ var base_stats: Dictionary
 var stats: Dictionary
 var levels: Dictionary = {}   # upgrade id -> level
 var milestones: Milestones    # assets/data/milestones.json
-var rewards: Array[String] = []   # milestone reward ids this run starts with (--rewards=)
+var rewards: Array[String] = []   # level milestone rewards picked in this run (they end with it)
+var _ms_queue: Array[int] = []    # milestone levels reached, their pick not shown yet
+var _ms_done: Array[int] = []     # milestone levels already offered in this run
+var ms_level := 0                 # the milestone level whose pick is open (0 = a normal level-up)
 var _guardian_t := 0.0        # Hộ thể: seconds until the next shield
 var _guardian_every := 0.0    # 0 = the slot does not own it
 var _guardian_buff := ""
 var _guardian_time := 0.0
 var _undying_used := false    # Bất tử revives once per run
-var _start_picks := 0         # Khởi đầu thần tốc: cards to pick at the start
 
 var enemies: Enemies
 var pickups: Pickups
@@ -159,10 +161,6 @@ func _ready() -> void:
 		playing_slot = prefs.active_slot
 		if not _stage_arg_set:
 			stage_number = clampi(prefs.stage_target, 1, stages.count())
-		if not _rewards_arg:
-			rewards.clear()
-			for id: String in playing_slot.rewards():
-				rewards.append(id)
 	stage_number = clampi(stage_number, 1, stages.count())
 	stage = stages.load_stage(stage_number)
 	stage_ground = stages.ground(stage_number)
@@ -253,22 +251,8 @@ func _ready() -> void:
 	_panels.run = self
 	layer.add_child(_panels)
 
-	# Shot-only: show the end screen with a pending milestone choice.
-	if _shot_end > 0:
-		state = State.WON
-		var fake := Slot.new(profile.defs)
-		fake.cls = class_id
-		fake.pending.append(_shot_end)
-		playing_slot = fake
-		var rw := Stages.load_default().rewards(_shot_end, true)   # what a first win of that stage gives
-		run_result = {"won": true, "stage": _shot_end, "collected": 0, "stage_gold": int(rw["gold"]), "gems": int(rw["gems"]),
-			"first": true, "milestone": _shot_end, "pending": [_shot_end], "next": true, "best": _shot_end}
-		_panels.show_end(true)
-		return
-
-	# Khởi đầu thần tốc: pick cards before the first monster shows up.
-	if _start_picks > 0:
-		pending_levels += _start_picks
+	# --milestone=N (shots): the level milestone pick opens at the start
+	if not _ms_queue.is_empty():
 		_open_level_up.call_deferred()
 
 	if bench > 0:
@@ -329,8 +313,8 @@ func _parse_args() -> void:
 			# Debug/shots: the first level-up offers these cards, e.g. --offer=earth_strike,haste,back_slash
 			for id in a.get_slice("=", 1).split(",", false):
 				offer.append(id)
-		elif a.begins_with("--shot-end="):
-			_shot_end = maxi(1, int(a.get_slice("=", 1)))
+		elif a.begins_with("--milestone="):
+			_ms_queue.append(int(a.get_slice("=", 1)))
 		elif a.begins_with("--rewards="):
 			# Debug/shots/tests: milestone rewards the slot owns, e.g. --rewards=earthquake,bloodthirst
 			_rewards_arg = true
@@ -1017,7 +1001,10 @@ func _step_fx(dt: float) -> void:
 			i += 1
 
 
-# --- milestone rewards (design/progression.md) --------------------------------
+# --- level milestone rewards (design/progression.md) ---------------------------
+# Reaching level 10/20/30 of a run offers one of three rewards for the rest of
+# that run: a unique skill (starts at level 1, levelled by cards), a passive,
+# or a rule. Nothing is kept after the run (user 2026-11-17).
 # What the slot picked at stages 10/20/30: a unique skill (starts at level 1,
 # levelled by cards), a passive, or a rule that changes the run.
 
@@ -1033,7 +1020,6 @@ func apply_rewards() -> void:
 	_guardian_buff = String(g.get("buff", "magnetic_shield"))
 	_guardian_time = float(g.get("duration", 0.0))
 	_guardian_t = _guardian_every
-	_start_picks = int(milestones.number(rewards, "start_picks"))
 
 
 ## Cards on a level-up: 3, or 4 with the Thêm lựa chọn rule.
@@ -1102,16 +1088,41 @@ func milestone_rows() -> Array:
 # --- progression -------------------------------------------------------------
 
 func _gain_xp(amount: float) -> void:
+	var before := level
 	var r := xp_curve.add(level, xp, amount)
 	level = r[0]
 	xp = r[1]
+	_queue_milestones(before, level)
 	if int(r[2]) > 0:
 		pending_levels += int(r[2])
 		if state == State.PLAYING:
 			_open_level_up()
 
 
+## Milestone levels passed going from [param from] to [param to] join the queue
+## (each once per run).
+func _queue_milestones(from: int, to: int) -> void:
+	if milestones == null:
+		return
+	for lv in milestones.milestone_levels():
+		if from < lv and lv <= to and not _ms_done.has(lv) and not _ms_queue.has(lv):
+			_ms_queue.append(lv)
+
+
 func _open_level_up() -> void:
+	# a milestone reached comes first: one of three rewards for the rest of the run
+	if not _ms_queue.is_empty() and milestones != null:
+		ms_level = _ms_queue.pop_front()
+		_ms_done.append(ms_level)
+		var offers := milestones.offers(ms_level, class_id).filter(func(id: String) -> bool: return not rewards.has(id))
+		if not offers.is_empty():
+			choices.assign(offers)
+			state = State.LEVEL_UP
+			_demo_pick_t = 0.0
+			_panels.show_milestone_pick(ms_level, choices)
+			return
+		ms_level = 0
+	ms_level = 0
 	choices = UpgradeRoller.roll(pool.get("upgrades", []), levels, level_up_card_count(), rng)
 	if not offer.is_empty():
 		choices = offer.duplicate()
@@ -1131,6 +1142,9 @@ func choose(index: int) -> void:
 	if state != State.LEVEL_UP or index >= choices.size():
 		return
 	var id := choices[index]
+	if ms_level > 0:
+		take_milestone(id)
+		return
 	levels[id] = int(levels.get(id, 0)) + 1
 	var old_max := float(stats.get("max_hp", 100.0))
 	_recompute_stats()
@@ -1139,6 +1153,25 @@ func choose(index: int) -> void:
 	_panels.hide_all()
 	state = State.PLAYING
 	if pending_levels > 0:
+		_open_level_up()
+
+
+## Takes level milestone reward [param id] for the rest of this run, then goes on
+## with the waiting level-ups (Bứt tốc adds its picks to them).
+func take_milestone(id: String) -> void:
+	if not rewards.has(id):
+		rewards.append(id)
+	apply_rewards()
+	var old_max := float(stats.get("max_hp", 100.0))
+	_recompute_stats()
+	hp += maxf(0.0, float(stats["max_hp"]) - old_max)
+	pending_levels += int(milestones.number([id], "picks_now"))
+	ms_level = 0
+	if _panels == null:   # no scene (unit tests): the numbers only
+		return
+	_panels.hide_all()
+	state = State.PLAYING
+	if pending_levels > 0 or not _ms_queue.is_empty():
 		_open_level_up()
 
 
@@ -1308,7 +1341,7 @@ func xp_needed() -> int:
 
 func _finish(won: bool) -> void:
 	var prefs := Prefs.current()
-	run_result = {"won": won, "stage": stage_number, "collected": gold, "stage_gold": 0, "gems": 0, "first": false, "milestone": 0}
+	run_result = {"won": won, "stage": stage_number, "collected": gold, "stage_gold": 0, "gems": 0, "first": false}
 	if playing_slot != null and stages != null and not prefs.is_fixed():
 		if won:
 			var r := playing_slot.record_win(stage_number, stages)
@@ -1316,12 +1349,10 @@ func _finish(won: bool) -> void:
 			run_result["stage_gold"] = int(r.get("gold", 0))
 			run_result["gems"] = int(r.get("gems", 0))
 			run_result["first"] = bool(r.get("first", false))
-			run_result["milestone"] = int(r.get("milestone", 0))
 		else:
 			playing_slot.gold += gold   # Thua: chỉ giữ vàng đã nhặt
 		prefs.slot_store().save(playing_slot)
 	run_result["next"] = won and stage_number < (stages.count() if stages != null else 30)
-	run_result["pending"] = playing_slot.pending.duplicate() if playing_slot != null else []
 	run_result["best"] = playing_slot.best if playing_slot != null else 0
 
 
@@ -1380,18 +1411,6 @@ func next_stage() -> void:
 	var prefs := Prefs.current()
 	prefs.set_value("stage_target", clampi(stage_number + 1, 1, stages.count() if stages != null else 30))
 	get_tree().reload_current_scene()
-
-
-func choose_milestone_reward(stage_n: int, reward_id: String) -> void:
-	if playing_slot == null:
-		return
-	if playing_slot.choose_milestone(stage_n, reward_id):
-		if not Prefs.current().is_fixed():
-			Prefs.current().slot_store().save(playing_slot)
-		run_result["pending"] = playing_slot.pending.duplicate()
-		# the choice is done; the end screen must not offer it again
-		if int(run_result.get("milestone", 0)) == stage_n:
-			run_result["milestone"] = 0
 
 
 func to_lobby() -> void:

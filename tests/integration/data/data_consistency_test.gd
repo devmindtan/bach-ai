@@ -156,24 +156,24 @@ func test_class_sprites_are_layered_side_view_movers() -> void:
 				"class sprite %s: layer %s missing (gamekit art promote)" % [name, n])
 
 
-## Milestone rewards (design/progression.md): every stage offers each class
+## Level milestone rewards (design/progression.md): every level offers each class
 ## three things to pick from, and each one is real data — a unique skill in the
 ## class pool, a passive with its numbers, a rule that the run reads.
 func test_milestones_offer_three_real_rewards_per_class() -> void:
 	var m := GameData.load_json(DATA + "milestones.json")
 	var icons := SpriteSheet.load_dir(SPRITES + "ui-icons", "ui-icons")
 	var classes := GameData.load_json(DATA + "classes.json")
-	var offered := {}       # unique skill id -> stage
-	for key: String in m.get("stages", {}):
+	var offered := {}       # unique skill id -> level
+	for key: String in m.get("levels", {}):
 		var n := int(key)
 		for cid: String in classes:
 			if cid.begins_with("_"):
 				continue
 			var ids: Array[String] = Milestones.new(m).offers(n, cid)
-			_check(ids.size() == 3, "stage %d offers %s %d rewards, want 1 of 3" % [n, cid, ids.size()])
+			_check(ids.size() == 3, "level %d offers %s %d rewards, want 1 of 3" % [n, cid, ids.size()])
 			for id in ids:
 				var r: Dictionary = m.get("rewards", {}).get(id, {})
-				_check(not r.is_empty(), "stage %d offers unknown reward %s" % [n, id])
+				_check(not r.is_empty(), "level %d offers unknown reward %s" % [n, id])
 				_check(["skill", "passive", "rule"].has(String(r.get("kind", ""))), "%s: unknown kind" % id)
 				var shown := Milestones.new(m).info(id, [])
 				if String(r.get("kind", "")) == "skill":
@@ -195,7 +195,7 @@ func test_milestones_offer_three_real_rewards_per_class() -> void:
 					_check(bool(u.get("unique", false)), "%s: %s must be marked unique (not a normal card)" % [id, sk])
 					_check(int(u.get("max_level", 1)) > 1, "%s: a unique skill is levelled by cards" % id)
 					_check(String(r.get("class", "")) == cid, "%s: skill reward must name its class" % id)
-					_check(not offered.has(sk), "%s is already a reward of stage %s" % [sk, offered.get(sk)])
+					_check(not offered.has(sk), "%s is already a reward of level %s" % [sk, offered.get(sk)])
 					offered[sk] = n
 				else:
 					_check(not r.has("class"), "%s: only skill rewards belong to one class" % id)

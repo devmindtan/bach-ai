@@ -1,7 +1,7 @@
 extends RefCounted
 ## Integration tests for the phase-3 session (design/progression.md): the selected
-## slot and stage must survive a restart, and the milestone choice in a run must
-## be one-shot (the end screen must not offer it again). Uses temporary folders.
+## slot and stage must survive a restart; level milestone rewards end with the
+## run (nothing on the slot). Uses temporary folders.
 
 const Run := preload("res://src/run/run.gd")
 
@@ -60,49 +60,26 @@ func test_slot_and_stage_survive_a_restart() -> void:
 	_clean()
 
 
-func test_milestone_choice_is_one_shot() -> void:
+func test_milestone_rewards_end_with_the_run() -> void:
+	# a reward picked at level 10 is not saved on the slot and the next run starts without it
 	_clean()
 	var p := _prefs()
 	p.ensure_slots()
 	var slot: Slot = p.active_slot
-	slot.record_win(10, Stages.load_default())
-	_check(slot.pending.has(10), "first win at stage 10 queues the reward")
-	_check(not slot.record_win(10, Stages.load_default())["first"], "a repeat win does not queue it again")
-	var r: Node = Run.new()
-	r.class_data = GameData.load_json("res://assets/data/classes.json")["knight"]
-	r.playing_slot = slot
-	r.stages = Stages.load_default()
-	r.stage_number = 10
-	r.run_result = {"won": true, "stage": 10, "collected": 12, "milestone": 10, "pending": [10], "next": true}
-	r._finish(true)
-	_check(r.run_result["first"] == false, "a repeat win is not a first win")
-	r.choose_milestone_reward(10, "earthquake")
-	_check(int(r.run_result["milestone"]) == 0, "the end screen must not offer the reward again")
-	_check(not r.run_result["pending"].has(10), "the pending reward is gone")
-	_check(slot.rewards().has("earthquake"), "the reward is saved on the slot")
-	p.slot_store().save(slot)
-	var back: Dictionary = p.slot_store().load_slot("slot1")
-	var loaded: Slot = back["slot"]
-	_check(loaded != null and loaded.rewards().has("earthquake"), "the reward survives a reload")
-	r.free()
-	_clean()
-
-
-func test_slot_rewards_reach_the_run() -> void:
-	_clean()
-	var p := _prefs()
-	p.ensure_slots()
-	var slot: Slot = p.active_slot
-	slot.pending.append(10)
-	slot.choose_milestone(10, "bloodthirst")
 	var r: Node = Run.new()
 	r.class_data = GameData.load_json("res://assets/data/classes.json")["knight"]
 	r.pool = GameData.load_json("res://assets/data/upgrades_knight.json")
 	r.base_stats = r.class_data["stats"]
 	r.milestones = Milestones.load_default()
-	for id: String in slot.rewards():
-		r.rewards.append(id)
-	r.apply_rewards()
-	_check(is_equal_approx(r.heal_on_kill(), 0.2), "the slot's Khát máu is applied to the run")
+	r.playing_slot = slot
+	r._recompute_stats()
+	r.take_milestone("bloodthirst")
+	_check(is_equal_approx(r.heal_on_kill(), 0.2), "Khát máu works in this run")
+	p.slot_store().save(slot)
+	var text := FileAccess.get_file_as_string(SLOTS + "slot1.json")
+	_check(not text.contains("bloodthirst"), "the reward is not written to the slot file")
+	var next: Node = Run.new()
+	_check(next.rewards.is_empty(), "the next run starts without milestone rewards")
 	r.free()
+	next.free()
 	_clean()

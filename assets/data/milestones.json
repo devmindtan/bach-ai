@@ -1,6 +1,6 @@
 {
-  "_doc": "Milestone rewards (design/progression.md): winning stage 10, 20 or 30 the first time lets the slot pick one of the rewards listed for that stage that fit its class, for good. kind skill = a unique class skill (upgrades_<class>.json, unique), started at level 1 every run and levelled by cards; passive = an always-on effect with its own numbers; rule = changes a run rule. effects (like a card's) are added to the stats.",
-  "stages": {
+  "_doc": "Level milestone rewards (design/progression.md, user 2026-11-17): reaching level 10, 20 or 30 in a run lets the player pick one of the rewards listed for that level that fit the class, for that run only (like Vampire Survivors' Arcanas, found mid-run and gone when the run ends). kind skill = a unique class skill (upgrades_<class>.json, unique), starting at level 1 and levelled by cards for the rest of the run; passive = an always-on effect with its own numbers; rule = changes a run rule. effects (like a card's) are added to the stats; picks_now = card picks given at once.",
+  "levels": {
     "10": ["earthquake", "void_orb", "bloodthirst", "twin_cast"],
     "20": ["solar_ray", "blizzard", "guardian", "wide_choice"],
     "30": ["god_hammer", "storm", "undying", "head_start"]
@@ -17,6 +17,6 @@
     "undying":     { "kind": "passive", "name": "Bất tử", "desc": "Mỗi trận một lần: khi gục ngã, sống lại với 50% máu và bất tử 2 giây.", "revive_hp": 0.5, "invuln": 2.0 },
     "twin_cast":   { "kind": "rule", "name": "Song kích", "desc": "+1 số lượng mọi chiêu (thêm nhát, thêm đạn, thêm lần nổ).", "effects": { "amount": { "add": 1.0 } } },
     "wide_choice": { "kind": "rule", "name": "Thêm lựa chọn", "desc": "Mỗi lần lên cấp có 4 thẻ để chọn thay vì 3.", "cards": 4 },
-    "head_start":  { "kind": "rule", "name": "Khởi đầu thần tốc", "desc": "Vào trận được chọn ngay 2 thẻ.", "start_picks": 2 }
+    "head_start":  { "kind": "rule", "name": "Bứt tốc", "desc": "Được chọn ngay 2 thẻ lên cấp.", "picks_now": 2 }
   }
 }

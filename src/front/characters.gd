@@ -1,8 +1,8 @@
 extends Node2D
 ## Character select (design/ux/front-end.md): the character slots in a column on the
 ## left (hero, name, class, highest stage) and the chosen one in a big panel on the
-## right (hero on a pedestal, progress, stats with equipment, passive, milestone
-## rewards, worn items; Chơi / Đổi tên / Xóa). "+ Tạo nhân vật" turns the panel into
+## right (hero on a pedestal, progress, stats with equipment, passive, worn
+## items; Chơi / Đổi tên / Xóa). "+ Tạo nhân vật" turns the panel into
 ## two class cards, a name field and "Tạo nhân vật". Esc goes back to the title.
 ##
 ## Command line (after `--`), for shots: --force-slots (preview slots, nothing is
@@ -25,7 +25,6 @@ var _create_class := ""
 var _t := 0.0
 var _scroll := Vector2.ZERO
 var _layer: CanvasLayer
-var _milestones: Milestones
 var _equip_defs := {}
 
 
@@ -37,7 +36,6 @@ func _ready() -> void:
 			_class_ids.append(id)
 			_sheets[id] = FrontArt.hero_sheet(cls[id])
 	_create_class = _class_ids[0]
-	_milestones = Milestones.load_default()
 	var items := GameData.load_json(DATA + "items.json")
 	_equip_defs = items.get("equipment", {})
 	var prefs := Prefs.current()
@@ -95,7 +93,7 @@ func _build() -> void:
 	var title := UiKit.label("Chọn nhân vật", 34, UiKit.GOLD)
 	title.position = Vector2(40, 24)
 	root.add_child(title)
-	var sub := UiKit.label("Mỗi nhân vật có class, túi đồ, tiến độ ải và phần thưởng mốc riêng (tối đa %d)." % SlotStore.MAX, 15, UiKit.MUTED)
+	var sub := UiKit.label("Mỗi nhân vật có class, túi đồ, tiến độ ải và vàng, đá riêng (tối đa %d)." % SlotStore.MAX, 15, UiKit.MUTED)
 	sub.position = Vector2(42, 70)
 	root.add_child(sub)
 	var back := UiKit.button("Quay lại  (Esc)", func() -> void: get_tree().change_scene_to_file(TITLE_SCENE), Vector2(180, 42), 17)
@@ -236,7 +234,7 @@ func _section(text: String) -> Label:
 	return UiKit.label(text, 16, UiKit.GOLD)
 
 
-## Name, class, progress, stats, passive, milestone rewards, worn items, actions.
+## Name, class, progress, stats, passive, worn items, actions.
 func _slot_panel(panel: PanelContainer, s: Slot) -> void:
 	var prefs := Prefs.current()
 	var h := HBoxContainer.new()
@@ -303,19 +301,6 @@ func _slot_panel(panel: PanelContainer, s: Slot) -> void:
 	if not pv.is_empty():
 		v.add_child(_section("Nội tại"))
 		v.add_child(_feature(String(pv.get("id", "")), String(pv.get("name", "")), String(pv.get("desc", ""))))
-	# milestone rewards
-	v.add_child(_section("Phần thưởng mốc"))
-	var mrow := HBoxContainer.new()
-	mrow.add_theme_constant_override("separation", 16)
-	v.add_child(mrow)
-	var pool := GameData.load_json(DATA + String(cd.get("upgrades", "")))
-	for rid: String in s.rewards():
-		var inf := _milestones.info(rid, pool.get("upgrades", []))
-		mrow.add_child(UiKit.stat(String(inf["icon"]), String(inf["name"]), String(inf["desc"]), 15))
-	if not s.pending.is_empty():
-		mrow.add_child(UiKit.label("Chờ chọn: mốc ải %d" % int(s.pending[0]), 15, Color("f2c14e")))
-	elif s.rewards().is_empty():
-		mrow.add_child(UiKit.label("Chưa có. Vượt ải 10, 20, 30 lần đầu để chọn.", 15, UiKit.MUTED))
 	# worn items: five slots, dim when empty
 	v.add_child(_section("Trang bị"))
 	var gear := HBoxContainer.new()

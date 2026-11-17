@@ -82,15 +82,15 @@ func test_max_slots() -> void:
 	_clean()
 
 
-func test_rewards_and_milestone_queue() -> void:
+func test_wins_give_rewards_and_keep_no_milestones() -> void:
+	# level milestone rewards belong to one run (user 2026-11-17): a slot keeps none
 	var stages := Stages.load_default()
 	var s := SlotStore.new_slot("An", "knight", _defs())
 	var first := s.record_win(10, stages)
-	_check(bool(first["first"]) and int(first["milestone"]) == 10 and s.pending == [10], "first win of 10 queues its milestone")
 	var again := s.record_win(10, stages)
-	_check(not bool(again["first"]) and int(again["milestone"]) == 0 and int(again["gems"]) < int(first["gems"]), "a repeat gives less, no milestone")
+	_check(bool(first["first"]) and not bool(again["first"]), "first win, then a repeat")
+	_check(int(again["gems"]) < int(first["gems"]) and int(again["gold"]) > 0, "a repeat gives fewer gems, still gold")
 	_check(s.unlocked(30) == 11, "stage 11 unlocked")
-	_check(not s.choose_milestone(20, "x"), "cannot choose a milestone not won")
-	_check(s.choose_milestone(10, "bloodthirst") and s.pending.is_empty() and s.rewards() == ["bloodthirst"], "milestone chosen")
-	s.record_win(10, stages)
-	_check(s.pending.is_empty(), "a chosen milestone is not queued again")
+	var d := s.to_dict()
+	_check(not d.has("milestones") and not d.has("pending"), "no milestone data saved on the slot")
+	_check(not first.has("milestone"), "a win queues no milestone")

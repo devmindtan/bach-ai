@@ -1,13 +1,13 @@
 class_name Milestones
 extends RefCounted
-## Milestone rewards (assets/data/milestones.json, design/progression.md): what
-## stages 10/20/30 offer a class, each reward's name / description / icon, and
-## the numbers of the rewards a slot owns, for the run.
+## Level milestone rewards (assets/data/milestones.json, design/progression.md):
+## what levels 10/20/30 of a run offer a class, each reward's name / description /
+## icon, and the numbers of the rewards picked in this run (they end with it).
 ##
 ## Example:
 ##   var m := Milestones.load_default()
 ##   var ids := m.offers(10, "mage")              # ["void_orb", "bloodthirst", "twin_cast"]
-##   var heal := m.number(owned, "heal_frac")     # 0.2 when the slot has Khát máu
+##   var heal := m.number(owned, "heal_frac")     # 0.2 when the run has Khát máu
 
 const PATH := "res://assets/data/milestones.json"
 
@@ -22,10 +22,10 @@ static func load_default() -> Milestones:
 	return Milestones.new(GameData.load_json(PATH))
 
 
-## Stages that give a reward, ascending.
-func stages() -> Array[int]:
+## Levels that give a reward, ascending.
+func milestone_levels() -> Array[int]:
 	var out: Array[int] = []
-	for k: String in data.get("stages", {}):
+	for k: String in data.get("levels", {}):
 		out.append(int(k))
 	out.sort()
 	return out
@@ -35,10 +35,10 @@ func reward(id: String) -> Dictionary:
 	return data.get("rewards", {}).get(id, {})
 
 
-## The rewards stage [param n] offers class [param cls] (the other class's unique skill left out).
+## The rewards level [param n] offers class [param cls] (the other class's unique skill left out).
 func offers(n: int, cls: String) -> Array[String]:
 	var out: Array[String] = []
-	for id: String in data.get("stages", {}).get(str(n), []):
+	for id: String in data.get("levels", {}).get(str(n), []):
 		var r := reward(id)
 		if not r.has("class") or String(r["class"]) == cls:
 			out.append(id)

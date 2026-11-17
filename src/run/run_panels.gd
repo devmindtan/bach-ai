@@ -56,6 +56,25 @@ func show_level_up(ids: Array[String], title := "Lên cấp! Chọn một") -> v
 	_fit_cards.call_deferred(row)
 
 
+## Level milestone (10/20/30): one of three rewards for the rest of this run only
+## (design/progression.md). Keys 1-3 or a click pick, like a level-up.
+func show_milestone_pick(level: int, ids: Array[String]) -> void:
+	var root := _open("Mốc cấp %d! Chọn một phần thưởng" % level, false)
+	var sub := _label("Chỉ có tác dụng trong trận này.", 16, MUTED)
+	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	root.add_child(sub)
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 20)
+	root.add_child(row)
+	for i in ids.size():
+		var info: Dictionary = run.milestones.info(ids[i], run.pool.get("upgrades", []))
+		var b := _milestone_choice(info, func() -> void: run.choose(i))
+		row.add_child(b)
+		if i == 0:
+			b.call_deferred("grab_focus")
+
+
 ## A Button does not grow with its children: once laid out, give every card the
 ## height of the tallest content so no text runs past the frame and the row is even.
 func _fit_cards(row: HBoxContainer) -> void:
@@ -380,7 +399,7 @@ func show_character() -> void:
 		side.add_child(_buff_row(id))
 	var rows: Array = run.milestone_rows()
 	if not rows.is_empty():
-		side.add_child(_label("Mốc ải", 20, BORDER))
+		side.add_child(_label("Phần thưởng mốc cấp (trận này)", 18, BORDER))
 		for r: Dictionary in rows:
 			side.add_child(_milestone_row(r))
 	side.add_child(_label("Thẻ chỉ số", 20, BORDER))
@@ -439,7 +458,7 @@ func _buff_row(id: String) -> HBoxContainer:
 	return h
 
 
-## A milestone reward the slot owns: icon, kind and name, what it does.
+## A level milestone reward picked in this run: icon, kind and name, what it does.
 func _milestone_row(r: Dictionary) -> HBoxContainer:
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", 10)
@@ -689,28 +708,10 @@ func show_end(won: bool) -> void:
 		next_b = _button("Ải tiếp ▶", func() -> void: run.next_stage())
 	buttons.add_child(again)
 	if next_b != null:
-		next_b.disabled = int(rr.get("milestone", 0)) > 0
 		buttons.add_child(next_b)
 	buttons.add_child(lobby_b)
 
-	# Milestone choice on first clear of a boss stage.
-	var pending: Array = rr.get("pending", [])
-	if won and int(rr.get("milestone", 0)) > 0 and pending.has(int(rr["milestone"])) and run.playing_slot != null and run.milestones != null:
-		var ms := int(rr["milestone"])
-		root.add_child(_label("Phần thưởng mốc ải %d · chọn 1 trong 3 (vĩnh viễn)" % ms, 20, MILESTONE))
-		var choices := HBoxContainer.new()
-		choices.alignment = BoxContainer.ALIGNMENT_CENTER
-		choices.add_theme_constant_override("separation", 12)
-		root.add_child(choices)
-		var offers: Array[String] = run.milestones.offers(ms, run.class_id)
-		for oid: String in offers:
-			var info: Dictionary = run.milestones.info(oid, run.pool.get("upgrades", []))
-			var cb := _milestone_choice(info, func() -> void:
-				run.choose_milestone_reward(ms, oid)
-				show_end(true))
-			choices.add_child(cb)
-		again.call_deferred("grab_focus")
-	elif next_b != null:
+	if next_b != null:
 		next_b.call_deferred("grab_focus")
 	else:
 		again.call_deferred("grab_focus")
