@@ -86,6 +86,12 @@ func _make_preview_slot() -> void:
 		s.record_win(n, st)
 	s.record_win(10, st)
 	s.profile.equip(hero, "iron_helm")
+	# a fuller bag for shots of the equipment screen: every item this class can wear
+	for id: String in slot_store().defs:
+		var d: Dictionary = slot_store().defs[id]
+		if not d.has("class") or String(d["class"]) == hero:
+			if not s.profile.bag.has(id):
+				s.profile.add(id)
 	active_slot = s
 	stage_target = 10
 

@@ -17,8 +17,9 @@ Người dùng 2026-11-17: bảng trang bị cần thiết kế lại chuẩn h�
 - Trái (cột 380 px), kiểu búp bê giấy: nhân vật trên bệ ở giữa; 5 ô xếp quanh: **Đầu** và **Ngực** bên trái,
   **Tay**, **Chân** bên phải, **Vũ khí** dưới. Ô có đồ: icon + viền màu độ hiếm; ô trống: khung mờ + tên ô.
   Ô đang chọn viền trắng. Dưới: 4 ô chỉ số (máu, sát thương, tốc độ, tầm hút) đã tính trang bị.
-- Giữa: **túi đồ** của ô đang chọn (chỉ món mặc được cho class này): lưới ô icon 64 px, viền màu độ hiếm, dấu ✓ ở
-  món đang mặc; món trùng gộp một ô có "×n". Túi trống: "Chưa có đồ cho ô này. Thắng ải hoặc mở rương tinh anh."
+- Giữa: **túi đồ** của ô đang chọn (chỉ món mặc được cho class này), xếp từ hiếm nhất: mỗi món một hàng (icon trong
+  khung màu độ hiếm, tên màu độ hiếm, "độ hiếm · ✓ đang mặc"); món trùng ghi "×n". Hàng thay cho lưới icon vì các
+  món cùng ô trông giống nhau ở 64 px (ảnh thử lần đầu). Túi trống: "Chưa có đồ cho ô này. Thắng ải hoặc mở rương tinh anh."
 - Phải (cột 340 px): **chi tiết món đang xem** theo bố cục cố định: tên (màu độ hiếm), "độ hiếm · ô · chỉ <class>",
   mô tả; khối **So với đang mặc**: từng chỉ số thay đổi, số trước → sau, ▲ xanh / ▼ đỏ; rồi nút **Mặc** (nút
   chính) hoặc **Bỏ ra** khi món đó đang mặc.
