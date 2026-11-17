@@ -628,7 +628,7 @@ func _cast(sid: String, ts: Dictionary, how: String) -> void:
 			var speed := float(ts.get("speed", 340.0))
 			for k in n:
 				var dv := to_target.rotated(deg_to_rad(12.0 * (k - (n - 1) * 0.5)))
-				var anim := String(ts.get("anim_prefix", "fly_")) + _dir_name(dv)
+				var anim := _fly_anim(sprite, String(ts.get("anim_prefix", "fly_")), dv)
 				var fx := _add_fx(sprite, anim, sc, 0.0, float(ts.get("duration", 1.2)), center, sid, kb)
 				if fx.is_empty():
 					continue
@@ -644,6 +644,25 @@ func _cast(sid: String, ts: Dictionary, how: String) -> void:
 				if not fx.is_empty():
 					fx["vel"] = dv * float(ts.get("speed", 300.0))
 					fx["rehit"] = float(ts.get("rehit", 0.25))
+
+
+## The flight animation closest to direction [param d]: "<prefix><degrees>" when
+## the sprite has angle animations (fly_000..fly_337, Sprite Lab lib/dirs16.py),
+## else the 4-direction "<prefix>right/left/up/down".
+func _fly_anim(sprite: String, prefix: String, d: Vector2) -> String:
+	var sheet: SpriteSheet = sheets.get(sprite)
+	var want := fposmod(rad_to_deg(d.angle()), 360.0)
+	var best := ""
+	var best_gap := 999.0
+	if sheet != null:
+		for n in sheet.animation_names():
+			var tail := n.trim_prefix(prefix)
+			if n.begins_with(prefix) and tail.length() == 3 and tail.is_valid_int():
+				var gap := absf(fposmod(want - float(tail) + 180.0, 360.0) - 180.0)
+				if gap < best_gap:
+					best_gap = gap
+					best = n
+	return best if best != "" else prefix + _dir_name(d)
 
 
 static func _dir_name(d: Vector2) -> String:
