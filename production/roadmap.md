@@ -60,6 +60,9 @@ Cần vẽ mới: **quái vật** (xem `design/monsters.md`), viên kinh nghiệ
 **Xong khi:** `gamekit test bach-ai` chạy (0 test), `gamekit run` mở cảnh trống, mọi file đã commit.
 
 ## Đợt 1: Lượt chơi cốt lõi (vertical slice) · cỡ L
+**Trạng thái (2026-11-17):** xong phần làm; còn chờ người chơi thử trả lời câu hỏi của đợt. 500 quái
+141 fps (`production/qa/bench-2026-11-17.md`). Có thêm ngoài kế hoạch: bảng Nhân vật, ô hồi chiêu, bảng
+sát thương cuối trận, cài đặt, 4 buff ngẫu nhiên (`design/buffs.md`). Cân bằng độ khó để sau (người dùng).
 **Câu hỏi:** một lượt 5 phút với Kiếm sĩ có vui không, có muốn chơi lượt 2 không?
 - Di chuyển 8 hướng, camera bám, sân giới hạn mềm; hitbox nhỏ hơn sprite.
 - Chiêu tự đánh: `kiếm chém vòng cung` (theo hướng đi) + 1 chiêu mở qua nâng cấp (`cleave-wave`).
