@@ -458,6 +458,7 @@ func _show_stage_select(root: Control, menu: Control) -> void:
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.add_child(center)
+	_dim(center)
 	var card := PanelContainer.new()
 	card.add_theme_stylebox_override("panel", _style(Color(0.09, 0.08, 0.13, 0.97), 20))
 	center.add_child(card)
@@ -478,31 +479,15 @@ func _show_stage_select(root: Control, menu: Control) -> void:
 		grid.add_theme_constant_override("separation", 6)
 		col.add_child(grid)
 		for n in range(from, to + 1):
-			var b := Button.new()
-			b.custom_minimum_size = Vector2(64, 56)
-			b.add_theme_font_size_override("font_size", 20)
 			var locked := n > unlocked
-			var cleared := _slot_mode and prefs.active_slot != null and prefs.active_slot.won(n)
-			var boss := _stages.is_boss(n)
-			var mark := "✓ " if cleared else ""
-			if n == _stage_n:
-				b.text = mark + str(n)
-				b.add_theme_stylebox_override("normal", _style(Color("4a5a2a"), 6))
-			elif locked:
-				b.text = "×"
-				b.add_theme_stylebox_override("normal", _style(Color("1d1828"), 6))
-			elif cleared:
-				b.text = "✓ %d" % n
-				b.add_theme_stylebox_override("normal", _style(Color("23402a"), 6))
-			else:
-				b.text = str(n)
-				b.add_theme_stylebox_override("normal", _style(PANEL, 6))
-			if boss:
-				b.add_theme_stylebox_override("normal", _style(Color("4a3a10") if not locked else Color("2a2218"), 6))
+			var b := _stage_tile(n, locked, _slot_mode and prefs.active_slot != null and prefs.active_slot.won(n),
+				_stages.is_boss(n), n == _stage_n)
 			b.disabled = locked
 			var tip := "Ải %d" % n
-			if boss:
+			if _stages.is_boss(n):
 				tip += " · BOSS · thưởng mốc"
+			if locked:
+				tip += " (vượt ải %d để mở)" % (n - 1)
 			b.tooltip_text = tip
 			b.pressed.connect(func() -> void:
 				_stage_n = n
@@ -513,6 +498,7 @@ func _show_stage_select(root: Control, menu: Control) -> void:
 				_layer.queue_free()
 				_build_ui())
 			grid.add_child(b)
+	col.add_child(_label("✓ đã vượt  ·  viền vàng + đầu lâu: ải boss, thưởng mốc  ·  mờ: chưa mở", 13, MUTED))
 	var back := _button("Quay lại", func() -> void:
 		center.queue_free()
 		menu.visible = true)
@@ -936,6 +922,66 @@ func _stat(icon: String, label: String, value: String) -> HBoxContainer:
 	row.add_child(name)
 	row.add_child(_label(value, 22, TEXT))
 	return row
+
+
+## Darkens the screen behind a modal panel: the full-screen [param center] draws a
+## dark rect before its children (the panel), and stops clicks reaching the menu.
+func _dim(center: Control) -> void:
+	center.mouse_filter = Control.MOUSE_FILTER_STOP
+	center.draw.connect(func() -> void: center.draw_rect(Rect2(Vector2.ZERO, center.size), Color(0, 0, 0, 0.6)))
+
+
+const TILE := Vector2(76, 64)
+const TILE_LOCKED := Color("15121e")
+const TILE_CLEARED := Color("1f3a26")
+const CHECK := Color("8fd08a")
+const BOSS_GOLD := Color("f2c14e")
+
+
+## One stage of the stage grid: the number centred (from the font size), a check
+## when won, a gold frame and a skull on boss stages, a white frame on the chosen
+## stage; locked stages are dim.
+func _stage_tile(n: int, locked: bool, cleared: bool, boss: bool, chosen: bool) -> Button:
+	var b := Button.new()
+	b.custom_minimum_size = TILE
+	b.focus_mode = Control.FOCUS_NONE if locked else Control.FOCUS_ALL
+	var bg := TILE_LOCKED if locked else (TILE_CLEARED if cleared else PANEL)
+	var border := BOSS_GOLD if boss else (Color("5f9a5a") if cleared else GOLD)
+	if locked:
+		border = Color("6a5a2a") if boss else Color("3a3448")
+	if chosen:
+		border = Color.WHITE
+	for st in ["normal", "disabled"]:
+		var sb := _style(bg, 4)
+		sb.border_color = border
+		sb.set_border_width_all(3 if boss or chosen else 2)
+		b.add_theme_stylebox_override(st, sb)
+	for st in ["hover", "focus", "pressed"]:
+		var sh := _style(PANEL_HOVER, 4)
+		sh.border_color = Color.WHITE
+		sh.set_border_width_all(3)
+		b.add_theme_stylebox_override(st, sh)
+	var art := Control.new()
+	art.set_anchors_preset(Control.PRESET_FULL_RECT)
+	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.add_child(art)
+	art.draw.connect(func() -> void:
+		var font := ThemeDB.fallback_font
+		var sz := 24
+		var txt := str(n)
+		var w := font.get_string_size(txt, HORIZONTAL_ALIGNMENT_LEFT, -1, sz).x
+		var base := (TILE.y + font.get_ascent(sz) - font.get_descent(sz)) * 0.5
+		var col := Color("5a5468") if locked else TEXT
+		art.draw_string(font, Vector2((TILE.x - w) * 0.5 + 1, base + 1), txt, HORIZONTAL_ALIGNMENT_LEFT, -1, sz, SHADOW)
+		art.draw_string(font, Vector2((TILE.x - w) * 0.5, base), txt, HORIZONTAL_ALIGNMENT_LEFT, -1, sz, col)
+		if cleared:
+			art.draw_string(font, Vector2(7, 7 + font.get_ascent(14)), "✓", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, CHECK)
+		if boss:
+			var c := Color(1, 1, 1, 0.35) if locked else Color.WHITE
+			var tex := UiIcons.texture("skull")
+			if tex != null:
+				art.draw_texture_rect(tex, Rect2(TILE.x - 23, 5, 16, 16), false, c))
+	return b
 
 
 func _card() -> PanelContainer:
