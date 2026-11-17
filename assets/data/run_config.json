@@ -4,6 +4,7 @@
   "xp": { "base": 5.0, "growth": 1.22, "flat": 2.0, "_formula": "xp_to_next(L) = round(base * growth^(L-1) + flat * (L-1))" },
   "pickups": { "radius": 70.0, "magnet_speed": 520.0, "collect_radius": 14.0, "gold_chance": 0.12 },
   "player": { "hit_invuln": 0.6 },
+  "buffs": { "_doc": "Random buff spawns (items.json buffs): first after first_after s, then every spawn_every [min,max] s one random buff on a ring spawn_ring [min,max] px around the player; it stays lifetime s (blinks the last blink s); at most max_on_field at once; picked up within collect_radius px.", "first_after": 15.0, "spawn_every": [25.0, 40.0], "spawn_ring": [160.0, 300.0], "lifetime": 20.0, "blink": 4.0, "max_on_field": 2, "collect_radius": 22.0 },
   "separation": { "cell": 48.0, "push": 60.0 },
   "max_enemies": 600,
   "ui": { "damage_number_time": 0.7, "damage_number_rise": 36.0, "damage_number_size": 16, "max_damage_numbers": 96,

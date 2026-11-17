@@ -314,7 +314,7 @@ func show_character() -> void:
 	left.custom_minimum_size = Vector2(360, 0)
 	body.add_child(left)
 	left.add_child(_label("%s · Cấp %d" % [run.class_data.get("name", ""), run.level], 20, BORDER))
-	var bd: Dictionary = PlayerStats.breakdown(run.base_stats, run.pool.get("upgrades", []), run.levels)
+	var bd: Dictionary = PlayerStats.breakdown(run.base_stats, run.effect_pool(), run.effect_levels())
 	for key: String in CHARACTER_STATS:
 		# a stat at 0 that no card touches (armour before equipment) is noise
 		if bd.has(key) and (not bd[key]["parts"].is_empty() or not is_zero_approx(float(bd[key]["final"]))):
@@ -365,8 +365,8 @@ func _stat_row(key: String, b: Dictionary) -> VBoxContainer:
 	chips.add_child(_indent(base_l))
 	for part: Dictionary in b["parts"]:
 		var amount: String = ("%+d%%" % roundi(float(part["mul"]) * 100.0)) if part.has("mul") else run.signed(float(part["add"]))
-		chips.add_child(_chip([String(part["id"])], amount, "%s cấp %d: %s %s" % [
-			part["name"], part["level"], run.STAT_LABEL.get(key, key), amount]))
+		var who := String(part["name"]) if not run.buff_def(String(part["id"])).is_empty() else "%s cấp %d" % [part["name"], part["level"]]
+		chips.add_child(_chip([String(part["id"])], amount, "%s: %s %s" % [who, run.STAT_LABEL.get(key, key), amount]))
 	v.add_child(chips)
 	return v
 
@@ -455,7 +455,7 @@ func _chip(icons: Array, text: String, tip: String, col := MUTED, sz := 12, note
 
 func _icon(id: String, px: int) -> TextureRect:
 	var t := TextureRect.new()
-	t.texture = UiIcons.texture(id)
+	t.texture = run.icon_texture(id)
 	t.custom_minimum_size = Vector2(px, px)
 	t.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	t.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED

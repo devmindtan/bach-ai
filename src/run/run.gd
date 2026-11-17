@@ -87,6 +87,10 @@ var forced_walk := Vector2.ZERO
 var pause_at := -1.0
 var pause_view := ""   # "settings" / "character": the --pause-at pause opens that page (shots)
 var god := false
+var buffs: Buffs
+var _buff_defs := {}
+var _forced_buffs: Array[String] = []   # --buff=a,b (shots)
+var _ground_buffs: Array[String] = []   # --buff-ground=a,b (shots)
 var damage_taken := 0.0   # end-of-run table
 var healed := 0.0
 var _bench_frames := 0
@@ -132,6 +136,11 @@ func _ready() -> void:
 	_gem_sprite = String(items.get("pickups", {}).get("xp_gem", {}).get("sprite", "exp-gem"))
 	_coin_sprite = String(items.get("pickups", {}).get("gold", {}).get("sprite", "gold-coin"))
 	var names: Array[String] = [String(class_data.get("sprite", "swordsman")), _gem_sprite, _coin_sprite]
+	_buff_defs = items.get("buffs", {})
+	for b: String in _buff_defs:
+		names.append(String(_buff_defs[b].get("sprite", b)))
+		if _buff_defs[b].has("aura"):
+			names.append(String(_buff_defs[b]["aura"]))
 	for m: String in monsters:
 		if not m.begins_with("_"):
 			names.append(String(monsters[m].get("sprite", m)))
@@ -151,6 +160,11 @@ func _ready() -> void:
 	enemies = Enemies.new(monsters, cfg, sheets, rng.seed)
 	_update_body()
 	pickups = Pickups.new(cfg.get("pickups", {}), 400)
+	buffs = Buffs.new(_buff_defs, cfg.get("buffs", {}), rng.seed + 7)
+	for id in _forced_buffs:
+		buffs.activate(id)
+	for k in _ground_buffs.size():
+		buffs.ground.append({"id": _ground_buffs[k], "pos": Vector2(120.0 + 70.0 * k, -60.0), "age": 0.0})
 	waves = WaveScheduler.new(stage.get("waves", []))
 	base_stats = class_data.get("stats", {})
 	for sk: String in class_data.get("start_skills", {}):
@@ -187,6 +201,14 @@ func _parse_args() -> void:
 		elif a.begins_with("--seed="):
 			rng.seed = int(a.get_slice("=", 1))
 			seeded = true
+		elif a.begins_with("--buff="):
+			# Debug/shots: start with these buffs active, e.g. --buff=magnetic_shield,power_orb
+			for id in a.get_slice("=", 1).split(",", false):
+				_forced_buffs.append(id)
+		elif a.begins_with("--buff-ground="):
+			# Debug/shots: these buffs lie on the ground near the start
+			for id in a.get_slice("=", 1).split(",", false):
+				_ground_buffs.append(id)
 		elif a == "--god":
 			god = true
 		elif a.begins_with("--pause-view="):
@@ -280,9 +302,13 @@ func _tick(dt: float) -> void:
 	_move_player(dt)
 	_spawn(clock - dt, clock)
 	var contact := enemies.step(dt, player_pos, player_pos + _hit_center)
-	if contact > 0.0 and invuln <= 0.0 and bench == 0 and not god:
+	if contact > 0.0 and invuln <= 0.0 and bench == 0 and not god and not buffs.invulnerable():
 		_take_hit(contact)
 	invuln = maxf(0.0, invuln - dt)
+	var had := buffs.active.size()
+	buffs.step(dt, player_pos + _hit_center)
+	if buffs.active.size() != had or not buffs.picked_ids().is_empty():
+		_recompute_stats()
 	var before := hp
 	hp = minf(float(stats["max_hp"]), hp + float(stats.get("regen", 0.0)) * dt)
 	healed += maxf(0.0, hp - before)
@@ -545,8 +571,9 @@ func skill_info() -> Array:
 		var touches := {"damage": "Sát thương", "cooldown": "Hồi chiêu", "area": "Vùng",
 			"skill_damage." + id: "Sát thương", "skill_area." + id: "Vùng"}
 		var sources := []
-		for v: Dictionary in pool.get("upgrades", []):
-			var vl := int(levels.get(v["id"], 0))
+		var lv_all := effect_levels()
+		for v: Dictionary in effect_pool():
+			var vl := int(lv_all.get(v["id"], 0))
 			if vl <= 0:
 				continue
 			var effects: Dictionary = v.get("effects", {})
@@ -748,7 +775,41 @@ static func _fmt_stat(key: String, v: float) -> String:
 
 
 func _recompute_stats() -> void:
-	stats = PlayerStats.compute(base_stats, pool.get("upgrades", []), levels)
+	stats = PlayerStats.compute(base_stats, effect_pool(), effect_levels())
+
+
+## Card upgrades plus active buffs (as level-1 upgrades): what the stats are made of.
+func effect_pool() -> Array:
+	var out: Array = pool.get("upgrades", []).duplicate()
+	if buffs != null:
+		out.append_array(buffs.as_upgrades())
+	return out
+
+
+func effect_levels() -> Dictionary:
+	var out := levels.duplicate()
+	if buffs != null:
+		out.merge(buffs.levels(), true)
+	return out
+
+
+## Icon for a card or a buff id: ui-icons, else the buff badge's first frame.
+func icon_texture(id: String) -> Texture2D:
+	var t := UiIcons.texture(id)
+	if t != null or buff_def(id).is_empty():
+		return t
+	var sh: SpriteSheet = sheets.get(String(buff_def(id).get("sprite", "")))
+	if sh == null:
+		return null
+	var at := AtlasTexture.new()
+	at.atlas = sh.texture
+	at.region = sh.src_rect(0)
+	return at
+
+
+## Buff definition (items.json "buffs") or {} for a card id.
+func buff_def(id: String) -> Dictionary:
+	return _buff_defs.get(id, {})
 
 
 func xp_needed() -> int:
@@ -844,6 +905,7 @@ func _draw() -> void:
 		if view.has_point(pickups.pos[i]):
 			var sh := gem if pickups.kind[i] == Pickups.GEM else coin
 			sh.draw(self, "idle", clock + i * 0.13, pickups.pos[i], _sprite_scale)
+	_draw_ground_buffs(view)
 	# dying monsters under the living ones
 	for pass_dying in [true, false]:
 		for i in enemies.count:
@@ -860,6 +922,7 @@ func _draw() -> void:
 	if hero != null:
 		var blink := invuln > 0.0 and state == State.PLAYING and int(invuln * 20.0) % 2 == 0
 		var tint := Color(1, 1, 1, 0.45) if blink else Color.WHITE
+		_draw_auras()   # behind the hero: an aura over the body hid the hero (2026-11-17)
 		hero.draw(self, _anim, _anim_t, player_pos, _sprite_scale, face_left, tint)
 	for fx in _fx:
 		var sh: SpriteSheet = fx["sheet"]
@@ -894,6 +957,33 @@ func _step_damage_numbers(dt: float) -> void:
 		_num_t[_num_next] = 0.0
 		_num_next = (_num_next + 1) % _num_t.size()
 	enemies.drain_hits()
+
+
+## Buffs lying on the ground: the badge bobbing; blinking in the last seconds.
+func _draw_ground_buffs(view: Rect2) -> void:
+	for g: Dictionary in buffs.ground:
+		var p: Vector2 = g["pos"]
+		if not view.has_point(p):
+			continue
+		var left := buffs.lifetime - float(g["age"])
+		if left < buffs.blink and int(left * 8.0) % 2 == 0:
+			continue
+		var sh: SpriteSheet = sheets.get(String(buff_def(g["id"]).get("sprite", "")))
+		if sh != null:
+			sh.draw(self, "idle", float(g["age"]), p, _sprite_scale)
+
+
+## The aura of each running buff, drawn behind the hero: at its feet
+## (aura_at "feet") or centred on its body ("body").
+func _draw_auras() -> void:
+	for id: String in buffs.active:
+		var d := buff_def(id)
+		var at := String(d.get("aura_at", "body"))
+		var sh: SpriteSheet = sheets.get(String(d.get("aura", "")))
+		if sh == null or not sh.has_animation("loop"):
+			continue
+		var p := player_pos if at == "feet" else player_pos + _hit_center
+		sh.draw(self, "loop", clock, p, _sprite_scale)
 
 
 func _draw_damage_numbers(view: Rect2) -> void:

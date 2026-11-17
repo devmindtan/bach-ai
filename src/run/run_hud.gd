@@ -85,6 +85,7 @@ func _draw() -> void:
 	draw_rect(bar, BACK)
 	draw_rect(Rect2(bar.position + Vector2(2, 2), Vector2((bar.size.x - 4) * clampf(run.hp / max_hp, 0.0, 1.0), 16)), HP_BAR)
 	_centered(font, Vector2(bar.get_center().x, _baseline(ROW, 14)), "%d / %d" % [ceili(run.hp), roundi(max_hp)], 14)
+	_draw_buffs(font, Vector2(bar.position.x, ROW + 32))
 	# clock: icon + elapsed, the total smaller on the same baseline
 	var t := int(run.clock)
 	var total := int(run.duration)
@@ -114,6 +115,27 @@ const SLOT_GAP := 8.0
 const SLOT_BOTTOM := 18.0   # gap under the bar
 const COOL := Color(0.02, 0.02, 0.05, 0.72)
 const ACTIVE := Color("ffd36b")
+
+
+## Running buffs under the hp bar: the badge, a time bar under it, seconds
+## left beside it.
+func _draw_buffs(font: Font, at: Vector2) -> void:
+	var x := at.x
+	for id: String in run.buffs.active:
+		var d: Dictionary = run.buff_def(id)
+		var sh: SpriteSheet = run.sheets.get(String(d.get("sprite", "")))
+		if sh == null:
+			continue
+		var c := Vector2(x + 14, at.y)
+		sh.draw(self, "idle", 0.0, c, 1.5)
+		var left := float(run.buffs.time_left(id))
+		var total := maxf(0.01, float(d.get("duration", 8.0)))
+		# time bar under the badge, in the badge's rim colour
+		var bar := Rect2(c.x - 12, c.y + 16, 24, 3)
+		draw_rect(bar, BACK)
+		draw_rect(Rect2(bar.position, Vector2(roundf(24 * clampf(left / total, 0.0, 1.0)), 3)), Color(d.get("color", "f2ecd8")))
+		_text(font, Vector2(c.x + 18, _baseline(c.y, 14)), "%d" % ceili(left), 14)
+		x += 56
 
 
 ## Owned skills along the bottom centre: icon in a slot, a dark sweep for the
