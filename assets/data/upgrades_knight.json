@@ -308,20 +308,21 @@
       ]
     },
     "cleave_wave": {
-      "sprite": "cleave-wave",
+      "sprite": "sword-wave",
       "tier_sprites": [
-        "cleave-wave",
-        "cleave-wave-ii",
-        "cleave-wave-iii",
-        "cleave-wave-iv",
-        "cleave-wave-v"
+        "sword-wave",
+        "sword-wave-ii",
+        "sword-wave-iii",
+        "sword-wave-iv",
+        "sword-wave-v"
       ],
       "cast": "wave",
-      "anim_prefix": "sweep_",
+      "anim_prefix": "fly_",
       "damage_mul": 0.9,
       "size_mul": 1.0,
       "cooldown": 2.2,
       "speed": 300.0,
+      "duration": 0.9,
       "count": [
         1,
         1,

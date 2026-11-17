@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cfub73dhouy1c"
-path="res://.godot/imported/cleave-wave-iii_strip.png-707f0c77c451ca635251844cdaba7085.ctex"
+uid="uid://bueps6jyrp5uw"
+path="res://.godot/imported/sword-wave-iii_strip.png-ff961192194b909b4a68ed5f1d47c74a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/custom/cleave-wave-iii/cleave-wave-iii_strip.png"
-dest_files=["res://.godot/imported/cleave-wave-iii_strip.png-707f0c77c451ca635251844cdaba7085.ctex"]
+source_file="res://assets/sprites/custom/sword-wave-iii/sword-wave-iii_strip.png"
+dest_files=["res://.godot/imported/sword-wave-iii_strip.png-ff961192194b909b4a68ed5f1d47c74a.ctex"]
 
 [params]
 

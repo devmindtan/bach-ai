@@ -636,11 +636,12 @@ func _cast(sid: String, ts: Dictionary, how: String) -> void:
 				fx["shot"] = {"damage": dmg, "explode": bool(ts.get("explode", false)), "pierce": int(ts.get("pierce", 0)),
 					"impact": String(ts.get("impact", "impact")), "wait": 0.0}
 		"wave":
-			var first := slash_dir(to_target)
-			var dirs := [first, -first, Vector2(first.y, first.x), Vector2(-first.y, -first.x)]
+			# straight at the nearest monster, then behind, then both sides
+			var first := to_target.normalized()
+			var dirs := [first, -first, first.orthogonal(), -first.orthogonal()]
 			for k in mini(_skill_count(sid, ts), dirs.size()):
 				var dv: Vector2 = dirs[k]
-				var fx := _add_fx(sprite, String(ts.get("anim_prefix", "sweep_")) + _dir_name(dv), sc, dmg, -1.0, center, sid, kb)
+				var fx := _add_fx(sprite, _fly_anim(sprite, String(ts.get("anim_prefix", "fly_")), dv), sc, dmg, float(ts.get("duration", 0.9)), center, sid, kb)
 				if not fx.is_empty():
 					fx["vel"] = dv * float(ts.get("speed", 300.0))
 					fx["rehit"] = float(ts.get("rehit", 0.25))
