@@ -298,3 +298,34 @@ func test_flying_skills_use_flight_animations() -> void:
 				for a: Dictionary in meta.get("animations", []):
 					has_fly = has_fly or String(a.get("name", "")).begins_with("fly_")
 				_check(has_fly, "%s: sprite %s has no fly_ animations" % [sk, n])
+
+
+## A self-cast skill plays an animation its sprite really has: "nearest" plays the
+## anim_prefix direction toward its target, "self" and "random" play "anim"
+## (default burst). god_hammer used to ask for "burst" while its sprite only had
+## strike_*, so it drew nothing and hit nothing (2026-11-17).
+func test_casts_play_an_animation_their_sprite_has() -> void:
+	var classes := GameData.load_json(DATA + "classes.json")
+	for cid: String in classes:
+		if cid.begins_with("_"):
+			continue
+		var pool := GameData.load_json(DATA + String(classes[cid].get("upgrades", "")))
+		for sk: String in pool.get("skills", {}):
+			var p: Dictionary = pool["skills"][sk]
+			var how := String(p.get("cast", ""))
+			if not ["nearest", "self", "random"].has(how):
+				continue
+			var prefix := String(p.get("anim_prefix", ""))
+			var anim := String(p.get("anim", "burst"))
+			for n: Variant in p.get("tier_sprites", [p.get("sprite", "")]):
+				var meta := GameData.load_json(SPRITES + String(n) + "/" + String(n) + ".json")
+				var names: Array[String] = []
+				for a: Dictionary in meta.get("animations", []):
+					names.append(String(a.get("name", "")))
+				if how == "nearest" and prefix != "":
+					var has_dir := false
+					for d in ["right", "left", "up", "down"]:
+						has_dir = has_dir or names.has(prefix + d)
+					_check(has_dir, "%s: sprite %s has no %s* direction animations for its nearest cast" % [sk, n, prefix])
+				else:
+					_check(names.has(anim), "%s: sprite %s has no '%s' animation (the %s cast draws nothing)" % [sk, n, anim, how])

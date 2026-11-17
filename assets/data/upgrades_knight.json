@@ -1,5 +1,5 @@
 {
-  "_doc": "Knight level-up pool. kind skill = an attack the run uses; stat = a modifier. effects apply per level: add (flat) or mul (+fraction). weight = roll weight. skills.<id>.cast says how the run casts it: nearest (burst cast_range px toward the nearest monster), self (burst on the hero), random (count[level-1] bursts on random monsters within cast_range), wave (anim_prefix + direction, flies at speed px/s through monsters, count[level-1] directions: nearest, opposite, then the two others), active (player-triggered: the dash; sprite = the hero, anim = its animation). tier_sprites pick the sprite by level. frost_nova moved out: it is a mage skill. under_hero = the effect is drawn behind the hero (ground effects around it, e.g. the stomp). on_hit = statuses the skill puts on monsters it hits (assets/data/statuses.json), each from a skill level. count = casts per level (more targets / waves / pulses); the \"amount\" stat (amount cards) adds one to every skill: blade slashes the next nearest monsters, whirlwind gets more ticks, self casts pulse again 0.25 s apart, nearest casts hit the next nearest monsters. unique = a milestone skill (milestones.json): never offered as a card until the slot owns it; the run starts it at level 1.",
+  "_doc": "Knight level-up pool. kind skill = an attack the run uses; stat = a modifier. effects apply per level: add (flat) or mul (+fraction). weight = roll weight. skills.<id>.cast says how the run casts it: nearest (one burst on each of the count nearest monsters; at_target puts its damage area on the monster instead of the art anchor, anim_prefix picks the direction animation), self (burst on the hero), random (count[level-1] bursts on random monsters within cast_range), wave (anim_prefix + direction, flies at speed px/s through monsters, count[level-1] directions: nearest, opposite, then the two others), active (player-triggered: the dash; sprite = the hero, anim = its animation). tier_sprites pick the sprite by level. frost_nova moved out: it is a mage skill. under_hero = the effect is drawn behind the hero (ground effects around it, e.g. the stomp). on_hit = statuses the skill puts on monsters it hits (assets/data/statuses.json), each from a skill level. count = casts per level (more targets / waves / pulses); the \"amount\" stat (amount cards) adds one to every skill: blade slashes the next nearest monsters, whirlwind gets more ticks, self casts pulse again 0.25 s apart, nearest casts hit the next nearest monsters. unique = a milestone skill (milestones.json): never offered as a card until the slot owns it; the run starts it at level 1.",
   "upgrades": [
     {
       "id": "blade_arc",
@@ -538,6 +538,7 @@
       ],
       "cast": "nearest",
       "anim_prefix": "strike_",
+      "at_target": true,
       "damage_mul": 3.0,
       "size_mul": 1.6,
       "cooldown": 3.0,

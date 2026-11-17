@@ -57,6 +57,10 @@ var k_hp := PackedFloat32Array()
 var k_damage := PackedFloat32Array()
 var k_speed := PackedFloat32Array()
 var k_radius := PackedFloat32Array()
+## How far a monster's body reaches from the point the spatial hash stores (its
+## feet): body radius + how far the body centre sits above the feet. The widest
+## kind's value; hit-box queries add it so no body at the edge is skipped.
+var max_hit_r := 0.0
 var k_xp := PackedFloat32Array()
 var k_scale := PackedFloat32Array()
 var k_center := PackedVector2Array()     # body centre relative to the anchor point (facing right)
@@ -166,6 +170,7 @@ func _register(id: String, m: Dictionary, sheet: SpriteSheet, world_scale: float
 		body.radius = 8.0 * sc
 	k_radius.append(body.radius)
 	k_center.append(body.center)
+	max_hit_r = maxf(max_hit_r, body.radius + body.center.length())
 	k_death_time.append(sheet.duration("death") if sheet != null and sheet.has_animation("death") else 0.4)
 	k_extra.append(m)
 	k_elite.append(1 if is_elite else 0)
@@ -396,9 +401,19 @@ func boss_telegraphs() -> Array:
 ## Damages every living monster whose body overlaps [param hb] (a skill
 ## effect's SpriteHitbox, placed where the effect is drawn). Knockback pushes
 ## away from the hitbox centre. Returns how many were hit.
+## How far a spatial-hash query around a hit box must reach so that every monster
+## whose body touches it is returned: the box's own reach (a rect's half
+## diagonal, a circle's radius; a rect reports radius 0) plus max_hit_r.
+func _query_pad(hb: SpriteHitbox) -> float:
+	var reach := hb.radius
+	if hb.shape == "rect":
+		reach = Vector2(hb.half_w, hb.half_h).length()
+	return reach + max_hit_r
+
+
 func hit_box(hb: SpriteHitbox, damage: float, knockback := 140.0, source := "", effects: Array = []) -> int:
 	_query.clear()
-	_hash.query(hb.center, hb.radius + 32.0, _query)
+	_hash.query(hb.center, _query_pad(hb), _query)
 	for j in range(_hashed_count, count):   # spawned since the hash was built
 		_query.append(j)
 	var hits := 0
@@ -418,7 +433,7 @@ func hit_box(hb: SpriteHitbox, damage: float, knockback := 140.0, source := "", 
 
 ## True when a living monster's body overlaps [param hb] (no damage).
 func overlaps(hb: SpriteHitbox) -> bool:
-	for i in living_within(hb.center, hb.radius + 48.0):
+	for i in living_within(hb.center, _query_pad(hb)):
 		if hb.contains(center_of(i), k_radius[kind[i]]):
 			return true
 	return false
@@ -556,7 +571,7 @@ func nearest(p: Vector2, max_dist: float) -> int:
 		for j in count:
 			_query.append(j)
 	else:
-		_hash.query(p, max_dist + 32.0, _query)
+		_hash.query(p, max_dist + max_hit_r, _query)
 		for j in range(_hashed_count, count):
 			_query.append(j)
 	var best := -1

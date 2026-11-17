@@ -378,8 +378,12 @@ func show_character() -> void:
 		side.add_child(_label("Không có buff nào.", 14, MUTED))
 	for id: String in run.buffs.active:
 		side.add_child(_buff_row(id))
-	var cards_title := _label("Thẻ chỉ số", 20, BORDER)
-	side.add_child(cards_title)
+	var rows: Array = run.milestone_rows()
+	if not rows.is_empty():
+		side.add_child(_label("Mốc ải", 20, BORDER))
+		for r: Dictionary in rows:
+			side.add_child(_milestone_row(r))
+	side.add_child(_label("Thẻ chỉ số", 20, BORDER))
 	var any := false
 	for o: Dictionary in run.owned_upgrades():
 		if not o["skill"]:
@@ -430,6 +434,24 @@ func _buff_row(id: String) -> HBoxContainer:
 	h.add_child(v)
 	v.add_child(_label("%s  ·  còn %d s" % [d.get("name", id), ceili(run.buffs.time_left(id))], 15, Color(d.get("color", "f2ecd8"))))
 	var desc := _label(String(d.get("desc", "")), 12, MUTED)
+	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	v.add_child(desc)
+	return h
+
+
+## A milestone reward the slot owns: icon, kind and name, what it does.
+func _milestone_row(r: Dictionary) -> HBoxContainer:
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 10)
+	var ic := _icon(String(r["icon"]), 28)
+	ic.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	h.add_child(ic)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 0)
+	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	h.add_child(v)
+	v.add_child(_label("%s  ·  %s" % [r["name"], r["kind"]], 15, MILESTONE))
+	var desc := _label(String(r["desc"]), 12, MUTED)
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	v.add_child(desc)
 	return h

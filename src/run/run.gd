@@ -16,6 +16,7 @@ extends Node2D
 ##   --pause-view=settings|character  with --pause-at, open that page (shots)
 ##   --pause-at=T    open the pause panel at T seconds (shots)
 ##   --offer=a,b,c   the first level-up offers these upgrade ids (shots of the cards)
+##   --rewards=a,b   milestone rewards the slot owns (shots/tests: design/progression.md)
 ##   --no-auto-pick  the demo stops at the first level-up panel (for shots)
 ##   --hitboxes      draw hit areas: effects (red while dealing damage), monster
 ##                   bodies, the player's body and pickup radius
@@ -45,6 +46,14 @@ var stage: Dictionary
 var base_stats: Dictionary
 var stats: Dictionary
 var levels: Dictionary = {}   # upgrade id -> level
+var milestones: Milestones    # assets/data/milestones.json
+var rewards: Array[String] = []   # milestone reward ids this run starts with (--rewards=)
+var _guardian_t := 0.0        # Hộ thể: seconds until the next shield
+var _guardian_every := 0.0    # 0 = the slot does not own it
+var _guardian_buff := ""
+var _guardian_time := 0.0
+var _undying_used := false    # Bất tử revives once per run
+var _start_picks := 0         # Khởi đầu thần tốc: cards to pick at the start
 
 var enemies: Enemies
 var pickups: Pickups
@@ -142,6 +151,7 @@ func _ready() -> void:
 		class_id = "knight"
 	class_data = classes.get(class_id, {})
 	pool = GameData.load_json(DATA + String(class_data.get("upgrades", "")))
+	milestones = Milestones.load_default()
 	stage = GameData.load_json(DATA + "waves/stage_%03d.json" % stage_number)
 	if stage.is_empty():
 		stage = GameData.load_json(DATA + "waves/stage_001.json")
@@ -209,6 +219,7 @@ func _ready() -> void:
 	for sk: String in class_data.get("start_skills", {}):
 		# keep a higher level forced by --skills
 		levels[sk] = maxi(int(levels.get(sk, 0)), int(class_data["start_skills"][sk]))
+	apply_rewards()
 	_recompute_stats()
 	hp = float(stats.get("max_hp", 100.0))
 
@@ -223,6 +234,11 @@ func _ready() -> void:
 	_panels = RunPanels.new()
 	_panels.run = self
 	layer.add_child(_panels)
+
+	# Khởi đầu thần tốc: pick cards before the first monster shows up.
+	if _start_picks > 0:
+		pending_levels += _start_picks
+		_open_level_up.call_deferred()
 
 	if bench > 0:
 		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
@@ -281,6 +297,10 @@ func _parse_args() -> void:
 			# Debug/shots: the first level-up offers these cards, e.g. --offer=earth_strike,haste,back_slash
 			for id in a.get_slice("=", 1).split(",", false):
 				offer.append(id)
+		elif a.begins_with("--rewards="):
+			# Debug/shots/tests: milestone rewards the slot owns, e.g. --rewards=earthquake,bloodthirst
+			for id in a.get_slice("=", 1).split(",", false):
+				rewards.append(id)
 		elif a == "--no-auto-pick":
 			auto_pick = false
 		elif a == "--hitboxes":
@@ -362,6 +382,7 @@ func _tick(dt: float) -> void:
 	buffs.step(dt, player_pos + _hit_center)
 	if buffs.active.size() != had or not buffs.picked_ids().is_empty():
 		_recompute_stats()
+	_step_guardian(dt)
 	var before := hp
 	hp = minf(float(stats["max_hp"]), hp + float(stats.get("regen", 0.0)) * dt)
 	healed += maxf(0.0, hp - before)
@@ -511,12 +532,15 @@ func _drops() -> void:
 	if enemies.kill_pos.is_empty():
 		return
 	var gold_chance := float(cfg.get("pickups", {}).get("gold_chance", 0.1))
+	var heal_frac := heal_on_kill()   # Khát máu: elites and bosses feed the hero
 	for i in enemies.kill_pos.size():
 		pickups.drop(Pickups.GEM, enemies.kill_pos[i], enemies.kill_xp[i])
 		if enemies.kill_elite[i] == 1:
 			pickups.drop(Pickups.CHEST, enemies.kill_pos[i] + Vector2(-10, 0), 1.0)
 		if enemies.kill_boss[i] == 1:
 			_boss_dead = true
+		if heal_frac > 0.0 and (enemies.kill_elite[i] == 1 or enemies.kill_boss[i] == 1):
+			heal_max(heal_frac)
 		if rng.randf() < gold_chance:
 			pickups.drop(Pickups.COIN, enemies.kill_pos[i] + Vector2(10, 0), 1.0)
 	enemies.drain_kills()
@@ -643,15 +667,31 @@ func _cast(sid: String, ts: Dictionary, how: String) -> void:
 		to_target = (enemies.center_of(target_i) - center).normalized()
 	match how:
 		"nearest":
-			# one burst toward each of the nearest monsters (count: more of them)
+			# one burst toward each of the nearest monsters (count: more of them);
+			# anim_prefix plays the direction, at_target drops it on the monster
 			var n := _skill_count(sid, ts)
 			var targets := enemies.nearest_n(center, n)
 			if targets.is_empty():
 				targets = [-1]
+			var prefix := String(ts.get("anim_prefix", ""))
+			var on_target := bool(ts.get("at_target", false))
 			for k in mini(n, targets.size()):
-				var dir := to_target if int(targets[k]) < 0 else (enemies.center_of(targets[k]) - center).normalized()
-				var p := center + dir * float(ts.get("cast_range", 140.0))
-				_add_fx(sprite, String(ts.get("anim", "burst")), sc, dmg, -1.0, p, sid, kb)
+				var dir := to_target
+				var aim := center + to_target * float(ts.get("cast_range", 140.0))
+				if int(targets[k]) >= 0:
+					dir = (enemies.center_of(targets[k]) - center).normalized()
+					aim = enemies.center_of(targets[k])
+				var anim := String(ts.get("anim", "burst"))
+				if prefix != "":
+					anim = _fly_anim(sprite, prefix, dir)
+				if on_target:
+					# drop the effect so its damage area covers the monster (the
+					# art's anchor is not its head: a hammer strike's box sits to
+					# one side of the frame)
+					var probe := SpriteHitbox.of(sheets.get(sprite), anim, Vector2.ZERO, sc)
+					if probe != null:
+						aim -= probe.center
+				_add_fx(sprite, anim, sc, dmg, -1.0, aim, sid, kb)
 		"self":
 			# count: pulses 0.25 s apart
 			for k in _skill_count(sid, ts):
@@ -942,6 +982,88 @@ func _step_fx(dt: float) -> void:
 			i += 1
 
 
+# --- milestone rewards (design/progression.md) --------------------------------
+# What the slot picked at stages 10/20/30: a unique skill (starts at level 1,
+# levelled by cards), a passive, or a rule that changes the run.
+
+## Applies the owned rewards to this run: unique skills start at level 1, the
+## passive/rule numbers are read once. Called from _ready.
+func apply_rewards() -> void:
+	if milestones == null:
+		milestones = Milestones.load_default()
+	for sk: String in milestones.skills(rewards):
+		levels[sk] = maxi(int(levels.get(sk, 0)), 1)
+	var g := milestones.with_key(rewards, "every")
+	_guardian_every = float(g.get("every", 0.0))
+	_guardian_buff = String(g.get("buff", "magnetic_shield"))
+	_guardian_time = float(g.get("duration", 0.0))
+	_guardian_t = _guardian_every
+	_start_picks = int(milestones.number(rewards, "start_picks"))
+
+
+## Cards on a level-up: 3, or 4 with the Thêm lựa chọn rule.
+func level_up_card_count() -> int:
+	var n := 3
+	if milestones != null:
+		n = int(milestones.number(rewards, "cards", 3.0))
+	return maxi(1, n)
+
+
+## Khát máu: fraction of max hp an elite or boss kill heals (0 = not owned).
+func heal_on_kill() -> float:
+	return milestones.number(rewards, "heal_frac") if milestones != null else 0.0
+
+
+## Heals [param frac] of max hp; returns how much was healed.
+func heal_max(frac: float) -> float:
+	var top := float(stats.get("max_hp", hp))
+	var before := hp
+	hp = minf(top, hp + top * frac)
+	healed += hp - before
+	return hp - before
+
+
+## Hộ thể: the shield comes by itself every `every` seconds, for `duration` s.
+func _step_guardian(dt: float) -> void:
+	if _guardian_every <= 0.0:
+		return
+	_guardian_t -= dt
+	if _guardian_t > 0.0:
+		return
+	_guardian_t += _guardian_every
+	buffs.activate(_guardian_buff, _guardian_time)
+	_recompute_stats()
+
+
+## Bất tử: the first time hp runs out, the hero stands up with revive_hp of max
+## hp and invuln s of immunity. True when it just happened (the run goes on).
+func try_undying() -> bool:
+	if _undying_used or milestones == null:
+		return false
+	var r := milestones.with_key(rewards, "revive_hp")
+	if r.is_empty():
+		return false
+	_undying_used = true
+	hp = float(stats.get("max_hp", 100.0)) * float(r.get("revive_hp", 0.5))
+	invuln = float(milestones.number(rewards, "invuln", 2.0))
+	_play_action("hurt")
+	return true
+
+
+## The owned milestone rewards for the character sheet: [{id, kind (Vietnamese
+## caption), icon, name, desc}], in stage order.
+func milestone_rows() -> Array:
+	var out := []
+	if milestones == null:
+		return out
+	var kinds := {"skill": "Chiêu độc nhất", "passive": "Nội tại", "rule": "Luật"}
+	for id: String in rewards:
+		var info := milestones.info(id, pool.get("upgrades", []))
+		info["kind"] = String(kinds.get(String(info["kind"]), info["kind"]))
+		out.append(info)
+	return out
+
+
 # --- progression -------------------------------------------------------------
 
 func _gain_xp(amount: float) -> void:
@@ -955,7 +1077,7 @@ func _gain_xp(amount: float) -> void:
 
 
 func _open_level_up() -> void:
-	choices = UpgradeRoller.roll(pool.get("upgrades", []), levels, 3, rng)
+	choices = UpgradeRoller.roll(pool.get("upgrades", []), levels, level_up_card_count(), rng)
 	if not offer.is_empty():
 		choices = offer.duplicate()
 		offer.clear()
@@ -1084,6 +1206,8 @@ func _recompute_stats() -> void:
 ## Card upgrades plus active buffs (as level-1 upgrades): what the stats are made of.
 func effect_pool() -> Array:
 	var out: Array = pool.get("upgrades", []).duplicate()
+	if milestones != null:
+		out.append_array(milestones.as_upgrades(rewards))   # milestone effects (Song kích)
 	if buffs != null:
 		out.append_array(buffs.as_upgrades())
 	if profile != null:
@@ -1093,6 +1217,8 @@ func effect_pool() -> Array:
 
 func effect_levels() -> Dictionary:
 	var out := levels.duplicate()
+	if milestones != null:
+		out.merge(milestones.levels(rewards), true)
 	if buffs != null:
 		out.merge(buffs.levels(), true)
 	if profile != null:
@@ -1146,6 +1272,9 @@ func xp_needed() -> int:
 
 
 func _die() -> void:
+	if try_undying():
+		print("Undying: back up at %.0f hp" % hp)
+		return
 	hp = 0.0
 	state = State.DEAD
 	_end_t = 0.0

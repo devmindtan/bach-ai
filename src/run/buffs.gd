@@ -78,9 +78,10 @@ func picked_ids() -> Array:
 	return _picked
 
 
-## Starts (or refreshes) buff [param id] for its full duration.
-func activate(id: String) -> void:
-	active[id] = float(defs.get(id, {}).get("duration", 8.0))
+## Starts (or refreshes) buff [param id]: for its own duration, or [param seconds]
+## when given (Hộ thể's shield lasts 4 s, not the pickup's 6 s).
+func activate(id: String, seconds := -1.0) -> void:
+	active[id] = seconds if seconds > 0.0 else float(defs.get(id, {}).get("duration", 8.0))
 
 
 func is_active(id: String) -> bool:
