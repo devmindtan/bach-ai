@@ -85,6 +85,19 @@ func test_roll_empty_pool() -> void:
 	_check(UpgradeRoller.roll([], {}, 3, rng).is_empty(), "empty pool should give no ids")
 
 
+## A milestone skill is a reward, not a card: it is offered only once the slot
+## owns it (the run starts it at level 1), never before (design/progression.md).
+func test_roll_skips_unowned_unique_skills() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 3
+	var pool := _pool() + [{"id": "u", "unique": true, "max_level": 5, "weight": 1, "effects": {}}]
+	var before := UpgradeRoller.roll(pool, {}, 9, rng)
+	_check(not before.has("u"), "an unowned unique skill must not be offered, got %s" % [before])
+	_check(before.size() == 3, "the three rollable ordinary upgrades are still offered (d has weight 0), got %s" % [before])
+	var after := UpgradeRoller.roll(pool, {"u": 1}, 9, rng)
+	_check(after.has("u"), "an owned unique skill is levelled by cards, got %s" % [after])
+
+
 # --- WaveScheduler -----------------------------------------------------------
 
 func test_wave_total_does_not_depend_on_step() -> void:

@@ -1,5 +1,5 @@
 {
-  "_doc": "Knight level-up pool. kind skill = an attack the run uses; stat = a modifier. effects apply per level: add (flat) or mul (+fraction). weight = roll weight. skills.<id>.cast says how the run casts it: nearest (burst cast_range px toward the nearest monster), self (burst on the hero), random (count[level-1] bursts on random monsters within cast_range), wave (anim_prefix + direction, flies at speed px/s through monsters, count[level-1] directions: nearest, opposite, then the two others), active (player-triggered: the dash; sprite = the hero, anim = its animation). tier_sprites pick the sprite by level. frost_nova moved out: it is a mage skill. under_hero = the effect is drawn behind the hero (ground effects around it, e.g. the stomp). on_hit = statuses the skill puts on monsters it hits (assets/data/statuses.json), each from a skill level. count = casts per level (more targets / waves / pulses); the \"amount\" stat (amount cards) adds one to every skill: blade slashes the next nearest monsters, whirlwind gets more ticks, self casts pulse again 0.25 s apart, nearest casts hit the next nearest monsters.",
+  "_doc": "Knight level-up pool. kind skill = an attack the run uses; stat = a modifier. effects apply per level: add (flat) or mul (+fraction). weight = roll weight. skills.<id>.cast says how the run casts it: nearest (burst cast_range px toward the nearest monster), self (burst on the hero), random (count[level-1] bursts on random monsters within cast_range), wave (anim_prefix + direction, flies at speed px/s through monsters, count[level-1] directions: nearest, opposite, then the two others), active (player-triggered: the dash; sprite = the hero, anim = its animation). tier_sprites pick the sprite by level. frost_nova moved out: it is a mage skill. under_hero = the effect is drawn behind the hero (ground effects around it, e.g. the stomp). on_hit = statuses the skill puts on monsters it hits (assets/data/statuses.json), each from a skill level. count = casts per level (more targets / waves / pulses); the \"amount\" stat (amount cards) adds one to every skill: blade slashes the next nearest monsters, whirlwind gets more ticks, self casts pulse again 0.25 s apart, nearest casts hit the next nearest monsters. unique = a milestone skill (milestones.json): never offered as a card until the slot owns it; the run starts it at level 1.",
   "upgrades": [
     {
       "id": "blade_arc",
@@ -209,6 +209,54 @@
       }
     },
     {
+      "id": "earthquake",
+      "kind": "skill",
+      "unique": true,
+      "name": "Địa chấn",
+      "desc": "Chiêu độc nhất (mốc ải 10). Đất nứt dưới quái ngẫu nhiên quanh bạn, choáng 0,6 giây. Mỗi cấp: +25% sát thương, +8% vùng. Cấp 2: 2 chỗ nứt; cấp 4: 3; cấp 5: 4.",
+      "max_level": 5,
+      "weight": 2,
+      "effects": {
+        "skill_damage.earthquake": {
+          "mul": 0.25
+        },
+        "skill_area.earthquake": {
+          "mul": 0.08
+        }
+      }
+    },
+    {
+      "id": "solar_ray",
+      "kind": "skill",
+      "unique": true,
+      "name": "Thái dương xạ",
+      "desc": "Chiêu độc nhất (mốc ải 20). Bắn tia nắng xuyên qua 5 quái, gây bỏng. Mỗi cấp: +25% sát thương. Cấp 3: 2 tia; cấp 5: 3 tia.",
+      "max_level": 5,
+      "weight": 2,
+      "effects": {
+        "skill_damage.solar_ray": {
+          "mul": 0.25
+        }
+      }
+    },
+    {
+      "id": "god_hammer",
+      "kind": "skill",
+      "unique": true,
+      "name": "Búa thần",
+      "desc": "Chiêu độc nhất (mốc ải 30). Búa thần giáng xuống quái gần nhất, sát thương lớn, choáng 1 giây. Mỗi cấp: +30% sát thương, +10% vùng. Cấp 2: 2 búa; cấp 4: 3; cấp 5: 4.",
+      "max_level": 5,
+      "weight": 2,
+      "effects": {
+        "skill_damage.god_hammer": {
+          "mul": 0.3
+        },
+        "skill_area.god_hammer": {
+          "mul": 0.1
+        }
+      }
+    },
+    {
       "id": "toughness",
       "kind": "stat",
       "name": "Da thép",
@@ -412,6 +460,101 @@
           "from": 3,
           "status": "stun",
           "time": 0.4
+        }
+      ]
+    },
+    "earthquake": {
+      "sprite": "earthquake-rift",
+      "tier_sprites": [
+        "earthquake-rift",
+        "earthquake-rift-ii",
+        "earthquake-rift-iii",
+        "earthquake-rift-iv",
+        "earthquake-rift-v"
+      ],
+      "cast": "random",
+      "anim": "spell",
+      "damage_mul": 1.6,
+      "size_mul": 1.0,
+      "cooldown": 4.0,
+      "cast_range": 300.0,
+      "count": [
+        1,
+        2,
+        2,
+        3,
+        4
+      ],
+      "on_hit": [
+        {
+          "from": 1,
+          "status": "stun",
+          "time": 0.6
+        }
+      ]
+    },
+    "solar_ray": {
+      "sprite": "solar-ray",
+      "tier_sprites": [
+        "solar-ray",
+        "solar-ray-ii",
+        "solar-ray-iii",
+        "solar-ray-iv",
+        "solar-ray-v"
+      ],
+      "cast": "projectile",
+      "anim_prefix": "fly_",
+      "impact": "impact",
+      "damage_mul": 1.4,
+      "size_mul": 1.0,
+      "cooldown": 2.4,
+      "speed": 460.0,
+      "pierce": 5,
+      "duration": 1.4,
+      "count": [
+        1,
+        1,
+        2,
+        2,
+        3
+      ],
+      "on_hit": [
+        {
+          "from": 1,
+          "status": "burn",
+          "dps_mul": 0.25,
+          "time": 2.0
+        }
+      ]
+    },
+    "god_hammer": {
+      "sprite": "war-hammer-strike",
+      "tier_sprites": [
+        "war-hammer-strike",
+        "war-hammer-strike-ii",
+        "war-hammer-strike-iii",
+        "war-hammer-strike-iv",
+        "war-hammer-strike-v"
+      ],
+      "cast": "nearest",
+      "anim_prefix": "strike_",
+      "damage_mul": 3.0,
+      "size_mul": 1.6,
+      "cooldown": 3.0,
+      "cast_range": 60.0,
+      "knockback": 220.0,
+      "count": [
+        1,
+        2,
+        2,
+        3,
+        4
+      ],
+      "on_hit": [
+        {
+          "from": 1,
+          "status": "stun",
+          "time": 1.0
         }
       ]
     }

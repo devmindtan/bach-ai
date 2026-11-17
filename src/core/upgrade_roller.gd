@@ -1,7 +1,8 @@
 class_name UpgradeRoller
 extends RefCounted
 ## Picks the level-up choices: up to [param count] distinct upgrades, weighted by
-## "weight", never one already at "max_level".
+## "weight", never one already at "max_level", never a "unique" (milestone) skill
+## the player does not own yet.
 ##
 ## Example:
 ##   var ids := UpgradeRoller.roll(pool, {"sharpen": 2}, 3, rng)
@@ -12,7 +13,11 @@ extends RefCounted
 static func roll(pool: Array, levels: Dictionary, count: int, rng: RandomNumberGenerator) -> Array[String]:
 	var candidates: Array[Dictionary] = []
 	for u: Variant in pool:
-		if u is Dictionary and int(levels.get(u.get("id", ""), 0)) < int(u.get("max_level", 1)):
+		if not u is Dictionary:
+			continue
+		var lv := int(levels.get(u.get("id", ""), 0))
+		# a unique (milestone) skill is only offered once the slot owns it (level >= 1)
+		if lv < int(u.get("max_level", 1)) and not (bool(u.get("unique", false)) and lv <= 0):
 			candidates.append(u)
 	var out: Array[String] = []
 	while out.size() < count and not candidates.is_empty():

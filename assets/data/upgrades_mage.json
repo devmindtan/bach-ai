@@ -1,5 +1,5 @@
 {
-  "_doc": "Mage level-up pool. kind skill = an attack the run uses; stat = a modifier. effects apply per level: add (flat) or mul (+fraction). weight = roll weight. skills.<id>.cast says how the run casts it: nearest (burst cast_range px toward the nearest monster), self (burst on the hero), random (count[level-1] bursts on random monsters within cast_range), wave (anim_prefix + direction, flies at speed px/s through monsters, count[level-1] directions: nearest, opposite, then the two others), active (player-triggered: the dash; sprite = the hero, anim = its animation). tier_sprites pick the sprite by level. under_hero = the effect is drawn behind the hero (ground effects around it, e.g. the stomp). on_hit = statuses the skill puts on monsters it hits (assets/data/statuses.json), each from a skill level. projectile = flies at speed px/s for duration s toward the nearest monster (count fan out 12 deg); it hits when its fly hitbox (from the sprite) touches a monster: explode = the impact animation hitbox deals the damage, else the fly hitbox does and it pierces pierce more monsters; impact = its hit animation. icon = borrow another card icon. count = casts per level (more targets / waves / pulses); the \"amount\" stat (amount cards) adds one to every skill: blade slashes the next nearest monsters, whirlwind gets more ticks, self casts pulse again 0.25 s apart, nearest casts hit the next nearest monsters.",
+  "_doc": "Mage level-up pool. kind skill = an attack the run uses; stat = a modifier. effects apply per level: add (flat) or mul (+fraction). weight = roll weight. skills.<id>.cast says how the run casts it: nearest (burst cast_range px toward the nearest monster), self (burst on the hero), random (count[level-1] bursts on random monsters within cast_range), wave (anim_prefix + direction, flies at speed px/s through monsters, count[level-1] directions: nearest, opposite, then the two others), active (player-triggered: the dash; sprite = the hero, anim = its animation). tier_sprites pick the sprite by level. under_hero = the effect is drawn behind the hero (ground effects around it, e.g. the stomp). on_hit = statuses the skill puts on monsters it hits (assets/data/statuses.json), each from a skill level. projectile = flies at speed px/s for duration s toward the nearest monster (count fan out 12 deg); it hits when its fly hitbox (from the sprite) touches a monster: explode = the impact animation hitbox deals the damage, else the fly hitbox does and it pierces pierce more monsters; impact = its hit animation. icon = borrow another card icon. count = casts per level (more targets / waves / pulses); the \"amount\" stat (amount cards) adds one to every skill: blade slashes the next nearest monsters, whirlwind gets more ticks, self casts pulse again 0.25 s apart, nearest casts hit the next nearest monsters. unique = a milestone skill (milestones.json): never offered as a card until the slot owns it; the run starts it at level 1.",
   "upgrades": [
     {
       "id": "arcane_bolt",
@@ -101,6 +101,54 @@
         },
         "skill_cd.dash": {
           "mul": -0.12
+        }
+      }
+    },
+    {
+      "id": "void_orb",
+      "kind": "skill",
+      "unique": true,
+      "name": "Cầu hư không",
+      "desc": "Chiêu độc nhất (mốc ải 10). Cầu hư không bay chậm, xuyên qua 8 quái và làm chậm chúng. Mỗi cấp: +25% sát thương, +10% kích thước. Cấp 3: 2 cầu; cấp 5: 3 cầu.",
+      "max_level": 5,
+      "weight": 2,
+      "effects": {
+        "skill_damage.void_orb": {
+          "mul": 0.25
+        },
+        "skill_area.void_orb": {
+          "mul": 0.1
+        }
+      }
+    },
+    {
+      "id": "blizzard",
+      "kind": "skill",
+      "unique": true,
+      "name": "Bão tuyết",
+      "desc": "Chiêu độc nhất (mốc ải 20). Lốc băng quanh người làm chậm quái; cấp 3: đóng băng 1 giây. Mỗi cấp: +25% sát thương, +8% vùng. Cấp 2: 2 đợt; cấp 4: 3 đợt.",
+      "max_level": 5,
+      "weight": 2,
+      "effects": {
+        "skill_damage.blizzard": {
+          "mul": 0.25
+        },
+        "skill_area.blizzard": {
+          "mul": 0.08
+        }
+      }
+    },
+    {
+      "id": "storm",
+      "kind": "skill",
+      "unique": true,
+      "name": "Bão sét",
+      "desc": "Chiêu độc nhất (mốc ải 30). Bão sét đánh xuống nhiều quái quanh bạn, giật lan sang 2 quái gần đó. Mỗi cấp: +25% sát thương. Cấp 1: 2 chỗ; cấp 2: 3; cấp 4: 4; cấp 5: 5.",
+      "max_level": 5,
+      "weight": 2,
+      "effects": {
+        "skill_damage.storm": {
+          "mul": 0.25
         }
       }
     },
@@ -427,6 +475,107 @@
       "distance": 130.0,
       "time": 0.18,
       "hit_radius": 26.0
+    },
+    "void_orb": {
+      "sprite": "void-orb",
+      "tier_sprites": [
+        "void-orb",
+        "void-orb-ii",
+        "void-orb-iii",
+        "void-orb-iv",
+        "void-orb-v"
+      ],
+      "cast": "projectile",
+      "anim_prefix": "fly_",
+      "impact": "impact",
+      "damage_mul": 1.2,
+      "size_mul": 1.4,
+      "cooldown": 3.0,
+      "speed": 200.0,
+      "pierce": 8,
+      "duration": 2.4,
+      "count": [
+        1,
+        1,
+        2,
+        2,
+        3
+      ],
+      "on_hit": [
+        {
+          "from": 1,
+          "status": "slow",
+          "mul": 0.5,
+          "time": 1.5
+        }
+      ]
+    },
+    "blizzard": {
+      "sprite": "blizzard-vortex",
+      "tier_sprites": [
+        "blizzard-vortex",
+        "blizzard-vortex-ii",
+        "blizzard-vortex-iii",
+        "blizzard-vortex-iv",
+        "blizzard-vortex-v"
+      ],
+      "cast": "self",
+      "anim": "burst",
+      "damage_mul": 1.0,
+      "size_mul": 1.2,
+      "cooldown": 5.0,
+      "count": [
+        1,
+        2,
+        2,
+        3,
+        3
+      ],
+      "on_hit": [
+        {
+          "from": 1,
+          "status": "slow",
+          "mul": 0.5,
+          "time": 2.0
+        },
+        {
+          "from": 3,
+          "status": "freeze",
+          "time": 1.0
+        }
+      ]
+    },
+    "storm": {
+      "sprite": "lightning-storm",
+      "tier_sprites": [
+        "lightning-storm",
+        "lightning-storm-ii",
+        "lightning-storm-iii",
+        "lightning-storm-iv",
+        "lightning-storm-v"
+      ],
+      "cast": "random",
+      "anim": "spell",
+      "damage_mul": 1.5,
+      "size_mul": 1.0,
+      "cooldown": 3.5,
+      "cast_range": 340.0,
+      "count": [
+        2,
+        3,
+        3,
+        4,
+        5
+      ],
+      "on_hit": [
+        {
+          "from": 1,
+          "status": "shock",
+          "chain": 2,
+          "mul": 0.5,
+          "radius": 90.0
+        }
+      ]
     }
   }
 }

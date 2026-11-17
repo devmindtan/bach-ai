@@ -1,0 +1,101 @@
+class_name Milestones
+extends RefCounted
+## Milestone rewards (assets/data/milestones.json, design/progression.md): what
+## stages 10/20/30 offer a class, each reward's name / description / icon, and
+## the numbers of the rewards a slot owns, for the run.
+##
+## Example:
+##   var m := Milestones.load_default()
+##   var ids := m.offers(10, "mage")              # ["void_orb", "bloodthirst", "twin_cast"]
+##   var heal := m.number(owned, "heal_frac")     # 0.2 when the slot has Khát máu
+
+const PATH := "res://assets/data/milestones.json"
+
+var data: Dictionary
+
+
+func _init(p_data: Dictionary) -> void:
+	data = p_data
+
+
+static func load_default() -> Milestones:
+	return Milestones.new(GameData.load_json(PATH))
+
+
+## Stages that give a reward, ascending.
+func stages() -> Array[int]:
+	var out: Array[int] = []
+	for k: String in data.get("stages", {}):
+		out.append(int(k))
+	out.sort()
+	return out
+
+
+func reward(id: String) -> Dictionary:
+	return data.get("rewards", {}).get(id, {})
+
+
+## The rewards stage [param n] offers class [param cls] (the other class's unique skill left out).
+func offers(n: int, cls: String) -> Array[String]:
+	var out: Array[String] = []
+	for id: String in data.get("stages", {}).get(str(n), []):
+		var r := reward(id)
+		if not r.has("class") or String(r["class"]) == cls:
+			out.append(id)
+	return out
+
+
+## {name, desc, kind, icon} of reward [param id]; a skill reward reads its card in
+## [param upgrades] (upgrades_<class>.json "upgrades").
+func info(id: String, upgrades: Array) -> Dictionary:
+	var r := reward(id)
+	var out := {"id": id, "kind": String(r.get("kind", "")), "icon": String(r.get("icon", id)),
+		"name": String(r.get("name", id)), "desc": String(r.get("desc", ""))}
+	if out["kind"] == "skill":
+		for u: Dictionary in upgrades:
+			if String(u.get("id", "")) == String(r.get("skill", id)):
+				out["name"] = String(u.get("name", id))
+				out["desc"] = String(u.get("desc", ""))
+	return out
+
+
+## Skill ids the owned rewards [param owned] start at level 1.
+func skills(owned: Array) -> Array[String]:
+	var out: Array[String] = []
+	for id: String in owned:
+		var r := reward(id)
+		if String(r.get("kind", "")) == "skill":
+			out.append(String(r.get("skill", id)))
+	return out
+
+
+## Owned rewards with "effects" as upgrade entries for PlayerStats (level 1 each).
+func as_upgrades(owned: Array) -> Array:
+	var out := []
+	for id: String in owned:
+		var r := reward(id)
+		if r.has("effects"):
+			out.append({"id": "milestone." + id, "name": r.get("name", id), "kind": "milestone", "effects": r["effects"]})
+	return out
+
+
+func levels(owned: Array) -> Dictionary:
+	var out := {}
+	for u: Dictionary in as_upgrades(owned):
+		out[u["id"]] = 1
+	return out
+
+
+## The reward among [param owned] that has [param key]; {} when none does.
+func with_key(owned: Array, key: String) -> Dictionary:
+	for id: String in owned:
+		var r := reward(id)
+		if r.has(key):
+			return r
+	return {}
+
+
+## Number [param key] of the owned reward that has it, else [param fallback].
+func number(owned: Array, key: String, fallback := 0.0) -> float:
+	var r := with_key(owned, key)
+	return float(r.get(key, fallback))

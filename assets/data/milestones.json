@@ -1,0 +1,22 @@
+{
+  "_doc": "Milestone rewards (design/progression.md): winning stage 10, 20 or 30 the first time lets the slot pick one of the rewards listed for that stage that fit its class, for good. kind skill = a unique class skill (upgrades_<class>.json, unique), started at level 1 every run and levelled by cards; passive = an always-on effect with its own numbers; rule = changes a run rule. effects (like a card's) are added to the stats.",
+  "stages": {
+    "10": ["earthquake", "void_orb", "bloodthirst", "twin_cast"],
+    "20": ["solar_ray", "blizzard", "guardian", "wide_choice"],
+    "30": ["god_hammer", "storm", "undying", "head_start"]
+  },
+  "rewards": {
+    "earthquake":  { "kind": "skill", "class": "knight", "skill": "earthquake" },
+    "void_orb":    { "kind": "skill", "class": "mage", "skill": "void_orb" },
+    "solar_ray":   { "kind": "skill", "class": "knight", "skill": "solar_ray" },
+    "blizzard":    { "kind": "skill", "class": "mage", "skill": "blizzard" },
+    "god_hammer":  { "kind": "skill", "class": "knight", "skill": "god_hammer" },
+    "storm":       { "kind": "skill", "class": "mage", "skill": "storm" },
+    "bloodthirst": { "kind": "passive", "name": "Khát máu", "desc": "Hạ quái tinh anh hoặc boss: hồi 20% máu tối đa.", "heal_frac": 0.2 },
+    "guardian":    { "kind": "passive", "name": "Hộ thể", "desc": "Mỗi 25 giây nhận Khiên từ trong 4 giây: miễn mọi sát thương.", "every": 25.0, "buff": "magnetic_shield", "duration": 4.0 },
+    "undying":     { "kind": "passive", "name": "Bất tử", "desc": "Mỗi trận một lần: khi gục ngã, sống lại với 50% máu và bất tử 2 giây.", "revive_hp": 0.5, "invuln": 2.0 },
+    "twin_cast":   { "kind": "rule", "name": "Song kích", "desc": "+1 số lượng mọi chiêu (thêm nhát, thêm đạn, thêm lần nổ).", "effects": { "amount": { "add": 1.0 } } },
+    "wide_choice": { "kind": "rule", "name": "Thêm lựa chọn", "desc": "Mỗi lần lên cấp có 4 thẻ để chọn thay vì 3.", "cards": 4 },
+    "head_start":  { "kind": "rule", "name": "Khởi đầu thần tốc", "desc": "Vào trận được chọn ngay 2 thẻ.", "start_picks": 2 }
+  }
+}
