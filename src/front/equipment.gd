@@ -232,6 +232,7 @@ func _slot_cell(slot: String, item: String) -> Control:
 const TABS := [["all", "Tất cả"], ["head", "Đầu"], ["chest", "Ngực"], ["arms", "Tay"], ["legs", "Chân"], ["weapon", "Vũ khí"]]
 const ORDER := ["legendary", "epic", "rare", "common"]
 const MIXED := Color("f2c14e")
+const GOLD_COLOR_FALLBACK := Color("c9a65a")
 
 
 func _bag(root: Control) -> void:
@@ -353,35 +354,39 @@ func _verdict(id: String) -> int:
 	return 1 if up > 0 and down == 0 else (-1 if down > 0 and up == 0 else 0)
 
 
-## One owned item: icon in its rarity frame, name in the rarity colour (×n),
-## a "MỚI" badge until seen, rarity (and slot in "Tất cả"), the short text, and on
-## the right "Đang mặc" or ▲ better / ▼ worse / ⇅ mixed against what is worn.
+## One owned item as a compact card: icon + name (rarity color) + rarity · slot +
+## one-line desc; upgrade marker on the right (▲ green better / ▼ red worse / ⇅ mixed /
+## "Đang mặc" green when this is the worn one). The same item owned twice folds to ×n.
 func _bag_row(id: String) -> Button:
 	var d: Dictionary = _prof.defs.get(id, {})
 	var rarity := String(d.get("rarity", "common"))
 	var col: Color = RARITY.get(rarity, UiKit.TEXT)
 	var b := Button.new()
-	b.custom_minimum_size = Vector2(340, 76)   # room for the scroll bar on the right
+	b.custom_minimum_size = Vector2(340, 64)
 	b.focus_mode = Control.FOCUS_ALL
 	var on := id == _view
-	var bg := Color(col, 0.10).blend(UiKit.PANEL_DARK) if not on else UiKit.PANEL_HOVER
+	var bg := Color(col, 0.10).blend(UiKit.PANEL_DARK) if not on else Color(col, 0.18).blend(UiKit.PANEL_DARK)
 	b.add_theme_stylebox_override("normal", UiKit.style(bg, 6, Color.WHITE if on else Color(col, 0.55), 3 if on else 1))
 	for st in ["hover", "focus", "pressed"]:
 		b.add_theme_stylebox_override(st, UiKit.style(UiKit.PANEL_HOVER, 6, Color.WHITE, 3))
 	var h := HBoxContainer.new()
 	h.set_anchors_preset(Control.PRESET_FULL_RECT)
-	h.offset_left = 8
+	h.offset_left = 7
 	h.offset_right = -10
-	h.add_theme_constant_override("separation", 10)
+	h.offset_top = 4
+	h.offset_bottom = -4
+	h.add_theme_constant_override("separation", 8)
 	h.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	b.add_child(h)
+	# icon in a rarity frame
 	var box := UiKit.panel(UiKit.PANEL_DARK, 3, col)
 	box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	box.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	box.add_child(UiKit.icon(String(d.get("icon", id)), 44.0))
+	box.add_child(UiKit.icon(String(d.get("icon", id)), 40.0))
 	h.add_child(box)
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 0)
+	v.add_theme_constant_override("separation", 1)
 	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	v.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -391,7 +396,7 @@ func _bag_row(id: String) -> Button:
 	top.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	v.add_child(top)
 	var copies := _prof.bag.count(id)
-	var nl := UiKit.label(String(d.get("name", id)) + ("  ×%d" % copies if copies > 1 else ""), 17, col)
+	var nl := UiKit.label(String(d.get("name", id)) + ("  ×%d" % copies if copies > 1 else ""), 16, col)
 	nl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	nl.clip_text = true
 	nl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
@@ -402,14 +407,14 @@ func _bag_row(id: String) -> Button:
 	var line := String(RARITY_NAME.get(rarity, rarity))
 	if _filter == "all":
 		line += "  ·  " + String(SLOT_NAME.get(String(d.get("slot", "")), ""))
-	var ll := UiKit.label(line, 13, UiKit.MUTED)
+	var ll := UiKit.label(line, 11, UiKit.MUTED)
 	ll.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	v.add_child(ll)
-	var dl := UiKit.label(String(d.get("desc", "")), 13, UiKit.TEXT)
+	var dl := UiKit.label(String(d.get("desc", "")), 12, UiKit.TEXT)
 	dl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	dl.clip_text = true
 	dl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	dl.custom_minimum_size.x = 190
+	dl.custom_minimum_size.y = 0
 	v.add_child(dl)
 	var vd := _verdict(id)
 	var mark: Control
@@ -418,7 +423,7 @@ func _bag_row(id: String) -> Button:
 	else:
 		var sym: String = {1: "▲", -1: "▼", 0: "⇅"}[vd]
 		var mcol: Color = {1: UP, -1: DOWN, 0: MIXED}[vd]
-		mark = UiKit.label(sym, 22, mcol)
+		mark = UiKit.label(sym, 20, mcol)
 		Tip.attach(mark, {1: "Tốt hơn đồ đang mặc", -1: "Kém hơn đồ đang mặc", 0: "Có chỉ số hơn, có chỉ số kém"}[vd],
 			"So với món đang mặc ở ô %s." % SLOT_NAME.get(String(d.get("slot", "")), ""), mcol)
 	mark.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -449,17 +454,22 @@ func _badge(text: String, col: Color) -> PanelContainer:
 
 # --- detail ----------------------------------------------------------------------
 
+## The viewed item, paper doll of its own effect: big rarity frame, name in its
+## rarity colour, desc, the stats it changes against the worn one (only the lines
+## that change), the action button (Mặc / Bỏ ra). Vertical space is filled with
+## the banner, not left empty.
 func _detail(root: Control) -> void:
-	var panel := UiKit.panel(Color(0.09, 0.08, 0.13, 0.94), 18)
+	var panel := UiKit.panel(Color(0.09, 0.08, 0.13, 0.94), 16, GOLD_COLOR_FALLBACK)
 	panel.position = Vector2(860, 104)
 	panel.custom_minimum_size = Vector2(380, 576)
 	panel.size = panel.custom_minimum_size
 	root.add_child(panel)
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 8)
+	v.add_theme_constant_override("separation", 10)
+	v.alignment = BoxContainer.ALIGNMENT_CENTER
 	panel.add_child(v)
 	if _view == "" or not _prof.defs.has(_view):
-		var l := UiKit.label("Chọn một món trong túi để xem.", 16, UiKit.MUTED)
+		var l := UiKit.label("Chọn một món trong túi để xem.", 17, UiKit.MUTED)
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		v.add_child(l)
 		return
@@ -468,31 +478,53 @@ func _detail(root: Control) -> void:
 		_prof.mark_seen(_view)
 		Prefs.current().save_profile()
 	var rarity := String(d.get("rarity", "common"))
-	var head := HBoxContainer.new()
-	head.add_theme_constant_override("separation", 12)
-	v.add_child(head)
-	var box := UiKit.panel(UiKit.PANEL_DARK, 6, RARITY.get(rarity, UiKit.GOLD))
-	box.add_child(UiKit.icon(String(d.get("icon", _view)), 48.0))
-	box.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	head.add_child(box)
-	var hv := VBoxContainer.new()
-	hv.add_theme_constant_override("separation", 2)
-	hv.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	head.add_child(hv)
-	var name := UiKit.label(String(d.get("name", _view)), 24, RARITY.get(rarity, UiKit.TEXT))
-	name.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	hv.add_child(name)
+	var rarity_col: Color = RARITY.get(rarity, UiKit.GOLD)
+	# banner: the item, big, in its rarity frame
+	var banner := PanelContainer.new()
+	var bstyle := UiKit.style(UiKit.PANEL_DARK, 6, rarity_col, 2)
+	bstyle.set_corner_radius_all(10)
+	banner.add_theme_stylebox_override("panel", bstyle)
+	banner.custom_minimum_size = Vector2(0, 220)
+	v.add_child(banner)
+	var bv := VBoxContainer.new()
+	bv.alignment = BoxContainer.ALIGNMENT_CENTER
+	bv.add_theme_constant_override("separation", 2)
+	banner.add_child(bv)
+	var big_ic := UiKit.icon(String(d.get("icon", _view)), 120.0)
+	big_ic.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	bv.add_child(big_ic)
+	# name over the icon area, rarity-tinted
+	var name := UiKit.label(String(d.get("name", _view)), 22, rarity_col)
+	name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	bv.add_child(name)
+	# rarity stripe: label in rarity colour, slot class restricted
+	var meta := String(RARITY_NAME.get(rarity, rarity))
 	var who := ""
 	if d.has("class"):
 		who = "  ·  chỉ " + String(GameData.load_json("res://assets/data/classes.json").get(String(d["class"]), {}).get("name", d["class"]))
-	hv.add_child(UiKit.label("%s  ·  %s%s" % [RARITY_NAME.get(rarity, rarity), SLOT_NAME.get(String(d.get("slot", "")), ""), who], 14, UiKit.MUTED))
-	var desc := UiKit.label(String(d.get("desc", "")), 15, UiKit.TEXT)
+	meta += "  ·  " + String(SLOT_NAME.get(String(d.get("slot", "")), "")) + who
+	var ml := UiKit.label(meta, 12, UiKit.MUTED)
+	ml.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	ml.custom_minimum_size = Vector2(320, 0)
+	ml.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	ml.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	bv.add_child(ml)
+	var desc := UiKit.label(String(d.get("desc", "")), 16, UiKit.TEXT)
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	desc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	v.add_child(desc)
 	# change against what is worn in this slot
 	var worn := _prof.equipped(_cls)
 	var is_worn := String(worn.get(_sel, "")) == _view
-	v.add_child(UiKit.label("Bỏ ra thì thay đổi" if is_worn else "So với đang mặc", 16, UiKit.GOLD))
+	var head := HBoxContainer.new()
+	head.alignment = BoxContainer.ALIGNMENT_CENTER
+	var cmp_label := UiKit.label("Đang mặc: thay đổi nếu tháo" if is_worn else "So với đang mặc", 15, UiKit.GOLD)
+	cmp_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	cmp_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	cmp_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	head.add_child(cmp_label)
+	v.add_child(head)
 	var after := worn.duplicate()
 	if is_worn:
 		after.erase(_sel)
@@ -503,7 +535,7 @@ func _detail(root: Control) -> void:
 	var rows := GridContainer.new()
 	rows.columns = 3
 	rows.add_theme_constant_override("h_separation", 14)
-	rows.add_theme_constant_override("v_separation", 4)
+	rows.add_theme_constant_override("v_separation", 6)
 	v.add_child(rows)
 	var changed := 0
 	for s in STATS:
@@ -518,9 +550,6 @@ func _detail(root: Control) -> void:
 		rows.add_child(UiKit.label("▲" if better else "▼", 15, UP if better else DOWN))
 	if changed == 0:
 		v.add_child(UiKit.label("Không đổi chỉ số nào.", 15, UiKit.MUTED))
-	var spacer := Control.new()
-	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	v.add_child(spacer)
 	var prefs := Prefs.current()
 	var act := UiKit.button("Bỏ ra" if is_worn else "Mặc  ▶", func() -> void:
 		if is_worn:
@@ -529,6 +558,7 @@ func _detail(root: Control) -> void:
 			_prof.equip(_cls, _view)
 		prefs.save_profile()
 		_rebuild(), Vector2(0, 56), 22, UiKit.PANEL if is_worn else UiKit.PRIMARY)
+	act.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	v.add_child(act)
 
 
