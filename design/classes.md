@@ -1,7 +1,7 @@
 # Class và nội tại
 
 Mỗi class có **một nội tại riêng** (`classes.json` → `passive`), luôn bật từ đầu lượt, không phải thẻ. Nội tại
-cho class một lối chơi riêng mà thẻ không thay được. Các mốc ải 10/20/30 không nâng nội tại này mà cho một
+cho class một lối chơi riêng mà thẻ không thay được. Các mốc cấp 10/20/30 trong trận không nâng nội tại này mà cho một
 phần thưởng **mới** (chiêu độc nhất, nội tại mới hoặc luật mới): xem `design/progression.md`.
 
 | Class | Vai trò | Nội tại | Tác dụng | Trạng thái |

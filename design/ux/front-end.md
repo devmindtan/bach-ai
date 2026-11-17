@@ -45,7 +45,7 @@ Mở game → Màn tiêu đề ──Tiếp tục──────────�
   - hình nhân vật lớn trên bệ, tên, "class · vai trò";
   - tiến độ: ải cao nhất, vàng, đá;
   - 4 ô chỉ số (máu, sát thương, tốc độ, tầm hút) đã tính trang bị;
-  - nội tại; phần thưởng mốc đã chọn; trang bị đang mặc (5 ô);
+  - nội tại; trang bị đang mặc (5 ô);
   - dưới cùng: **Chơi ▶** (nút chính), Đổi tên, Xóa (bấm hai lần).
 - Khi chọn "+ Tạo nhân vật": bảng phải đổi thành hai **thẻ class** cạnh nhau (hình, tên, vai trò, chỉ số gốc,
   nội tại, chiêu khởi đầu); bấm thẻ để chọn; ô nhập tên; **Tạo nhân vật**. Tạo xong thì nhân vật mới được chọn.

@@ -10,8 +10,8 @@ Nguyên tắc: **làm cho vòng lặp cốt lõi vui trước**, rồi mới t�
 |---|---|
 | Thể loại | survivors-like + RPG theo class |
 | Lượt chơi | **Mỗi ải là một lượt mới**: vào ải bắt đầu cấp 1, lên cấp chọn 1/3 nâng cấp theo class, hết lượt thì cấp mất |
-| Sức mạnh lâu dài | Cây kỹ năng theo class, trang bị (vũ khí, giáp), gacha, hiệu ứng mốc mỗi 10 ải, tất cả gắn với **slot nhân vật** |
-| Hiệu ứng ải 10/20/30 | Vượt ải 10, 20, 30 (mở rộng: mỗi 10 ải) → chọn 1/3 phần thưởng đặc biệt **vĩnh viễn** cho slot: một **chiêu độc nhất**, một **nội tại mới** hoặc một **luật mới**; không phải nâng nội tại cũ (2026-11-17, you said). Chi tiết: `design/progression.md` |
+| Sức mạnh lâu dài | Cây kỹ năng theo class, trang bị (vũ khí, giáp), gacha, tất cả gắn với **slot nhân vật** |
+| Mốc cấp 10/20/30 | Lên cấp 10, 20, 30 trong một trận → chọn 1/3 phần thưởng: **chiêu độc nhất**, **nội tại mới** hoặc **luật mới**, chỉ có tác dụng trong trận đó (2026-11-17, you said: mốc là cấp trong trận, không phải ải; không nâng nội tại cũ). Chi tiết: `design/progression.md` |
 | Quái vật | Vẽ mới trong Sprite Lab, cùng phong cách tối giản 48 px với nhân vật |
 | Nền tảng | **PC trước** (Steam: Windows/Linux, bàn phím + tay cầm); mobile sau (đợt 8) |
 | Engine | Godot 4.7.2, GDScript, gamekit (test, shot, export) |
@@ -47,7 +47,7 @@ Cần vẽ mới: **quái vật** (xem `design/monsters.md`), viên kinh nghiệ
 - **Dữ liệu, không hardcode:** `assets/data/classes.json`, `upgrades_<class>.json`, `monsters.json`, `stages.json`, `waves/*.json`, và sau này `skill_tree_<class>.json`, `items.json`, `perks.json`, `gacha_banners.json`.
 - **Logic thuần trong `src/core/` có unit test:** công thức sát thương, đường kinh nghiệm, rút 3 nâng cấp (RNG có seed, có trọng số), lịch đợt quái, scale độ khó theo ải, roll gacha + bảo hiểm (pity), kiểm tra cây kỹ năng.
 - **Input qua InputMap** (`move_*`, `pause`, `choose_1..3`, `confirm`): thêm tay cầm, sau này joystick cảm ứng, mà không sửa gameplay.
-- **Lưu:** `user://slots/<id>.json` có số phiên bản schema; mỗi slot = class + cây kỹ năng + túi đồ + ải đã vượt + hiệu ứng mốc.
+- **Lưu:** `user://slots/<id>.json` có số phiên bản schema; mỗi slot = class + cây kỹ năng + túi đồ + ải đã vượt.
 - **Sprite:** làm trong Sprite Lab, đưa vào game bằng `gamekit art promote <tên> bach-ai`, vẽ bằng `SpriteSheet`.
 
 ---
@@ -90,14 +90,14 @@ theo thời gian. Còn: rung màn/khựng khi chí mạng (chưa có chí mạng
 ## Đợt 3: Tiến trình ải 1–30 + slot nhân vật · cỡ M
 **Trạng thái (2026-11-17):** xong phần làm (`design/progression.md`). 30 ải / 3 vùng có màu nền riêng, công thức
 tăng độ khó (đường cong ở dashboard, tab Ải), slot nhân vật (tối đa 4, file hỏng không làm mất slot khác), màn
-chọn ải, phần thưởng thắng (vàng, đá), phần thưởng mốc 10/20/30 (6 chiêu độc nhất có bậc I–V, 3 nội tại mới,
+chọn ải, phần thưởng thắng (vàng, đá), phần thưởng mốc cấp 10/20/30 trong trận (6 chiêu độc nhất có bậc I–V, 3 nội tại mới,
 3 luật mới). Còn: chơi thử ải 1–30 với 2 class để chỉnh hệ số (`stages.json` → `scale`); loài quái và boss riêng
 từng vùng (đợt 6, hiện các vùng dùng chung thạch nhầy / dơi / yêu tinh / Vua Thạch Nhầy).
 **Câu hỏi:** độ khó tăng có đều không, người chơi có muốn "thêm một ải nữa" không?
 - `stages.json` + công thức scale (máu/sát thương/mật độ quái theo ải, loài quái theo vùng, boss mỗi 10 ải); ghi đè tay khi cần.
 - Màn chọn ải (1 → ải cao nhất đã mở), màn kết quả (vàng, đá gacha, điểm kỹ năng nhận được).
 - **Slot nhân vật:** tạo (chọn class, đặt tên), chơi, xoá; lưu `user://slots`.
-- **Phần thưởng mốc ải 10/20/30:** vượt ải lần đầu → chọn 1/3 phần thưởng vĩnh viễn: chiêu độc nhất của class, nội tại mới, hoặc luật mới (`design/progression.md`).
+- **Phần thưởng mốc cấp 10/20/30:** lên cấp trong trận → chọn 1/3 phần thưởng cho trận đó: chiêu độc nhất của class, nội tại mới, hoặc luật mới (`design/progression.md`).
 **Test:** công thức scale (đơn điệu tăng, không nhảy vọt), lưu/đọc slot (phiên bản schema, file hỏng → báo lỗi, không mất slot khác).
 **Xong khi:** vượt được ải 1–30 với 2 class trong thời gian hợp lý; đường cong độ khó vẽ thành biểu đồ để xem.
 
