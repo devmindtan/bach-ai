@@ -563,85 +563,44 @@ func _show_stage_select(root: Control, menu: Control) -> void:
 	back.call_deferred("grab_focus")
 
 
-## Character slots: play / rename / delete / create (design/progression.md).
+## Character slots (design/progression.md): a 2 x 2 grid of slot cards (hero,
+## name, class, progress, milestone rewards; Chơi / Đổi tên / Xóa) and a card to
+## create one while there is room. Fixed mode (shots, tests) lists the in-memory
+## preview slots and never writes to disk.
 func _show_slots(root: Control, menu: Control) -> void:
 	menu.visible = false
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.add_child(center)
+	_dim(center)
 	var card := PanelContainer.new()
 	card.add_theme_stylebox_override("panel", _style(Color(0.09, 0.08, 0.13, 0.97), 22))
 	center.add_child(card)
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 12)
-	col.custom_minimum_size = Vector2(940, 0)
 	card.add_child(col)
 	col.add_child(_label("Nhân vật", 32, GOLD))
+	col.add_child(_label("Mỗi nhân vật có class, túi đồ, tiến độ ải và phần thưởng mốc riêng (tối đa %d)." % SlotStore.MAX, 14, MUTED))
 	var prefs := Prefs.current()
 	var store := prefs.slot_store()
-	var body := VBoxContainer.new()
-	body.add_theme_constant_override("separation", 10)
-	col.add_child(body)
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 12)
+	grid.add_theme_constant_override("v_separation", 12)
+	col.add_child(grid)
 	var refresh := func() -> void: pass
 	refresh = func() -> void:
-		for c in body.get_children():
+		for c in grid.get_children():
 			c.queue_free()
-		var entries := store.list()
-		if entries.is_empty():
-			body.add_child(_label("Chưa có nhân vật. Tạo một nhân vật để bắt đầu.", 16, MUTED))
+		var entries: Array = prefs.preview_entries() if prefs.is_fixed() else store.list()
 		for e: Dictionary in entries:
-			var id := String(e["id"])
 			var s: Slot = e["slot"]
 			if s == null:
-				var broken := PanelContainer.new()
-				broken.add_theme_stylebox_override("panel", _style(Color("3a2020"), 10))
-				var bl := _label("Slot %s: không đọc được (%s) — chỉ có thể xoá." % [id, String(e["error"])], 16, Color("ff9a9a"))
-				broken.add_child(bl)
-				var bd := Button.new()
-				bd.text = "Xóa"
-				bd.add_theme_stylebox_override("normal", _style(PANEL, 8))
-				bd.pressed.connect(func() -> void:
-					store.delete(id)
-					refresh.call())
-				broken.add_child(bd)
-				body.add_child(broken)
-				continue
-			body.add_child(_slot_row(s, id, store, refresh))
-		# create row: name + class
-		var make := HBoxContainer.new()
-		make.add_theme_constant_override("separation", 10)
-		var name_edit := LineEdit.new()
-		name_edit.placeholder_text = "Tên nhân vật"
-		name_edit.custom_minimum_size = Vector2(220, 44)
-		make.add_child(name_edit)
-		var class_pick := OptionButton.new()
-		for cid: String in _class_ids:
-			class_pick.add_item(String(_classes[cid].get("name", cid)))
-		make.add_child(class_pick)
-		var make_b := Button.new()
-		make_b.text = "Tạo mới"
-		make_b.custom_minimum_size = Vector2(150, 44)
-		make_b.add_theme_stylebox_override("normal", _style(PANEL, 8))
-		make_b.pressed.connect(func() -> void:
-			var cls := _class_ids[clampi(class_pick.selected, 0, _class_ids.size() - 1)]
-			var n := name_edit.text.strip_edges()
-			if n == "":
-				n = "Nhân vật %d" % (store.list().size() + 1)
-			var created := store.create(n, cls)
-			if created == null:
-				make_b.tooltip_text = "Đã đầy 4 slot."
-				return
-			prefs.select_slot(created.id)
-			_slot_mode = true
-			_stage_n = 1
-			_stage = _stages.load_stage(1)
-			refresh.call())
-		make.add_child(make_b)
-		if store.list().size() >= 4:
-			make_b.disabled = true
-			name_edit.disabled = true
-			class_pick.disabled = true
-		body.add_child(make)
+				grid.add_child(_broken_slot_card(String(e["id"]), String(e["error"]), store, refresh))
+			else:
+				grid.add_child(_slot_card(s, String(e["id"]), store, refresh))
+		if entries.size() < SlotStore.MAX:
+			grid.add_child(_new_slot_card(store, refresh))
 	var back := _button("Quay lại", func() -> void:
 		center.queue_free()
 		menu.visible = true
@@ -654,74 +613,222 @@ func _show_slots(root: Control, menu: Control) -> void:
 	back.call_deferred("grab_focus")
 
 
-func _slot_row(s: Slot, id: String, store: SlotStore, refresh: Callable) -> PanelContainer:
+const SLOT_CARD := Vector2(470, 168)
+const PORTRAIT := 112.0
+var _portraits := {}   # class id -> SpriteSheet (layers composed)
+
+
+func _slot_panel(border: Color, bg := PANEL) -> PanelContainer:
 	var p := PanelContainer.new()
-	p.add_theme_stylebox_override("panel", _style(PANEL, 10))
+	p.custom_minimum_size = SLOT_CARD
+	var sb := _style(bg, 12)
+	sb.border_color = border
+	p.add_theme_stylebox_override("panel", sb)
+	return p
+
+
+func _small_button(text: String, cb: Callable, bg := PANEL) -> Button:
+	var b := Button.new()
+	b.text = text
+	b.custom_minimum_size = Vector2(0, 36)
+	b.add_theme_font_size_override("font_size", 15)
+	b.add_theme_stylebox_override("normal", _style(bg, 8))
+	b.add_theme_stylebox_override("hover", _style(PANEL_HOVER, 8))
+	b.add_theme_stylebox_override("focus", _style(PANEL_HOVER, 8))
+	b.add_theme_stylebox_override("pressed", _style(PANEL_HOVER, 8))
+	b.pressed.connect(cb)
+	return b
+
+
+## The class's idle hero, feet on a dark plate.
+func _portrait(cls: String) -> Control:
+	if not _portraits.has(cls):
+		var sprite := String(_classes.get(cls, {}).get("sprite", "swordsman"))
+		var sh := SpriteSheet.load_dir(SPRITES + sprite, sprite)
+		if sh != null and not sh.layer_names().is_empty():
+			sh.compose_layers()
+		_portraits[cls] = sh
+	var sheet: SpriteSheet = _portraits[cls]
+	var c := Control.new()
+	c.custom_minimum_size = Vector2(PORTRAIT, PORTRAIT)
+	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	c.draw.connect(func() -> void:
+		c.draw_rect(Rect2(Vector2.ZERO, c.size), Color("1d1828"))
+		c.draw_rect(Rect2(Vector2(14, PORTRAIT - 22), Vector2(PORTRAIT - 28, 6)), Color(0, 0, 0, 0.4))
+		if sheet != null:
+			sheet.draw(c, "idle", 0.0, Vector2(PORTRAIT * 0.5, PORTRAIT - 18), 3.0, false))
+	return c
+
+
+func _slot_card(s: Slot, id: String, store: SlotStore, refresh: Callable) -> PanelContainer:
+	var prefs := Prefs.current()
+	var active := prefs.active_slot != null and prefs.active_slot.id == id
+	var p := _slot_panel(Color.WHITE if active else GOLD)
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 14)
+	p.add_child(h)
+	h.add_child(_portrait(s.cls))
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 4)
-	p.add_child(v)
-	var active := Prefs.current().active_slot != null and Prefs.current().active_slot.id == id
+	v.add_theme_constant_override("separation", 6)
+	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	h.add_child(v)
+	# name (or the rename field) and class
 	var head := HBoxContainer.new()
 	head.add_theme_constant_override("separation", 10)
 	v.add_child(head)
-	head.add_child(_label(("● " if active else "○ ") + s.name, 22, GOLD if active else TEXT))
-	head.add_child(_label(String(_classes.get(s.cls, {}).get("name", s.cls)), 16, MUTED))
-	v.add_child(_label("Ải cao nhất: %d  ·  Vàng: %d  ·  Đá: %d" % [s.best, s.gold, s.gems], 15, MUTED))
-	var rw := s.rewards()
-	var rw_names: Array[String] = []
+	var name_l := _label(s.name, 22, GOLD if active else TEXT)
+	name_l.clip_text = true
+	name_l.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	name_l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.add_child(name_l)
+	var edit := LineEdit.new()
+	edit.text = s.name
+	edit.max_length = 18
+	edit.visible = false
+	edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.add_child(edit)
+	var cls_l := _label(String(_classes.get(s.cls, {}).get("name", s.cls)), 15, MUTED)
+	cls_l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	head.add_child(cls_l)
+	# progress
+	var prog := HBoxContainer.new()
+	prog.add_theme_constant_override("separation", 16)
+	v.add_child(prog)
+	prog.add_child(_small_stat("star", "Ải %d" % s.best, "Ải cao nhất đã vượt"))
+	prog.add_child(_small_stat("coin", str(s.gold), "Vàng"))
+	prog.add_child(_small_stat("gem", str(s.gems), "Đá"))
+	# milestone rewards (icons), or what is waiting
+	var mrow := HBoxContainer.new()
+	mrow.add_theme_constant_override("separation", 6)
+	mrow.custom_minimum_size = Vector2(0, 28)
+	v.add_child(mrow)
 	var ms := Milestones.load_default()
 	var pool := GameData.load_json(DATA + String(_classes.get(s.cls, {}).get("upgrades", "")))
-	for rid: String in rw:
-		rw_names.append(String(ms.info(rid, pool.get("upgrades", [])).get("name", rid)))
-	var pending_names := PackedStringArray()
-	for x: Variant in s.pending:
-		pending_names.append(str(x))
-	var mtext := "Mốc: " + (", ".join(rw_names) if not rw_names.is_empty() else "chưa có")
+	for rid: String in s.rewards():
+		var inf := ms.info(rid, pool.get("upgrades", []))
+		var t := _small_stat(String(inf["icon"]), String(inf["name"]), String(inf["name"]) + "\n" + String(inf["desc"]))
+		(t.get_child(1) as Label).add_theme_font_size_override("font_size", 14)
+		mrow.add_child(t)
 	if not s.pending.is_empty():
-		mtext += "  ·  Chờ chọn: " + ", ".join(pending_names)
-	v.add_child(_label(mtext, 14, MUTED))
+		mrow.add_child(_label("Chờ chọn mốc ải %d" % int(s.pending[0]), 14, BOSS_GOLD))
+	elif s.rewards().is_empty():
+		mrow.add_child(_label("Chưa có phần thưởng mốc", 14, MUTED))
+	# actions
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
 	v.add_child(row)
-	var edit := LineEdit.new()
-	edit.text = s.name
-	edit.custom_minimum_size = Vector2(200, 38)
-	row.add_child(edit)
-	var rename := Button.new()
-	rename.text = "Đổi tên"
-	rename.add_theme_stylebox_override("normal", _style(PANEL, 6))
-	rename.pressed.connect(func() -> void:
-		s.name = edit.text.strip_edges()
-		if s.name == "":
-			s.name = id
-		store.save(s)
-		refresh.call())
-	row.add_child(rename)
-	var play := Button.new()
-	play.text = "Chọn" if not active else "Đang chơi"
-	play.disabled = active
-	play.add_theme_stylebox_override("normal", _style(PANEL, 6))
-	play.pressed.connect(func() -> void:
-		Prefs.current().select_slot(id)
+	var play := _small_button("Đang chơi" if active else "Chơi  ▶", func() -> void:
+		if not prefs.is_fixed():
+			prefs.select_slot(id)
 		_slot_mode = true
-		_stage_n = clampi(Prefs.current().stage_target, 1, s.unlocked(_stages.count()))
+		_stage_n = clampi(prefs.stage_target, 1, s.unlocked(_stages.count()))
 		_stage = _stages.load_stage(_stage_n)
 		refresh.call())
+	play.disabled = active
+	play.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(play)
-	var del := Button.new()
-	del.text = "Xóa"
-	del.add_theme_stylebox_override("normal", _style(Color("4a2424"), 6))
+	var rename := _small_button("Đổi tên", func() -> void: pass)
+	rename.custom_minimum_size.x = 92
+	rename.pressed.connect(func() -> void:
+		if not edit.visible:   # first press: edit the name in place
+			edit.visible = true
+			name_l.visible = false
+			rename.text = "Lưu"
+			edit.grab_focus()
+			return
+		var n := edit.text.strip_edges()
+		s.name = n if n != "" else s.name
+		if not prefs.is_fixed():
+			store.save(s)
+		refresh.call())
+	row.add_child(rename)
+	var del := _small_button("Xóa", func() -> void: pass, Color("4a2424"))
+	del.custom_minimum_size.x = 92
 	del.pressed.connect(func() -> void:
-		store.delete(id)
-		if Prefs.current().active_slot != null and Prefs.current().active_slot.id == id:
-			Prefs.current().active_slot = null
-			Prefs.current().slot_id = ""
-			for e2: Dictionary in store.list():
-				if e2.get("slot") != null:
-					Prefs.current().select_slot(String(e2["id"]))
-					break
+		if del.text == "Xóa":   # first press asks; the second deletes
+			del.text = "Chắc chắn?"
+			return
+		if not prefs.is_fixed():
+			store.delete(id)
+			if active:
+				prefs.active_slot = null
+				prefs.slot_id = ""
+				prefs.ensure_slots()
 		refresh.call())
 	row.add_child(del)
+	return p
+
+
+func _broken_slot_card(id: String, error: String, store: SlotStore, refresh: Callable) -> PanelContainer:
+	var p := _slot_panel(Color("a04848"), Color("2a1a20"))
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 8)
+	p.add_child(v)
+	v.add_child(_label("Không đọc được %s" % id, 20, Color("ff9a9a")))
+	var why := _label("Lý do: %s. Các nhân vật khác vẫn chơi bình thường; nhân vật này chỉ xóa được." % error, 14, MUTED)
+	why.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	why.custom_minimum_size = Vector2(SLOT_CARD.x - 30, 0)
+	v.add_child(why)
+	var del := _small_button("Xóa", func() -> void: pass, Color("4a2424"))
+	del.custom_minimum_size.x = 120
+	del.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	del.pressed.connect(func() -> void:
+		if del.text == "Xóa":
+			del.text = "Chắc chắn?"
+			return
+		if not Prefs.current().is_fixed():
+			store.delete(id)
+		refresh.call())
+	v.add_child(del)
+	return p
+
+
+func _new_slot_card(store: SlotStore, refresh: Callable) -> PanelContainer:
+	var prefs := Prefs.current()
+	var p := _slot_panel(Color("5a5068"), Color("1d1828"))
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 8)
+	p.add_child(v)
+	v.add_child(_label("+  Tạo nhân vật", 20, GOLD))
+	var name_edit := LineEdit.new()
+	name_edit.placeholder_text = "Tên nhân vật"
+	name_edit.max_length = 18
+	name_edit.custom_minimum_size = Vector2(0, 38)
+	v.add_child(name_edit)
+	var pick := HBoxContainer.new()
+	pick.add_theme_constant_override("separation", 8)
+	v.add_child(pick)
+	var chosen := [_class_ids[0] if not _class_ids.is_empty() else "knight"]
+	var class_buttons: Array[Button] = []
+	for cid: String in _class_ids:
+		var cb := _small_button(String(_classes[cid].get("name", cid)), func() -> void: pass)
+		cb.toggle_mode = true
+		cb.button_pressed = cid == chosen[0]
+		cb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var sel := _style(Color(String(_classes[cid].get("color", "c9a65a"))).darkened(0.5), 8)
+		sel.border_color = Color.WHITE
+		cb.add_theme_stylebox_override("pressed", sel)
+		cb.pressed.connect(func() -> void:
+			chosen[0] = cid
+			for other in class_buttons:
+				other.button_pressed = other == cb)
+		class_buttons.append(cb)
+		pick.add_child(cb)
+	var make := _small_button("Tạo", func() -> void:
+		var n := name_edit.text.strip_edges()
+		if n == "":
+			n = "Nhân vật %d" % (store.list().size() + 1)
+		if prefs.is_fixed():
+			return
+		var created := store.create(n, String(chosen[0]))
+		if created == null:
+			return
+		prefs.select_slot(created.id)
+		_slot_mode = true
+		_stage_n = 1
+		_stage = _stages.load_stage(1)
+		refresh.call(), Color("3a4a2a"))
+	v.add_child(make)
 	return p
 
 

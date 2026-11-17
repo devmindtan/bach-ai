@@ -85,6 +85,23 @@ func _make_preview_slot() -> void:
 	stage_target = 10
 
 
+## The slot list in fixed mode (shots, tests): the preview slot, a second one
+## and a broken file, so the slot page shows every state without touching disk.
+func preview_entries() -> Array:
+	var out := []
+	if active_slot != null:
+		out.append({"id": active_slot.id, "slot": active_slot, "error": ""})
+	if _force_slots:
+		var other := SlotStore.new_slot("Lam Vân", "mage" if hero == "knight" else "knight", slot_store().defs)
+		other.id = "slot2"
+		var st := Stages.load_default()
+		for n in range(1, 4):
+			other.record_win(n, st)
+		out.append({"id": "slot2", "slot": other, "error": ""})
+		out.append({"id": "slot3", "slot": null, "error": "file hỏng"})
+	return out
+
+
 ## True for screenshots and tests: nothing is read from or written to disk.
 func is_fixed() -> bool:
 	return _fixed

@@ -5,7 +5,7 @@
     { "name": "01c-lobby-mage", "title": "Sảnh chờ: chọn class (Pháp sư)", "scene": "", "frames": 60, "args": ["--class=mage"] },
     { "name": "01b-lobby-settings", "title": "Cài đặt (ở sảnh)", "scene": "", "frames": 30, "args": ["--lobby-settings"] },
     { "name": "01d-lobby-gear", "title": "Sảnh: trang bị (chọn/mặc/bỏ đồ trong túi)", "scene": "", "frames": 30, "args": ["--lobby-gear"] },
-    { "name": "01e-lobby-slots", "title": "Sảnh: nhân vật (tạo/đổi tên/chọn/xoá slot)", "scene": "", "frames": 30, "args": ["--lobby-slots"] },
+    { "name": "01e-lobby-slots", "title": "Sảnh: nhân vật (tạo/đổi tên/chọn/xoá slot)", "scene": "", "frames": 30, "args": ["--force-slots", "--lobby-slots"] },
     { "name": "01f-stage-select", "title": "Sảnh: chọn ải (3 vùng × 10 ải, đã mở ải 10)", "scene": "", "frames": 30, "args": ["--force-slots", "--lobby-stages"] },
     { "name": "01g-lobby-slot", "title": "Sảnh chế độ slot (tên slot, ‹/› chọn ải)", "scene": "", "frames": 60, "args": ["--force-slots"] },
     { "name": "02-run-start", "title": "Vào ải (HUD, ô hồi chiêu)", "scene": "res://src/run/run.tscn", "frames": 240, "args": ["--demo", "--seed=1", "--sim-steps=2"] },
