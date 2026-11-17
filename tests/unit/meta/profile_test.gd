@@ -46,3 +46,22 @@ func test_round_trip_through_a_dictionary() -> void:
 	var q := Profile.new(ITEMS)
 	q.from_dict(p.to_dict())
 	_check(q.bag == ["iron_helm"] and q.equipped("mage").get("head", "") == "iron_helm", "saved and loaded back")
+
+
+func test_new_items_are_new_until_seen() -> void:
+	# inventory "new" badges clear once the player has looked (design/ux/equipment.md)
+	var p := Profile.new(ITEMS)
+	p.add("iron_helm")
+	_check(p.is_new("iron_helm"), "a freshly added item is new")
+	p.mark_seen("iron_helm")
+	_check(not p.is_new("iron_helm"), "seen: no longer new")
+	p.add("steel_sword")
+	var q := Profile.new(ITEMS)
+	q.from_dict(p.to_dict())
+	_check(not q.is_new("iron_helm") and q.is_new("steel_sword"), "seen state survives a save")
+
+
+func test_saves_from_before_new_badges_count_everything_as_seen() -> void:
+	var q := Profile.new(ITEMS)
+	q.from_dict({"version": 1, "bag": ["iron_helm", "steel_sword"], "worn": {}})
+	_check(not q.is_new("iron_helm") and not q.is_new("steel_sword"), "old bags do not light up as new")

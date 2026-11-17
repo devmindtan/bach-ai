@@ -16,6 +16,7 @@ var defs: Dictionary          # items.json "equipment"
 var bag: Array = []           # item ids owned (one entry per copy)
 var worn := {}                # class id -> {slot: item id}
 var given_starter := false
+var seen: Array = []          # item ids the player has looked at ("MỚI" badge until then)
 
 
 func _init(p_defs: Dictionary) -> void:
@@ -37,6 +38,16 @@ func save() -> void:
 	var f := FileAccess.open(PATH, FileAccess.WRITE)
 	if f != null:
 		f.store_string(JSON.stringify(to_dict(), "  "))
+
+
+## True while [param id] is owned and not looked at yet (the bag's "MỚI" badge).
+func is_new(id: String) -> bool:
+	return bag.has(id) and not seen.has(id)
+
+
+func mark_seen(id: String) -> void:
+	if not seen.has(id):
+		seen.append(id)
 
 
 func add(id: String) -> void:
@@ -96,10 +107,12 @@ func levels(cls: String) -> Dictionary:
 
 
 func to_dict() -> Dictionary:
-	return {"version": 1, "bag": bag, "worn": worn, "given_starter": given_starter}
+	return {"version": 1, "bag": bag, "worn": worn, "given_starter": given_starter, "seen": seen}
 
 
 func from_dict(d: Dictionary) -> void:
 	bag = Array(d.get("bag", [])).filter(func(id: Variant) -> bool: return defs.has(String(id)))
 	worn = d.get("worn", {})
 	given_starter = bool(d.get("given_starter", false))
+	# saves from before the badges: everything already owned counts as seen
+	seen = Array(d.get("seen", bag.duplicate()))

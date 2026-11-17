@@ -102,4 +102,5 @@ static func new_slot(p_name: String, cls: String, p_defs: Dictionary) -> Slot:
 		if bool(d.get("starter", false)) and (not d.has("class") or String(d["class"]) == cls):
 			s.profile.add(id)
 			s.profile.equip(cls, id)
+			s.profile.mark_seen(id)   # starter items are not news
 	return s
