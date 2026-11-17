@@ -1,5 +1,5 @@
 {
-  "_doc": "Knight level-up pool. kind skill = an attack the run uses; stat = a modifier. effects apply per level: add (flat) or mul (+fraction). weight = roll weight. TEMP: frost_nova + earth_strike are exposed on knight for both-tier gameplay testing until the mage class lands.",
+  "_doc": "Knight level-up pool. kind skill = an attack the run uses; stat = a modifier. effects apply per level: add (flat) or mul (+fraction). weight = roll weight. skills.<id>.cast says how the run casts it: nearest (burst cast_range px toward the nearest monster), self (burst on the hero), random (count[level-1] bursts on random monsters within cast_range), wave (anim_prefix + direction, flies at speed px/s through monsters, count[level-1] directions: nearest, opposite, then the two others), active (player-triggered: the dash; sprite = the hero, anim = its animation). tier_sprites pick the sprite by level. frost_nova moved out: it is a mage skill.",
   "upgrades": [
     {
       "id": "blade_arc",
@@ -135,25 +135,9 @@
       }
     },
     {
-      "id": "frost_nova",
-      "kind": "skill",
-      "name": "Frost Nova",
-      "desc": "Băng nổ ở phía quái gần nhất. Mỗi cấp: +25% sát thương, +8% vùng, hình mạnh hơn.",
-      "max_level": 5,
-      "weight": 2,
-      "effects": {
-        "skill_damage.frost_nova": {
-          "mul": 0.25
-        },
-        "skill_area.frost_nova": {
-          "mul": 0.08
-        }
-      }
-    },
-    {
       "id": "earth_strike",
       "kind": "skill",
-      "name": "Earth Strike",
+      "name": "Đất nứt",
       "desc": "Đất nứt ở phía quái gần nhất. Mỗi cấp: +25% sát thương, +8% vùng, hình mạnh hơn.",
       "max_level": 5,
       "weight": 2,
@@ -163,6 +147,77 @@
         },
         "skill_area.earth_strike": {
           "mul": 0.08
+        }
+      }
+    },
+    {
+      "id": "ground_slam",
+      "kind": "skill",
+      "name": "Dậm đất",
+      "desc": "Định kỳ dậm xuống đất quanh người, đẩy lùi quái. Mỗi cấp: +25% sát thương, +8% vùng, hình mạnh hơn.",
+      "max_level": 5,
+      "weight": 2,
+      "effects": {
+        "skill_damage.ground_slam": {
+          "mul": 0.25
+        },
+        "skill_area.ground_slam": {
+          "mul": 0.08
+        }
+      }
+    },
+    {
+      "id": "cleave_wave",
+      "kind": "skill",
+      "name": "Sóng kiếm",
+      "desc": "Phóng sóng kiếm bay xuyên qua quái về phía quái gần nhất. Mỗi cấp: +20% sát thương; cấp 3: thêm sóng phía sau; cấp 5: thêm sóng lên và xuống.",
+      "max_level": 5,
+      "weight": 2,
+      "effects": {
+        "skill_damage.cleave_wave": {
+          "mul": 0.2
+        }
+      }
+    },
+    {
+      "id": "holy_column",
+      "kind": "skill",
+      "name": "Cột thánh quang",
+      "desc": "Cột sáng giáng xuống quái ngẫu nhiên gần đó. Mỗi cấp: +20% sát thương; cấp 3: 2 cột; cấp 5: 3 cột.",
+      "max_level": 5,
+      "weight": 2,
+      "effects": {
+        "skill_damage.holy_column": {
+          "mul": 0.2
+        }
+      }
+    },
+    {
+      "id": "dash",
+      "kind": "skill",
+      "name": "Lướt",
+      "desc": "Bấm Space / Shift (tay cầm RB) để lướt theo hướng đang đi: không bị trúng đòn khi lướt, chém quái trên đường. Mỗi cấp: -12% hồi lướt, +20% sát thương.",
+      "max_level": 5,
+      "weight": 2,
+      "effects": {
+        "skill_damage.dash": {
+          "mul": 0.2
+        },
+        "skill_cd.dash": {
+          "mul": -0.12
+        }
+      }
+    },
+    {
+      "id": "toughness",
+      "kind": "stat",
+      "name": "Da thép",
+      "desc": "+2 giáp: mỗi đòn của quái trừ đi 2 sát thương.",
+      "max_level": 5,
+      "weight": 3,
+      "effects": {
+        "armor": {
+          "add": 2.0
         }
       }
     }
@@ -184,20 +239,6 @@
       "duration": 0.9,
       "ticks": 3
     },
-    "frost_nova": {
-      "sprite": "frost-nova-i",
-      "tier_sprites": [
-        "frost-nova-i",
-        "frost-nova-ii",
-        "frost-nova-iii",
-        "frost-nova-iv",
-        "frost-nova-v"
-      ],
-      "damage_mul": 1.0,
-      "size_mul": 1.0,
-      "cooldown": 3.5,
-      "cast_range": 140.0
-    },
     "earth_strike": {
       "sprite": "earth-strike-i",
       "tier_sprites": [
@@ -210,7 +251,67 @@
       "damage_mul": 1.0,
       "size_mul": 1.0,
       "cooldown": 3.5,
-      "cast_range": 140.0
+      "cast_range": 140.0,
+      "cast": "nearest"
+    },
+    "ground_slam": {
+      "sprite": "ground-slam-i",
+      "tier_sprites": [
+        "ground-slam-i",
+        "ground-slam-ii",
+        "ground-slam-iii",
+        "ground-slam-iv",
+        "ground-slam-v"
+      ],
+      "cast": "self",
+      "anim": "burst",
+      "damage_mul": 1.2,
+      "size_mul": 1.0,
+      "cooldown": 4.0,
+      "knockback": 260.0
+    },
+    "cleave_wave": {
+      "sprite": "cleave-wave",
+      "cast": "wave",
+      "anim_prefix": "sweep_",
+      "damage_mul": 0.9,
+      "size_mul": 1.0,
+      "cooldown": 2.2,
+      "speed": 300.0,
+      "count": [
+        1,
+        1,
+        2,
+        2,
+        4
+      ],
+      "rehit": 0.25
+    },
+    "holy_column": {
+      "sprite": "holy-column",
+      "cast": "random",
+      "anim": "descend",
+      "damage_mul": 1.4,
+      "size_mul": 1.0,
+      "cooldown": 3.0,
+      "cast_range": 320.0,
+      "count": [
+        1,
+        1,
+        2,
+        2,
+        3
+      ]
+    },
+    "dash": {
+      "sprite": "swordsman",
+      "anim": "dash",
+      "cast": "active",
+      "damage_mul": 0.8,
+      "cooldown": 3.0,
+      "distance": 130.0,
+      "time": 0.18,
+      "hit_radius": 26.0
     }
   }
 }

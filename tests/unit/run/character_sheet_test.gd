@@ -52,3 +52,20 @@ func test_skill_info_uses_the_same_numbers_as_casting() -> void:
 	var srcs: Array = whirl["sources"].map(func(p: Dictionary) -> String: return p["id"])
 	_check(srcs.has("haste") and srcs.has("sharpen"), "whirlwind lists the cards that change it, got %s" % [srcs])
 	r.free()
+
+
+func test_dash_cooldown_falls_with_its_card_and_haste() -> void:
+	var r := _run({"blade_arc": 1, "dash": 3, "haste": 1})
+	# 3.0 s base x (1 - 0.12 x 3) dash card x 0.9 haste
+	_check(is_equal_approx(r.skill_cooldown("dash"), 3.0 * 0.64 * 0.9), "dash cooldown, got %s" % r.skill_cooldown("dash"))
+	r.free()
+
+
+func test_wave_and_column_counts_follow_the_level() -> void:
+	var r := _run({"blade_arc": 1, "cleave_wave": 3, "holy_column": 5})
+	var sk: Dictionary = r.pool["skills"]
+	_check(r._skill_count("cleave_wave", sk["cleave_wave"]) == 2, "cleave wave 3: front + back")
+	_check(r._skill_count("holy_column", sk["holy_column"]) == 3, "holy column 5: three columns")
+	r.levels["cleave_wave"] = 1
+	_check(r._skill_count("cleave_wave", sk["cleave_wave"]) == 1, "cleave wave 1: one wave")
+	r.free()

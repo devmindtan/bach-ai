@@ -366,6 +366,16 @@ func drain_kills() -> void:
 	kill_xp.clear()
 
 
+## Indices of living monsters whose centre is within [param radius] of [param p].
+func living_within(p: Vector2, radius: float) -> Array[int]:
+	var out: Array[int] = []
+	var r2 := radius * radius
+	for i in count:
+		if state[i] != DYING and center_of(i).distance_squared_to(p) <= r2:
+			out.append(i)
+	return out
+
+
 func living() -> int:
 	var n := 0
 	for i in count:

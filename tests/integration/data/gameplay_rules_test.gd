@@ -71,6 +71,8 @@ func test_skills_meet_must_rules() -> void:
 		var cls: Dictionary = entry[2]
 		var up: Dictionary = entry[3]
 		var p: Dictionary = entry[4]
+		if String(p.get("cast", "")) == "active":
+			continue   # player-triggered movement skill (dash): the rules grade auto attacks
 		var stats: Dictionary = cls.get("stats", {})
 		# auto: cooldown in range
 		var cd := float(p["cooldown"]) if p.has("cooldown") else float(stats.get("cooldown", 1.0)) * float(p.get("cooldown_mul", 1.0))

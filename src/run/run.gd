@@ -9,6 +9,7 @@ extends Node2D
 ##   --sim-steps=N   simulate N fixed steps per frame (fast-forward for shots)
 ##   --walk=X,Y      the demo walks in a fixed direction (shots of each view)
 ##   --god           the hero takes no damage (shots of the win screen)
+##   --dash-at=T     dash at T seconds (needs the dash card, e.g. --skills=dash:1)
 ##   --pause-view=settings|character  with --pause-at, open that page (shots)
 ##   --pause-at=T    open the pause panel at T seconds (shots)
 ##   --offer=a,b,c   the first level-up offers these upgrade ids (shots of the cards)
@@ -91,6 +92,13 @@ var buffs: Buffs
 var _buff_defs := {}
 var _forced_buffs: Array[String] = []   # --buff=a,b (shots)
 var _ground_buffs: Array[String] = []   # --buff-ground=a,b (shots)
+var _dash_left := 0.0      # seconds of the current dash left
+var _dash_dir := Vector2.RIGHT
+var _dash_cd := 0.0
+var _dash_hit_half := false
+var _dash_from := Vector2.ZERO
+var _dash_trail := 0.0      # afterimages stay this long after the dash
+var dash_at := -1.0          # --dash-at=T (shots)
 var damage_taken := 0.0   # end-of-run table
 var healed := 0.0
 var _bench_frames := 0
@@ -209,6 +217,8 @@ func _parse_args() -> void:
 			# Debug/shots: these buffs lie on the ground near the start
 			for id in a.get_slice("=", 1).split(",", false):
 				_ground_buffs.append(id)
+		elif a.begins_with("--dash-at="):
+			dash_at = float(a.get_slice("=", 1))
 		elif a == "--god":
 			god = true
 		elif a.begins_with("--pause-view="):
@@ -262,6 +272,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			open_pause()
 		elif state == State.PAUSED:
 			resume()
+	elif event.is_action_pressed("dash") and state == State.PLAYING:
+		try_dash()
 	elif event.is_action_pressed("character"):
 		if state == State.PLAYING:
 			open_pause()
@@ -302,7 +314,7 @@ func _tick(dt: float) -> void:
 	_move_player(dt)
 	_spawn(clock - dt, clock)
 	var contact := enemies.step(dt, player_pos, player_pos + _hit_center)
-	if contact > 0.0 and invuln <= 0.0 and bench == 0 and not god and not buffs.invulnerable():
+	if contact > 0.0 and invuln <= 0.0 and bench == 0 and not god and not buffs.invulnerable() and _dash_left <= 0.0:
 		_take_hit(contact)
 	invuln = maxf(0.0, invuln - dt)
 	var had := buffs.active.size()
@@ -327,6 +339,14 @@ func _tick(dt: float) -> void:
 
 
 func _move_player(dt: float) -> void:
+	_dash_cd = maxf(0.0, _dash_cd - dt)
+	_dash_trail = maxf(0.0, _dash_trail - dt)
+	if dash_at >= 0.0 and clock >= dash_at:
+		dash_at = -1.0
+		try_dash()
+	if _dash_left > 0.0:
+		_dash_step(dt)
+		return
 	var dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	if demo:
 		dir = forced_walk if forced_walk != Vector2.ZERO else _autopilot()
@@ -341,6 +361,48 @@ func _move_player(dt: float) -> void:
 	_action_left = maxf(0.0, _action_left - dt)
 	if _action_left <= 0.0:
 		_set_anim("run" if _moving else "idle")
+
+
+## Dash (the dash card): along the walk direction (or facing), fast, no damage
+## taken, slashing the monsters on the way. Returns true when it started.
+func try_dash() -> bool:
+	if int(levels.get("dash", 0)) <= 0 or _dash_cd > 0.0 or _dash_left > 0.0:
+		return false
+	var sp: Dictionary = pool.get("skills", {}).get("dash", {})
+	var dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	if demo and forced_walk != Vector2.ZERO:
+		dir = forced_walk
+	if dir.length_squared() < 0.01:
+		dir = Vector2.LEFT if face_left else Vector2.RIGHT
+	_dash_dir = dir.normalized()
+	_dash_from = player_pos
+	_dash_left = float(sp.get("time", 0.18))
+	_dash_trail = _dash_left + 0.12
+	_dash_hit_half = false
+	_dash_cd = skill_cooldown("dash")
+	if absf(_dash_dir.x) > 0.1:
+		face_left = _dash_dir.x < 0.0
+		_update_body()
+	_play_action(String(sp.get("anim", "dash")))
+	return true
+
+
+func _dash_step(dt: float) -> void:
+	var sp: Dictionary = pool.get("skills", {}).get("dash", {})
+	var total := maxf(0.01, float(sp.get("time", 0.18)))
+	var dist := float(sp.get("distance", 130.0))
+	var step := minf(dt, _dash_left)
+	player_pos += _dash_dir * dist / total * step
+	player_pos = player_pos.clamp(Vector2(-_arena_half, -_arena_half), Vector2(_arena_half, _arena_half))
+	_dash_left -= step
+	# two cuts along the path: covering the half just travelled each time
+	var r := dist * 0.25 + float(sp.get("hit_radius", 26.0))
+	var back := _dash_dir * dist * 0.25
+	if not _dash_hit_half and _dash_left <= total * 0.5:
+		_dash_hit_half = true
+		enemies.hit_circle(player_pos + _hit_center - back, r, skill_damage("dash"), 120.0, "dash")
+	elif _dash_left <= 0.0:
+		enemies.hit_circle(player_pos + _hit_center - back, r, skill_damage("dash"), 120.0, "dash")
 
 
 ## Demo / bench movement: walk to the nearest monster (so the sweep has
@@ -442,34 +504,75 @@ func _skills(dt: float) -> void:
 ## The slash never follows the walk: it always points at the nearest living
 ## monster (snapped to the slash sprite's 4 directions). With no monster left
 ## it keeps its last direction. Standing still, the hero turns to face it.
-	# Tiered AOE skills (frost-nova / earth-strike): one-shot burst cast out
-	# toward the nearest enemy (AOE/projectile-style: fired away from the player,
-	# not attached to it). Sprite is chosen by level (I-V).
-	var tier_skills: Array = ["frost_nova", "earth_strike"]
-	for tid in tier_skills:
-		if levels.get(tid, 0) <= 0 or not skills.has(tid):
+	# Data-driven skills (skills.<id>.cast in upgrades_<class>.json): nearest / self /
+	# random / wave. blade_arc and whirlwind above have their own timing; "active"
+	# (the dash) is cast by the player.
+	for sid: String in skills:
+		var ts: Dictionary = skills[sid]
+		var how := String(ts.get("cast", ""))
+		if how == "" or how == "active" or int(levels.get(sid, 0)) <= 0:
 			continue
-		var ts: Dictionary = skills[tid]
-		var tier_names: Array = ts.get("tier_sprites", [])
-		var sprite := String(ts.get("sprite", tid))
-		if tier_names.size() > 0:
-			var ti: int = clampi(int(levels[tid]) - 1, 0, tier_names.size() - 1)
-			sprite = String(tier_names[ti])
-		var cd_left := float(_tier_cd.get(tid, 0.0)) - dt
-		_tier_cd[tid] = cd_left
+		var cd_left := float(_tier_cd.get(sid, 0.0)) - dt
+		_tier_cd[sid] = cd_left
 		if cd_left <= 0.0:
-			_tier_cd[tid] = skill_cooldown(tid)
-			var dmg := skill_damage(tid)
-			var sc := _sprite_scale * skill_size(tid)
-			var cdir := attack_dir
-			var target_i := enemies.nearest(player_pos + _hit_center, INF)
-			if target_i >= 0:
-				cdir = (enemies.center_of(target_i) - (player_pos + _hit_center)).normalized()
-			elif cdir.length_squared() < 0.01:
-				cdir = Vector2.RIGHT
-			var cast_range := float(ts.get("cast_range", 140.0))
-			var cast_pos := player_pos + _hit_center + cdir.normalized() * cast_range
-			_add_fx(sprite, "burst", sc, dmg, -1.0, cast_pos, tid)
+			_tier_cd[sid] = skill_cooldown(sid)
+			_cast(sid, ts, how)
+
+
+## Sprite of a skill at its current level (tier_sprites I-V, else "sprite").
+func _skill_sprite(sid: String, ts: Dictionary) -> String:
+	var tier_names: Array = ts.get("tier_sprites", [])
+	if tier_names.is_empty():
+		return String(ts.get("sprite", sid))
+	return String(tier_names[clampi(int(levels.get(sid, 1)) - 1, 0, tier_names.size() - 1)])
+
+
+## How many casts at the current level (skills.<id>.count per level, default 1).
+func _skill_count(sid: String, ts: Dictionary) -> int:
+	var c: Array = ts.get("count", [])
+	if c.is_empty():
+		return 1
+	return maxi(1, int(c[clampi(int(levels.get(sid, 1)) - 1, 0, c.size() - 1)]))
+
+
+func _cast(sid: String, ts: Dictionary, how: String) -> void:
+	var dmg := skill_damage(sid)
+	var sc := _sprite_scale * skill_size(sid)
+	var sprite := _skill_sprite(sid, ts)
+	var center := player_pos + _hit_center
+	var kb := float(ts.get("knockback", 140.0))
+	var to_target := attack_dir if attack_dir.length_squared() > 0.01 else Vector2.RIGHT
+	var target_i := enemies.nearest(center, INF)
+	if target_i >= 0:
+		to_target = (enemies.center_of(target_i) - center).normalized()
+	match how:
+		"nearest":
+			var p := center + to_target * float(ts.get("cast_range", 140.0))
+			_add_fx(sprite, String(ts.get("anim", "burst")), sc, dmg, -1.0, p, sid, kb)
+		"self":
+			_add_fx(sprite, String(ts.get("anim", "burst")), sc, dmg, -1.0, center, sid, kb)
+		"random":
+			var pool_i := enemies.living_within(center, float(ts.get("cast_range", 300.0)))
+			for k in _skill_count(sid, ts):
+				if pool_i.is_empty():
+					break
+				var i: int = pool_i.pop_at(rng.randi() % pool_i.size())
+				_add_fx(sprite, String(ts.get("anim", "burst")), sc, dmg, -1.0, enemies.pos[i], sid, kb)
+		"wave":
+			var first := slash_dir(to_target)
+			var dirs := [first, -first, Vector2(first.y, first.x), Vector2(-first.y, -first.x)]
+			for k in mini(_skill_count(sid, ts), dirs.size()):
+				var dv: Vector2 = dirs[k]
+				var fx := _add_fx(sprite, String(ts.get("anim_prefix", "sweep_")) + _dir_name(dv), sc, dmg, -1.0, center, sid, kb)
+				if not fx.is_empty():
+					fx["vel"] = dv * float(ts.get("speed", 300.0))
+					fx["rehit"] = float(ts.get("rehit", 0.25))
+
+
+static func _dir_name(d: Vector2) -> String:
+	if absf(d.x) >= absf(d.y):
+		return "right" if d.x >= 0.0 else "left"
+	return "down" if d.y > 0.0 else "up"
 
 
 ## Skill numbers, shared by casting, the HUD and the character sheet so they never
@@ -496,10 +599,11 @@ func skill_cooldown(id: String, st: Dictionary = {}) -> float:
 	if st.is_empty():
 		st = stats
 	var sp: Dictionary = pool.get("skills", {}).get(id, {})
+	var own := PlayerStats.skill_mul(st, "skill_cd." + id)   # e.g. the dash card's -12% per level
 	if sp.has("cooldown"):
 		var haste := float(st.get("cooldown", 1.0)) / maxf(0.01, float(base_stats.get("cooldown", 1.0)))
-		return float(sp["cooldown"]) * haste
-	return float(st.get("cooldown", 1.0)) * float(sp.get("cooldown_mul", 1.0))
+		return float(sp["cooldown"]) * haste * own
+	return float(st.get("cooldown", 1.0)) * float(sp.get("cooldown_mul", 1.0)) * own
 
 
 ## Cooldown shown on the HUD: [seconds left, cooldown, active]. active = the skill
@@ -511,6 +615,8 @@ func cooldown_state(id: String) -> Array:
 			return [maxf(0.0, _blade_cd), total, false]
 		"whirlwind":
 			return [0.0 if _whirl_left > 0.0 else maxf(0.0, _whirl_cd), total, _whirl_left > 0.0]
+		"dash":
+			return [_dash_cd, total, _dash_left > 0.0]
 		_:
 			return [maxf(0.0, float(_tier_cd.get(id, 0.0))), total, false]
 
@@ -569,7 +675,7 @@ func skill_info() -> Array:
 		if u.get("kind") != "skill" or lv <= 0:
 			continue
 		var touches := {"damage": "Sát thương", "cooldown": "Hồi chiêu", "area": "Vùng",
-			"skill_damage." + id: "Sát thương", "skill_area." + id: "Vùng"}
+			"skill_damage." + id: "Sát thương", "skill_area." + id: "Vùng", "skill_cd." + id: "Hồi chiêu"}
 		var sources := []
 		var lv_all := effect_levels()
 		for v: Dictionary in effect_pool():
@@ -623,13 +729,18 @@ func _slash_anim(d: Vector2) -> String:
 ## shields, orbiting states). When [param world_pos] is given it is placed there
 ## in the world instead (projectiles / cast-out AOE). When [param damage] > 0 it
 ## hits once, on the animation's active frames, through the sprite hitbox.
-func _add_fx(sprite: String, anim: String, sc: float, damage: float, life := -1.0, world_pos: Variant = null, source := "") -> void:
+## Adds an effect; returns it (empty when the sprite or animation is missing).
+## A moving effect (fx["vel"]) with fx["rehit"] keeps hitting every rehit s.
+func _add_fx(sprite: String, anim: String, sc: float, damage: float, life := -1.0, world_pos: Variant = null,
+		source := "", knockback := 140.0) -> Dictionary:
 	var sheet: SpriteSheet = sheets.get(sprite)
-	if sheet == null:
-		return
-	_fx.append({"sheet": sheet, "anim": anim, "t": 0.0, "scale": sc, "damage": damage, "done": damage <= 0.0,
+	if sheet == null or not sheet.has_animation(anim):
+		return {}
+	var fx := {"sheet": sheet, "anim": anim, "t": 0.0, "scale": sc, "damage": damage, "done": damage <= 0.0,
 		"life": life if life > 0.0 else sheet.duration(anim),
-		"pos": world_pos, "follow": world_pos == null, "source": source})
+		"pos": world_pos, "follow": world_pos == null, "source": source, "kb": knockback}
+	_fx.append(fx)
+	return fx
 
 
 
@@ -644,13 +755,19 @@ func _step_fx(dt: float) -> void:
 	while i < _fx.size():
 		var fx: Dictionary = _fx[i]
 		fx["t"] = float(fx["t"]) + dt
+		if fx.has("vel"):
+			fx["pos"] = (fx["pos"] as Vector2) + (fx["vel"] as Vector2) * dt
 		if not fx["done"]:
 			var hb := SpriteHitbox.of(fx["sheet"], fx["anim"], _fx_pos(fx), float(fx["scale"]))
 			if hb == null:
 				fx["done"] = true
-			elif hb.is_active(float(fx["t"])):
-				enemies.hit_box(hb, float(fx["damage"]), 140.0, String(fx.get("source", "")))
-				fx["done"] = true
+			elif hb.is_active(float(fx["t"])) and float(fx.get("hit_wait", 0.0)) <= 0.0:
+				enemies.hit_box(hb, float(fx["damage"]), float(fx.get("kb", 140.0)), String(fx.get("source", "")))
+				if fx.has("rehit"):
+					fx["hit_wait"] = float(fx["rehit"])
+				else:
+					fx["done"] = true
+			fx["hit_wait"] = float(fx.get("hit_wait", 0.0)) - dt
 		if float(fx["t"]) >= float(fx["life"]):
 			_fx.remove_at(i)
 		else:
@@ -923,6 +1040,7 @@ func _draw() -> void:
 		var blink := invuln > 0.0 and state == State.PLAYING and int(invuln * 20.0) % 2 == 0
 		var tint := Color(1, 1, 1, 0.45) if blink else Color.WHITE
 		_draw_auras("back")
+		_draw_dash_trail(hero)
 		hero.draw(self, _anim, _anim_t, player_pos, _sprite_scale, face_left, tint)
 		_draw_auras("front")
 	for fx in _fx:
@@ -958,6 +1076,17 @@ func _step_damage_numbers(dt: float) -> void:
 		_num_t[_num_next] = 0.0
 		_num_next = (_num_next + 1) % _num_t.size()
 	enemies.drain_hits()
+
+
+## Afterimages of the hero along the dash path (the camera follows the hero, so
+## without them a dash only shows as the ground sliding).
+func _draw_dash_trail(hero: SpriteSheet) -> void:
+	if _dash_trail <= 0.0:
+		return
+	var fade := clampf(_dash_trail / 0.3, 0.0, 1.0)
+	for k in range(1, 4):
+		var p := _dash_from.lerp(player_pos, float(k) / 4.0)
+		hero.draw(self, _anim, _anim_t, p, _sprite_scale, face_left, Color(0.65, 0.85, 1.0, 0.18 * k * fade))
 
 
 ## Buffs lying on the ground: the badge bobbing; blinking in the last seconds.
