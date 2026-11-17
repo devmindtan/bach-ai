@@ -282,7 +282,7 @@ func _owned_tile(o: Dictionary, info: RichTextLabel) -> Button:
 	over.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	over.draw.connect(func() -> void: _draw_owned_badge(over, lv, mx, accent, maxed))
 	b.add_child(over)
-	b.tooltip_text = "%s  %d/%d" % [o["name"], lv, mx]
+	Tip.attach(b, String(o["name"]), String(o.get("desc", "")), accent, String(o["id"]), "Cấp %d/%d" % [lv, mx])
 	b.mouse_entered.connect(func() -> void: _show_owned_info(info, o))
 	b.focus_entered.connect(func() -> void: _show_owned_info(info, o))
 	return b
@@ -567,7 +567,7 @@ func _skill_row(si: Dictionary) -> PanelContainer:
 	var mx: int = si["max"]
 	pips.custom_minimum_size = Vector2(24 * mx, 18)
 	pips.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	pips.tooltip_text = "Cấp %d/%d" % [lv, mx]
+	Tip.attach(pips, "Cấp %d/%d" % [lv, mx], "Ô ◆ là mốc: hình mới hoặc thêm hiệu ứng.")
 	pips.draw.connect(func() -> void: _draw_pips(pips, lv, mx, [mx], BORDER, false))
 	head.add_child(pips)
 	v.add_child(head)
@@ -617,8 +617,9 @@ func _skill_row(si: Dictionary) -> PanelContainer:
 func _chip(icons: Array, text: String, tip: String, col := MUTED, sz := 12, note := "") -> HBoxContainer:
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", 3)
-	h.tooltip_text = tip
 	h.mouse_filter = Control.MOUSE_FILTER_PASS
+	if tip != "":
+		Tip.attach(h, text, tip, col if col != MUTED else BORDER, String(icons[0]) if not icons.is_empty() else "")
 	for i in icons.size():
 		var ic := _icon(String(icons[i]), 16 if i == 0 else 12)
 		ic.size_flags_vertical = Control.SIZE_SHRINK_CENTER

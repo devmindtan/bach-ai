@@ -283,7 +283,7 @@ func _build_ui() -> void:
 func _small_stat(icon: String, value: String, tip: String) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 6)
-	row.tooltip_text = tip
+	Tip.attach(row, tip)
 	row.mouse_filter = Control.MOUSE_FILTER_STOP
 	var tex := TextureRect.new()
 	tex.texture = UiIcons.texture(icon)
@@ -363,7 +363,7 @@ func _feature(icon: String, name: String, desc: String, col: Color) -> HBoxConta
 func _icon_tile(icon: String, name: String, desc: String) -> PanelContainer:
 	var p := PanelContainer.new()
 	p.add_theme_stylebox_override("panel", _style(Color("1d1828"), 4))
-	p.tooltip_text = name + "\n" + desc
+	Tip.attach(p, name, desc, GOLD, icon)
 	p.mouse_filter = Control.MOUSE_FILTER_STOP
 	var tex := TextureRect.new()
 	tex.texture = UiIcons.texture(icon)

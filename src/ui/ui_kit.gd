@@ -18,6 +18,8 @@ const PRIMARY := Color("8a3a2e")        # the one dominant action of a screen
 const PRIMARY_HOVER := Color("a8483a")
 const DANGER := Color("4a2424")
 const SHADOW := Color(0, 0, 0, 0.7)
+const RARITY := {"common": Color("e8e2d0"), "rare": Color("6fb7ff"), "epic": Color("c38df5"), "legendary": Color("f2b64a")}
+const RARITY_NAME := {"common": "Thường", "rare": "Hiếm", "epic": "Sử thi", "legendary": "Huyền thoại"}
 
 
 static func style(bg: Color, pad: int, border := GOLD, width := 2) -> StyleBoxFlat:
@@ -92,8 +94,8 @@ static func icon(id: String, px := 20.0) -> TextureRect:
 static func stat(icon_id: String, value: String, tip: String, font := 17) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 6)
-	row.tooltip_text = tip
 	row.mouse_filter = Control.MOUSE_FILTER_STOP
+	Tip.attach(row, tip)
 	row.add_child(icon(icon_id, 20.0))
 	var l := label(value, font, TEXT)
 	l.size_flags_vertical = Control.SIZE_SHRINK_CENTER

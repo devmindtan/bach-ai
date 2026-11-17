@@ -191,7 +191,12 @@ func _slot_cell(slot: String, item: String) -> Control:
 	b.add_theme_stylebox_override("normal", UiKit.style(UiKit.PANEL_DARK, 6, frame, 3 if slot == _sel else 2))
 	for st in ["hover", "focus", "pressed"]:
 		b.add_theme_stylebox_override(st, UiKit.style(UiKit.PANEL_HOVER, 6, Color.WHITE, 3))
-	b.tooltip_text = "%s: %s" % [SLOT_NAME[slot], String(d.get("name", "trống"))]
+	if item != "":
+		var rar := String(d.get("rarity", "common"))
+		Tip.attach(b, String(d.get("name", item)), String(d.get("desc", "")), RARITY.get(rar, UiKit.GOLD),
+			String(d.get("icon", item)), "%s · %s" % [RARITY_NAME.get(rar, rar), SLOT_NAME[slot]])
+	else:
+		Tip.attach(b, "%s: trống" % SLOT_NAME[slot], "Chọn ô này rồi chọn món trong túi để mặc.")
 	if item != "":
 		var ic := UiKit.icon(String(d.get("icon", item)), 52.0)
 		ic.position = (CELL - Vector2(52, 52)) * 0.5   # no anchors: a Button is not a container

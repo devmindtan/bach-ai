@@ -42,7 +42,7 @@ func _make_gear() -> void:
 	_gear.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_gear.custom_minimum_size = Vector2(32, 32)
 	_gear.size = Vector2(32, 32)
-	_gear.tooltip_text = "Tạm dừng / Cài đặt (Esc)"
+	Tip.attach(_gear, "Tạm dừng / Cài đặt", "Phím Esc.")
 	_gear.focus_mode = Control.FOCUS_NONE
 	_gear.mouse_entered.connect(func() -> void: _gear.modulate = Color(1.25, 1.25, 1.25))
 	_gear.mouse_exited.connect(func() -> void: _gear.modulate = Color.WHITE)

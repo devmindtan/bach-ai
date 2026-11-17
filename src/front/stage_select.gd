@@ -203,7 +203,8 @@ func _tile(n: int, locked: bool) -> Button:
 	for st in ["hover", "focus", "pressed"]:
 		b.add_theme_stylebox_override(st, UiKit.style(UiKit.PANEL_HOVER, 4, Color.WHITE, 3))
 	b.disabled = locked
-	b.tooltip_text = "Ải %d%s" % [n, " · BOSS" if boss else ""] + (" (vượt ải %d để mở)" % (n - 1) if locked else "")
+	Tip.attach(b, "Ải %d" % n, ("Vượt ải %d để mở." % (n - 1)) if locked else ("Đã vượt %d lần." % int(_slot.wins.get(str(n), 0)) if won else "Chưa vượt."),
+		BOSS_GOLD if boss else UiKit.GOLD, "skull" if boss else "", "Ải boss" if boss else String(_stages.region(n).get("name", "")))
 	b.pressed.connect(func() -> void:
 		_n = n
 		_rebuild())
@@ -301,7 +302,7 @@ func _monster_box(id: String) -> Control:
 	var c := Control.new()
 	c.custom_minimum_size = Vector2(56, 56)
 	c.clip_contents = true
-	c.tooltip_text = String(m.get("name", id))
+	Tip.attach(c, String(m.get("name", id)), "", UiKit.GOLD, "", "Quái vật")
 	c.draw.connect(func() -> void:
 		c.draw_rect(Rect2(Vector2.ZERO, c.size), UiKit.PANEL_DARK)
 		if sheet == null:

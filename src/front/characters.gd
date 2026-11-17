@@ -313,7 +313,12 @@ func _slot_panel(panel: PanelContainer, s: Slot) -> void:
 		cell.custom_minimum_size = Vector2(52, 52)
 		var item_id := String(worn.get(slot, ""))
 		var d: Dictionary = _equip_defs.get(item_id, {})
-		cell.tooltip_text = "%s: %s" % [SLOT_NAMES.get(slot, slot), String(d.get("name", "trống"))]
+		var rar := String(d.get("rarity", "common"))
+		if item_id != "":
+			Tip.attach(cell, String(d.get("name", item_id)), String(d.get("desc", "")), UiKit.RARITY.get(rar, UiKit.GOLD),
+				String(d.get("icon", item_id)), "%s · %s" % [UiKit.RARITY_NAME.get(rar, rar), SLOT_NAMES.get(slot, slot)])
+		else:
+			Tip.attach(cell, "%s: trống" % SLOT_NAMES.get(slot, slot), "Mặc đồ ở màn Trang bị (từ sảnh).")
 		if item_id != "":
 			cell.add_child(UiKit.icon(String(d.get("icon", item_id)), 36.0))
 		gear.add_child(cell)
