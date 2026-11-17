@@ -22,5 +22,27 @@
                          "effects": { "magnet": { "mul": 3.0 } }, "invulnerable": true,
                          "desc": "Trong 6 giây: miễn mọi sát thương, tầm hút vật phẩm ×4." }
   },
-  "equipment": {}
+  "equipment": {
+    "_doc": "Equipment (src/meta/profile.gd): one item per slot (head, chest, arms, legs, weapon); class = only that class can wear it; rarity common | rare | epic (the colour of its frame); effects work like card effects (PlayerStats, level 1). icon = ui-icons frame. Won at the end of a stage, sometimes from a chest; the lobby's Trang bị panel equips them. starter = given once on the first visit.",
+    "iron_helm":     { "name": "Mũ sắt", "slot": "head", "rarity": "common", "icon": "iron_helm", "starter": true,
+                       "effects": { "max_hp": { "add": 15.0 } }, "desc": "+15 máu tối đa." },
+    "wizard_hat":    { "name": "Mũ phù thủy", "slot": "head", "class": "mage", "rarity": "common", "icon": "wizard_hat",
+                       "effects": { "cooldown": { "mul": -0.08 } }, "desc": "Hồi chiêu −8%." },
+    "steel_chest":   { "name": "Giáp ngực thép", "slot": "chest", "class": "knight", "rarity": "rare", "icon": "steel_chest",
+                       "effects": { "armor": { "add": 3.0 } }, "desc": "+3 giáp." },
+    "mage_robe":     { "name": "Áo choàng phép", "slot": "chest", "class": "mage", "rarity": "rare", "icon": "mage_robe",
+                       "effects": { "max_hp": { "add": 10.0 }, "area": { "mul": 0.1 } }, "desc": "+10 máu tối đa, vùng phép +10%." },
+    "war_gloves":    { "name": "Găng chiến", "slot": "arms", "rarity": "common", "icon": "war_gloves",
+                       "effects": { "damage": { "mul": 0.08 } }, "desc": "Sát thương +8%." },
+    "arcane_bracer": { "name": "Vòng tay phép", "slot": "arms", "class": "mage", "rarity": "rare", "icon": "arcane_bracer",
+                       "effects": { "cooldown": { "mul": -0.06 }, "damage": { "mul": 0.05 } }, "desc": "Hồi chiêu −6%, sát thương +5%." },
+    "swift_boots":   { "name": "Ủng nhẹ", "slot": "legs", "rarity": "common", "icon": "swift_boots", "starter": true,
+                       "effects": { "move_speed": { "mul": 0.12 } }, "desc": "Tốc độ chạy +12%." },
+    "woven_shoes":   { "name": "Giày bện", "slot": "legs", "rarity": "common", "icon": "woven_shoes",
+                       "effects": { "magnet": { "mul": 0.3 }, "regen": { "add": 0.5 } }, "desc": "Tầm hút +30%, hồi 0,5 máu/giây." },
+    "steel_sword":   { "name": "Kiếm thép", "slot": "weapon", "class": "knight", "rarity": "rare", "icon": "steel_sword",
+                       "effects": { "damage": { "mul": 0.15 } }, "desc": "Sát thương +15%." },
+    "crystal_staff": { "name": "Gậy pha lê", "slot": "weapon", "class": "mage", "rarity": "rare", "icon": "crystal_staff",
+                       "effects": { "damage": { "mul": 0.12 }, "area": { "mul": 0.08 } }, "desc": "Sát thương +12%, vùng phép +8%." }
+  }
 }

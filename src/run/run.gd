@@ -28,7 +28,10 @@ const STEP := 1.0 / 60.0
 var class_id := "knight"   # Prefs.current().hero (the lobby choice, or --class=)
 var stage_number := 1        # --stage=N (stage select comes in phase 3)
 var _boss_dead := false
-var _delayed: Array = []   # self casts waiting for their pulse (count > 1)
+var _delayed: Array = []
+var profile: Profile                # equipment (Prefs.current().profile())
+var won_items: Array[String] = []   # equipment won this run (end screen)
+var _gear: Array[String] = []       # --gear=a,b (shots: wear these)   # self casts waiting for their pulse (count > 1)
 var _chest_open := false   # the next level-up panel comes from a chest
 var _chest_sprite := "chest"
 
@@ -199,6 +202,10 @@ func _ready() -> void:
 		buffs.ground.append({"id": _ground_buffs[k], "pos": Vector2(120.0 + 70.0 * k, -60.0), "age": 0.0})
 	waves = WaveScheduler.new(stage.get("waves", []))
 	base_stats = class_data.get("stats", {})
+	profile = Prefs.current().profile()
+	for id in _gear:
+		profile.add(id)
+		profile.equip(class_id, id)
 	for sk: String in class_data.get("start_skills", {}):
 		# keep a higher level forced by --skills
 		levels[sk] = maxi(int(levels.get(sk, 0)), int(class_data["start_skills"][sk]))
@@ -246,6 +253,9 @@ func _parse_args() -> void:
 				_status_all.append(st)
 		elif a.begins_with("--monster-hp="):
 			monster_hp_mul = maxf(0.01, float(a.get_slice("=", 1)))
+		elif a.begins_with("--gear="):
+			for id in a.get_slice("=", 1).split(",", false):
+				_gear.append(id)
 		elif a.begins_with("--stage="):
 			stage_number = maxi(1, int(a.get_slice("=", 1)))
 		elif a.begins_with("--dash-at="):
@@ -372,6 +382,8 @@ func _tick(dt: float) -> void:
 		_gain_xp(got.x)
 	if pickups.chests > 0 and state == State.PLAYING:   # a chest from an elite: one extra pick
 		pickups.chests -= 1
+		if rng.randf() < float(cfg.get("rewards", {}).get("chest_item_chance", 0.0)):
+			_win_item()
 		pending_levels += 1
 		_chest_open = true
 		_open_level_up()
@@ -1074,6 +1086,8 @@ func effect_pool() -> Array:
 	var out: Array = pool.get("upgrades", []).duplicate()
 	if buffs != null:
 		out.append_array(buffs.as_upgrades())
+	if profile != null:
+		out.append_array(profile.as_upgrades(class_id))   # worn equipment
 	return out
 
 
@@ -1081,7 +1095,28 @@ func effect_levels() -> Dictionary:
 	var out := levels.duplicate()
 	if buffs != null:
 		out.merge(buffs.levels(), true)
+	if profile != null:
+		out.merge(profile.levels(class_id), true)
 	return out
+
+
+## A random equipment item for this class (shared ones too), added to the profile
+## and saved; "" when there is none.
+func _win_item() -> String:
+	if profile == null:
+		return ""
+	var ids := []
+	for id: String in profile.defs:
+		var d: Dictionary = profile.defs[id]
+		if not d.has("class") or String(d["class"]) == class_id:
+			ids.append(id)
+	if ids.is_empty():
+		return ""
+	var id: String = ids[rng.randi() % ids.size()]
+	profile.add(id)
+	Prefs.current().save_profile()
+	won_items.append(id)
+	return id
 
 
 ## Icon for a card, buff or status id: ui-icons, else the first frame of the
@@ -1122,6 +1157,8 @@ func _die() -> void:
 func _win() -> void:
 	state = State.WON
 	pickups.pull_all()
+	if bool(cfg.get("rewards", {}).get("win_item", false)):
+		_win_item()
 	print("Run over: won, level %d, kills %d, gold %d" % [level, enemies.total_kills, gold])
 	_panels.show_end(true)
 

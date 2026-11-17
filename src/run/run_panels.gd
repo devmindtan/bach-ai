@@ -628,6 +628,15 @@ func show_end(won: bool) -> void:
 	var total := 0.0
 	for r: Dictionary in report:
 		total += float(r["damage"])
+	if not run.won_items.is_empty():
+		var got := HBoxContainer.new()
+		got.alignment = BoxContainer.ALIGNMENT_CENTER
+		got.add_theme_constant_override("separation", 14)
+		got.add_child(_label("Trang bị nhận được:", 16, BORDER))
+		for id: String in run.won_items:
+			var d: Dictionary = run.profile.defs.get(id, {})
+			got.add_child(_chip([String(d.get("icon", id))], String(d.get("name", id)), String(d.get("desc", "")), RARITY.get(String(d.get("rarity", "common")), TEXT), 16))
+		root.add_child(got)
 	var foot := _label("Tổng sát thương %d  ·  Sát thương nhận %d  ·  Máu đã hồi %d" % [
 		roundi(total), roundi(run.damage_taken), roundi(run.healed)], 14, MUTED)
 	foot.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -643,6 +652,7 @@ func show_end(won: bool) -> void:
 
 
 const DMG_BAR := 150.0
+const RARITY := {"common": Color("e8e2d0"), "rare": Color("6fb7ff"), "epic": Color("c38df5")}
 
 
 func _damage_table(report: Array) -> GridContainer:

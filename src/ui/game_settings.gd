@@ -22,7 +22,8 @@ var scale := 0                      # 0 = auto, else 1..3
 var damage_numbers := true
 var monster_hp := true
 var hero := "knight"                # the class chosen in the lobby (classes.json id)
-var _fixed := false                 # screenshots / tests: defaults, never touch the window
+var _fixed := false
+var _profile: Profile                 # screenshots / tests: defaults, never touch the window
 
 static var _default: Prefs
 
@@ -54,6 +55,35 @@ func _ready() -> void:
 		hero = forced_hero
 	apply()
 	get_tree().root.size_changed.connect(_fit_scale)
+
+
+## True for screenshots and tests: nothing is read from or written to disk.
+func is_fixed() -> bool:
+	return _fixed
+
+
+## The player's profile (equipment), loaded once; a fresh one when fixed. The first
+## visit gets the starter items (items.json "starter"), worn by every class.
+func profile() -> Profile:
+	if _profile == null:
+		var items := GameData.load_json("res://assets/data/items.json")
+		var defs: Dictionary = items.get("equipment", {}).duplicate()
+		defs.erase("_doc")
+		_profile = Profile.load_or_new(defs, _fixed)
+		if not _profile.given_starter:
+			_profile.given_starter = true
+			for id: String in defs:
+				if bool(defs[id].get("starter", false)):
+					_profile.add(id)
+					for cls in ["knight", "mage"]:
+						_profile.equip(cls, id)
+			save_profile()
+	return _profile
+
+
+func save_profile() -> void:
+	if not _fixed and _profile != null:
+		_profile.save()
 
 
 ## Changes one setting, saves and applies it.

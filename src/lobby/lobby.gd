@@ -25,6 +25,7 @@ var _scroll := Vector2.ZERO
 var _layer: CanvasLayer
 var _classes := {}
 var _class_ids: Array[String] = []
+var _dirty_stats := false   # equipment changed: rebuild the menu when the panel closes
 
 
 func _ready() -> void:
@@ -142,9 +143,10 @@ func _build_ui() -> void:
 	menu.add_child(sub)
 	var top := HBoxContainer.new()
 	top.add_theme_constant_override("separation", 10)
-	top.position = Vector2(vp.x - 32 - 2 * 140 - 10, 26)
+	top.position = Vector2(vp.x - 32 - 3 * 140 - 20, 26)
 	menu.add_child(top)
-	for b in [_button("Cài đặt", func() -> void: _show_settings(root, menu)), _button("Thoát", func() -> void: get_tree().quit())]:
+	for b in [_button("Trang bị", func() -> void: _show_equipment(root, menu)), _button("Cài đặt", func() -> void: _show_settings(root, menu)),
+			_button("Thoát", func() -> void: get_tree().quit())]:
 		b.custom_minimum_size = Vector2(140, 42)
 		b.add_theme_font_size_override("font_size", 18)
 		top.add_child(b)
@@ -182,15 +184,19 @@ func _build_ui() -> void:
 	var cv := VBoxContainer.new()
 	cv.add_theme_constant_override("separation", 12)
 	card.add_child(cv)
-	var stats: Dictionary = _class.get("stats", {})
+	# stats with the worn equipment (green where it adds something)
+	var base: Dictionary = _class.get("stats", {})
+	var prof := Prefs.current().profile()
+	var cid := Prefs.current().hero
+	var stats := PlayerStats.compute(base, prof.as_upgrades(cid), prof.levels(cid))
 	var tiles := HBoxContainer.new()
 	tiles.add_theme_constant_override("separation", 10)
 	cv.add_child(tiles)
-	for t in [["heart", "Máu", "%d" % roundi(float(stats.get("max_hp", 0)))],
-			["sword", "Sát thương", "%d" % roundi(float(stats.get("damage", 0)))],
-			["boot", "Tốc độ", "%d" % roundi(float(stats.get("move_speed", 0)))],
-			["magnet", "Tầm hút", "×%.1f" % float(stats.get("magnet", 1.0))]]:
-		tiles.add_child(_tile(t[0], t[1], t[2]))
+	for t in [["heart", "Máu", "max_hp", "%d"], ["sword", "Sát thương", "damage", "%d"],
+			["boot", "Tốc độ", "move_speed", "%d"], ["magnet", "Tầm hút", "magnet", "×%.1f"]]:
+		var val := float(stats.get(t[2], 0.0))
+		var txt: String = (t[3] % roundi(val)) if t[3] == "%d" else (t[3] % val)
+		tiles.add_child(_tile(t[0], t[1], txt, not is_equal_approx(val, float(base.get(t[2], val)))))
 	var pv: Dictionary = _class.get("passive", {})
 	if not pv.is_empty():
 		cv.add_child(_section("Nội tại", accent))
@@ -236,6 +242,8 @@ func _build_ui() -> void:
 	start.call_deferred("grab_focus")
 	if OS.get_cmdline_user_args().has("--lobby-settings"):   # shots of the settings page
 		_show_settings.call_deferred(root, menu)
+	if OS.get_cmdline_user_args().has("--lobby-gear"):       # shots of the equipment page
+		_show_equipment.call_deferred(root, menu)
 
 	var hint := _label("Enter: bắt đầu  ·  ← / →: đổi class  ·  Trong trận: WASD di chuyển, Space lướt, Tab nhân vật, Esc tạm dừng", 14, MUTED)
 	hint.position = Vector2(32, vp.y - 30)
@@ -243,7 +251,7 @@ func _build_ui() -> void:
 
 
 ## A stat tile: icon over the value, the name under it.
-func _tile(icon: String, name: String, value: String) -> PanelContainer:
+func _tile(icon: String, name: String, value: String, boosted := false) -> PanelContainer:
 	var p := PanelContainer.new()
 	p.add_theme_stylebox_override("panel", _style(Color("231d30"), 8))
 	p.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -262,8 +270,8 @@ func _tile(icon: String, name: String, value: String) -> PanelContainer:
 	tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	tex.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	h.add_child(tex)
-	h.add_child(_label(value, 24, TEXT))
-	var n := _label(name, 14, MUTED)
+	h.add_child(_label(value, 24, Color("8ee08e") if boosted else TEXT))
+	var n := _label(name + (" (có trang bị)" if boosted else ""), 14, MUTED)
 	n.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(n)
 	return p
@@ -331,6 +339,104 @@ func _show_settings(root: Control, menu: Control) -> void:
 	card.add_child(SettingsPanel.build(func() -> void:
 		center.queue_free()
 		menu.visible = true))
+
+
+const SLOT_NAME := {"head": "Đầu", "chest": "Ngực", "arms": "Tay", "legs": "Chân", "weapon": "Vũ khí"}
+const RARITY := {"common": Color("e8e2d0"), "rare": Color("6fb7ff"), "epic": Color("c38df5")}
+
+
+## Equipment of the chosen class: one row per slot (what is worn, its effect) with
+## "Đổi" cycling through the fitting items in the bag (and empty); the total at the
+## bottom. Saved at once (Prefs.save_profile).
+func _show_equipment(root: Control, menu: Control) -> void:
+	menu.visible = false
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.add_child(center)
+	var card := PanelContainer.new()
+	card.add_theme_stylebox_override("panel", _style(Color(0.09, 0.08, 0.13, 0.96), 24))
+	center.add_child(card)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 10)
+	col.custom_minimum_size = Vector2(620, 0)
+	card.add_child(col)
+	var cls := Prefs.current().hero
+	var prof := Prefs.current().profile()
+	col.add_child(_label("Trang bị · %s" % String(_class.get("name", "")), 30, GOLD))
+	var rows := VBoxContainer.new()
+	rows.add_theme_constant_override("separation", 8)
+	col.add_child(rows)
+	var total := _label("", 15, MUTED)
+	total.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var refresh := func() -> void: pass
+	refresh = func() -> void:
+		for c in rows.get_children():
+			c.queue_free()
+		for slot: String in Profile.SLOTS:
+			rows.add_child(_gear_row(prof, cls, slot, refresh))
+		var parts := []
+		for slot: String in prof.equipped(cls):
+			parts.append(String(prof.defs.get(prof.equipped(cls)[slot], {}).get("desc", "")))
+		total.text = "Tổng: " + (" · ".join(parts) if not parts.is_empty() else "chưa mặc gì.")
+	refresh.call()
+	col.add_child(total)
+	col.add_child(_label("Thắng ải để nhận thêm trang bị; rương của quái tinh anh đôi khi cũng có.", 13, MUTED))
+	var back := _button("Quay lại", func() -> void:
+		center.queue_free()
+		menu.visible = true
+		if _dirty_stats:   # the stat tiles show the new equipment
+			_dirty_stats = false
+			_layer.queue_free()
+			_build_ui())
+	col.add_child(back)
+	back.call_deferred("grab_focus")
+
+
+func _gear_row(prof: Profile, cls: String, slot: String, refresh: Callable) -> PanelContainer:
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", _style(Color("231d30"), 8))
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 12)
+	p.add_child(h)
+	var sl := _label(String(SLOT_NAME.get(slot, slot)), 16, MUTED)
+	sl.custom_minimum_size = Vector2(70, 0)
+	sl.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	h.add_child(sl)
+	var id := String(prof.equipped(cls).get(slot, ""))
+	var d: Dictionary = prof.defs.get(id, {})
+	var tex := TextureRect.new()
+	tex.texture = UiIcons.texture(String(d.get("icon", id))) if id != "" else null
+	tex.custom_minimum_size = Vector2(36, 36)
+	tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	tex.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	h.add_child(tex)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 0)
+	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	v.alignment = BoxContainer.ALIGNMENT_CENTER   # the row's line: slot name, icon, item, button
+	h.add_child(v)
+	v.add_child(_label(String(d.get("name", "Trống")), 18, RARITY.get(String(d.get("rarity", "common")), TEXT) if id != "" else MUTED))
+	if id != "":
+		v.add_child(_label(String(d.get("desc", "")), 13, MUTED))
+	var choices := prof.choices(cls, slot)
+	var b := _button("Đổi (%d)" % choices.size(), func() -> void:
+		# next fitting item, then empty, then the first again
+		var opts: Array = choices.duplicate()
+		opts.append("")
+		var nxt: String = opts[(opts.find(id) + 1) % opts.size()]
+		if nxt == "":
+			prof.unequip(cls, slot)
+		else:
+			prof.equip(cls, nxt)
+		Prefs.current().save_profile()
+		refresh.call()
+		_dirty_stats = true)
+	b.custom_minimum_size = Vector2(110, 40)
+	b.add_theme_font_size_override("font_size", 16)
+	b.disabled = choices.is_empty()
+	h.add_child(b)
+	return p
 
 
 func _arrow(text: String, cb: Callable) -> Button:

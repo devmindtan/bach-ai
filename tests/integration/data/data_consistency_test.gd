@@ -78,11 +78,21 @@ func test_items_reference_existing_sprites() -> void:
 	var items := GameData.load_json(DATA + "items.json")
 	for id in ["xp_gem", "gold"]:   # the two pickups run.gd drops
 		_check(items.get("pickups", {}).has(id), "items.json pickups.%s missing" % id)
-	for group in ["pickups", "equipment"]:
-		var d: Dictionary = items.get(group, {})
-		for id: String in d:
-			_check(String(d[id].get("name", "")) != "", "item %s has no name" % id)
-			_check(_sprite_ok(String(d[id].get("sprite", ""))), "item %s: sprite missing" % id)
+	for id: String in items.get("pickups", {}):
+		var d: Dictionary = items["pickups"][id]
+		_check(String(d.get("name", "")) != "", "item %s has no name" % id)
+		_check(_sprite_ok(String(d.get("sprite", ""))), "item %s: sprite missing" % id)
+	# equipment: an icon in ui-icons, a known slot, effects PlayerStats knows
+	var icons := SpriteSheet.load_dir(SPRITES + "ui-icons", "ui-icons")
+	var eq: Dictionary = items.get("equipment", {})
+	for id: String in eq:
+		if id.begins_with("_"):
+			continue
+		var d: Dictionary = eq[id]
+		_check(String(d.get("name", "")) != "", "equipment %s has no name" % id)
+		_check(Profile.SLOTS.has(String(d.get("slot", ""))), "equipment %s: unknown slot %s" % [id, d.get("slot")])
+		_check(icons.has_animation(String(d.get("icon", id))), "equipment %s: icon %s not in ui-icons" % [id, d.get("icon", id)])
+		_check(not Dictionary(d.get("effects", {})).is_empty(), "equipment %s has no effects" % id)
 
 
 func test_skill_effects_have_pixel_hitboxes() -> void:
