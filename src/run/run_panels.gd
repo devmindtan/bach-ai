@@ -334,32 +334,53 @@ func show_character() -> void:
 
 
 const CHARACTER_STATS := ["max_hp", "damage", "cooldown", "area", "move_speed", "regen", "magnet", "armor"]
+## Icon for each stat (ui-icons), used on the sheet and in source chips.
+const STAT_ICON := {"max_hp": "heart", "damage": "sword", "cooldown": "haste", "area": "reach",
+	"move_speed": "boot", "regen": "regen", "magnet": "magnet", "armor": "shield"}
+const WHAT_ICON := {"Sát thương": "sword", "Hồi chiêu": "haste", "Vùng": "reach", "Nhát sau": "back_slash"}
 
 
-## One stat: name and final value on a line, then "gốc X" and each card's share.
+## One stat: icon, name, final value; under it the class base and one chip per
+## card (card icon + amount, full text on hover).
 func _stat_row(key: String, b: Dictionary) -> VBoxContainer:
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 0)
+	v.add_theme_constant_override("separation", 2)
 	var head := HBoxContainer.new()
+	head.add_theme_constant_override("separation", 10)
+	head.add_child(_icon(String(STAT_ICON.get(key, "star")), 24))
 	var name := _label(String(run.STAT_LABEL.get(key, key)), 16, TEXT)
 	name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	head.add_child(name)
 	var changed: bool = not b["parts"].is_empty()
-	head.add_child(_label(run._fmt_stat(key, float(b["final"])), 16, GAIN if changed else TEXT))
+	var val := _label(run._fmt_stat(key, float(b["final"])), 16, GAIN if changed else TEXT)
+	val.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	head.add_child(val)
 	v.add_child(head)
-	var bits := ["gốc %s" % run._fmt_stat(key, float(b["base"]))]
+	var chips := HFlowContainer.new()
+	chips.add_theme_constant_override("h_separation", 10)
+	chips.add_theme_constant_override("v_separation", 2)
+	var base_l := _label("gốc %s" % run._fmt_stat(key, float(b["base"])), 12, MUTED)
+	base_l.custom_minimum_size = Vector2(34, 0)
+	chips.add_child(_indent(base_l))
 	for part: Dictionary in b["parts"]:
 		var amount: String = ("%+d%%" % roundi(float(part["mul"]) * 100.0)) if part.has("mul") else run.signed(float(part["add"]))
-		bits.append("%s %d: %s" % [part["name"], part["level"], amount])
-	var src := _label("  ·  ".join(bits), 12, MUTED)
-	src.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	src.custom_minimum_size = Vector2(360, 0)
-	v.add_child(src)
+		chips.add_child(_chip([String(part["id"])], amount, "%s cấp %d: %s %s" % [
+			part["name"], part["level"], run.STAT_LABEL.get(key, key), amount]))
+	v.add_child(chips)
 	return v
 
 
-## One skill: icon, name and level; real numbers (with the class-only value);
-## the cards that change it.
+## Indents a chip row under the stat name (past the 24 px icon).
+func _indent(c: Control) -> MarginContainer:
+	var m := MarginContainer.new()
+	m.add_theme_constant_override("margin_left", 34)
+	m.add_child(c)
+	return m
+
+
+## One skill: icon; name and level pips; damage / cooldown / size as icon chips
+## (class-only value muted); the cards changing it as chips.
 func _skill_row(si: Dictionary) -> PanelContainer:
 	var card := PanelContainer.new()
 	var st := _style(CARD, BORDER)
@@ -368,39 +389,79 @@ func _skill_row(si: Dictionary) -> PanelContainer:
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", 12)
 	card.add_child(h)
-	var icon := TextureRect.new()
-	icon.texture = UiIcons.texture(si["id"])
-	icon.custom_minimum_size = Vector2(40, 40)
-	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	var icon := _icon(String(si["id"]), 40)
 	icon.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	h.add_child(icon)
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 2)
+	v.add_theme_constant_override("separation", 4)
+	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	h.add_child(v)
-	var head := RichTextLabel.new()
-	head.bbcode_enabled = true
-	head.fit_content = true
-	head.scroll_active = false
-	head.autowrap_mode = TextServer.AUTOWRAP_OFF
-	head.custom_minimum_size = Vector2(440, 0)
-	head.add_theme_font_size_override("normal_font_size", 14)
-	head.add_theme_font_size_override("bold_font_size", 16)
-	head.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	head.text = "[b]%s[/b]  [color=#%s]Cấp %d/%d[/color]\n%s" % [si["name"], BORDER.to_html(false), si["level"], si["max"],
-		"Sát thương [b][color=#%s]%d[/color][/b] [color=#%s](gốc %d)[/color]   Hồi chiêu [b][color=#%s]%.2f s[/color][/b] [color=#%s](gốc %.2f)[/color]   Vùng [b]×%.2f[/b]" % [
-			GAIN.to_html(false), roundi(si["damage"]), MUTED.to_html(false), roundi(si["base_damage"]),
-			GAIN.to_html(false), si["cooldown"], MUTED.to_html(false), si["base_cooldown"], si["size"]]]
+	var head := HBoxContainer.new()
+	head.add_theme_constant_override("separation", 12)
+	var nl := _label(String(si["name"]), 17, TEXT)
+	head.add_child(nl)
+	var pips := Control.new()
+	var lv: int = si["level"]
+	var mx: int = si["max"]
+	pips.custom_minimum_size = Vector2(24 * mx, 18)
+	pips.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	pips.tooltip_text = "Cấp %d/%d" % [lv, mx]
+	pips.draw.connect(func() -> void: _draw_pips(pips, lv, mx, [mx], BORDER, false))
+	head.add_child(pips)
 	v.add_child(head)
-	var bits := []
+	var nums := HBoxContainer.new()
+	nums.add_theme_constant_override("separation", 18)
+	nums.add_child(_chip(["sword"], "%d" % roundi(si["damage"]), "Sát thương (gốc %d)" % roundi(si["base_damage"]),
+		GAIN if roundi(si["damage"]) != roundi(si["base_damage"]) else TEXT, 15, "gốc %d" % roundi(si["base_damage"])))
+	nums.add_child(_chip(["haste"], "%.2f s" % si["cooldown"], "Hồi chiêu (gốc %.2f s)" % si["base_cooldown"],
+		GAIN if not is_equal_approx(si["cooldown"], si["base_cooldown"]) else TEXT, 15, "gốc %.2f" % si["base_cooldown"]))
+	nums.add_child(_chip(["reach"], "×%.2f" % si["size"], "Vùng", GAIN if not is_equal_approx(si["size"], 1.0) else TEXT, 15))
+	v.add_child(nums)
+	var chips := HFlowContainer.new()
+	chips.add_theme_constant_override("h_separation", 12)
+	chips.add_theme_constant_override("v_separation", 2)
 	for p: Dictionary in si["sources"]:
-		bits.append("%s %d: %s %s" % [p["name"], p["level"], p["what"], p["text"]])
-	var src := _label("  ·  ".join(bits) if not bits.is_empty() else "Chưa có thẻ nào tác động.", 12, MUTED)
-	src.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	src.custom_minimum_size = Vector2(440, 0)
-	v.add_child(src)
+		# a stat card's icon already says which stat it changes; a skill card needs the second icon
+		var icons := [String(p["id"])]
+		if run.upgrade(String(p["id"])).get("kind") == "skill":
+			icons.append(String(WHAT_ICON.get(p["what"], "star")))
+		chips.add_child(_chip(icons, String(p["text"]),
+			"%s cấp %d: %s %s" % [p["name"], p["level"], p["what"], p["text"]]))
+	if not si["sources"].is_empty():
+		v.add_child(chips)
 	return card
+
+
+## A small icon + text group with a tooltip. Icons after the first are drawn
+## smaller (they say which stat the first one changes).
+func _chip(icons: Array, text: String, tip: String, col := MUTED, sz := 12, note := "") -> HBoxContainer:
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 3)
+	h.tooltip_text = tip
+	h.mouse_filter = Control.MOUSE_FILTER_PASS
+	for i in icons.size():
+		var ic := _icon(String(icons[i]), 16 if i == 0 else 12)
+		ic.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		h.add_child(ic)
+	var l := _label(text, sz, col)
+	l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	h.add_child(l)
+	if note != "":
+		var n := _label(note, 12, MUTED)
+		n.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		h.add_child(n)
+	return h
+
+
+func _icon(id: String, px: int) -> TextureRect:
+	var t := TextureRect.new()
+	t.texture = UiIcons.texture(id)
+	t.custom_minimum_size = Vector2(px, px)
+	t.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	t.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	t.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	t.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return t
 
 
 func show_settings() -> void:

@@ -69,13 +69,19 @@ func _draw() -> void:
 	var frac := clampf(float(run.xp) / float(run.xp_needed()), 0.0, 1.0)
 	draw_rect(Rect2(0, 0, w, 10), BACK)
 	draw_rect(Rect2(2, 2, (w - 4) * frac, 6), XP_BAR)
-	# level: star with the number in its middle
-	UiIcons.draw(self, "star", Vector2(32, ROW), 3.0)
-	_centered(font, Vector2(32, _baseline(ROW + 2, 18)), str(run.level), 18)
+	# level: star icon + number beside it (like kills / gold); the number used to sit
+	# on the star and its outline ran into the star's edge (user 2026-11-17)
+	UiIcons.draw(self, "star", Vector2(28, ROW), 2.0)
+	var lvl := str(run.level)
+	_text(font, Vector2(48, _baseline(ROW, 22)), lvl, 22)
+	# room for two digits, so the hp bar does not move when the level reaches 10
+	var lw := maxf(font.get_string_size(lvl, HORIZONTAL_ALIGNMENT_LEFT, -1, 22).x,
+		font.get_string_size("88", HORIZONTAL_ALIGNMENT_LEFT, -1, 22).x)
 	# hp: heart + bar with the number in its middle
 	var max_hp := float(run.stats["max_hp"])
-	UiIcons.draw(self, "heart", Vector2(78, ROW), 2.0)
-	var bar := Rect2(96, ROW - 10, 200, 20)
+	var hx := roundf(48 + lw + 30)
+	UiIcons.draw(self, "heart", Vector2(hx, ROW), 2.0)
+	var bar := Rect2(hx + 18, ROW - 10, 200, 20)
 	draw_rect(bar, BACK)
 	draw_rect(Rect2(bar.position + Vector2(2, 2), Vector2((bar.size.x - 4) * clampf(run.hp / max_hp, 0.0, 1.0), 16)), HP_BAR)
 	_centered(font, Vector2(bar.get_center().x, _baseline(ROW, 14)), "%d / %d" % [ceili(run.hp), roundi(max_hp)], 14)
