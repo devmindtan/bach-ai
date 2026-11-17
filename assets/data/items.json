@@ -1,48 +1,503 @@
 {
-  "_doc": "Every item in the game. pickups: dropped in a run and collected by walking near (pickups.radius x magnet in run_config.json). buffs: temporary buffs that appear at random near the player (timing in run_config.json buffs) and run for duration s once walked onto; effects work like upgrade effects (PlayerStats), invulnerable blocks all damage, color = HUD timer bar; aura = status sprite drawn around the hero meanwhile (made for the hero: same 48 px frame and feet anchor, each buff in its own zone so auras never overlap; aura_layer back = behind the hero, front = over it, drawn in this order so the shield bubble comes last). equipment: worn items, one per slot (head, chest, arms, legs, weapon); empty until the gear phase. Read by src/run/run.gd and the studio dashboard (tab Vat pham).",
+  "_doc": "Every item in the game. pickups: dropped in a run and collected by walking near (pickups.radius x magnet in run_config.json). buffs: temporary buffs that appear at random near the player (timing in run_config.json buffs) and run for duration s once walked onto; effects work like upgrade effects (PlayerStats), invulnerable blocks all damage, color = HUD timer bar; aura = status sprite drawn around the hero meanwhile (made for the hero: same 48 px frame and feet anchor, each buff in its own zone so auras never overlap; aura_layer back = behind the hero, front = over it, drawn in this order so the shield bubble comes last). Rarity tiers (cosmetic + power curve, buffs/equipment docs in design/buffs.md and design/equipment.md): common < rare < epic < legendary. rarity = shown colour in the gear screen and used for the drops' power level. icon = ui-icons frame. Read by src/run/run.gd and the studio dashboard (tab Vat pham).",
   "pickups": {
-    "xp_gem": { "name": "Ngọc kinh nghiệm", "sprite": "exp-gem",
-                "desc": "Rơi khi hạ quái; giá trị bằng kinh nghiệm của quái đó. Nhặt đủ thì lên cấp và chọn 1 trong 3 thẻ." },
-    "gold": { "name": "Đồng vàng", "sprite": "gold-coin",
-              "desc": "Có tỉ lệ rơi thêm khi hạ quái. Tích lũy qua các lượt chơi." },
-    "chest": { "name": "Rương báu", "sprite": "chest",
-               "desc": "Quái tinh anh (vòng sáng vàng) rơi ra khi chết. Nhặt được thì chọn thêm 1 thẻ nâng cấp." }
+    "xp_gem": {
+      "name": "Ngọc kinh nghiệm",
+      "sprite": "exp-gem",
+      "desc": "Rơi khi hạ quái; giá trị bằng kinh nghiệm của quái đó. Nhặt đủ thì lên cấp và chọn 1 trong 3 thẻ."
+    },
+    "gold": {
+      "name": "Đồng vàng",
+      "sprite": "gold-coin",
+      "desc": "Có tỉ lệ rơi thêm khi hạ quái. Tích lũy qua các lượt chơi."
+    },
+    "chest": {
+      "name": "Rương báu",
+      "sprite": "chest",
+      "desc": "Quái tinh anh (vòng sáng vàng) rơi ra khi chết. Nhặt được thì chọn thêm 1 thẻ nâng cấp."
+    }
   },
   "buffs": {
-    "haste_rune": { "name": "Rune tốc độ", "sprite": "haste-rune-pickup", "aura": "aura-haste", "color": "#f2c040", "aura_layer": "back", "duration": 8.0,
-                    "effects": { "move_speed": { "mul": 0.4 }, "cooldown": { "mul": -0.3 } },
-                    "desc": "Trong 8 giây: tốc độ chạy +40%, hồi chiêu −30%." },
-    "power_orb": { "name": "Ngọc sức mạnh", "sprite": "arcane-empower-pickup", "aura": "aura-power", "color": "#b47cf0", "aura_layer": "front", "duration": 8.0,
-                   "effects": { "damage": { "mul": 0.5 } },
-                   "desc": "Trong 8 giây: sát thương mọi đòn +50%." },
-    "heal_bloom": { "name": "Hoa hồi phục", "sprite": "heal-bloom-pickup", "aura": "aura-heal", "color": "#6fd66a", "aura_layer": "front", "duration": 6.0,
-                    "effects": { "regen": { "add": 6.0 } },
-                    "desc": "Trong 6 giây: hồi 6 máu mỗi giây." },
-    "magnetic_shield": { "name": "Khiên từ", "sprite": "magnetic-shield-pickup", "aura": "aura-shield", "color": "#6fc3ff", "aura_layer": "front", "duration": 6.0,
-                         "effects": { "magnet": { "mul": 3.0 } }, "invulnerable": true,
-                         "desc": "Trong 6 giây: miễn mọi sát thương, tầm hút vật phẩm ×4." }
+    "haste_rune": {
+      "name": "Rune tốc độ",
+      "sprite": "haste-rune-pickup",
+      "aura": "aura-haste",
+      "color": "#f2c040",
+      "aura_layer": "back",
+      "duration": 8.0,
+      "effects": {
+        "move_speed": {
+          "mul": 0.3
+        },
+        "cooldown": {
+          "mul": -0.25
+        }
+      },
+      "desc": "Trong 8 giây: tốc độ chạy +30%, hồi chiêu −25%.",
+      "rarity": "rare"
+    },
+    "power_orb": {
+      "name": "Ngọc sức mạnh",
+      "sprite": "arcane-empower-pickup",
+      "aura": "aura-power",
+      "color": "#b47cf0",
+      "aura_layer": "front",
+      "duration": 8.0,
+      "effects": {
+        "damage": {
+          "mul": 0.35
+        }
+      },
+      "desc": "Trong 8 giây: sát thương mọi đòn +35%.",
+      "rarity": "common"
+    },
+    "heal_bloom": {
+      "name": "Hoa hồi phục",
+      "sprite": "heal-bloom-pickup",
+      "aura": "aura-heal",
+      "color": "#6fd66a",
+      "aura_layer": "front",
+      "duration": 6.0,
+      "effects": {
+        "regen": {
+          "add": 7.0
+        }
+      },
+      "desc": "Trong 6 giây: hồi 7 máu mỗi giây.",
+      "rarity": "common"
+    },
+    "magnetic_shield": {
+      "name": "Khiên từ",
+      "sprite": "magnetic-shield-pickup",
+      "aura": "aura-shield",
+      "color": "#6fc3ff",
+      "aura_layer": "front",
+      "duration": 5.0,
+      "effects": {
+        "magnet": {
+          "mul": 2.5
+        }
+      },
+      "invulnerable": true,
+      "desc": "Trong 5 giây: miễn mọi sát thương, tầm hút vật phẩm ×2.5.",
+      "rarity": "epic"
+    }
   },
   "equipment": {
     "_doc": "Equipment (src/meta/profile.gd): one item per slot (head, chest, arms, legs, weapon); class = only that class can wear it; rarity common | rare | epic (the colour of its frame); effects work like card effects (PlayerStats, level 1). icon = ui-icons frame. Won at the end of a stage, sometimes from a chest; the lobby's Trang bị panel equips them. starter = given once on the first visit.",
-    "iron_helm":     { "name": "Mũ sắt", "slot": "head", "rarity": "common", "icon": "iron_helm", "starter": true,
-                       "effects": { "max_hp": { "add": 15.0 } }, "desc": "+15 máu tối đa." },
-    "wizard_hat":    { "name": "Mũ phù thủy", "slot": "head", "class": "mage", "rarity": "common", "icon": "wizard_hat",
-                       "effects": { "cooldown": { "mul": -0.08 } }, "desc": "Hồi chiêu −8%." },
-    "steel_chest":   { "name": "Giáp ngực thép", "slot": "chest", "class": "knight", "rarity": "rare", "icon": "steel_chest",
-                       "effects": { "armor": { "add": 3.0 } }, "desc": "+3 giáp." },
-    "mage_robe":     { "name": "Áo choàng phép", "slot": "chest", "class": "mage", "rarity": "rare", "icon": "mage_robe",
-                       "effects": { "max_hp": { "add": 10.0 }, "area": { "mul": 0.1 } }, "desc": "+10 máu tối đa, vùng phép +10%." },
-    "war_gloves":    { "name": "Găng chiến", "slot": "arms", "rarity": "common", "icon": "war_gloves",
-                       "effects": { "damage": { "mul": 0.08 } }, "desc": "Sát thương +8%." },
-    "arcane_bracer": { "name": "Vòng tay phép", "slot": "arms", "class": "mage", "rarity": "rare", "icon": "arcane_bracer",
-                       "effects": { "cooldown": { "mul": -0.06 }, "damage": { "mul": 0.05 } }, "desc": "Hồi chiêu −6%, sát thương +5%." },
-    "swift_boots":   { "name": "Ủng nhẹ", "slot": "legs", "rarity": "common", "icon": "swift_boots", "starter": true,
-                       "effects": { "move_speed": { "mul": 0.12 } }, "desc": "Tốc độ chạy +12%." },
-    "woven_shoes":   { "name": "Giày bện", "slot": "legs", "rarity": "common", "icon": "woven_shoes",
-                       "effects": { "magnet": { "mul": 0.3 }, "regen": { "add": 0.5 } }, "desc": "Tầm hút +30%, hồi 0,5 máu/giây." },
-    "steel_sword":   { "name": "Kiếm thép", "slot": "weapon", "class": "knight", "rarity": "rare", "icon": "steel_sword",
-                       "effects": { "damage": { "mul": 0.15 } }, "desc": "Sát thương +15%." },
-    "crystal_staff": { "name": "Gậy pha lê", "slot": "weapon", "class": "mage", "rarity": "rare", "icon": "crystal_staff",
-                       "effects": { "damage": { "mul": 0.12 }, "area": { "mul": 0.08 } }, "desc": "Sát thương +12%, vùng phép +8%." }
+    "iron_helm": {
+      "name": "Mũ sắt",
+      "slot": "head",
+      "rarity": "common",
+      "icon": "iron_helm",
+      "starter": true,
+      "effects": {
+        "max_hp": {
+          "add": 15.0
+        }
+      },
+      "desc": "+15 máu tối đa."
+    },
+    "wizard_hat": {
+      "name": "Mũ phù thủy",
+      "slot": "head",
+      "class": "mage",
+      "rarity": "common",
+      "icon": "wizard_hat",
+      "effects": {
+        "cooldown": {
+          "mul": -0.08
+        }
+      },
+      "desc": "Hồi chiêu −8%."
+    },
+    "steel_chest": {
+      "name": "Giáp ngực thép",
+      "slot": "chest",
+      "class": "knight",
+      "rarity": "rare",
+      "icon": "steel_chest",
+      "effects": {
+        "armor": {
+          "add": 3.0
+        }
+      },
+      "desc": "+3 giáp."
+    },
+    "mage_robe": {
+      "name": "Áo choàng phép",
+      "slot": "chest",
+      "class": "mage",
+      "rarity": "rare",
+      "icon": "mage_robe",
+      "effects": {
+        "max_hp": {
+          "add": 10.0
+        },
+        "area": {
+          "mul": 0.1
+        }
+      },
+      "desc": "+10 máu tối đa, vùng phép +10%."
+    },
+    "war_gloves": {
+      "name": "Găng chiến",
+      "slot": "arms",
+      "rarity": "common",
+      "icon": "war_gloves",
+      "effects": {
+        "damage": {
+          "mul": 0.08
+        }
+      },
+      "desc": "Sát thương +8%."
+    },
+    "arcane_bracer": {
+      "name": "Vòng tay phép",
+      "slot": "arms",
+      "class": "mage",
+      "rarity": "rare",
+      "icon": "arcane_bracer",
+      "effects": {
+        "cooldown": {
+          "mul": -0.06
+        },
+        "damage": {
+          "mul": 0.05
+        }
+      },
+      "desc": "Hồi chiêu −6%, sát thương +5%."
+    },
+    "swift_boots": {
+      "name": "Ủng nhẹ",
+      "slot": "legs",
+      "rarity": "common",
+      "icon": "swift_boots",
+      "starter": true,
+      "effects": {
+        "move_speed": {
+          "mul": 0.12
+        }
+      },
+      "desc": "Tốc độ chạy +12%."
+    },
+    "woven_shoes": {
+      "name": "Giày bện",
+      "slot": "legs",
+      "rarity": "common",
+      "icon": "woven_shoes",
+      "effects": {
+        "magnet": {
+          "mul": 0.3
+        },
+        "regen": {
+          "add": 0.5
+        }
+      },
+      "desc": "Tầm hút +30%, hồi 0,5 máu/giây."
+    },
+    "steel_sword": {
+      "name": "Kiếm thép",
+      "slot": "weapon",
+      "class": "knight",
+      "rarity": "rare",
+      "icon": "steel_sword",
+      "effects": {
+        "damage": {
+          "mul": 0.15
+        }
+      },
+      "desc": "Sát thương +15%."
+    },
+    "crystal_staff": {
+      "name": "Gậy pha lê",
+      "slot": "weapon",
+      "class": "mage",
+      "rarity": "rare",
+      "icon": "crystal_staff",
+      "effects": {
+        "damage": {
+          "mul": 0.12
+        },
+        "area": {
+          "mul": 0.08
+        }
+      },
+      "desc": "Sát thương +12%, vùng phép +8%."
+    },
+    "dragon_helm": {
+      "name": "Mũ rồng",
+      "slot": "head",
+      "class": "knight",
+      "rarity": "epic",
+      "icon": "iron_helm",
+      "effects": {
+        "armor": {
+          "add": 2.0
+        },
+        "max_hp": {
+          "add": 20.0
+        }
+      },
+      "desc": "+2 giáp, +20 máu tối đa."
+    },
+    "void_hat": {
+      "name": "Mũ hư không",
+      "slot": "head",
+      "class": "mage",
+      "rarity": "epic",
+      "icon": "wizard_hat",
+      "effects": {
+        "cooldown": {
+          "mul": -0.1
+        },
+        "regen": {
+          "add": 1.0
+        }
+      },
+      "desc": "Hồi chiêu −10%, hồi 1 máu/giây."
+    },
+    "dragon_chest": {
+      "name": "Giáp rồng",
+      "slot": "chest",
+      "class": "knight",
+      "rarity": "epic",
+      "icon": "steel_chest",
+      "effects": {
+        "armor": {
+          "add": 4.0
+        },
+        "max_hp": {
+          "add": 25.0
+        }
+      },
+      "desc": "+4 giáp, +25 máu tối đa."
+    },
+    "void_robe": {
+      "name": "Áo choàng hư không",
+      "slot": "chest",
+      "class": "mage",
+      "rarity": "epic",
+      "icon": "mage_robe",
+      "effects": {
+        "max_hp": {
+          "add": 15.0
+        },
+        "area": {
+          "mul": 0.12
+        },
+        "damage": {
+          "mul": 0.1
+        }
+      },
+      "desc": "+15 máu tối đa, vùng phép +12%, sát thương +10%."
+    },
+    "dragon_hands": {
+      "name": "Găng rồng",
+      "slot": "arms",
+      "class": "knight",
+      "rarity": "epic",
+      "icon": "war_gloves",
+      "effects": {
+        "damage": {
+          "mul": 0.12
+        },
+        "area": {
+          "mul": 0.06
+        }
+      },
+      "desc": "Sát thương +12%, vùng đánh +6%."
+    },
+    "void_hands": {
+      "name": "Vòng tay hư không",
+      "slot": "arms",
+      "class": "mage",
+      "rarity": "epic",
+      "icon": "arcane_bracer",
+      "effects": {
+        "cooldown": {
+          "mul": -0.1
+        },
+        "damage": {
+          "mul": 0.1
+        }
+      },
+      "desc": "Hồi chiêu −10%, sát thương +10%."
+    },
+    "dragon_boots": {
+      "name": "Ủng rồng",
+      "slot": "legs",
+      "class": "knight",
+      "rarity": "epic",
+      "icon": "swift_boots",
+      "effects": {
+        "move_speed": {
+          "mul": 0.18
+        },
+        "regen": {
+          "add": 1.0
+        }
+      },
+      "desc": "Tốc độ chạy +18%, hồi 1 máu/giây."
+    },
+    "void_boots": {
+      "name": "Giày hư không",
+      "slot": "legs",
+      "class": "mage",
+      "rarity": "epic",
+      "icon": "woven_shoes",
+      "effects": {
+        "magnet": {
+          "mul": 0.5
+        },
+        "cooldown": {
+          "mul": -0.05
+        }
+      },
+      "desc": "Tầm hút +50%, hồi chiêu −5%."
+    },
+    "dragon_blade": {
+      "name": "Kiếm rồng",
+      "slot": "weapon",
+      "class": "knight",
+      "rarity": "epic",
+      "icon": "steel_sword",
+      "effects": {
+        "damage": {
+          "mul": 0.18
+        },
+        "area": {
+          "mul": 0.1
+        }
+      },
+      "desc": "Sát thương +18%, vùng đánh +10%."
+    },
+    "void_staff": {
+      "name": "Gậy hư không",
+      "slot": "weapon",
+      "class": "mage",
+      "rarity": "epic",
+      "icon": "crystal_staff",
+      "effects": {
+        "damage": {
+          "mul": 0.15
+        },
+        "cooldown": {
+          "mul": -0.08
+        },
+        "area": {
+          "mul": 0.08
+        }
+      },
+      "desc": "Sát thương +15%, hồi chiêu −8%, vùng phép +8%."
+    },
+    "aegis_helm": {
+      "name": "Mũ Thần Hộ",
+      "slot": "head",
+      "class": "knight",
+      "rarity": "legendary",
+      "icon": "iron_helm",
+      "effects": {
+        "max_hp": {
+          "add": 40.0
+        },
+        "armor": {
+          "add": 4.0
+        }
+      },
+      "desc": "+40 máu tối đa, +4 giáp."
+    },
+    "void_crown": {
+      "name": "Vương miện hư không",
+      "slot": "head",
+      "class": "mage",
+      "rarity": "legendary",
+      "icon": "wizard_hat",
+      "effects": {
+        "cooldown": {
+          "mul": -0.15
+        },
+        "damage": {
+          "mul": 0.1
+        },
+        "regen": {
+          "add": 2.0
+        }
+      },
+      "desc": "Hồi chiêu −15%, sát thương +10%, hồi 2 máu/giây."
+    },
+    "aegis_chest": {
+      "name": "Giáp Thần Hộ",
+      "slot": "chest",
+      "class": "knight",
+      "rarity": "legendary",
+      "icon": "steel_chest",
+      "effects": {
+        "armor": {
+          "add": 6.0
+        },
+        "max_hp": {
+          "add": 40.0
+        },
+        "regen": {
+          "add": 1.0
+        }
+      },
+      "desc": "+6 giáp, +40 máu tối đa, hồi 1 máu/giây."
+    },
+    "void_heart": {
+      "name": "Áo choàng trái tim",
+      "slot": "chest",
+      "class": "mage",
+      "rarity": "legendary",
+      "icon": "mage_robe",
+      "effects": {
+        "damage": {
+          "mul": 0.18
+        },
+        "area": {
+          "mul": 0.18
+        },
+        "max_hp": {
+          "add": 25.0
+        }
+      },
+      "desc": "Sát thương +18%, vùng phép +18%, +25 máu tối đa."
+    },
+    "aegis_blade": {
+      "name": "Kiếm Thần Hộ",
+      "slot": "weapon",
+      "class": "knight",
+      "rarity": "legendary",
+      "icon": "god_hammer",
+      "effects": {
+        "damage": {
+          "mul": 0.25
+        },
+        "area": {
+          "mul": 0.15
+        }
+      },
+      "desc": "Sát thương +25%, vùng đánh +15%."
+    },
+    "void_eternal": {
+      "name": "Gậy Vĩnh Cửu",
+      "slot": "weapon",
+      "class": "mage",
+      "rarity": "legendary",
+      "icon": "crystal_staff",
+      "effects": {
+        "damage": {
+          "mul": 0.22
+        },
+        "cooldown": {
+          "mul": -0.12
+        },
+        "area": {
+          "mul": 0.15
+        }
+      },
+      "desc": "Sát thương +22%, hồi chiêu −12%, vùng phép +15%."
+    }
   }
 }
