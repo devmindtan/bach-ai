@@ -66,8 +66,8 @@ dùng mốc cấp thay cho rương boss vì mỗi ải là một trận 5 phút.
 
 | Mốc cấp | Chiêu độc nhất (Kiếm sĩ / Pháp sư) | Nội tại mới | Luật mới |
 |---|---|---|---|
-| 10 | **Địa chấn**: nứt đất dưới quái ngẫu nhiên, choáng / **Cầu hư không**: cầu tím bay xuyên quái, làm chậm | **Khát máu**: hạ tinh anh hoặc boss hồi 20% máu tối đa | **Song kích**: +1 số lượng mọi chiêu |
-| 20 | **Thái dương xạ**: tia nắng xuyên 5 quái, gây bỏng / **Bão tuyết**: lốc băng quanh người, làm chậm rồi đóng băng | **Hộ thể**: mỗi 25 s có Khiên từ 4 s (miễn sát thương) | **Thêm lựa chọn**: lên cấp có 4 thẻ |
+| 10 | **Địa chấn**: nứt đất dưới quái ngẫu nhiên, choáng / **Cầu hư không**: cầu tím bay xuyên quái, làm chậm | **Khát máu**: hạ tinh anh hoặc boss hồi 20% máu tối đa | **Đa phép**: +1 số lượng mọi chiêu (hiếm: chỉ có ở mốc cấp) |
+| 20 | **Thái dương xạ**: tia nắng xuyên 5 quái, gây bỏng / **Bão tuyết**: lốc băng giáng xuống quái ở xa (120–360 px), làm chậm rồi đóng băng | **Hộ thể**: mỗi 25 s có Khiên từ 4 s (miễn sát thương) | **Thêm lựa chọn**: lên cấp có 4 thẻ |
 | 30 | **Búa thần**: búa giáng xuống quái gần nhất, choáng / **Bão sét**: sét đánh nhiều quái, giật lan | **Bất tử**: một lần, chết thì sống lại với 50% máu | **Bứt tốc**: được chọn ngay 2 thẻ lên cấp |
 
 - Nhảy nhiều cấp một lúc (ví dụ 9 → 11) vẫn mở đúng một bảng cho mỗi mốc đã qua, mỗi mốc một lần mỗi trận.

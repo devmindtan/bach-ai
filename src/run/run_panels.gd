@@ -56,6 +56,70 @@ func show_level_up(ids: Array[String], title := "Lên cấp! Chọn một") -> v
 	_fit_cards.call_deferred(row)
 
 
+## A count card (Thêm đòn / Thêm phép): pick the one skill that gets +1 count.
+## Each card: the skill's icon, name, its count now -> after.
+func show_skill_pick(card_name: String, ids: Array[String]) -> void:
+	var root := _open("%s: chọn một chiêu để +1 số lượng" % card_name, false)
+	var sub := _label("Chỉ chiêu bạn chọn được thêm; các chiêu khác giữ nguyên.", 16, MUTED)
+	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	root.add_child(sub)
+	var row := HFlowContainer.new()
+	row.alignment = FlowContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("h_separation", 14)
+	row.add_theme_constant_override("v_separation", 14)
+	row.custom_minimum_size = Vector2(1100, 0)
+	root.add_child(row)
+	for i in ids.size():
+		var b := _skill_pick_card(ids[i], func() -> void: run.choose(i))
+		row.add_child(b)
+		if i == 0:
+			b.call_deferred("grab_focus")
+
+
+## One skill in the count-card pick: its icon, name and level, and the count now -> after.
+func _skill_pick_card(sid: String, pick: Callable) -> Button:
+	var u: Dictionary = run.upgrade(sid)
+	var now: int = run.skill_count_now(sid)
+	var own := int(run.skill_extra.get(sid, 0))
+	var b := Button.new()
+	b.custom_minimum_size = Vector2(340, 100)
+	b.add_theme_stylebox_override("normal", _style(CARD))
+	b.add_theme_stylebox_override("hover", _style(CARD_HOVER, Color.WHITE))
+	b.add_theme_stylebox_override("pressed", _style(CARD_HOVER, Color.WHITE))
+	b.add_theme_stylebox_override("focus", _style(CARD_HOVER, Color.WHITE))
+	var h := HBoxContainer.new()
+	h.set_anchors_preset(Control.PRESET_FULL_RECT)
+	h.offset_left = 14
+	h.offset_right = -14
+	h.add_theme_constant_override("separation", 14)
+	h.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.add_child(h)
+	var ic := _icon(String(u.get("icon", sid)), 56)
+	ic.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	h.add_child(ic)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 0)
+	v.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	h.add_child(v)
+	v.add_child(_label(String(u.get("name", sid)), 20, MILESTONE))
+	v.add_child(_label("Cấp %d%s" % [int(run.levels.get(sid, 0)), ("  ·  đã thêm +%d" % own) if own > 0 else ""], 13, MUTED))
+	var num := HBoxContainer.new()
+	num.add_theme_constant_override("separation", 8)
+	num.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	v.add_child(num)
+	num.add_child(_label("×%d" % now, 20, TEXT))
+	num.add_child(_label("→", 20, MUTED))
+	num.add_child(_label("×%d" % (now + 1), 20, Color("8fe08a")))
+	for c in num.get_children():
+		(c as Control).mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for c in v.get_children():
+		(c as Control).mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.pressed.connect(pick)
+	return b
+
+
 ## Level milestone (10/20/30): one of three rewards for the rest of this run only
 ## (design/progression.md). Keys 1-3 or a click pick, like a level-up.
 func show_milestone_pick(level: int, ids: Array[String]) -> void:
@@ -578,7 +642,7 @@ func _skill_row(si: Dictionary) -> PanelContainer:
 	nums.add_child(_chip(["haste"], "%.2f s" % si["cooldown"], "Hồi chiêu (gốc %.2f s)" % si["base_cooldown"], TEXT, 16))
 	nums.add_child(_chip(["reach"], "×%.2f" % si["size"], "Vùng", TEXT, 16))
 	if int(si.get("count", 1)) > 1:
-		nums.add_child(_chip([], "×%d" % int(si["count"]), "Số lượng mỗi lần ra chiêu", MILESTONE, 16, "lần"))
+		nums.add_child(_chip([], "×%d" % int(si["count"]), "Số lượng mỗi lần ra chiêu.\n" + String(si.get("count_parts", "")), MILESTONE, 16, "lần"))
 	v.add_child(nums)
 	# total change per stat; each card / buff on hover
 	var tot := {}

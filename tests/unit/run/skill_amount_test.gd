@@ -33,15 +33,40 @@ func test_aoe_skills_cast_more_with_level() -> void:
 	r.free()
 
 
-func test_amount_card_adds_one_to_every_skill() -> void:
+func test_amount_card_adds_one_to_the_chosen_skill_only() -> void:
+	# user 2026-11-17: Thêm phép / Thêm đòn give +1 to ONE skill the player picks;
+	# only the rare Đa phép (level milestone) adds to every skill
 	var r := _run("mage", {"arcane_bolt": 1, "fireball": 1})
 	var sk: Dictionary = r.pool["skills"]
-	var before: int = r._skill_count("fireball", sk["fireball"])
-	r.levels["multicast"] = 2
+	var fb: int = r._skill_count("fireball", sk["fireball"])
+	var ab: int = r._skill_count("arcane_bolt", sk["arcane_bolt"])
+	r.levels["multicast"] = 1
 	r._recompute_stats()
-	_check(r._skill_count("fireball", sk["fireball"]) == before + 2, "multicast 2: +2 fireballs")
-	_check(r._skill_count("arcane_bolt", sk["arcane_bolt"]) == 1 + 2, "and +2 bolts")
+	_check(r._skill_count("fireball", sk["fireball"]) == fb, "taking the card alone adds nothing yet")
+	r.add_skill_extra("fireball")
+	_check(r._skill_count("fireball", sk["fireball"]) == fb + 1, "the chosen fireball: +1")
+	_check(r._skill_count("arcane_bolt", sk["arcane_bolt"]) == ab, "the other skill unchanged")
+	r.add_skill_extra("fireball")
+	_check(r._skill_count("fireball", sk["fireball"]) == fb + 2, "it stacks on the same skill")
 	r.free()
+
+
+func test_amount_card_offers_owned_attacks_only() -> void:
+	var r := _run("knight", {"blade_arc": 1, "earth_strike": 2, "dash": 1})
+	var ids: Array = r.skill_pick_ids()
+	_check(ids.has("blade_arc") and ids.has("earth_strike"), "owned attacks offered, got %s" % [ids])
+	_check(not ids.has("dash") and not ids.has("whirlwind"), "no dash (player-cast), nothing not owned")
+	r.free()
+
+
+func test_only_milestone_rewards_add_to_every_skill() -> void:
+	for cls in ["knight", "mage"]:
+		var pool := GameData.load_json("res://assets/data/upgrades_%s.json" % cls)
+		for u: Dictionary in pool.get("upgrades", []):
+			_check(not u.get("effects", {}).has("amount"), "%s card %s must not add to every skill" % [cls, u["id"]])
+	var ms := GameData.load_json("res://assets/data/milestones.json")
+	_check(ms["rewards"]["twin_cast"].get("effects", {}).has("amount") and ms["rewards"]["twin_cast"]["name"] == "Đa phép",
+		"Đa phép is the level-milestone reward adding to every skill")
 
 
 func test_nearest_n_sorted() -> void:

@@ -18,6 +18,7 @@ extends Node2D
 ##   --offer=a,b,c   the first level-up offers these upgrade ids (shots of the cards)
 ##   --rewards=a,b   start with these level milestone rewards (shots/tests: design/progression.md)
 ##   --milestone=N   open the level-N milestone pick at the start (shots)
+##   --pick-card=ID  take count card ID at the start and open its skill pick (shots)
 ##   --no-auto-pick  the demo stops at the first level-up panel (for shots)
 ##   --hitboxes      draw hit areas: effects (red while dealing damage), monster
 ##                   bodies, the player's body and pickup radius
@@ -58,6 +59,9 @@ var rewards: Array[String] = []   # level milestone rewards picked in this run (
 var _ms_queue: Array[int] = []    # milestone levels reached, their pick not shown yet
 var _ms_done: Array[int] = []     # milestone levels already offered in this run
 var ms_level := 0                 # the milestone level whose pick is open (0 = a normal level-up)
+var skill_extra := {}             # skill id -> count added by Thêm đòn / Thêm phép on that skill only
+var skill_pick := 0               # > 0: the open panel picks the skill a count card adds to
+var _pick_card := ""              # --pick-card=ID (shots)
 var _guardian_t := 0.0        # Hộ thể: seconds until the next shield
 var _guardian_every := 0.0    # 0 = the slot does not own it
 var _guardian_buff := ""
@@ -254,6 +258,12 @@ func _ready() -> void:
 	# --milestone=N (shots): the level milestone pick opens at the start
 	if not _ms_queue.is_empty():
 		_open_level_up.call_deferred()
+	elif _pick_card != "":   # --pick-card=ID (shots): its skill pick at the start
+		(func() -> void:
+			choices.assign([_pick_card])
+			state = State.LEVEL_UP
+			pending_levels += 1
+			choose(0)).call_deferred()
 
 	if bench > 0:
 		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
@@ -313,6 +323,8 @@ func _parse_args() -> void:
 			# Debug/shots: the first level-up offers these cards, e.g. --offer=earth_strike,haste,back_slash
 			for id in a.get_slice("=", 1).split(",", false):
 				offer.append(id)
+		elif a.begins_with("--pick-card="):
+			_pick_card = a.get_slice("=", 1)
 		elif a.begins_with("--milestone="):
 			_ms_queue.append(int(a.get_slice("=", 1)))
 		elif a.begins_with("--rewards="):
@@ -580,7 +592,7 @@ func _skills(dt: float) -> void:
 			_aim()
 			_add_fx(sprite, _slash_anim(attack_dir), sc, dmg, -1.0, null, "blade_arc")
 			# amount: one more slash at each next nearest monster's side
-			var extra := int(stats.get("amount", 0.0))
+			var extra := amount_for("blade_arc")
 			if extra > 0:
 				var done := [attack_dir]
 				for i in enemies.nearest_n(player_pos + _hit_center, extra + 4):
@@ -599,7 +611,7 @@ func _skills(dt: float) -> void:
 		if _whirl_left > 0.0:
 			_whirl_left -= dt
 			var dur := float(w.get("duration", 0.9))
-			var ticks := maxi(1, int(w.get("ticks", 3)) + int(stats.get("amount", 0.0)))
+			var ticks := maxi(1, int(w.get("ticks", 3)) + amount_for("whirlwind"))
 			var due := int(floor((dur - maxf(_whirl_left, 0.0)) / dur * ticks)) + 1
 			while _whirl_ticks_done < mini(due, ticks):
 				_whirl_ticks_done += 1
@@ -671,7 +683,55 @@ func _skill_sprite(sid: String, ts: Dictionary) -> String:
 func _skill_count(sid: String, ts: Dictionary) -> int:
 	var c: Array = ts.get("count", [])
 	var base := 1 if c.is_empty() else maxi(1, int(c[clampi(int(levels.get(sid, 1)) - 1, 0, c.size() - 1)]))
-	return base + int(stats.get("amount", 0.0))   # the amount cards add one to every skill
+	return base + amount_for(sid)
+
+
+## Count added to skill [param sid] on top of its level: the count cards put on it
+## (Thêm đòn / Thêm phép, one chosen skill each) plus Đa phép (a level milestone,
+## the only thing adding to every skill).
+func amount_for(sid: String) -> int:
+	return int(skill_extra.get(sid, 0)) + int(stats.get("amount", 0.0))
+
+
+## The count of skill [param sid] now, as the skill uses it: casts / targets /
+## projectiles; slashes for Chém kiếm; ticks for Lốc xoáy.
+func skill_count_now(sid: String) -> int:
+	var ts: Dictionary = pool.get("skills", {}).get(sid, {})
+	match sid:
+		"blade_arc":
+			return 1 + amount_for(sid)
+		"whirlwind":
+			return maxi(1, int(ts.get("ticks", 3)) + amount_for(sid))
+	return _skill_count(sid, ts)
+
+
+## Where skill [param sid]'s count comes from, one line each (character sheet):
+## its level, the count cards put on it, Đa phép.
+func count_parts(sid: String) -> String:
+	var own := int(skill_extra.get(sid, 0))
+	var all := int(stats.get("amount", 0.0))
+	var lines := ["Theo cấp của chiêu: ×%d" % (skill_count_now(sid) - own - all)]
+	if own > 0:
+		lines.append("Thẻ Thêm đòn / Thêm phép chọn chiêu này: +%d" % own)
+	if all > 0:
+		lines.append("Đa phép (mốc cấp, mọi chiêu): +%d" % all)
+	return "\n".join(lines)
+
+
+## A count card's +1 (pick_skill) goes on skill [param sid].
+func add_skill_extra(sid: String, n := 1) -> void:
+	skill_extra[sid] = int(skill_extra.get(sid, 0)) + n
+
+
+## Skills a count card can go on: owned attacks (not the player-cast dash).
+func skill_pick_ids() -> Array[String]:
+	var out: Array[String] = []
+	var defs: Dictionary = pool.get("skills", {})
+	for u: Dictionary in pool.get("upgrades", []):
+		var sid := String(u.get("id", ""))
+		if u.get("kind") == "skill" and int(levels.get(sid, 0)) > 0 and String(defs.get(sid, {}).get("cast", "")) != "active":
+			out.append(sid)
+	return out
 
 
 func _cast(sid: String, ts: Dictionary, how: String) -> void:
@@ -718,6 +778,12 @@ func _cast(sid: String, ts: Dictionary, how: String) -> void:
 					"anim": String(ts.get("anim", "burst")), "under": bool(ts.get("under_hero", false))})
 		"random":
 			var pool_i := enemies.living_within(center, float(ts.get("cast_range", 300.0)))
+			# a ranged skill (min_range) skips monsters close to the hero while farther ones exist
+			var min_r := float(ts.get("min_range", 0.0))
+			if min_r > 0.0:
+				var far := pool_i.filter(func(i: int) -> bool: return enemies.pos[i].distance_to(center) >= min_r)
+				if not far.is_empty():
+					pool_i = far
 			for k in _skill_count(sid, ts):
 				if pool_i.is_empty():
 					break
@@ -917,7 +983,7 @@ func skill_info() -> Array:
 		out.append({"id": id, "name": u.get("name", id), "level": lv, "max": int(u.get("max_level", 1)),
 			"damage": skill_damage(id), "cooldown": skill_cooldown(id), "size": skill_size(id),
 			"base_damage": skill_damage(id, plain), "base_cooldown": skill_cooldown(id, plain), "sources": sources,
-			"statuses": on_hit(id), "count": _skill_count(id, pool.get("skills", {}).get(id, {}))})
+			"statuses": on_hit(id), "count": skill_count_now(id), "count_parts": count_parts(id)})
 	return out
 
 
@@ -1145,11 +1211,31 @@ func choose(index: int) -> void:
 	if ms_level > 0:
 		take_milestone(id)
 		return
+	if skill_pick > 0:   # the skill a count card goes on
+		add_skill_extra(id, skill_pick)
+		skill_pick = 0
+		_after_pick()
+		return
 	levels[id] = int(levels.get(id, 0)) + 1
+	var n_pick := int(upgrade(id).get("pick_skill", 0))
+	if n_pick > 0 and not skill_pick_ids().is_empty():
+		# Thêm đòn / Thêm phép: the player now picks the one skill it adds to
+		skill_pick = n_pick
+		choices = skill_pick_ids()
+		_demo_pick_t = 0.0
+		if _panels != null:
+			_panels.show_skill_pick(String(upgrade(id).get("name", id)), choices)
+		return
+	_after_pick()
+
+
+func _after_pick() -> void:
 	var old_max := float(stats.get("max_hp", 100.0))
 	_recompute_stats()
 	hp += maxf(0.0, float(stats["max_hp"]) - old_max)
 	pending_levels -= 1
+	if _panels == null:   # unit tests
+		return
 	_panels.hide_all()
 	state = State.PLAYING
 	if pending_levels > 0:

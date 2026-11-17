@@ -118,7 +118,7 @@ func test_twin_cast_adds_one_to_every_skill() -> void:
 	var p: Dictionary = plain.pool["skills"][sk]
 	var before: int = plain._skill_count(sk, p)
 	_check(is_equal_approx(float(r.stats.get("amount", 0.0)), float(plain.stats.get("amount", 0.0)) + 1.0),
-		"Song kích: amount %s vs %s" % [r.stats.get("amount"), plain.stats.get("amount")])
+		"Đa phép: amount %s vs %s" % [r.stats.get("amount"), plain.stats.get("amount")])
 	_check(r._skill_count(sk, p) == before + 1, "one more fireball: %d -> %d" % [before, r._skill_count(sk, p)])
 	plain.free()
 	r.free()

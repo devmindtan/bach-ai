@@ -22,3 +22,22 @@ phần thưởng **mới** (chiêu độc nhất, nội tại mới hoặc luậ
 
 `passive` có: `id`, `name`, `desc` và các con số (`hp_below`, `damage_mul`, `taken_mul`, `vs_status_mul`). Code:
 `Run.passive_active`, `Run.damage_taken_mul`, `Enemies.vs_status_mul`; test `tests/unit/run/passive_test.gd`.
+
+## Số lượng chiêu (người dùng 2026-11-17)
+
+Số lượng (số nhát, số đạn, số mục tiêu, số lần nổ) của **mỗi chiêu tính riêng**:
+
+```text
+số lượng = theo cấp của chiêu (count trong upgrades_<class>.json)
+         + số thẻ Thêm đòn / Thêm phép đã đặt vào chính chiêu đó
+         + Đa phép (phần thưởng mốc cấp, chỉ trong trận)
+```
+
+- **Thêm đòn** (kiếm sĩ), **Thêm phép** (pháp sư): thẻ thường, tối đa 3 lần; chọn thẻ xong mở bảng chọn **một** chiêu
+  đang có (không có Lướt), chiêu đó +1; dồn được vào cùng chiêu.
+- **Đa phép**: thứ duy nhất +1 cho mọi chiêu, hiếm: chỉ là phần thưởng mốc cấp 10.
+- Bảng Nhân vật: tooltip của "×N lần" ghi từng phần (theo cấp / thẻ chọn chiêu này / Đa phép).
+- Tham khảo: Vampire Survivors, số đạn tăng theo cấp riêng của từng vũ khí, còn Duplicator (+1 cho mọi vũ khí) là
+  món hiếm ([wiki Duplicator](https://vampire-survivors.fandom.com/wiki/Duplicator)).
+- Test: `tests/unit/run/skill_amount_test.gd`.
+
