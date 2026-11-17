@@ -1,0 +1,137 @@
+{
+  "frames": 36,
+  "frame_size": [
+    20,
+    20
+  ],
+  "fps": 14.0,
+  "loop": true,
+  "anchor": [
+    11.0,
+    10.0
+  ],
+  "anchor_source": "explicit",
+  "animations": [
+    {
+      "name": "fly",
+      "start": 0,
+      "frames": 6,
+      "fps": 14.0,
+      "loop": true,
+      "hitbox": {
+        "shape": "rect",
+        "center": [
+          8.0,
+          10.5
+        ],
+        "active": [
+          0,
+          5
+        ],
+        "half_w": 6.0,
+        "half_h": 3.5
+      }
+    },
+    {
+      "name": "fly_right",
+      "start": 6,
+      "frames": 6,
+      "fps": 14.0,
+      "loop": true,
+      "hitbox": {
+        "shape": "rect",
+        "center": [
+          8.0,
+          10.5
+        ],
+        "active": [
+          0,
+          5
+        ],
+        "half_w": 6.0,
+        "half_h": 3.5
+      }
+    },
+    {
+      "name": "fly_left",
+      "start": 12,
+      "frames": 6,
+      "fps": 14.0,
+      "loop": true,
+      "hitbox": {
+        "shape": "rect",
+        "center": [
+          12.0,
+          9.5
+        ],
+        "active": [
+          0,
+          5
+        ],
+        "half_w": 6.0,
+        "half_h": 3.5
+      }
+    },
+    {
+      "name": "fly_up",
+      "start": 18,
+      "frames": 6,
+      "fps": 14.0,
+      "loop": true,
+      "hitbox": {
+        "shape": "rect",
+        "center": [
+          10.5,
+          12.0
+        ],
+        "active": [
+          0,
+          5
+        ],
+        "half_w": 3.5,
+        "half_h": 6.0
+      }
+    },
+    {
+      "name": "fly_down",
+      "start": 24,
+      "frames": 6,
+      "fps": 14.0,
+      "loop": true,
+      "hitbox": {
+        "shape": "rect",
+        "center": [
+          9.5,
+          8.0
+        ],
+        "active": [
+          0,
+          5
+        ],
+        "half_w": 3.5,
+        "half_h": 6.0
+      }
+    },
+    {
+      "name": "impact",
+      "start": 30,
+      "frames": 6,
+      "fps": 16.0,
+      "loop": false,
+      "hitbox": {
+        "shape": "rect",
+        "center": [
+          10.5,
+          10.0
+        ],
+        "active": [
+          0,
+          5
+        ],
+        "half_w": 9.5,
+        "half_h": 10.0
+      }
+    }
+  ],
+  "source": "sprite-lab/sprites/arcane-bolt"
+}

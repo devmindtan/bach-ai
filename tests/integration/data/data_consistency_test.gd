@@ -154,4 +154,6 @@ func test_every_upgrade_has_a_card_icon() -> void:
 			continue
 		var pool := GameData.load_json(DATA + String(classes[cid].get("upgrades", "")))
 		for u: Dictionary in pool.get("upgrades", []):
-			_check(icons.has_animation(String(u["id"])), "upgrade %s has no icon in ui-icons (draw it in Sprite Lab)" % u["id"])
+			# a card may borrow another card's icon with "icon"
+			var icon_id := String(u.get("icon", u["id"]))
+			_check(icons.has_animation(icon_id), "upgrade %s has no icon '%s' in ui-icons (draw it in Sprite Lab)" % [u["id"], icon_id])

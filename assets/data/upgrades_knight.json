@@ -60,7 +60,7 @@
       "id": "haste",
       "kind": "stat",
       "name": "Nhanh tay",
-      "desc": "-10% thời gian hồi chiêu.",
+      "desc": "-10% thời gian hồi của mọi chiêu.",
       "max_level": 5,
       "weight": 4,
       "effects": {
@@ -225,8 +225,8 @@
   "skills": {
     "blade_arc": {
       "sprite": "sword-slash",
+      "cooldown": 0.9,
       "damage_mul": 1.0,
-      "cooldown_mul": 1.0,
       "size_mul": 1.0,
       "back_damage_mul": 0.5,
       "back_damage_per_level": 0.25,

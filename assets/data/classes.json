@@ -1,5 +1,5 @@
 {
-  "_doc": "Character classes. stats are the level-1 base; upgrades list the pool rolled on level-up (upgrades_<class>.json). The body circle comes from the sprite json 'body'.",
+  "_doc": "Character classes. stats are the level-1 base (cooldown is a x multiplier on every skill's own cooldown); upgrades list the pool rolled on level-up (upgrades_<class>.json). The body circle comes from the sprite json 'body'.",
   "knight": {
     "name": "Kiếm sĩ",
     "sprite": "swordsman",
@@ -7,7 +7,7 @@
       "max_hp": 100.0,
       "move_speed": 150.0,
       "damage": 20.0,
-      "cooldown": 0.9,
+      "cooldown": 1.0,
       "area": 1.0,
       "regen": 0.0,
       "armor": 0.0,
@@ -17,5 +17,23 @@
       "blade_arc": 1
     },
     "upgrades": "upgrades_knight.json"
+  },
+  "mage": {
+    "name": "Pháp sư",
+    "sprite": "mage",
+    "stats": {
+      "max_hp": 80.0,
+      "move_speed": 145.0,
+      "damage": 18.0,
+      "cooldown": 1.0,
+      "area": 1.0,
+      "regen": 0.0,
+      "armor": 0.0,
+      "magnet": 1.1
+    },
+    "start_skills": {
+      "arcane_bolt": 1
+    },
+    "upgrades": "upgrades_mage.json"
   }
 }

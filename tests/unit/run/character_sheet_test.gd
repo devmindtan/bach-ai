@@ -27,7 +27,7 @@ func test_breakdown_lists_each_source_and_matches_compute() -> void:
 	var r := _run({"blade_arc": 1, "haste": 4, "sharpen": 2})
 	var b: Dictionary = PlayerStats.breakdown(r.base_stats, r.pool["upgrades"], r.levels)
 	var cd: Dictionary = b["cooldown"]
-	_check(is_equal_approx(float(cd["base"]), 0.9), "cooldown base 0.9, got %s" % cd["base"])
+	_check(is_equal_approx(float(cd["base"]), 1.0), "cooldown base x1.00 (a multiplier on every skill), got %s" % cd["base"])
 	_check(is_equal_approx(float(cd["final"]), float(r.stats["cooldown"])), "final equals compute()")
 	_check(cd["parts"].size() == 1 and cd["parts"][0]["id"] == "haste", "one source: haste, got %s" % [cd["parts"]])
 	_check(is_equal_approx(float(cd["parts"][0]["mul"]), -0.4), "haste 4 = -40%%, got %s" % cd["parts"][0]["mul"])
@@ -68,4 +68,16 @@ func test_wave_and_column_counts_follow_the_level() -> void:
 	_check(r._skill_count("holy_column", sk["holy_column"]) == 3, "holy column 5: three columns")
 	r.levels["cleave_wave"] = 1
 	_check(r._skill_count("cleave_wave", sk["cleave_wave"]) == 1, "cleave wave 1: one wave")
+	r.free()
+
+
+func test_cooldown_stat_is_one_multiplier_for_every_skill() -> void:
+	# user 2026-11-17: the cooldown stat speeds up ALL skills, not only the basic attack
+	var r := _run({"blade_arc": 1, "whirlwind": 1, "earth_strike": 1, "haste": 2})
+	_check(is_equal_approx(float(r.base_stats["cooldown"]), 1.0), "class cooldown stat is a x1.00 multiplier")
+	_check(is_equal_approx(float(r.stats["cooldown"]), 0.8), "haste 2: x0.80, got %s" % r.stats["cooldown"])
+	for sid in ["blade_arc", "whirlwind", "earth_strike"]:
+		var own := float(r.pool["skills"][sid]["cooldown"])
+		_check(is_equal_approx(r.skill_cooldown(sid), own * 0.8), "%s: own %.2f s x 0.8, got %.2f" % [sid, own, r.skill_cooldown(sid)])
+	_check(r._fmt_stat("cooldown", 0.8) == "-20%", "shown as a percentage, got %s" % r._fmt_stat("cooldown", 0.8))
 	r.free()

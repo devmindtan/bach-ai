@@ -98,7 +98,7 @@ func _upgrade_card(i: int, id: String) -> Button:
 	tile.add_theme_stylebox_override("panel", ts)
 	tile.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var icon := TextureRect.new()
-	icon.texture = UiIcons.texture(id)
+	icon.texture = run.icon_texture(id)
 	icon.custom_minimum_size = Vector2(48, 48)
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -250,7 +250,7 @@ func _owned_tile(o: Dictionary, info: RichTextLabel) -> Button:
 	b.add_theme_stylebox_override("focus", _style(CARD_HOVER, Color.WHITE))
 	b.add_theme_stylebox_override("pressed", _style(CARD_HOVER, Color.WHITE))
 	var icon := TextureRect.new()
-	icon.texture = UiIcons.texture(o["id"])
+	icon.texture = run.icon_texture(String(o["id"]))
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -634,7 +634,7 @@ func _damage_table(report: Array) -> GridContainer:
 		var name := HBoxContainer.new()
 		name.add_theme_constant_override("separation", 8)
 		var icon := TextureRect.new()
-		icon.texture = UiIcons.texture(r["id"])
+		icon.texture = run.icon_texture(String(r["id"]))
 		icon.custom_minimum_size = Vector2(24, 24)
 		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED

@@ -152,7 +152,7 @@ func _draw_skill_bar(font: Font) -> void:
 		var r := Rect2(x, y, SLOT, SLOT)
 		var cd: Array = run.cooldown_state(si["id"])
 		draw_rect(r, BACK)
-		var tex := UiIcons.texture(si["id"])
+		var tex: Texture2D = run.icon_texture(String(si["id"]))
 		if tex != null:
 			draw_texture_rect(tex, Rect2(r.position + Vector2(8, 8), Vector2(32, 32)), false)
 		var left := float(cd[0])

@@ -1,0 +1,367 @@
+{
+  "_doc": "Mage level-up pool. kind skill = an attack the run uses; stat = a modifier. effects apply per level: add (flat) or mul (+fraction). weight = roll weight. skills.<id>.cast says how the run casts it: nearest (burst cast_range px toward the nearest monster), self (burst on the hero), random (count[level-1] bursts on random monsters within cast_range), wave (anim_prefix + direction, flies at speed px/s through monsters, count[level-1] directions: nearest, opposite, then the two others), active (player-triggered: the dash; sprite = the hero, anim = its animation). tier_sprites pick the sprite by level. under_hero = the effect is drawn behind the hero (ground effects around it, e.g. the stomp). on_hit = statuses the skill puts on monsters it hits (assets/data/statuses.json), each from a skill level. projectile = flies at speed px/s for duration s toward the nearest monster (count fan out 12 deg); it hits when its fly hitbox (from the sprite) touches a monster: explode = the impact animation hitbox deals the damage, else the fly hitbox does and it pierces pierce more monsters; impact = its hit animation. icon = borrow another card icon.",
+  "upgrades": [
+    {
+      "id": "arcane_bolt",
+      "kind": "skill",
+      "name": "Tia phép",
+      "desc": "Bắn tia phép về phía quái gần nhất. Mỗi cấp: +20% sát thương; cấp 3: 2 tia; cấp 5: 3 tia.",
+      "max_level": 5,
+      "weight": 3,
+      "effects": {
+        "skill_damage.arcane_bolt": {
+          "mul": 0.2
+        }
+      }
+    },
+    {
+      "id": "fireball",
+      "kind": "skill",
+      "name": "Cầu lửa",
+      "desc": "Ném cầu lửa nổ khi chạm quái, gây bỏng vùng nổ. Mỗi cấp: +25% sát thương, +10% vùng nổ.",
+      "max_level": 5,
+      "weight": 2,
+      "effects": {
+        "skill_damage.fireball": {
+          "mul": 0.25
+        },
+        "skill_area.fireball": {
+          "mul": 0.1
+        }
+      }
+    },
+    {
+      "id": "frost_nova",
+      "kind": "skill",
+      "name": "Băng nổ",
+      "desc": "Băng nổ ở phía quái gần nhất, làm chậm quái. Mỗi cấp: +25% sát thương, +8% vùng, hình mạnh hơn; cấp 3: đóng băng.",
+      "max_level": 5,
+      "weight": 2,
+      "effects": {
+        "skill_damage.frost_nova": {
+          "mul": 0.25
+        },
+        "skill_area.frost_nova": {
+          "mul": 0.08
+        }
+      }
+    },
+    {
+      "id": "lightning",
+      "kind": "skill",
+      "name": "Sét đánh",
+      "desc": "Sét giáng xuống quái ngẫu nhiên gần đó, điện lan sang quái bên cạnh. Mỗi cấp: +20% sát thương; cấp 3: 2 tia sét; cấp 5: 3 tia.",
+      "max_level": 5,
+      "weight": 2,
+      "effects": {
+        "skill_damage.lightning": {
+          "mul": 0.2
+        }
+      }
+    },
+    {
+      "id": "thunder_javelin",
+      "kind": "skill",
+      "name": "Giáo sấm",
+      "desc": "Phóng giáo sấm xuyên qua mọi quái trên đường. Mỗi cấp: +20% sát thương; cấp 3: giật điện.",
+      "max_level": 5,
+      "weight": 2,
+      "effects": {
+        "skill_damage.thunder_javelin": {
+          "mul": 0.2
+        }
+      }
+    },
+    {
+      "id": "meteor",
+      "kind": "skill",
+      "name": "Mưa thiên thạch",
+      "desc": "Thiên thạch rơi xuống quái ngẫu nhiên, gây bỏng. Mỗi cấp: +25% sát thương; cấp 4: 2 viên.",
+      "max_level": 5,
+      "weight": 2,
+      "effects": {
+        "skill_damage.meteor": {
+          "mul": 0.25
+        },
+        "skill_area.meteor": {
+          "mul": 0.08
+        }
+      }
+    },
+    {
+      "id": "dash",
+      "kind": "skill",
+      "name": "Lướt",
+      "desc": "Bấm Space / Shift (tay cầm RB) để lướt theo hướng đang đi: không bị trúng đòn khi lướt, chém quái trên đường. Mỗi cấp: -12% hồi lướt, +20% sát thương. Cấp 3: gây choáng.",
+      "max_level": 5,
+      "weight": 2,
+      "effects": {
+        "skill_damage.dash": {
+          "mul": 0.2
+        },
+        "skill_cd.dash": {
+          "mul": -0.12
+        }
+      }
+    },
+    {
+      "id": "arcane_power",
+      "kind": "stat",
+      "name": "Pháp lực",
+      "desc": "+15% sát thương mọi phép.",
+      "max_level": 5,
+      "weight": 4,
+      "icon": "sharpen",
+      "effects": {
+        "damage": {
+          "mul": 0.15
+        }
+      }
+    },
+    {
+      "id": "quick_cast",
+      "kind": "stat",
+      "name": "Niệm nhanh",
+      "desc": "-10% thời gian hồi của mọi chiêu.",
+      "max_level": 5,
+      "weight": 4,
+      "icon": "haste",
+      "effects": {
+        "cooldown": {
+          "mul": -0.1
+        }
+      }
+    },
+    {
+      "id": "wide_magic",
+      "kind": "stat",
+      "name": "Mở rộng",
+      "desc": "+15% vùng phép.",
+      "max_level": 5,
+      "weight": 3,
+      "icon": "reach",
+      "effects": {
+        "area": {
+          "mul": 0.15
+        }
+      }
+    },
+    {
+      "id": "vitality",
+      "kind": "stat",
+      "name": "Sinh lực",
+      "desc": "+20 máu tối đa và hồi đầy phần thêm.",
+      "max_level": 5,
+      "weight": 3,
+      "effects": {
+        "max_hp": {
+          "add": 20.0
+        }
+      }
+    },
+    {
+      "id": "swift",
+      "kind": "stat",
+      "name": "Nhẹ chân",
+      "desc": "+10% tốc độ chạy.",
+      "max_level": 5,
+      "weight": 3,
+      "effects": {
+        "move_speed": {
+          "mul": 0.1
+        }
+      }
+    },
+    {
+      "id": "magnet",
+      "kind": "stat",
+      "name": "Nam châm",
+      "desc": "+40% tầm hút vật phẩm.",
+      "max_level": 3,
+      "weight": 2,
+      "effects": {
+        "magnet": {
+          "mul": 0.4
+        }
+      }
+    },
+    {
+      "id": "regen",
+      "kind": "stat",
+      "name": "Hồi phục",
+      "desc": "Hồi 0.5 máu mỗi giây.",
+      "max_level": 4,
+      "weight": 2,
+      "effects": {
+        "regen": {
+          "add": 0.5
+        }
+      }
+    },
+    {
+      "id": "mana_shield",
+      "kind": "stat",
+      "name": "Áo phép",
+      "desc": "+2 giáp: mỗi đòn của quái trừ đi 2 sát thương.",
+      "max_level": 5,
+      "weight": 3,
+      "icon": "toughness",
+      "effects": {
+        "armor": {
+          "add": 2.0
+        }
+      }
+    }
+  ],
+  "skills": {
+    "arcane_bolt": {
+      "sprite": "arcane-bolt",
+      "cast": "projectile",
+      "anim_prefix": "fly_",
+      "impact": "impact",
+      "damage_mul": 1.0,
+      "size_mul": 1.0,
+      "cooldown": 1.0,
+      "speed": 360.0,
+      "pierce": 0,
+      "count": [
+        1,
+        1,
+        2,
+        2,
+        3
+      ],
+      "duration": 1.2
+    },
+    "fireball": {
+      "sprite": "fireball",
+      "cast": "projectile",
+      "anim_prefix": "fly_",
+      "impact": "impact",
+      "damage_mul": 1.3,
+      "size_mul": 1.2,
+      "cooldown": 2.6,
+      "speed": 280.0,
+      "pierce": 0,
+      "on_hit": [
+        {
+          "from": 1,
+          "status": "burn",
+          "dps_mul": 0.25,
+          "time": 2.0
+        }
+      ],
+      "duration": 1.5,
+      "explode": true
+    },
+    "frost_nova": {
+      "sprite": "frost-nova-i",
+      "tier_sprites": [
+        "frost-nova-i",
+        "frost-nova-ii",
+        "frost-nova-iii",
+        "frost-nova-iv",
+        "frost-nova-v"
+      ],
+      "damage_mul": 1.0,
+      "size_mul": 1.0,
+      "cooldown": 3.5,
+      "cast_range": 140.0,
+      "cast": "nearest",
+      "anim": "burst",
+      "on_hit": [
+        {
+          "from": 1,
+          "status": "slow",
+          "mul": 0.5,
+          "time": 1.5
+        },
+        {
+          "from": 3,
+          "status": "freeze",
+          "time": 1.2
+        }
+      ]
+    },
+    "lightning": {
+      "sprite": "lightning-strike",
+      "cast": "random",
+      "anim": "strike",
+      "damage_mul": 1.3,
+      "size_mul": 1.0,
+      "cooldown": 2.8,
+      "cast_range": 320.0,
+      "count": [
+        1,
+        1,
+        2,
+        2,
+        3
+      ],
+      "on_hit": [
+        {
+          "from": 1,
+          "status": "shock",
+          "chain": 2,
+          "mul": 0.5,
+          "radius": 90.0
+        }
+      ]
+    },
+    "thunder_javelin": {
+      "sprite": "thunder-javelin",
+      "cast": "projectile",
+      "anim_prefix": "fly_",
+      "impact": "impact",
+      "damage_mul": 1.1,
+      "size_mul": 1.0,
+      "cooldown": 2.4,
+      "speed": 420.0,
+      "pierce": 99,
+      "on_hit": [
+        {
+          "from": 3,
+          "status": "shock",
+          "chain": 2,
+          "mul": 0.4,
+          "radius": 80.0
+        }
+      ],
+      "duration": 1.25
+    },
+    "meteor": {
+      "sprite": "meteor-fall",
+      "cast": "random",
+      "anim": "strike",
+      "damage_mul": 2.2,
+      "size_mul": 1.2,
+      "cooldown": 5.0,
+      "cast_range": 340.0,
+      "count": [
+        1,
+        1,
+        1,
+        2,
+        2
+      ],
+      "on_hit": [
+        {
+          "from": 1,
+          "status": "burn",
+          "dps_mul": 0.3,
+          "time": 2.5
+        }
+      ]
+    },
+    "dash": {
+      "sprite": "mage",
+      "anim": "dash",
+      "cast": "active",
+      "damage_mul": 0.6,
+      "cooldown": 3.0,
+      "distance": 130.0,
+      "time": 0.18,
+      "hit_radius": 26.0
+    }
+  }
+}

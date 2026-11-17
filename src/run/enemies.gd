@@ -327,6 +327,14 @@ func hit_box(hb: SpriteHitbox, damage: float, knockback := 140.0, source := "", 
 	return hits
 
 
+## True when a living monster's body overlaps [param hb] (no damage).
+func overlaps(hb: SpriteHitbox) -> bool:
+	for i in living_within(hb.center, hb.radius + 48.0):
+		if hb.contains(center_of(i), k_radius[kind[i]]):
+			return true
+	return false
+
+
 ## Arc area around [param center] (half angle in radians; PI = full circle).
 ## Convenience for tests and effects without a sprite.
 func hit_arc(center: Vector2, facing: Vector2, radius: float, half_angle: float, damage: float,

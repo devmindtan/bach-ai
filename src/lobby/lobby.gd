@@ -1,12 +1,12 @@
 extends Node2D
 ## The lobby (waiting screen) before a run: title, the hero idling on the
 ## stage's grass, the chosen class with its base stats (icons), the stage, and
-## Start / Quit. Start (Enter, or A on a pad) loads the run scene.
+## Start / Quit. Start (Enter, or A on a pad) loads the run scene. The class
+## switches with the ‹ › buttons or Left / Right; the choice is saved (Prefs.hero).
 
 const DATA := "res://assets/data/"
 const SPRITES := "res://assets/sprites/custom/"
 const RUN_SCENE := "res://src/run/run.tscn"
-const CLASS_ID := "knight"
 const STAGE_FILE := "waves/stage_001.json"
 const HERO_SCALE := 5.0
 
@@ -23,20 +23,50 @@ var _stage: Dictionary
 var _t := 0.0
 var _scroll := Vector2.ZERO
 var _layer: CanvasLayer
+var _classes := {}
+var _class_ids: Array[String] = []
 
 
 func _ready() -> void:
-	_class = GameData.load_json(DATA + "classes.json").get(CLASS_ID, {})
+	_classes = GameData.load_json(DATA + "classes.json")
+	for id: String in _classes:
+		if not id.begins_with("_"):
+			_class_ids.append(id)
 	_stage = GameData.load_json(DATA + STAGE_FILE)
-	var sprite := String(_class.get("sprite", "swordsman"))
-	_hero = SpriteSheet.load_dir(SPRITES + sprite, sprite)
-	if _hero != null and not _hero.layer_names().is_empty():
-		_hero.compose_layers()   # equipment will pass its layers here
+	_load_class(Prefs.current().hero)
 	_build_ui()
 	get_viewport().size_changed.connect(func() -> void:
 		if _layer != null:
 			_layer.queue_free()
 		_build_ui())
+
+
+func _load_class(id: String) -> void:
+	if not _classes.has(id):
+		id = _class_ids[0]
+	_class = _classes[id]
+	var sprite := String(_class.get("sprite", "swordsman"))
+	_hero = SpriteSheet.load_dir(SPRITES + sprite, sprite)
+	if _hero != null and not _hero.layer_names().is_empty():
+		_hero.compose_layers()   # equipment will pass its layers here
+
+
+## Next / previous class (step +1 / -1): saved for the run, the menu rebuilt.
+func switch_class(step: int) -> void:
+	var i := _class_ids.find(Prefs.current().hero)
+	var id := _class_ids[posmod(i + step, _class_ids.size())]
+	Prefs.current().set_value("hero", id)
+	_load_class(id)
+	if _layer != null:
+		_layer.queue_free()
+	_build_ui()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_left"):
+		switch_class(-1)
+	elif event.is_action_pressed("ui_right"):
+		switch_class(1)
 
 
 func _process(delta: float) -> void:
@@ -94,7 +124,17 @@ func _build_ui() -> void:
 	var cv := VBoxContainer.new()
 	cv.add_theme_constant_override("separation", 8)
 	card.add_child(cv)
-	cv.add_child(_label(String(_class.get("name", CLASS_ID)), 30, TEXT))
+	# class name between ‹ › (Left / Right also switch)
+	var head := HBoxContainer.new()
+	head.add_theme_constant_override("separation", 8)
+	cv.add_child(head)
+	var prev := _arrow("‹", func() -> void: switch_class(-1))
+	head.add_child(prev)
+	var cname := _label(String(_class.get("name", "")), 30, TEXT)
+	cname.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	cname.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	head.add_child(cname)
+	head.add_child(_arrow("›", func() -> void: switch_class(1)))
 	var stats: Dictionary = _class.get("stats", {})
 	cv.add_child(_stat("heart", "Máu", "%d" % roundi(float(stats.get("max_hp", 0)))))
 	cv.add_child(_stat("sword", "Sát thương", "%d" % roundi(float(stats.get("damage", 0)))))
@@ -125,7 +165,7 @@ func _build_ui() -> void:
 	start.call_deferred("grab_focus")
 	_keep_above.call_deferred(col, vp.y - HINT_SPACE)
 
-	var hint := _label("Enter: bắt đầu  ·  WASD / mũi tên: di chuyển  ·  Esc: tạm dừng", 16, MUTED)
+	var hint := _label("Enter: bắt đầu  ·  ← / →: đổi class  ·  Trong trận: WASD di chuyển, Space lướt, Tab nhân vật, Esc tạm dừng", 16, MUTED)
 	hint.position = Vector2(0, vp.y - 40)
 	hint.size = Vector2(vp.x, 24)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -155,6 +195,19 @@ func _show_settings(root: Control, menu: Control) -> void:
 	card.add_child(SettingsPanel.build(func() -> void:
 		center.queue_free()
 		menu.visible = true))
+
+
+func _arrow(text: String, cb: Callable) -> Button:
+	var b := Button.new()
+	b.text = text
+	b.custom_minimum_size = Vector2(40, 40)
+	b.focus_mode = Control.FOCUS_NONE
+	b.add_theme_font_size_override("font_size", 26)
+	b.add_theme_stylebox_override("normal", _style(PANEL_HOVER, 6))
+	b.add_theme_stylebox_override("hover", _style(Color("4a4066"), 6))
+	b.add_theme_stylebox_override("pressed", _style(Color("4a4066"), 6))
+	b.pressed.connect(cb)
+	return b
 
 
 func _stat(icon: String, label: String, value: String) -> HBoxContainer:

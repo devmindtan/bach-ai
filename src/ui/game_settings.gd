@@ -21,6 +21,7 @@ var fullscreen := false
 var scale := 0                      # 0 = auto, else 1..3
 var damage_numbers := true
 var monster_hp := true
+var hero := "knight"                # the class chosen in the lobby (classes.json id)
 var _fixed := false                 # screenshots / tests: defaults, never touch the window
 
 static var _default: Prefs
@@ -39,13 +40,18 @@ static func current() -> Prefs:
 
 
 func _ready() -> void:
+	var forced_hero := ""
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--gk-"):
 			_fixed = true
+		elif a.begins_with("--class="):   # shots / tests: play this class
+			forced_hero = a.get_slice("=", 1)
 	if DisplayServer.get_name() == "headless":
 		_fixed = true
 	if not _fixed:
 		_load()
+	if forced_hero != "":
+		hero = forced_hero
 	apply()
 	get_tree().root.size_changed.connect(_fit_scale)
 
@@ -91,6 +97,7 @@ func _load() -> void:
 	scale = clampi(int(cfg.get_value("display", "scale", scale)), 0, 3)
 	damage_numbers = bool(cfg.get_value("hud", "damage_numbers", damage_numbers))
 	monster_hp = bool(cfg.get_value("hud", "monster_hp", monster_hp))
+	hero = String(cfg.get_value("game", "hero", hero))
 
 
 func _save() -> void:
@@ -99,4 +106,5 @@ func _save() -> void:
 	cfg.set_value("display", "scale", scale)
 	cfg.set_value("hud", "damage_numbers", damage_numbers)
 	cfg.set_value("hud", "monster_hp", monster_hp)
+	cfg.set_value("game", "hero", hero)
 	cfg.save(PATH)

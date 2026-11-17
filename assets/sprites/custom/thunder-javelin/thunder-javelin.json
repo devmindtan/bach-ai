@@ -1,0 +1,137 @@
+{
+  "frames": 36,
+  "frame_size": [
+    28,
+    28
+  ],
+  "fps": 16.0,
+  "loop": true,
+  "anchor": [
+    14.0,
+    14.0
+  ],
+  "anchor_source": "explicit",
+  "animations": [
+    {
+      "name": "fly",
+      "start": 0,
+      "frames": 6,
+      "fps": 16.0,
+      "loop": true,
+      "hitbox": {
+        "shape": "rect",
+        "center": [
+          11.5,
+          14.5
+        ],
+        "active": [
+          0,
+          5
+        ],
+        "half_w": 11.5,
+        "half_h": 3.5
+      }
+    },
+    {
+      "name": "fly_right",
+      "start": 6,
+      "frames": 6,
+      "fps": 16.0,
+      "loop": true,
+      "hitbox": {
+        "shape": "rect",
+        "center": [
+          11.5,
+          14.5
+        ],
+        "active": [
+          0,
+          5
+        ],
+        "half_w": 11.5,
+        "half_h": 3.5
+      }
+    },
+    {
+      "name": "fly_left",
+      "start": 12,
+      "frames": 6,
+      "fps": 16.0,
+      "loop": true,
+      "hitbox": {
+        "shape": "rect",
+        "center": [
+          16.5,
+          13.5
+        ],
+        "active": [
+          0,
+          5
+        ],
+        "half_w": 11.5,
+        "half_h": 3.5
+      }
+    },
+    {
+      "name": "fly_up",
+      "start": 18,
+      "frames": 6,
+      "fps": 16.0,
+      "loop": true,
+      "hitbox": {
+        "shape": "rect",
+        "center": [
+          14.5,
+          16.5
+        ],
+        "active": [
+          0,
+          5
+        ],
+        "half_w": 3.5,
+        "half_h": 11.5
+      }
+    },
+    {
+      "name": "fly_down",
+      "start": 24,
+      "frames": 6,
+      "fps": 16.0,
+      "loop": true,
+      "hitbox": {
+        "shape": "rect",
+        "center": [
+          13.5,
+          11.5
+        ],
+        "active": [
+          0,
+          5
+        ],
+        "half_w": 3.5,
+        "half_h": 11.5
+      }
+    },
+    {
+      "name": "impact",
+      "start": 30,
+      "frames": 6,
+      "fps": 15.0,
+      "loop": false,
+      "hitbox": {
+        "shape": "rect",
+        "center": [
+          14.5,
+          14.5
+        ],
+        "active": [
+          0,
+          5
+        ],
+        "half_w": 12.5,
+        "half_h": 9.5
+      }
+    }
+  ],
+  "source": "sprite-lab/sprites/thunder-javelin"
+}

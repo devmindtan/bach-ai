@@ -24,7 +24,7 @@ extends Node2D
 const DATA := "res://assets/data/"
 const SPRITES := "res://assets/sprites/custom/"
 const STEP := 1.0 / 60.0
-const CLASS_ID := "knight"
+var class_id := "knight"   # Prefs.current().hero (the lobby choice, or --class=)
 const STAGE_FILE := "waves/stage_001.json"
 
 enum State { PLAYING, LEVEL_UP, PAUSED, DEAD, WON }
@@ -129,7 +129,10 @@ func _ready() -> void:
 	RunInput.register()
 	cfg = GameData.load_json(DATA + "run_config.json")
 	var classes := GameData.load_json(DATA + "classes.json")
-	class_data = classes.get(CLASS_ID, {})
+	class_id = Prefs.current().hero
+	if not classes.has(class_id):
+		class_id = "knight"
+	class_data = classes.get(class_id, {})
 	pool = GameData.load_json(DATA + String(class_data.get("upgrades", "")))
 	stage = GameData.load_json(DATA + STAGE_FILE)
 	var monsters := GameData.load_json(DATA + "monsters.json")
@@ -597,6 +600,19 @@ func _cast(sid: String, ts: Dictionary, how: String) -> void:
 					break
 				var i: int = pool_i.pop_at(rng.randi() % pool_i.size())
 				_add_fx(sprite, String(ts.get("anim", "burst")), sc, dmg, -1.0, enemies.pos[i], sid, kb)
+		"projectile":
+			# fired at the nearest monster; several fan out 12 degrees apart
+			var n := _skill_count(sid, ts)
+			var speed := float(ts.get("speed", 340.0))
+			for k in n:
+				var dv := to_target.rotated(deg_to_rad(12.0 * (k - (n - 1) * 0.5)))
+				var anim := String(ts.get("anim_prefix", "fly_")) + _dir_name(dv)
+				var fx := _add_fx(sprite, anim, sc, 0.0, float(ts.get("duration", 1.2)), center, sid, kb)
+				if fx.is_empty():
+					continue
+				fx["vel"] = dv * speed
+				fx["shot"] = {"damage": dmg, "explode": bool(ts.get("explode", false)), "pierce": int(ts.get("pierce", 0)),
+					"impact": String(ts.get("impact", "impact")), "wait": 0.0}
 		"wave":
 			var first := slash_dir(to_target)
 			var dirs := [first, -first, Vector2(first.y, first.x), Vector2(-first.y, -first.x)]
@@ -631,18 +647,15 @@ func skill_size(id: String, st: Dictionary = {}) -> float:
 	return float(st.get("area", 1.0)) * float(sp.get("size_mul", 1.0)) * PlayerStats.skill_mul(st, "skill_area." + id)
 
 
-## Seconds between casts. A skill with its own "cooldown" scales it by the class
-## cooldown stat relative to its base (so -10% haste is -10% here too); the basic
-## attack uses the cooldown stat itself (times "cooldown_mul").
+## Seconds between casts: the skill's own "cooldown" x the cooldown stat (one
+## multiplier for EVERY skill, x1.00 for a class, -10% per Nhanh tay level; user
+## 2026-11-17) x the skill's own card multiplier (skill_cd.<id>, e.g. the dash).
 func skill_cooldown(id: String, st: Dictionary = {}) -> float:
 	if st.is_empty():
 		st = stats
 	var sp: Dictionary = pool.get("skills", {}).get(id, {})
 	var own := PlayerStats.skill_mul(st, "skill_cd." + id)   # e.g. the dash card's -12% per level
-	if sp.has("cooldown"):
-		var haste := float(st.get("cooldown", 1.0)) / maxf(0.01, float(base_stats.get("cooldown", 1.0)))
-		return float(sp["cooldown"]) * haste * own
-	return float(st.get("cooldown", 1.0)) * float(sp.get("cooldown_mul", 1.0)) * own
+	return float(sp.get("cooldown", 1.0)) * float(st.get("cooldown", 1.0)) * own
 
 
 ## Cooldown shown on the HUD: [seconds left, cooldown, active]. active = the skill
@@ -798,6 +811,9 @@ func _step_fx(dt: float) -> void:
 		fx["t"] = float(fx["t"]) + dt
 		if fx.has("vel"):
 			fx["pos"] = (fx["pos"] as Vector2) + (fx["vel"] as Vector2) * dt
+		if fx.has("shot") and _step_shot(fx, dt):
+			_fx.remove_at(i)
+			continue
 		if not fx["done"]:
 			var hb := SpriteHitbox.of(fx["sheet"], fx["anim"], _fx_pos(fx), float(fx["scale"]))
 			if hb == null:
@@ -929,8 +945,9 @@ static func signed(v: float) -> String:
 
 static func _fmt_stat(key: String, v: float) -> String:
 	match key:
-		"cooldown":
-			return "%.2f s" % v
+		"cooldown":   # a multiplier on every skill's cooldown: shown as a change in percent
+			var pct := roundi((v - 1.0) * 100.0)
+			return "0%" if pct == 0 else "%+d%%" % pct
 		"area", "magnet":
 			return "×%.2f" % v
 		"regen":
@@ -961,7 +978,8 @@ func effect_levels() -> Dictionary:
 ## Icon for a card, buff or status id: ui-icons, else the first frame of the
 ## buff badge / status sprite.
 func icon_texture(id: String) -> Texture2D:
-	var t := UiIcons.texture(id)
+	# a card may borrow another icon ("icon" in upgrades_<class>.json)
+	var t := UiIcons.texture(String(upgrade(id).get("icon", id)))
 	if t != null:
 		return t
 	var sprite := String(buff_def(id).get("sprite", status_defs.get(id, {}).get("sprite", "")))
@@ -1127,6 +1145,35 @@ func _step_damage_numbers(dt: float) -> void:
 	enemies.drain_hits()
 
 
+## A flying projectile: hits when its fly hitbox (from the sprite) touches a
+## monster. explode: the impact animation's hitbox deals the damage; else the fly
+## hitbox does and it goes on through "pierce" more. Returns true when spent.
+func _step_shot(fx: Dictionary, dt: float) -> bool:
+	var sh: Dictionary = fx["shot"]
+	sh["wait"] = float(sh["wait"]) - dt
+	if float(sh["wait"]) > 0.0:
+		return false
+	var sheet: SpriteSheet = fx["sheet"]
+	var p: Vector2 = fx["pos"]
+	var hb := SpriteHitbox.of(sheet, fx["anim"], p, float(fx["scale"]))
+	if hb == null or not enemies.overlaps(hb):
+		return false
+	var src := String(fx.get("source", ""))
+	var impact := String(sh["impact"])
+	if bool(sh["explode"]) and sheet.has_animation(impact):
+		var boom := _add_fx(sheet.name, impact, float(fx["scale"]), float(sh["damage"]), -1.0, p, src, float(fx.get("kb", 140.0)))
+		if not boom.is_empty():
+			boom["effects"] = fx.get("effects", [])
+		return true
+	enemies.hit_box(hb, float(sh["damage"]), float(fx.get("kb", 140.0)), src, fx.get("effects", []))
+	if sheet.has_animation(impact):
+		_fx.append({"sheet": sheet, "anim": impact, "t": 0.0, "scale": fx["scale"], "damage": 0.0,
+			"done": true, "life": sheet.duration(impact), "pos": p, "follow": false, "source": src})
+	sh["pierce"] = int(sh["pierce"]) - 1
+	sh["wait"] = 0.15
+	return int(sh["pierce"]) < 0
+
+
 ## Skill effects; [param under] = only those drawn behind the hero (ground
 ## effects such as the stomp), else the rest, over it.
 func _draw_fx(under: bool) -> void:
@@ -1134,7 +1181,8 @@ func _draw_fx(under: bool) -> void:
 		if bool(fx.get("under", false)) != under:
 			continue
 		var sh: SpriteSheet = fx["sheet"]
-		var t := fmod(float(fx["t"]), sh.duration(fx["anim"])) if fx["anim"] == "spin" else float(fx["t"])
+		var looping: bool = fx["anim"] == "spin" or fx.has("shot")
+		var t := fmod(float(fx["t"]), sh.duration(fx["anim"])) if looping else float(fx["t"])
 		sh.draw(self, fx["anim"], t, _fx_pos(fx), float(fx["scale"]))
 
 
