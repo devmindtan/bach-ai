@@ -70,6 +70,12 @@ func _ready() -> void:
 	get_tree().root.size_changed.connect(_fit_scale)
 
 
+## Fixed mode (shots, tests): makes the preview character active when none is.
+func ensure_preview_slot() -> void:
+	if active_slot == null:
+		_make_preview_slot()
+
+
 ## An in-memory slot for shots of slot mode (never saved: fixed mode blocks writes).
 func _make_preview_slot() -> void:
 	var s := SlotStore.new_slot("Nhân vật 1", hero, slot_store().defs)

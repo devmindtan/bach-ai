@@ -1,12 +1,15 @@
 extends Node2D
-## The lobby (waiting screen) before a run: title, the hero idling on the
-## stage's grass, the chosen class with its base stats (icons), the stage, and
-## Start / Quit. Start (Enter, or A on a pad) loads the run scene. The class
-## switches with the ‹ › buttons or Left / Right; the choice is saved (Prefs.hero).
+## The preparation lobby of the chosen character (design/ux/front-end.md): the hero
+## on its pedestal with its progress, the class card (stats with equipment, passive,
+## skills, milestone rewards), equipment, stage choice and Start. Characters are
+## chosen on the character screen (src/front/characters.tscn): "Nhân vật" and Esc go
+## there, "Menu chính" goes to the title. Without a character it opens that screen.
 
 const DATA := "res://assets/data/"
 const SPRITES := "res://assets/sprites/custom/"
 const RUN_SCENE := "res://src/run/run.tscn"
+const CHARACTERS_SCENE := "res://src/front/characters.tscn"
+const TITLE_SCENE := "res://src/front/title.tscn"
 const STAGES_PATH := "res://assets/data/stages.json"
 const HERO_SCALE := 6.0
 
@@ -46,6 +49,12 @@ func _ready() -> void:
 				if e.get("slot") != null:
 					prefs.select_slot(String(e["id"]))
 					break
+	if prefs.active_slot == null:
+		if prefs.is_fixed():
+			prefs.ensure_preview_slot()   # shots: the preview character
+		else:
+			get_tree().change_scene_to_file.call_deferred(CHARACTERS_SCENE)
+			return
 	if prefs.active_slot != null:
 		_slot_mode = true
 		prefs.hero = prefs.active_slot.cls
@@ -71,20 +80,6 @@ func _load_class(id: String) -> void:
 		_hero.compose_layers()   # equipment will pass its layers here
 
 
-## Next / previous class (step +1 / -1): saved for the run, the menu rebuilt.
-## In slot mode the class is fixed (design/progression.md).
-func switch_class(step: int) -> void:
-	if _slot_mode:
-		return
-	var i := _class_ids.find(Prefs.current().hero)
-	var id := _class_ids[posmod(i + step, _class_ids.size())]
-	Prefs.current().set_value("hero", id)
-	_load_class(id)
-	if _layer != null:
-		_layer.queue_free()
-	_build_ui()
-
-
 func switch_stage(step: int) -> void:
 	var prefs := Prefs.current()
 	var max_n := _stages.count()
@@ -99,10 +94,8 @@ func switch_stage(step: int) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("ui_left"):
-		switch_class(-1)
-	elif event.is_action_pressed("ui_right"):
-		switch_class(1)
+	if event.is_action_pressed("ui_cancel") and _layer != null and _layer.get_child(0).get_child(0).visible:
+		get_tree().change_scene_to_file(CHARACTERS_SCENE)
 
 
 func _process(delta: float) -> void:
@@ -170,18 +163,18 @@ func _build_ui() -> void:
 	var accent := Color(String(_class.get("color", "c9a65a")))
 
 	# top bar: title left, settings / quit right
-	var title := _label("BÁCH ẢI", 46, GOLD)
+	var title := _label("Chuẩn bị", 46, GOLD)   # the screen's name; the logo is on the title screen
 	title.position = Vector2(32, 18)
 	menu.add_child(title)
-	var sub := _label("Vượt trăm ải", 16, MUTED)
+	var sub := _label("Trang bị, chọn ải rồi vào trận", 16, MUTED)
 	sub.position = Vector2(36, 74)
 	menu.add_child(sub)
 	var top := HBoxContainer.new()
 	top.add_theme_constant_override("separation", 10)
-	var top_buttons := [_button("Nhân vật", func() -> void: _show_slots(root, menu)),
+	var top_buttons := [_button("Nhân vật", func() -> void: get_tree().change_scene_to_file(CHARACTERS_SCENE)),
 		_button("Trang bị", func() -> void: _show_equipment(root, menu)),
 		_button("Cài đặt", func() -> void: _show_settings(root, menu)),
-		_button("Thoát", func() -> void: get_tree().quit())]
+		_button("Menu chính", func() -> void: get_tree().change_scene_to_file(TITLE_SCENE))]
 	top.position = Vector2(vp.x - 32 - top_buttons.size() * 140 - (top_buttons.size() - 1) * 10, 26)
 	menu.add_child(top)
 	for b in top_buttons:
@@ -189,16 +182,7 @@ func _build_ui() -> void:
 		b.add_theme_font_size_override("font_size", 18)
 		top.add_child(b)
 
-	# hero stage (drawn in _draw): arrows either side, name and role under it
-	if not _slot_mode:
-		var prev := _arrow("‹", func() -> void: switch_class(-1))
-		prev.position = Vector2(PEDESTAL_X - 230, PEDESTAL_Y - 150)
-		prev.custom_minimum_size = Vector2(52, 64)
-		menu.add_child(prev)
-		var nxt := _arrow("›", func() -> void: switch_class(1))
-		nxt.position = Vector2(PEDESTAL_X + 178, PEDESTAL_Y - 150)
-		nxt.custom_minimum_size = Vector2(52, 64)
-		menu.add_child(nxt)
+	# hero stage (drawn in _draw): name and role under it
 	var slot_now: Slot = Prefs.current().active_slot if _slot_mode else null
 	# slot mode: the slot's name big, "class · role" under it, then its progress
 	var cname := _label(slot_now.name if slot_now != null else String(_class.get("name", "")), 40, TEXT)
@@ -227,12 +211,6 @@ func _build_ui() -> void:
 		for it in [["star", "Ải %d" % slot_now.best, "Ải cao nhất đã vượt"], ["coin", str(slot_now.gold), "Vàng"],
 				["gem", str(slot_now.gems), "Đá (gacha, đợt 5)"]]:
 			prog.add_child(_small_stat(it[0], it[1], it[2]))
-	else:
-		var dots := _label(" ".join(_class_ids.map(func(id: String) -> String: return "●" if _classes[id] == _class else "○")), 16, MUTED)
-		dots.position = Vector2(PEDESTAL_X - 260, PEDESTAL_Y + 130)
-		dots.size = Vector2(520, 24)
-		dots.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		menu.add_child(dots)
 
 	# right: the class card (stats, passive, starting skill, skill set)
 	var card := _card()
@@ -379,13 +357,10 @@ func _build_ui() -> void:
 		_show_settings.call_deferred(root, menu)
 	if OS.get_cmdline_user_args().has("--lobby-gear"):       # shots of the equipment page
 		_show_equipment.call_deferred(root, menu)
-	if OS.get_cmdline_user_args().has("--lobby-slots"):      # shots of the slot page
-		_show_slots.call_deferred(root, menu)
 	if OS.get_cmdline_user_args().has("--lobby-stages"):     # shots of the stage grid
 		_show_stage_select.call_deferred(root, menu)
 
-	var tip := "Chọn ải / đổi nhân vật ở thanh dưới" if _slot_mode else "← / →: đổi class"
-	var hint := _label("Enter: bắt đầu  ·  %s  ·  Trong trận: WASD di chuyển, Space lướt, Tab nhân vật, Esc tạm dừng" % tip, 14, MUTED)
+	var hint := _label("Enter: bắt đầu  ·  Esc: chọn nhân vật  ·  Trong trận: WASD di chuyển, Space lướt, Tab nhân vật, Esc tạm dừng", 14, MUTED)
 	hint.position = Vector2(32, vp.y - 30)
 	menu.add_child(hint)
 
@@ -494,6 +469,7 @@ func _show_settings(root: Control, menu: Control) -> void:
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.add_child(center)
+	_dim(center)
 	var card := PanelContainer.new()
 	var st := _style(Color(0.09, 0.08, 0.13, 0.95), 24)
 	card.add_theme_stylebox_override("panel", st)
@@ -504,7 +480,7 @@ func _show_settings(root: Control, menu: Control) -> void:
 
 
 const SLOT_NAME := {"head": "Đầu", "chest": "Ngực", "arms": "Tay", "legs": "Chân", "weapon": "Vũ khí"}
-const RARITY := {"common": Color("e8e2d0"), "rare": Color("6fb7ff"), "epic": Color("c38df5")}
+const RARITY := {"common": Color("e8e2d0"), "rare": Color("6fb7ff"), "epic": Color("c38df5"), "legendary": Color("f2b64a")}
 
 
 ## Stage select: a grid of 3 regions x 10 stages (design/progression.md). Locked
@@ -565,281 +541,13 @@ func _show_stage_select(root: Control, menu: Control) -> void:
 	back.call_deferred("grab_focus")
 
 
-## Character slots (design/progression.md): a 2 x 2 grid of slot cards (hero,
-## name, class, progress, milestone rewards; Chơi / Đổi tên / Xóa) and a card to
-## create one while there is room. Fixed mode (shots, tests) lists the in-memory
-## preview slots and never writes to disk.
-func _show_slots(root: Control, menu: Control) -> void:
-	menu.visible = false
-	var center := CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	root.add_child(center)
-	_dim(center)
-	var card := PanelContainer.new()
-	card.add_theme_stylebox_override("panel", _style(Color(0.09, 0.08, 0.13, 0.97), 22))
-	center.add_child(card)
-	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 12)
-	card.add_child(col)
-	col.add_child(_label("Nhân vật", 32, GOLD))
-	col.add_child(_label("Mỗi nhân vật có class, túi đồ, tiến độ ải và phần thưởng mốc riêng (tối đa %d)." % SlotStore.MAX, 14, MUTED))
-	var prefs := Prefs.current()
-	var store := prefs.slot_store()
-	var grid := GridContainer.new()
-	grid.columns = 2
-	grid.add_theme_constant_override("h_separation", 12)
-	grid.add_theme_constant_override("v_separation", 12)
-	col.add_child(grid)
-	var refresh := func() -> void: pass
-	refresh = func() -> void:
-		for c in grid.get_children():
-			c.queue_free()
-		var entries: Array = prefs.preview_entries() if prefs.is_fixed() else store.list()
-		for e: Dictionary in entries:
-			var s: Slot = e["slot"]
-			if s == null:
-				grid.add_child(_broken_slot_card(String(e["id"]), String(e["error"]), store, refresh))
-			else:
-				grid.add_child(_slot_card(s, String(e["id"]), store, refresh))
-		if entries.size() < SlotStore.MAX:
-			grid.add_child(_new_slot_card(store, refresh))
-	var back := _button("Quay lại", func() -> void:
-		center.queue_free()
-		menu.visible = true
-		_layer.queue_free()
-		_build_ui())
-	back.custom_minimum_size = Vector2(220, 46)
-	back.add_theme_font_size_override("font_size", 18)
-	col.add_child(back)
-	refresh.call()
-	back.call_deferred("grab_focus")
-
-
-const SLOT_CARD := Vector2(470, 168)
-const PORTRAIT := 112.0
-var _portraits := {}   # class id -> SpriteSheet (layers composed)
-
-
-func _slot_panel(border: Color, bg := PANEL) -> PanelContainer:
-	var p := PanelContainer.new()
-	p.custom_minimum_size = SLOT_CARD
-	var sb := _style(bg, 12)
-	sb.border_color = border
-	p.add_theme_stylebox_override("panel", sb)
-	return p
-
-
-func _small_button(text: String, cb: Callable, bg := PANEL) -> Button:
-	var b := Button.new()
-	b.text = text
-	b.custom_minimum_size = Vector2(0, 36)
-	b.add_theme_font_size_override("font_size", 15)
-	b.add_theme_stylebox_override("normal", _style(bg, 8))
-	b.add_theme_stylebox_override("hover", _style(PANEL_HOVER, 8))
-	b.add_theme_stylebox_override("focus", _style(PANEL_HOVER, 8))
-	b.add_theme_stylebox_override("pressed", _style(PANEL_HOVER, 8))
-	b.pressed.connect(cb)
-	return b
-
-
-## The class's idle hero, feet on a dark plate.
-func _portrait(cls: String) -> Control:
-	if not _portraits.has(cls):
-		var sprite := String(_classes.get(cls, {}).get("sprite", "swordsman"))
-		var sh := SpriteSheet.load_dir(SPRITES + sprite, sprite)
-		if sh != null and not sh.layer_names().is_empty():
-			sh.compose_layers()
-		_portraits[cls] = sh
-	var sheet: SpriteSheet = _portraits[cls]
-	var c := Control.new()
-	c.custom_minimum_size = Vector2(PORTRAIT, PORTRAIT)
-	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	c.draw.connect(func() -> void:
-		c.draw_rect(Rect2(Vector2.ZERO, c.size), Color("1d1828"))
-		c.draw_rect(Rect2(Vector2(14, PORTRAIT - 22), Vector2(PORTRAIT - 28, 6)), Color(0, 0, 0, 0.4))
-		if sheet != null:
-			sheet.draw(c, "idle", 0.0, Vector2(PORTRAIT * 0.5, PORTRAIT - 18), 3.0, false))
-	return c
-
-
-func _slot_card(s: Slot, id: String, store: SlotStore, refresh: Callable) -> PanelContainer:
-	var prefs := Prefs.current()
-	var active := prefs.active_slot != null and prefs.active_slot.id == id
-	var p := _slot_panel(Color.WHITE if active else GOLD)
-	var h := HBoxContainer.new()
-	h.add_theme_constant_override("separation", 14)
-	p.add_child(h)
-	h.add_child(_portrait(s.cls))
-	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 6)
-	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	h.add_child(v)
-	# name (or the rename field) and class
-	var head := HBoxContainer.new()
-	head.add_theme_constant_override("separation", 10)
-	v.add_child(head)
-	var name_l := _label(s.name, 22, GOLD if active else TEXT)
-	name_l.clip_text = true
-	name_l.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	name_l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	head.add_child(name_l)
-	var edit := LineEdit.new()
-	edit.text = s.name
-	edit.max_length = 18
-	edit.visible = false
-	edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	head.add_child(edit)
-	var cls_l := _label(String(_classes.get(s.cls, {}).get("name", s.cls)), 15, MUTED)
-	cls_l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	head.add_child(cls_l)
-	# progress
-	var prog := HBoxContainer.new()
-	prog.add_theme_constant_override("separation", 16)
-	v.add_child(prog)
-	prog.add_child(_small_stat("star", "Ải %d" % s.best, "Ải cao nhất đã vượt"))
-	prog.add_child(_small_stat("coin", str(s.gold), "Vàng"))
-	prog.add_child(_small_stat("gem", str(s.gems), "Đá"))
-	# milestone rewards (icons), or what is waiting
-	var mrow := HBoxContainer.new()
-	mrow.add_theme_constant_override("separation", 6)
-	mrow.custom_minimum_size = Vector2(0, 28)
-	v.add_child(mrow)
-	var ms := Milestones.load_default()
-	var pool := GameData.load_json(DATA + String(_classes.get(s.cls, {}).get("upgrades", "")))
-	for rid: String in s.rewards():
-		var inf := ms.info(rid, pool.get("upgrades", []))
-		var t := _small_stat(String(inf["icon"]), String(inf["name"]), String(inf["name"]) + "\n" + String(inf["desc"]))
-		(t.get_child(1) as Label).add_theme_font_size_override("font_size", 14)
-		mrow.add_child(t)
-	if not s.pending.is_empty():
-		mrow.add_child(_label("Chờ chọn mốc ải %d" % int(s.pending[0]), 14, BOSS_GOLD))
-	elif s.rewards().is_empty():
-		mrow.add_child(_label("Chưa có phần thưởng mốc", 14, MUTED))
-	# actions
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
-	v.add_child(row)
-	var play := _small_button("Đang chơi" if active else "Chơi  ▶", func() -> void:
-		if not prefs.is_fixed():
-			prefs.select_slot(id)
-		_slot_mode = true
-		_stage_n = clampi(prefs.stage_target, 1, s.unlocked(_stages.count()))
-		_stage = _stages.load_stage(_stage_n)
-		refresh.call())
-	play.disabled = active
-	play.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(play)
-	var rename := _small_button("Đổi tên", func() -> void: pass)
-	rename.custom_minimum_size.x = 92
-	rename.pressed.connect(func() -> void:
-		if not edit.visible:   # first press: edit the name in place
-			edit.visible = true
-			name_l.visible = false
-			rename.text = "Lưu"
-			edit.grab_focus()
-			return
-		var n := edit.text.strip_edges()
-		s.name = n if n != "" else s.name
-		if not prefs.is_fixed():
-			store.save(s)
-		refresh.call())
-	row.add_child(rename)
-	var del := _small_button("Xóa", func() -> void: pass, Color("4a2424"))
-	del.custom_minimum_size.x = 92
-	del.pressed.connect(func() -> void:
-		if del.text == "Xóa":   # first press asks; the second deletes
-			del.text = "Chắc chắn?"
-			return
-		if not prefs.is_fixed():
-			store.delete(id)
-			if active:
-				prefs.active_slot = null
-				prefs.slot_id = ""
-				prefs.ensure_slots()
-		refresh.call())
-	row.add_child(del)
-	return p
-
-
-func _broken_slot_card(id: String, error: String, store: SlotStore, refresh: Callable) -> PanelContainer:
-	var p := _slot_panel(Color("a04848"), Color("2a1a20"))
-	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 8)
-	p.add_child(v)
-	v.add_child(_label("Không đọc được %s" % id, 20, Color("ff9a9a")))
-	var why := _label("Lý do: %s. Các nhân vật khác vẫn chơi bình thường; nhân vật này chỉ xóa được." % error, 14, MUTED)
-	why.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	why.custom_minimum_size = Vector2(SLOT_CARD.x - 30, 0)
-	v.add_child(why)
-	var del := _small_button("Xóa", func() -> void: pass, Color("4a2424"))
-	del.custom_minimum_size.x = 120
-	del.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	del.pressed.connect(func() -> void:
-		if del.text == "Xóa":
-			del.text = "Chắc chắn?"
-			return
-		if not Prefs.current().is_fixed():
-			store.delete(id)
-		refresh.call())
-	v.add_child(del)
-	return p
-
-
-func _new_slot_card(store: SlotStore, refresh: Callable) -> PanelContainer:
-	var prefs := Prefs.current()
-	var p := _slot_panel(Color("5a5068"), Color("1d1828"))
-	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 8)
-	p.add_child(v)
-	v.add_child(_label("+  Tạo nhân vật", 20, GOLD))
-	var name_edit := LineEdit.new()
-	name_edit.placeholder_text = "Tên nhân vật"
-	name_edit.max_length = 18
-	name_edit.custom_minimum_size = Vector2(0, 38)
-	v.add_child(name_edit)
-	var pick := HBoxContainer.new()
-	pick.add_theme_constant_override("separation", 8)
-	v.add_child(pick)
-	var chosen := [_class_ids[0] if not _class_ids.is_empty() else "knight"]
-	var class_buttons: Array[Button] = []
-	for cid: String in _class_ids:
-		var cb := _small_button(String(_classes[cid].get("name", cid)), func() -> void: pass)
-		cb.toggle_mode = true
-		cb.button_pressed = cid == chosen[0]
-		cb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		var sel := _style(Color(String(_classes[cid].get("color", "c9a65a"))).darkened(0.5), 8)
-		sel.border_color = Color.WHITE
-		cb.add_theme_stylebox_override("pressed", sel)
-		cb.pressed.connect(func() -> void:
-			chosen[0] = cid
-			for other in class_buttons:
-				other.button_pressed = other == cb)
-		class_buttons.append(cb)
-		pick.add_child(cb)
-	var make := _small_button("Tạo", func() -> void:
-		var n := name_edit.text.strip_edges()
-		if n == "":
-			n = "Nhân vật %d" % (store.list().size() + 1)
-		if prefs.is_fixed():
-			return
-		var created := store.create(n, String(chosen[0]))
-		if created == null:
-			return
-		prefs.select_slot(created.id)
-		_slot_mode = true
-		_stage_n = 1
-		_stage = _stages.load_stage(1)
-		refresh.call(), Color("3a4a2a"))
-	v.add_child(make)
-	return p
-
-
 ## Pick a pending milestone reward for [param slot] at stage [param ms].
 func _show_milestone_claim(root: Control, menu: Control, slot: Slot, ms: int) -> void:
 	menu.visible = false
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.add_child(center)
+	_dim(center)
 	var card := PanelContainer.new()
 	card.add_theme_stylebox_override("panel", _style(Color(0.09, 0.08, 0.13, 0.96), 24))
 	center.add_child(card)
@@ -917,6 +625,7 @@ func _show_equipment(root: Control, menu: Control) -> void:
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.add_child(center)
+	_dim(center)
 	var card := PanelContainer.new()
 	card.add_theme_stylebox_override("panel", _style(Color(0.09, 0.08, 0.13, 0.96), 24))
 	center.add_child(card)
@@ -926,7 +635,8 @@ func _show_equipment(root: Control, menu: Control) -> void:
 	card.add_child(col)
 	var cls := Prefs.current().hero
 	var prof := Prefs.current().profile()
-	col.add_child(_label("Trang bị · %s" % String(_class.get("name", "")), 30, GOLD))
+	var who: Slot = Prefs.current().active_slot
+	col.add_child(_label("Trang bị · %s (%s)" % [who.name if who != null else "", String(_class.get("name", ""))], 30, GOLD))
 	var rows := VBoxContainer.new()
 	rows.add_theme_constant_override("separation", 8)
 	col.add_child(rows)
@@ -944,7 +654,7 @@ func _show_equipment(root: Control, menu: Control) -> void:
 		total.text = "Tổng: " + (" · ".join(parts) if not parts.is_empty() else "chưa mặc gì.")
 	refresh.call()
 	col.add_child(total)
-	col.add_child(_label("Thắng ải hoặc mở rương tinh anh để nhận thêm trang bị. Bấm “Chọn” để mặc/bỏ.", 13, MUTED))
+	col.add_child(_label("Thắng ải hoặc mở rương tinh anh để nhận thêm trang bị. Bấm “Mặc” / “Đổi” để chọn đồ hoặc bỏ ra.", 13, MUTED))
 	var back := _button("Quay lại", func() -> void:
 		center.queue_free()
 		menu.visible = true
@@ -959,6 +669,7 @@ func _show_equipment(root: Control, menu: Control) -> void:
 func _gear_row(root: Control, prof: Profile, cls: String, slot: String, refresh: Callable) -> PanelContainer:
 	var p := PanelContainer.new()
 	p.add_theme_stylebox_override("panel", _style(Color("231d30"), 8))
+	p.custom_minimum_size = Vector2(0, 64)   # every row the same height, worn or empty
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", 12)
 	p.add_child(h)
@@ -968,13 +679,13 @@ func _gear_row(root: Control, prof: Profile, cls: String, slot: String, refresh:
 	h.add_child(sl)
 	var id := String(prof.equipped(cls).get(slot, ""))
 	var d: Dictionary = prof.defs.get(id, {})
-	var tex := TextureRect.new()
-	tex.texture = UiIcons.texture(String(d.get("icon", id))) if id != "" else null
-	tex.custom_minimum_size = Vector2(36, 36)
-	tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	tex.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	h.add_child(tex)
+	var box := PanelContainer.new()   # the item's icon in a box; an empty box when nothing is worn
+	box.add_theme_stylebox_override("panel", UiKit.style(UiKit.PANEL_DARK, 3, GOLD if id != "" else Color("4a4458")))
+	box.custom_minimum_size = Vector2(46, 46)
+	box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	if id != "":
+		box.add_child(UiKit.icon(String(d.get("icon", id)), 36.0))
+	h.add_child(box)
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 0)
 	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -984,11 +695,18 @@ func _gear_row(root: Control, prof: Profile, cls: String, slot: String, refresh:
 	if id != "":
 		v.add_child(_label(String(d.get("desc", "")), 13, MUTED))
 	var choices := prof.choices(cls, slot)
-	var b := _button("Chọn (%d)" % choices.size(), func() -> void:
+	if choices.is_empty() and id == "":   # nothing to wear: say so instead of a dead button
+		var none := _label("Chưa có đồ", 15, MUTED)
+		none.custom_minimum_size = Vector2(120, 0)
+		none.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		none.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		h.add_child(none)
+		return p
+	var b := _button(("Đổi (%d)" if id != "" else "Mặc (%d)") % choices.size(), func() -> void:
 		_show_gear_picker(root, prof, cls, slot, refresh))
 	b.custom_minimum_size = Vector2(120, 40)
+	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	b.add_theme_font_size_override("font_size", 16)
-	b.disabled = choices.is_empty() and id == ""
 	h.add_child(b)
 	return p
 
