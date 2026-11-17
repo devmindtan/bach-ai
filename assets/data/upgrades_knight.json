@@ -309,6 +309,13 @@
     },
     "cleave_wave": {
       "sprite": "cleave-wave",
+      "tier_sprites": [
+        "cleave-wave",
+        "cleave-wave-ii",
+        "cleave-wave-iii",
+        "cleave-wave-iv",
+        "cleave-wave-v"
+      ],
       "cast": "wave",
       "anim_prefix": "sweep_",
       "damage_mul": 0.9,
@@ -334,6 +341,13 @@
     },
     "holy_column": {
       "sprite": "holy-column",
+      "tier_sprites": [
+        "holy-column",
+        "holy-column-ii",
+        "holy-column-iii",
+        "holy-column-iv",
+        "holy-column-v"
+      ],
       "cast": "random",
       "anim": "descend",
       "damage_mul": 1.4,

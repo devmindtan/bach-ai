@@ -216,6 +216,13 @@
   "skills": {
     "arcane_bolt": {
       "sprite": "arcane-bolt",
+      "tier_sprites": [
+        "arcane-bolt",
+        "arcane-bolt-ii",
+        "arcane-bolt-iii",
+        "arcane-bolt-iv",
+        "arcane-bolt-v"
+      ],
       "cast": "projectile",
       "anim_prefix": "fly_",
       "impact": "impact",
@@ -235,6 +242,13 @@
     },
     "fireball": {
       "sprite": "fireball",
+      "tier_sprites": [
+        "fireball",
+        "fireball-ii",
+        "fireball-iii",
+        "fireball-iv",
+        "fireball-v"
+      ],
       "cast": "projectile",
       "anim_prefix": "fly_",
       "impact": "impact",
@@ -285,6 +299,13 @@
     },
     "lightning": {
       "sprite": "lightning-strike",
+      "tier_sprites": [
+        "lightning-strike",
+        "lightning-strike-ii",
+        "lightning-strike-iii",
+        "lightning-strike-iv",
+        "lightning-strike-v"
+      ],
       "cast": "random",
       "anim": "strike",
       "damage_mul": 1.3,
@@ -310,6 +331,13 @@
     },
     "thunder_javelin": {
       "sprite": "thunder-javelin",
+      "tier_sprites": [
+        "thunder-javelin",
+        "thunder-javelin-ii",
+        "thunder-javelin-iii",
+        "thunder-javelin-iv",
+        "thunder-javelin-v"
+      ],
       "cast": "projectile",
       "anim_prefix": "fly_",
       "impact": "impact",
@@ -331,6 +359,13 @@
     },
     "meteor": {
       "sprite": "meteor-fall",
+      "tier_sprites": [
+        "meteor-fall",
+        "meteor-fall-ii",
+        "meteor-fall-iii",
+        "meteor-fall-iv",
+        "meteor-fall-v"
+      ],
       "cast": "random",
       "anim": "strike",
       "damage_mul": 2.2,
