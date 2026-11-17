@@ -11,7 +11,7 @@ Nguyên tắc: **làm cho vòng lặp cốt lõi vui trước**, rồi mới t�
 | Thể loại | survivors-like + RPG theo class |
 | Lượt chơi | **Mỗi ải là một lượt mới**: vào ải bắt đầu cấp 1, lên cấp chọn 1/3 nâng cấp theo class, hết lượt thì cấp mất |
 | Sức mạnh lâu dài | Cây kỹ năng theo class, trang bị (vũ khí, giáp), gacha, hiệu ứng mốc mỗi 10 ải, tất cả gắn với **slot nhân vật** |
-| Hiệu ứng ải 10/20/30 | Vượt ải 10, 20, 30 (mở rộng: mỗi 10 ải) → chọn 1/3 hiệu ứng đặc biệt **vĩnh viễn** cho slot |
+| Hiệu ứng ải 10/20/30 | Vượt ải 10, 20, 30 (mở rộng: mỗi 10 ải) → chọn 1/3 phần thưởng đặc biệt **vĩnh viễn** cho slot: một **chiêu độc nhất**, một **nội tại mới** hoặc một **luật mới**; không phải nâng nội tại cũ (2026-11-17, you said). Chi tiết: `design/progression.md` |
 | Quái vật | Vẽ mới trong Sprite Lab, cùng phong cách tối giản 48 px với nhân vật |
 | Nền tảng | **PC trước** (Steam: Windows/Linux, bàn phím + tay cầm); mobile sau (đợt 8) |
 | Engine | Godot 4.7.2, GDScript, gamekit (test, shot, export) |
@@ -92,7 +92,7 @@ theo thời gian. Còn: rung màn/khựng khi chí mạng (chưa có chí mạng
 - `stages.json` + công thức scale (máu/sát thương/mật độ quái theo ải, loài quái theo vùng, boss mỗi 10 ải); ghi đè tay khi cần.
 - Màn chọn ải (1 → ải cao nhất đã mở), màn kết quả (vàng, đá gacha, điểm kỹ năng nhận được).
 - **Slot nhân vật:** tạo (chọn class, đặt tên), chơi, xoá; lưu `user://slots`.
-- **Hiệu ứng mốc ải 10/20/30:** vượt ải → chọn 1/3 hiệu ứng vĩnh viễn (ví dụ: "mỗi 10 giây phát nổ quanh người", "chiêu đầu tiên +1 đạn", "hồi 1% máu mỗi lần hạ quái tinh anh").
+- **Phần thưởng mốc ải 10/20/30:** vượt ải lần đầu → chọn 1/3 phần thưởng vĩnh viễn: chiêu độc nhất của class, nội tại mới, hoặc luật mới (`design/progression.md`).
 **Test:** công thức scale (đơn điệu tăng, không nhảy vọt), lưu/đọc slot (phiên bản schema, file hỏng → báo lỗi, không mất slot khác).
 **Xong khi:** vượt được ải 1–30 với 2 class trong thời gian hợp lý; đường cong độ khó vẽ thành biểu đồ để xem.
 

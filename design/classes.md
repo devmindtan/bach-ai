@@ -1,8 +1,8 @@
 # Class và nội tại
 
 Mỗi class có **một nội tại riêng** (`classes.json` → `passive`), luôn bật từ đầu lượt, không phải thẻ. Nội tại
-cho class một lối chơi riêng mà thẻ không thay được. Sau này các mốc ải 10/20/30 (roadmap đợt 3) sẽ cho chọn
-một trong ba cách **nâng nội tại** của slot.
+cho class một lối chơi riêng mà thẻ không thay được. Các mốc ải 10/20/30 không nâng nội tại này mà cho một
+phần thưởng **mới** (chiêu độc nhất, nội tại mới hoặc luật mới): xem `design/progression.md`.
 
 | Class | Vai trò | Nội tại | Tác dụng | Trạng thái |
 |---|---|---|---|---|
@@ -17,13 +17,6 @@ một trong ba cách **nâng nội tại** của slot.
 - **Trong trận:** icon nội tại cạnh thanh máu; sáng lên khi nội tại đang bật (Bất khuất khi máu thấp).
 - **Bảng Nhân vật:** nội tại ở đầu cột Chỉ số.
 - **Dashboard:** tab Nhân vật hiện nội tại của từng class.
-
-## Nâng nội tại (đợt 3, mốc ải 10/20/30)
-
-| Class | Hướng A | Hướng B | Hướng C |
-|---|---|---|---|
-| Kiếm sĩ | ngưỡng máu 30% → 40% | thêm hồi 2 máu/giây khi bật | khi bật: miễn choáng / đẩy lùi |
-| Pháp sư | +20% → +35% | trạng thái kéo dài +30% | quái chết khi có trạng thái thì nổ lan trạng thái |
 
 ## Dữ liệu
 
