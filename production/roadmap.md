@@ -104,8 +104,9 @@ từng vùng (đợt 6, hiện các vùng dùng chung thạch nhầy / dơi / y�
 ## Đợt 4: Cây kỹ năng + trang bị · cỡ L
 **Trạng thái (2026-11-18):** cây kỹ năng xong (`design/skill-tree.md`): 3 nhánh × 3 tầng mỗi class, mua bằng
 Tinh hoa (tinh anh rơi 1, boss rơi 10), đặt lại bằng Tẩy Tủy Đan + vàng; chế độ Thử thách (`design/challenge.md`)
-rơi Tẩy Tủy Đan; màn trang bị (búp bê giấy, túi đồ lọc/sắp xếp, so sánh); cường hoá đồ +1..+5 bằng vàng. Còn: dòng
-phụ / hiệu ứng đặc biệt ở đồ hiếm cao, đồ vẽ lên người nhân vật; chơi thử để chỉnh giá node và lượng Tinh hoa rơi.
+rơi Tẩy Tủy Đan; màn trang bị (búp bê giấy, túi đồ lọc/sắp xếp, so sánh); cường hoá đồ +1..+5 bằng vàng; dòng phụ
+(sử thi, huyền thoại, mở ở +2) và hiệu ứng đặc biệt (6 món huyền thoại, mở ở +3). Còn: đồ vẽ lên người nhân vật;
+chơi thử để chỉnh giá node, lượng Tinh hoa rơi, số liệu dòng phụ / hiệu ứng đặc biệt.
 **Câu hỏi:** đầu tư lâu dài có làm người chơi thấy rõ nhân vật mạnh lên giữa các lượt không?
 - **Cây kỹ năng theo class**: điểm từ vượt ải / lên cấp tài khoản; nhánh (ví dụ Kiếm sĩ: Phòng thủ / Cuồng nộ / Kiếm khí); có nút đặt lại (mất ít vàng).
 - **Trang bị:** ô vũ khí, mũ, áo, găng, giày; độ hiếm (thường → huyền thoại); chỉ số chính + dòng phụ + **hiệu ứng đặc biệt** ở hiếm cao; rơi từ boss/rương.
@@ -115,7 +116,8 @@ phụ / hiệu ứng đặc biệt ở đồ hiếm cao, đồ vẽ lên ngườ
 ## Đợt 5: Gacha · cỡ M
 **Trạng thái (2026-11-18):** lõi xong (`design/gacha.md`, `assets/data/gacha.json`): 2 banner, 10 đá/lượt, tỉ lệ
 công khai trên màn, pity huyền thoại ở lượt 50 mỗi banner, món trùng đổi vàng; test tỉ lệ 200k lượt. Còn: chốt số
-(tỉ lệ, pity, giá) khi chơi thử; lịch sử quay; nhiệm vụ ngày / thành tựu cho thêm đá; hiệu ứng quay.
+(tỉ lệ, pity, giá) khi chơi thử; nhiệm vụ ngày / thành tựu cho thêm đá; hiệu ứng quay. Lịch sử quay: xong
+(tab Lịch sử, 100 lượt mỗi banner).
 **Câu hỏi:** quay gacha có hồi hộp mà không làm hỏng cân bằng không?
 - Banner vũ khí và banner giáp; tỉ lệ công khai trong game; **bảo hiểm (pity)** sau N lần; trùng → nguyên liệu cường hoá.
 - Đá gacha kiếm trong game: vượt ải (lần đầu nhiều hơn, cày lại ít hơn), boss, nhiệm vụ ngày, thành tựu; lịch sử quay.
@@ -134,6 +136,9 @@ công khai trên màn, pity huyền thoại ở lượt 50 mỗi banner, món tr
 **Xong khi:** ải 100 vượt được với build đầu tư hợp lý, không vượt được với build trống (số đo từ mô phỏng).
 
 ## Đợt 7: Hoàn thiện + Steam · cỡ L
+**Trạng thái (2026-11-18):** âm thanh xong phần lõi (`design/audio.md`: 31 hiệu ứng + 3 nhạc nền tạo bằng
+`gamekit audio`, âm lượng Nhạc / Hiệu ứng trong Cài đặt); bản 0.2.0 xuất được Linux + Web (font dự phòng cho ký hiệu
+trên Web). Còn: nhạc theo vùng, đổi phím, tay cầm, tiếng Anh, Steam.
 - Âm thanh, nhạc theo vùng; cài đặt (âm lượng, phím, độ phân giải); tay cầm đầy đủ; tiếng Việt + tiếng Anh.
 - Steam qua GodotSteam: thành tựu, lưu đám mây; trang cửa hàng (ảnh, trailer); bản demo (ải 1–10).
 - `gamekit export`, kiểm tra trên Windows thật.
