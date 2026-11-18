@@ -1,0 +1,82 @@
+{
+  "_doc": "Effects for gamekit audio (tools/gamekit/pipeline/soundkit.py: layer keys). Ids are used by assets/data/audio.json. design/audio.md",
+  "ui_click": {"wave": "square", "duty": 0.25, "freq": 1200, "freq_end": 900, "attack": 0.001, "sustain": 0.01, "decay": 0.04, "lowpass": 5000, "volume": 0.5},
+  "ui_start": {"volume": 0.7, "layers": [
+    {"wave": "square", "duty": 0.5, "freq": 523, "attack": 0.002, "sustain": 0.05, "decay": 0.12, "arp": [[0.06, 1.26], [0.12, 1.19]], "lowpass": 4000},
+    {"wave": "triangle", "freq": 262, "attack": 0.002, "sustain": 0.1, "decay": 0.2, "gain": 0.6}]},
+  "hit": {"wave": "noise", "freq": 9000, "freq_end": 3000, "attack": 0.001, "sustain": 0.0, "decay": 0.06, "lowpass": 4000, "volume": 0.35, "seed": 11},
+  "kill": {"volume": 0.5, "layers": [
+    {"wave": "noise", "freq": 1800, "freq_end": 400, "attack": 0.001, "sustain": 0.01, "decay": 0.12, "lowpass": 2500, "seed": 12},
+    {"wave": "square", "duty": 0.25, "freq": 330, "freq_end": 110, "attack": 0.001, "sustain": 0.0, "decay": 0.09, "gain": 0.35, "lowpass": 2000}]},
+  "gem": {"wave": "sine", "freq": 1320, "attack": 0.001, "sustain": 0.02, "decay": 0.07, "arp": [[0.03, 1.5]], "volume": 0.3},
+  "coin": {"wave": "square", "duty": 0.5, "freq": 988, "attack": 0.001, "sustain": 0.04, "decay": 0.18, "arp": [[0.05, 1.335]], "lowpass": 6000, "volume": 0.45},
+  "essence": {"volume": 0.6, "layers": [
+    {"wave": "sine", "freq": 660, "freq_end": 1320, "attack": 0.01, "sustain": 0.15, "decay": 0.35, "vibrato": [0.02, 9]},
+    {"wave": "triangle", "freq": 1980, "attack": 0.01, "sustain": 0.05, "decay": 0.3, "gain": 0.35, "delay": 0.08}]},
+  "chest": {"volume": 0.7, "layers": [
+    {"wave": "square", "duty": 0.5, "freq": 392, "attack": 0.002, "sustain": 0.06, "decay": 0.1, "lowpass": 3500},
+    {"wave": "square", "duty": 0.5, "freq": 523, "attack": 0.002, "sustain": 0.06, "decay": 0.1, "lowpass": 3500, "delay": 0.09},
+    {"wave": "square", "duty": 0.5, "freq": 784, "attack": 0.002, "sustain": 0.12, "decay": 0.3, "lowpass": 3500, "delay": 0.18}]},
+  "hurt": {"volume": 0.7, "layers": [
+    {"wave": "saw", "freq": 300, "freq_end": 90, "attack": 0.001, "sustain": 0.03, "decay": 0.15, "lowpass": 1800},
+    {"wave": "noise", "freq": 3000, "attack": 0.001, "sustain": 0.0, "decay": 0.08, "gain": 0.5, "seed": 21}]},
+  "dash": {"wave": "noise", "freq": 1500, "freq_end": 6000, "attack": 0.02, "sustain": 0.04, "decay": 0.12, "highpass": 600, "lowpass": 5000, "volume": 0.45, "seed": 22},
+  "level_up": {"volume": 0.75, "layers": [
+    {"wave": "square", "duty": 0.25, "freq": 523, "attack": 0.002, "sustain": 0.36, "decay": 0.25, "arp": [[0.08, 1.26], [0.16, 1.19], [0.24, 1.335]], "lowpass": 5000},
+    {"wave": "triangle", "freq": 262, "attack": 0.002, "sustain": 0.4, "decay": 0.3, "gain": 0.5}]},
+  "card_pick": {"wave": "square", "duty": 0.5, "freq": 784, "attack": 0.001, "sustain": 0.03, "decay": 0.12, "arp": [[0.04, 1.5]], "lowpass": 4500, "volume": 0.55},
+  "milestone": {"volume": 0.8, "layers": [
+    {"wave": "square", "duty": 0.5, "freq": 392, "attack": 0.003, "sustain": 0.5, "decay": 0.5, "arp": [[0.1, 1.26], [0.2, 1.19], [0.3, 1.335]], "vibrato": [0.01, 6], "lowpass": 4000},
+    {"wave": "triangle", "freq": 196, "attack": 0.003, "sustain": 0.6, "decay": 0.5, "gain": 0.6},
+    {"wave": "sine", "freq": 1568, "attack": 0.05, "sustain": 0.3, "decay": 0.4, "gain": 0.25, "delay": 0.3}]},
+  "boss_spawn": {"volume": 0.85, "layers": [
+    {"wave": "saw", "freq": 55, "freq_end": 45, "attack": 0.2, "sustain": 0.6, "decay": 0.6, "lowpass": 600, "vibrato": [0.03, 5]},
+    {"wave": "noise", "freq": 300, "attack": 0.3, "sustain": 0.3, "decay": 0.6, "lowpass": 400, "gain": 0.6, "seed": 31}]},
+  "boss_slam": {"volume": 0.8, "layers": [
+    {"wave": "sine", "freq": 120, "freq_end": 35, "attack": 0.001, "sustain": 0.05, "decay": 0.35, "punch": 0.6},
+    {"wave": "noise", "freq": 700, "freq_end": 150, "attack": 0.001, "sustain": 0.02, "decay": 0.3, "lowpass": 900, "gain": 0.7, "seed": 32}]},
+  "win": {"volume": 0.8, "layers": [
+    {"wave": "square", "duty": 0.5, "freq": 523, "attack": 0.003, "sustain": 0.1, "decay": 0.05, "lowpass": 4000},
+    {"wave": "square", "duty": 0.5, "freq": 659, "attack": 0.003, "sustain": 0.1, "decay": 0.05, "lowpass": 4000, "delay": 0.15},
+    {"wave": "square", "duty": 0.5, "freq": 784, "attack": 0.003, "sustain": 0.1, "decay": 0.05, "lowpass": 4000, "delay": 0.3},
+    {"wave": "square", "duty": 0.5, "freq": 1047, "attack": 0.003, "sustain": 0.4, "decay": 0.6, "lowpass": 4000, "delay": 0.45, "vibrato": [0.01, 6]},
+    {"wave": "triangle", "freq": 262, "attack": 0.003, "sustain": 0.8, "decay": 0.5, "gain": 0.6}]},
+  "lose": {"volume": 0.6, "layers": [
+    {"wave": "triangle", "freq": 392, "attack": 0.003, "sustain": 0.15, "decay": 0.05, "lowpass": 2500},
+    {"wave": "triangle", "freq": 370, "attack": 0.003, "sustain": 0.15, "decay": 0.05, "lowpass": 2500, "delay": 0.22},
+    {"wave": "triangle", "freq": 349, "attack": 0.003, "sustain": 0.15, "decay": 0.05, "lowpass": 2500, "delay": 0.44},
+    {"wave": "triangle", "freq": 330, "freq_end": 300, "attack": 0.003, "sustain": 0.5, "decay": 0.6, "lowpass": 2500, "delay": 0.66, "vibrato": [0.02, 5]}]},
+  "slash": {"wave": "noise", "freq": 4000, "freq_end": 9000, "attack": 0.005, "sustain": 0.02, "decay": 0.09, "highpass": 1200, "volume": 0.4, "seed": 41},
+  "whirl": {"wave": "noise", "freq": 2000, "attack": 0.03, "sustain": 0.1, "decay": 0.15, "highpass": 700, "lowpass": 4000, "vibrato": [0.5, 14], "volume": 0.4, "seed": 42},
+  "quake": {"volume": 0.6, "layers": [
+    {"wave": "sine", "freq": 90, "freq_end": 40, "attack": 0.002, "sustain": 0.04, "decay": 0.25, "punch": 0.5},
+    {"wave": "noise", "freq": 500, "freq_end": 120, "attack": 0.002, "sustain": 0.03, "decay": 0.25, "lowpass": 800, "gain": 0.8, "seed": 43}]},
+  "wave": {"wave": "noise", "freq": 3000, "freq_end": 1200, "attack": 0.01, "sustain": 0.08, "decay": 0.2, "highpass": 500, "lowpass": 5000, "volume": 0.4, "seed": 44},
+  "holy": {"volume": 0.5, "layers": [
+    {"wave": "sine", "freq": 880, "attack": 0.02, "sustain": 0.1, "decay": 0.3, "vibrato": [0.01, 8]},
+    {"wave": "sine", "freq": 1320, "attack": 0.02, "sustain": 0.1, "decay": 0.3, "gain": 0.6},
+    {"wave": "noise", "freq": 9000, "attack": 0.01, "sustain": 0.05, "decay": 0.2, "highpass": 4000, "gain": 0.2, "seed": 45}]},
+  "bolt": {"wave": "square", "duty": 0.25, "freq": 1400, "freq_end": 500, "attack": 0.001, "sustain": 0.02, "decay": 0.1, "lowpass": 4000, "volume": 0.35},
+  "fire": {"volume": 0.5, "layers": [
+    {"wave": "noise", "freq": 900, "freq_end": 300, "attack": 0.01, "sustain": 0.05, "decay": 0.25, "lowpass": 1600, "seed": 46},
+    {"wave": "saw", "freq": 180, "freq_end": 90, "attack": 0.005, "sustain": 0.03, "decay": 0.15, "lowpass": 900, "gain": 0.4}]},
+  "frost": {"volume": 0.45, "layers": [
+    {"wave": "noise", "freq": 8000, "attack": 0.005, "sustain": 0.05, "decay": 0.25, "highpass": 3000, "seed": 47},
+    {"wave": "triangle", "freq": 1760, "freq_end": 1500, "attack": 0.005, "sustain": 0.05, "decay": 0.2, "gain": 0.5, "arp": [[0.05, 1.19]]}]},
+  "zap": {"volume": 0.45, "layers": [
+    {"wave": "square", "duty": 0.1, "freq": 2200, "freq_end": 300, "attack": 0.001, "sustain": 0.02, "decay": 0.12, "vibrato": [0.3, 40], "lowpass": 6000},
+    {"wave": "noise", "freq": 6000, "attack": 0.001, "sustain": 0.01, "decay": 0.1, "highpass": 2000, "gain": 0.6, "seed": 48}]},
+  "gacha_pull": {"wave": "noise", "freq": 1000, "freq_end": 7000, "attack": 0.15, "sustain": 0.1, "decay": 0.1, "highpass": 400, "lowpass": 6000, "volume": 0.5, "seed": 51},
+  "gacha_epic": {"volume": 0.7, "layers": [
+    {"wave": "square", "duty": 0.25, "freq": 659, "attack": 0.003, "sustain": 0.25, "decay": 0.3, "arp": [[0.08, 1.26], [0.16, 1.19]], "lowpass": 4500},
+    {"wave": "sine", "freq": 1319, "attack": 0.02, "sustain": 0.2, "decay": 0.3, "gain": 0.4, "delay": 0.16}]},
+  "gacha_legend": {"volume": 0.8, "layers": [
+    {"wave": "square", "duty": 0.5, "freq": 523, "attack": 0.003, "sustain": 0.6, "decay": 0.6, "arp": [[0.09, 1.26], [0.18, 1.19], [0.27, 1.335], [0.36, 1.26]], "vibrato": [0.01, 6], "lowpass": 4500},
+    {"wave": "triangle", "freq": 131, "attack": 0.01, "sustain": 0.8, "decay": 0.6, "gain": 0.6},
+    {"wave": "noise", "freq": 10000, "attack": 0.2, "sustain": 0.3, "decay": 0.6, "highpass": 5000, "gain": 0.25, "seed": 52}]},
+  "enhance": {"volume": 0.65, "layers": [
+    {"wave": "square", "duty": 0.5, "freq": 1568, "freq_end": 1400, "attack": 0.001, "sustain": 0.02, "decay": 0.25, "lowpass": 6000},
+    {"wave": "noise", "freq": 5000, "attack": 0.001, "sustain": 0.0, "decay": 0.05, "highpass": 2000, "gain": 0.5, "seed": 53},
+    {"wave": "sine", "freq": 2093, "attack": 0.01, "sustain": 0.05, "decay": 0.3, "gain": 0.4, "delay": 0.1}]},
+  "buy": {"wave": "square", "duty": 0.5, "freq": 784, "attack": 0.001, "sustain": 0.05, "decay": 0.15, "arp": [[0.05, 1.26], [0.1, 1.19]], "lowpass": 5000, "volume": 0.5}
+}

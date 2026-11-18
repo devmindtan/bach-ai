@@ -12,6 +12,7 @@ config/features=PackedStringArray("4.7", "GL Compatibility")
 [autoload]
 
 GameSettings="*res://src/ui/game_settings.gd"
+Audio="*res://src/audio/sound.gd"
 
 [display]
 

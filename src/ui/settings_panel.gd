@@ -36,12 +36,22 @@ static func build(on_back: Callable) -> VBoxContainer:
 		func() -> void: Prefs.current().set_value("damage_numbers", not Prefs.current().damage_numbers))
 	_row(col, "Thanh máu quái", func() -> String: return "Hiện" if Prefs.current().monster_hp else "Ẩn",
 		func() -> void: Prefs.current().set_value("monster_hp", not Prefs.current().monster_hp))
+	_row(col, "Nhạc", func() -> String: return "%d%%" % Prefs.current().music_volume,
+		func() -> void: Prefs.current().set_value("music_volume", next_volume(Prefs.current().music_volume)))
+	_row(col, "Hiệu ứng âm thanh", func() -> String: return "%d%%" % Prefs.current().sfx_volume,
+		func() -> void: Prefs.current().set_value("sfx_volume", next_volume(Prefs.current().sfx_volume)))
 	var hint := _label("Tỉ lệ luôn là số nguyên để pixel và chữ sắc nét.", 13, MUTED)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(hint)
 	var back := _button("Quay lại", on_back)
 	col.add_child(back)
 	return col
+
+
+## The next volume step (audio.json "volume" step, 20 %): 0 → 20 → … → 100 → 0.
+static func next_volume(v: int) -> int:
+	var step := int(GameData.load_json("res://assets/data/audio.json").get("volume", {}).get("step", 20))
+	return 0 if v >= 100 else mini(100, (v / step + 1) * step)
 
 
 static func _row(col: VBoxContainer, name: String, value: Callable, toggle: Callable) -> void:

@@ -39,6 +39,8 @@ var tree_owner: Slot          # whose skill tree applies (the active slot; the p
 var skill_tree: SkillTree
 var run_result: Dictionary = {}
 var _boss_dead := false
+var _boss_music := false                # the boss song is on (a boss is alive)
+var _boss_check_t := 0.0
 var challenge_id := ""        # playing a challenge (design/challenge.md); --challenge=ID for shots
 var _win_on_boss := true
 var _delayed: Array = []
@@ -162,6 +164,7 @@ var _panels: RunPanels
 func _ready() -> void:
 	_parse_args()
 	RunInput.register()
+	Sfx.music("run")
 	cfg = GameData.load_json(DATA + "run_config.json")
 	stages = Stages.load_default()
 	milestones = Milestones.load_default()
@@ -445,22 +448,42 @@ func _tick(dt: float) -> void:
 						enemies.apply_status(i, st, {"time": 1.0, "mul": 0.5, "dps_mul": 0.01, "chain": 2, "radius": 120.0}, 1.0, "test")
 	_drain_shocks(dt)
 	_drops()
+	var essence_before := pickups.essence
 	var got := pickups.step(dt, player_pos + _hit_center, float(stats.get("magnet", 1.0)))
 	gold += int(got.y)
+	if got.y > 0.0:
+		Sfx.play("coin")
+	if pickups.essence > essence_before:
+		Sfx.play("essence")
 	if got.x > 0.0:
+		Sfx.play("gem")
 		_gain_xp(got.x)
 	if pickups.chests > 0 and state == State.PLAYING:   # a chest from an elite: one extra pick
 		pickups.chests -= 1
+		Sfx.play("chest")
 		if rng.randf() < float(cfg.get("rewards", {}).get("chest_item_chance", 0.0)):
 			_win_item()
 		pending_levels += 1
 		_chest_open = true
 		_open_level_up()
+	if not enemies.slams.is_empty():
+		Sfx.play("boss_slam")
 	for p in enemies.slams:   # boss landings: a dust ring where it hit the ground
 		_add_fx("stomp-i", "burst", _sprite_scale * 1.6, 0.0, -1.0, p)
 	enemies.slams.clear()
 	_step_fx(dt)
+	if not enemies.hit_pos.is_empty():
+		Sfx.play("hit")
 	_step_damage_numbers(dt)
+	_boss_check_t -= dt
+	if _boss_check_t <= 0.0:   # the boss song while a boss lives
+		_boss_check_t = 0.5
+		var boss := enemies.boss_index() >= 0
+		if boss != _boss_music:
+			_boss_music = boss
+			Sfx.music("boss" if boss else "run")
+			if boss:
+				Sfx.play("boss_spawn")
 	if hp <= 0.0:
 		_die()
 	elif (clock >= duration or (_boss_dead and _win_on_boss)) and bench == 0:
@@ -513,6 +536,7 @@ func try_dash() -> bool:
 		face_left = _dash_dir.x < 0.0
 		_update_body()
 	_play_action(String(sp.get("anim", "dash")))
+	Sfx.skill("dash")
 	return true
 
 
@@ -573,6 +597,7 @@ func _take_hit(amount: float) -> void:
 	hp -= taken
 	damage_taken += taken
 	invuln = float(cfg.get("player", {}).get("hit_invuln", 0.6))
+	Sfx.play("hurt")
 	_play_action("hurt")
 
 
@@ -589,6 +614,7 @@ func essence_drop(elite: bool, boss: bool) -> int:
 func _drops() -> void:
 	if enemies.kill_pos.is_empty():
 		return
+	Sfx.play("kill")
 	var gold_chance := float(cfg.get("pickups", {}).get("gold_chance", 0.1))
 	var heal_frac := heal_on_kill()   # Khát máu: elites and bosses feed the hero
 	for i in enemies.kill_pos.size():
@@ -659,6 +685,7 @@ func _skills(dt: float) -> void:
 				_whirl_ticks_done = 0
 				var sc := _sprite_scale * skill_size("whirlwind")
 				_add_fx(String(w.get("sprite", "whirlwind")), "spin", sc, 0.0, _whirl_left)
+				Sfx.skill("whirlwind")
 
 
 ## The slash never follows the walk: it always points at the nearest living
@@ -1060,6 +1087,8 @@ func _add_fx(sprite: String, anim: String, sc: float, damage: float, life := -1.
 		"pos": world_pos, "follow": world_pos == null, "source": source, "kb": knockback,
 		"effects": on_hit(source)}
 	_fx.append(fx)
+	if source != "":   # a cast: its sound (audio.json "skills"; voices/gap keep it calm)
+		Sfx.skill(source)
 	return fx
 
 
@@ -1215,6 +1244,7 @@ func _open_level_up() -> void:
 			choices.assign(offers)
 			state = State.LEVEL_UP
 			_demo_pick_t = 0.0
+			Sfx.play("milestone")
 			_panels.show_milestone_pick(ms_level, choices)
 			return
 		ms_level = 0
@@ -1229,6 +1259,8 @@ func _open_level_up() -> void:
 		return
 	state = State.LEVEL_UP
 	_demo_pick_t = 0.0
+	if not _chest_open:
+		Sfx.play("level_up")
 	_panels.show_level_up(choices, "Rương báu! Chọn một" if _chest_open else "Lên cấp! Chọn một")
 	_chest_open = false
 
@@ -1499,6 +1531,8 @@ func _die() -> void:
 	state = State.DEAD
 	_end_t = 0.0
 	_set_anim("death")
+	Sfx.music("")
+	Sfx.play("lose")
 	_finish(false)
 	print("Run over: lost at %.1fs, level %d, kills %d" % [clock, level, enemies.total_kills])
 	_panels.show_end(false)
@@ -1506,6 +1540,8 @@ func _die() -> void:
 
 func _win() -> void:
 	state = State.WON
+	Sfx.music("")
+	Sfx.play("win")
 	pickups.pull_all()
 	if bool(cfg.get("rewards", {}).get("win_item", false)):
 		_win_item()

@@ -21,6 +21,7 @@ var _menu: Control
 
 
 func _ready() -> void:
+	Sfx.music("menu")
 	var classes := GameData.load_json("res://assets/data/classes.json")
 	for id: String in classes:
 		if not id.begins_with("_"):

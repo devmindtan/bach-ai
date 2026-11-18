@@ -1,0 +1,35 @@
+{
+  "_doc": "Looping songs for gamekit audio (soundkit.py: song keys). A minor pentatonic (A C D E G) for a wuxia feel. design/audio.md",
+  "menu": {
+    "bpm": 84, "steps_per_beat": 2, "volume": 0.6,
+    "tracks": [
+      {"wave": "triangle", "gain": 0.45, "attack": 0.02, "decay": 0.2, "sustain_level": 0.7, "release": 0.15, "vibrato": [0.006, 5],
+       "pattern": "A4 - C5 - D5 - E5 - | G5 - - - E5 - D5 - | E5 - D5 C5 A4 - - - | G4 - A4 - - - - - | A4 - C5 - D5 - G5 - | E5 - - - D5 - C5 - | D5 - C5 A4 G4 - A4 - | A4 - - - - - . ."},
+      {"wave": "sine", "gain": 0.4, "attack": 0.01, "decay": 0.3, "sustain_level": 0.6, "release": 0.2,
+       "pattern": "A2 - - - E3 - - - | G2 - - - D3 - - - | F2 - - - C3 - - - | E2 - - - B2 - - - | A2 - - - E3 - - - | C3 - - - G3 - - - | D3 - - - A3 - - - | A2 - - - E3 - - -"},
+      {"wave": "square", "duty": 0.125, "gain": 0.08, "attack": 0.005, "decay": 0.1, "sustain_level": 0.3, "release": 0.1, "lowpass": 2500,
+       "pattern": ". . E5 . . . A5 . | . . D5 . . . G5 . | . . C5 . . . A5 . | . . B4 . . . E5 . | . . E5 . . . A5 . | . . E5 . . . G5 . | . . D5 . . . A5 . | . . E5 . . . A5 ."},
+      {"wave": "drums", "gain": 0.25, "pattern": "k . h . h . h . | k . h . h . h h"}
+    ]
+  },
+  "run": {
+    "bpm": 132, "steps_per_beat": 4, "volume": 0.6,
+    "tracks": [
+      {"wave": "square", "duty": 0.25, "gain": 0.28, "attack": 0.004, "decay": 0.08, "sustain_level": 0.55, "release": 0.04, "lowpass": 3800,
+       "pattern": "E5 - - - D5 - C5 - A4 - - - C5 - D5 - | E5 - - - G5 - E5 - D5 - - - . . . . | D5 - - - C5 - A4 - G4 - - - A4 - C5 - | D5 - - - - - - - . . . . . . . . | E5 - - - D5 - C5 - A4 - - - C5 - D5 - | E5 - - - G5 - A5 - G5 - - - E5 - - - | D5 - C5 - D5 - E5 - G5 - E5 - D5 - C5 - | A4 - - - - - - - . . . . . . . ."},
+      {"wave": "triangle", "gain": 0.45, "attack": 0.003, "decay": 0.06, "sustain_level": 0.7, "release": 0.03,
+       "pattern": "A2 - . . A3 - . . A2 - . . A3 - . . | A2 - . . A3 - . . A2 - . . G2 - . . | G2 - . . G3 - . . G2 - . . G3 - . . | G2 - . . G3 - . . G2 - . . E2 - . . | F2 - . . F3 - . . F2 - . . F3 - . . | C3 - . . C3 - . . G2 - . . G2 - . . | D3 - . . D3 - . . E2 - . . E3 - . . | A2 - . . A3 - . . A2 - . . E2 - . ."},
+      {"wave": "drums", "gain": 0.4, "pattern": "k . h . s . h . k . h k s . h . | k . h . s . h . k k h . s . h h"}
+    ]
+  },
+  "boss": {
+    "bpm": 150, "steps_per_beat": 4, "volume": 0.62, "repeat": 2,
+    "tracks": [
+      {"wave": "saw", "gain": 0.22, "attack": 0.01, "decay": 0.1, "sustain_level": 0.7, "release": 0.05, "lowpass": 2200, "vibrato": [0.008, 6],
+       "pattern": "E4 - - - F4 - - - E4 - - - B3 - - - | E4 - - - G4 - - - F4 - - - E4 - - - | A4 - - - G4 - - - F4 - - - E4 - - - | D4 - - - F4 - - - E4 - - - - - - -"},
+      {"wave": "square", "duty": 0.5, "gain": 0.3, "attack": 0.002, "decay": 0.05, "sustain_level": 0.5, "release": 0.02, "lowpass": 1200,
+       "pattern": "E2 E2 E2 E2 E2 E2 F2 F2 E2 E2 E2 E2 E2 E2 B1 B1 | E2 E2 E2 E2 G2 G2 G2 G2 F2 F2 F2 F2 E2 E2 E2 E2 | A2 A2 A2 A2 G2 G2 G2 G2 F2 F2 F2 F2 E2 E2 E2 E2 | D2 D2 D2 D2 F2 F2 F2 F2 E2 E2 E2 E2 E2 E2 E2 E2"},
+      {"wave": "drums", "gain": 0.45, "pattern": "k . k . s . h . k k . . s . h h | k . k . s . h k k . k . s s s s"}
+    ]
+  }
+}

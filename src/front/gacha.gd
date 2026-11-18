@@ -19,6 +19,7 @@ var _layer: CanvasLayer
 
 
 func _ready() -> void:
+	Sfx.music("menu")
 	var prefs := Prefs.current()
 	if prefs.is_fixed():
 		prefs.ensure_preview_slot()
@@ -62,6 +63,13 @@ func _pull(n: int) -> void:
 	if got.is_empty():
 		return
 	_last = got
+	Sfx.play("gacha_pull")
+	var best := ""
+	for r: Dictionary in got:
+		if r["rarity"] == "legendary" or (r["rarity"] == "epic" and best == ""):
+			best = String(r["rarity"])
+	if best != "":
+		Sfx.play("gacha_legend" if best == "legendary" else "gacha_epic")
 	if not Prefs.current().is_fixed():
 		Prefs.current().slot_store().save(_slot)
 	_rebuild()

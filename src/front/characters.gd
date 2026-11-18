@@ -29,6 +29,7 @@ var _equip_defs := {}
 
 
 func _ready() -> void:
+	Sfx.music("menu")
 	var cls := GameData.load_json(DATA + "classes.json")
 	for id: String in cls:
 		if not id.begins_with("_"):

@@ -1,0 +1,15 @@
+{
+  "boss_slam": 1,
+  "boss_spawn": 1,
+  "coin": 29,
+  "gem": 115,
+  "hit": 150,
+  "kill": 90,
+  "level_up": 9,
+  "milestone": 1,
+  "music:boss": 1,
+  "music:run": 1,
+  "quake": 42,
+  "slash": 126,
+  "whirl": 29
+}

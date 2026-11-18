@@ -116,6 +116,7 @@ func _skill_pick_card(sid: String, pick: Callable) -> Button:
 		(c as Control).mouse_filter = Control.MOUSE_FILTER_IGNORE
 	for c in v.get_children():
 		(c as Control).mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.set_meta("sfx", "card_pick")   # Sfx: a card, not a plain click
 	b.pressed.connect(pick)
 	return b
 
@@ -234,6 +235,7 @@ func _upgrade_card(i: int, id: String) -> Button:
 	d.custom_minimum_size = Vector2(270, 0)
 	v.add_child(d)
 	var idx := i
+	b.set_meta("sfx", "card_pick")   # Sfx: a card, not a plain click
 	b.pressed.connect(func() -> void: run.choose(idx))
 	if i == 0:
 		b.call_deferred("grab_focus")
@@ -822,6 +824,7 @@ func _milestone_choice(info: Dictionary, pick: Callable) -> Button:
 	d.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	d.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	vb.add_child(d)
+	b.set_meta("sfx", "card_pick")   # Sfx: a card, not a plain click
 	b.pressed.connect(pick)
 	return b
 

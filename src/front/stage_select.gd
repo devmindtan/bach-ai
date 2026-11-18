@@ -28,6 +28,7 @@ var _layer: CanvasLayer
 
 
 func _ready() -> void:
+	Sfx.music("menu")
 	_stages = Stages.load_default()
 	_monsters = GameData.load_json("res://assets/data/monsters.json")
 	var prefs := Prefs.current()
@@ -173,6 +174,7 @@ func _build() -> void:
 	root.add_child(panel)
 	_detail(panel, unlocked)
 	var start := UiKit.button("Bắt đầu  ▶", func() -> void: _start(), Vector2(330, 64), 26, UiKit.PRIMARY)
+	start.set_meta("sfx", "")   # ui_start instead of a click
 	start.position = Vector2(root.size.x - 40 - 330, 616)
 	start.disabled = _n > unlocked
 	root.add_child(start)
@@ -342,6 +344,7 @@ func _start() -> void:
 		return
 	Prefs.current().challenge_target = ""
 	Prefs.current().set_value("stage_target", _n)
+	Sfx.play("ui_start")
 	get_tree().change_scene_to_file(RUN_SCENE)
 
 
@@ -383,7 +386,9 @@ func _build_trials(root: Control) -> void:
 	_challenge_detail(panel)
 	var start := UiKit.button("Bắt đầu  ▶", func() -> void:
 		Prefs.current().challenge_target = _ch
+		Sfx.play("ui_start")
 		get_tree().change_scene_to_file(RUN_SCENE), Vector2(330, 64), 26, UiKit.PRIMARY)
+	start.set_meta("sfx", "")   # ui_start instead of a click
 	start.position = Vector2(root.size.x - 40 - 330, 616)
 	start.disabled = not _challenges.is_open(_slot, _ch)
 	root.add_child(start)

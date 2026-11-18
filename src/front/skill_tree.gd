@@ -27,6 +27,7 @@ var _layer: CanvasLayer
 
 
 func _ready() -> void:
+	Sfx.music("menu")
 	var prefs := Prefs.current()
 	if prefs.is_fixed():
 		prefs.ensure_preview_slot()
@@ -266,6 +267,7 @@ func _detail(root: Control) -> void:
 			v.add_child(wl)
 		var buy := UiKit.button("Mở  (%d Tinh hoa)" % _tree.cost(_view), func() -> void:
 			if _tree.buy(_slot, _view):
+				Sfx.play("buy")
 				_save()
 				_rebuild(), Vector2(0, 52), 20, UiKit.PRIMARY)
 		buy.disabled = why != ""

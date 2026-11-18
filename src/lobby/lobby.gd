@@ -34,6 +34,7 @@ var _slot_mode := false       # true when using a character slot (phase 3)
 
 
 func _ready() -> void:
+	Sfx.music("menu")
 	_classes = GameData.load_json(DATA + "classes.json")
 	for id: String in _classes:
 		if not id.begins_with("_"):

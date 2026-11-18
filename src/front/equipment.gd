@@ -41,6 +41,7 @@ var _layer: CanvasLayer
 
 
 func _ready() -> void:
+	Sfx.music("menu")
 	var prefs := Prefs.current()
 	if prefs.is_fixed():
 		prefs.ensure_preview_slot()
@@ -560,6 +561,7 @@ func _detail(root: Control) -> void:
 	var eb := UiKit.button(("Cường hoá  %d vàng" % cost) if cost > 0 else "Đã tối đa", func() -> void:
 		var wallet := {"v": _slot_data.gold}
 		if _prof.enhance(_view, wallet):
+			Sfx.play("enhance")
 			_slot_data.gold = int(wallet["v"])
 			prefs.save_profile()
 			_rebuild(), Vector2(0, 40), 15)
@@ -573,6 +575,7 @@ func _detail(root: Control) -> void:
 			_prof.unequip(_cls, _sel)
 		else:
 			_prof.equip(_cls, _view)
+			Sfx.play("buy")
 		prefs.save_profile()
 		_rebuild(), Vector2(0, 56), 22, UiKit.PANEL if is_worn else UiKit.PRIMARY)
 	act.size_flags_horizontal = Control.SIZE_EXPAND_FILL
