@@ -65,6 +65,7 @@ func _draw() -> void:
 		return
 	var font := ThemeDB.fallback_font
 	var w := size.x
+	_draw_wave_call(font)
 	# xp: thin bar across the whole top edge
 	var frac := clampf(float(run.xp) / float(run.xp_needed()), 0.0, 1.0)
 	draw_rect(Rect2(0, 0, w, 10), BACK)
@@ -125,6 +126,19 @@ const ACTIVE := Color("ffd36b")
 
 
 ## The boss's name and hp under the clock while one is alive.
+## A wave call across the upper screen while run.wave_call_t runs (fades in the last 0.5 s).
+func _draw_wave_call(font: Font) -> void:
+	if run.wave_call_t <= 0.0 or run.wave_call == "":
+		return
+	var a := clampf(run.wave_call_t / 0.5, 0.0, 1.0)
+	var sz := 30
+	var w := font.get_string_size(run.wave_call, HORIZONTAL_ALIGNMENT_LEFT, -1, sz).x
+	var vp := get_viewport_rect().size / maxf(0.01, Prefs.current().current_scale())
+	var p := Vector2(vp.x * 0.5 - w * 0.5, 150.0)
+	draw_string_outline(font, p, run.wave_call, HORIZONTAL_ALIGNMENT_LEFT, -1, sz, 8, Color(0.08, 0.04, 0.04, a))
+	draw_string(font, p, run.wave_call, HORIZONTAL_ALIGNMENT_LEFT, -1, sz, Color(1.0, 0.78, 0.35, a))
+
+
 func _draw_boss_bar(font: Font) -> void:
 	var i: int = run.enemies.boss_index()
 	if i < 0:

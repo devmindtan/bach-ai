@@ -116,7 +116,9 @@ var zones: Array[Dictionary] = []
 var _affix_tags: Array = []
 var _rage_t := 0.0                    # seconds the "nổi giận" call still shows
 var _rage_seen := false
-var _boss_hp_share := -1.0            # --boss-hp=0.45 (shots): a boss starts at this share of its hp          # [pos, name, colour] of elite affixes this frame (drawn on top)    # lasting ground zones left by skills ("zone": burn ground, a pulling storm)
+var _boss_hp_share := -1.0
+var wave_call := ""                   # the latest wave call ("Bầy dơi kéo tới!"), shown by the HUD
+var wave_call_t := 0.0            # --boss-hp=0.45 (shots): a boss starts at this share of its hp          # [pos, name, colour] of elite affixes this frame (drawn on top)    # lasting ground zones left by skills ("zone": burn ground, a pulling storm)
 var _end_t := 0.0
 # floating damage numbers (ring buffer, sizes from run_config "ui")
 var _num_pos := PackedVector2Array()
@@ -492,6 +494,7 @@ func _tick(dt: float) -> void:
 		if rng.randf() < float(cfg.get("rewards", {}).get("chest_item_chance", 0.0)):
 			_win_item()
 		pending_levels += 1
+		_log_level("chest -> +1 pick")
 		_chest_open = true
 		_open_level_up()
 	for p in enemies.bolt_pops:   # monster bolts that burst (hit or out of range)
@@ -513,6 +516,7 @@ func _tick(dt: float) -> void:
 		Sfx.play("hit")
 	_step_damage_numbers(dt)
 	_rage_t = maxf(0.0, _rage_t - dt)
+	wave_call_t = maxf(0.0, wave_call_t - dt)
 	var bi := enemies.boss_index()
 	if bi >= 0 and _boss_hp_share > 0.0:   # shots: show phase 2 without a long fight
 		enemies.hp[bi] = enemies.k_hp[enemies.kind[bi]] * _boss_hp_share
@@ -634,6 +638,10 @@ func _spawn(t0: float, t1: float) -> void:
 		while enemies.living() < bench and enemies.count < enemies.capacity:
 			enemies.spawn(enemies.kind_ids[rng.randi() % enemies.kind_ids.size()], enemies.ring_point(player_pos))
 		return
+	for call in waves.announcements(t0, t1):   # a big wave is called before it comes
+		wave_call = call
+		wave_call_t = 2.6
+		Sfx.play("boss_spawn")
 	for id in waves.advance(t0, t1):
 		enemies.spawn(id, enemies.ring_point(player_pos))
 
@@ -1496,6 +1504,7 @@ func _gain_xp(amount: float) -> void:
 	_queue_milestones(before, level)
 	if int(r[2]) > 0:
 		pending_levels += int(r[2])
+		_log_level("xp %.0f -> +%d level(s), level %d" % [amount, int(r[2]), level])
 		if state == State.PLAYING:
 			_open_level_up()
 
@@ -1508,6 +1517,20 @@ func _queue_milestones(from: int, to: int) -> void:
 	for lv in milestones.milestone_levels():
 		if from < lv and lv <= to and not _ms_done.has(lv) and not _ms_queue.has(lv):
 			_ms_queue.append(lv)
+
+
+## --log-levels: every source of a level-up pick, with the clock (diagnosis).
+func _log_level(what: String) -> void:
+	if OS.get_cmdline_user_args().has("--log-levels"):
+		printerr("LEVEL %6.1fs pending %d: %s" % [clock, pending_levels, what])
+
+
+## Level-up panel title: where the pick comes from and how many more wait
+## (user 2026-11-18: several picks in a row read as a bug without it).
+func level_up_title(chest: bool) -> String:
+	var head := "Rương báu! Chọn một" if chest else "Lên cấp %d! Chọn một" % level
+	var left := pending_levels - 1
+	return head + (" (còn %d lượt)" % left if left > 0 else "")
 
 
 func _open_level_up() -> void:
@@ -1537,7 +1560,7 @@ func _open_level_up() -> void:
 	_demo_pick_t = 0.0
 	if not _chest_open:
 		Sfx.play("level_up")
-	_panels.show_level_up(choices, "Rương báu! Chọn một" if _chest_open else "Lên cấp! Chọn một")
+	_panels.show_level_up(choices, level_up_title(_chest_open))
 	_chest_open = false
 
 
@@ -1590,6 +1613,7 @@ func take_milestone(id: String) -> void:
 	_recompute_stats()
 	hp += maxf(0.0, float(stats["max_hp"]) - old_max)
 	pending_levels += int(milestones.number([id], "picks_now"))
+	_log_level("milestone %s -> +%d pick(s)" % [id, int(milestones.number([id], "picks_now"))])
 	ms_level = 0
 	if _panels == null:   # no scene (unit tests): the numbers only
 		return

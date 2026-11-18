@@ -177,3 +177,19 @@ func test_milestone_rows_describe_each_owned_reward() -> void:
 		_check(rows[1]["name"] == "Thêm lựa chọn" and rows[1]["kind"] == "Luật", "rule row: %s" % rows[1].get("name"))
 	_check(_run("knight", {}, []).milestone_rows().is_empty(), "no rewards: no rows")
 	r.free()
+
+
+# --- level-up panel title (user 2026-11-18: many picks in a row, source unclear) ---
+
+func test_level_up_title_names_source_level_and_picks_left() -> void:
+	var r := _run("mage", {})
+	r.level = 12
+	r.pending_levels = 3
+	var t := String(r.level_up_title(false))
+	_check(t.contains("12") and t.contains("còn 2"), "XP pick title names level 12 and 2 more, got '%s'" % t)
+	r.pending_levels = 1
+	t = String(r.level_up_title(false))
+	_check(not t.contains("còn"), "last pick has no 'còn', got '%s'" % t)
+	t = String(r.level_up_title(true))
+	_check(t.contains("Rương"), "chest pick names the chest, got '%s'" % t)
+	r.free()

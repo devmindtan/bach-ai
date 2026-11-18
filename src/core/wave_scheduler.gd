@@ -31,6 +31,20 @@ static func rate_at(w: Dictionary, t: float) -> float:
 	return lerpf(r0, r1, (t - t0) / (t1 - t0))
 
 
+## Wave calls for clock time (t0, t1] (design 6A pacing): the "announce" text of
+## every wave whose t_from - "warn" (default 2 s) falls in the step, so a big
+## wave is called before it arrives.
+func announcements(t0: float, t1: float) -> Array[String]:
+	var out: Array[String] = []
+	for w: Dictionary in _waves:
+		if not w.has("announce"):
+			continue
+		var tc := float(w.get("t_from", 0.0)) - float(w.get("warn", 2.0))
+		if tc > t0 - 0.0001 and tc <= t1:
+			out.append(String(w["announce"]))
+	return out
+
+
 ## Monsters to spawn for clock time (t0, t1]: an Array of monster ids (repeats allowed).
 func advance(t0: float, t1: float) -> Array[String]:
 	var out: Array[String] = []
