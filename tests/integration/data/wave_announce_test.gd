@@ -10,9 +10,13 @@ func _check(cond: bool, msg: String) -> void:
 		failures.append(msg)
 
 
+var _monsters := GameData.load_json("res://assets/data/monsters.json")
+
+
 func _needs_call(w: Dictionary) -> bool:
 	var m := String(w.get("monster", ""))
-	return int(w.get("burst", 0)) >= 10 or m.ends_with("@elite") or m == "king_slime"
+	var boss := bool(_monsters.get(m, {}).get("boss", false)) if _monsters.get(m) is Dictionary else false
+	return int(w.get("burst", 0)) >= 10 or m.ends_with("@elite") or boss
 
 
 func test_big_waves_are_announced() -> void:

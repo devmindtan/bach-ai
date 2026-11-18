@@ -30,6 +30,7 @@ func test_boss_and_milestone_stages() -> void:
 
 func test_each_stage_has_waves_and_a_boss_where_it_should() -> void:
 	var s := Stages.load_default()
+	var monsters := GameData.load_json("res://assets/data/monsters.json")
 	for n in range(1, s.count() + 1):
 		var st := s.load_stage(n)
 		var waves: Array = st.get("waves", [])
@@ -37,7 +38,8 @@ func test_each_stage_has_waves_and_a_boss_where_it_should() -> void:
 		_check(int(st.get("number", 0)) == n, "stage %d knows its number" % n)
 		var has_boss := false
 		for w: Dictionary in waves:
-			if String(w.get("monster", "")) == "king_slime":
+			var m: Variant = monsters.get(String(w.get("monster", "")))
+			if m is Dictionary and bool(m.get("boss", false)):   # any region's boss
 				has_boss = true
 		_check(has_boss == s.is_boss(n), "stage %d: boss in waves = %s" % [n, s.is_boss(n)])
 	_check(s.region(15).get("id") == "dark_forest" and s.region(30).get("id") == "poison_marsh", "regions by stage")

@@ -1,5 +1,5 @@
 {
-  "_doc": "Monster stats at stage 1 (stage scaling comes in phase 3). behaviour: chase | swarm | charge | boss_slime (winds up, jumps to where the player was, slam on landing; split_at fractions of hp spawn split_count split_into). boss: true = HUD bar, the stage is won when it dies. body circle (contact, being hit) comes from the sprite json 'body', not from here. xp = gem value. See design/monsters.md. behaviour shoot (design 6A): keeps keep_range, every shoot_every s within shoot_range winds up (windup s) and fires a bolt (bolt_sprite, bolt_speed px/s, bolt_damage, bolt_range px, bolt_radius). zigzag (Ma Trơi, design 6A): closes in on legs of zig_time s, turned zig_angle degrees left then right. explode {delay s, radius px, damage}: on death a warning ring at the body, then a blast hurting a player inside (Bọ Lửa). Boss phases (design 6A): rage_at (hp share) switches to rage_jump_every / rage_windup and a shockwave ring on every slam {speed px/s, max px, width px, damage}; volley {every s, count, spread_deg} fires bolts (bolt_* keys) in phase 1 and 2. telegraph (charge): while winding up the dash lane shows on the ground (Sói Rừng).",
+  "_doc": "Monster stats at stage 1 (stage scaling comes in phase 3). behaviour: chase | swarm | charge | boss_slime (winds up, jumps to where the player was, slam on landing; split_at fractions of hp spawn split_count split_into). boss: true = HUD bar, the stage is won when it dies. body circle (contact, being hit) comes from the sprite json 'body', not from here. xp = gem value. See design/monsters.md. behaviour shoot (design 6A): keeps keep_range, every shoot_every s within shoot_range winds up (windup s) and fires a bolt (bolt_sprite, bolt_speed px/s, bolt_damage, bolt_range px, bolt_radius). zigzag (Ma Trơi, design 6A): closes in on legs of zig_time s, turned zig_angle degrees left then right. explode {delay s, radius px, damage}: on death a warning ring at the body, then a blast hurting a player inside (Bọ Lửa). Boss phases (design 6A): rage_at (hp share) switches to rage_jump_every / rage_windup and a shockwave ring on every slam {speed px/s, max px, width px, damage}; volley {every s, count, spread_deg} fires bolts (bolt_* keys) in phase 1 and 2. telegraph (charge): while winding up the dash lane shows on the ground (Sói Rừng). boss_tree (Mộc Yêu, design/bosses.md): every root_every s (enraged rage_root_every) root_count roots (rage_root_count) erupt root_delay s after a warning ring, one under the player and the rest within root_spread; each hurts root_damage within root_radius; every summon_every s it calls summon_count monsters from summon around itself.",
   "slime": {
     "sprite": "slime",
     "behaviour": "chase",
@@ -136,5 +136,33 @@
     "dash_time": 0.4,
     "charge_cooldown": 2.6,
     "telegraph": true
+  },
+  "tree_boss": {
+    "name": "Mộc Yêu",
+    "sprite": "tree-boss",
+    "behaviour": "boss_tree",
+    "boss": true,
+    "hp": 8500.0,
+    "damage": 20.0,
+    "speed": 26.0,
+    "xp": 200.0,
+    "scale": 4,
+    "root_every": 3.2,
+    "root_count": 3,
+    "root_delay": 0.9,
+    "root_radius": 30.0,
+    "root_damage": 30.0,
+    "root_spread": 110.0,
+    "root_sprite": "tree-roots",
+    "summon_every": 11.0,
+    "summon": [
+      "wolf",
+      "wisp",
+      "wisp"
+    ],
+    "summon_count": 3,
+    "rage_at": 0.5,
+    "rage_root_every": 2.0,
+    "rage_root_count": 6
   }
 }

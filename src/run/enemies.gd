@@ -11,7 +11,7 @@ extends RefCounted
 ##   e.hit_circle(center, 80.0, 12.0)                           # kills land in kill_pos / kill_xp
 
 enum { MOVE, WINDUP, DASH, DYING }
-enum { CHASE, SWARM, CHARGE, BOSS_SLIME, SHOOT, ZIGZAG }
+enum { CHASE, SWARM, CHARGE, BOSS_SLIME, SHOOT, ZIGZAG, BOSS_TREE }
 
 const HURT_FLASH := 0.12
 const KNOCKBACK_DECAY := 10.0
@@ -123,6 +123,8 @@ var blast_r := PackedFloat32Array()
 var blast_dmg := PackedFloat32Array()
 var blast_total := PackedFloat32Array()  # its full delay (the ring fills as it counts down)
 var blasts_done := PackedVector2Array()  # blasts that went off this step (the run draws them)
+var blast_root := PackedByteArray()      # 1 = a Mộc Yêu root (drawn as roots, not a burst)
+var roots_done := PackedVector2Array()   # roots that erupted this step (the run draws them)
 var vs_status_mul := 0.0        # class passive: extra damage taken by monsters with a status   # set by the run from the class sprite's body
 
 var _hash: SpatialHash
@@ -184,7 +186,7 @@ func _init(monsters: Dictionary, cfg: Dictionary, sheets: Dictionary, seed_value
 			_register(id + "@elite", m, sheets.get(String(m.get("sprite", id))), world_scale, elite)
 
 
-const BEHAVIOURS := {"chase": CHASE, "swarm": SWARM, "charge": CHARGE, "boss_slime": BOSS_SLIME, "shoot": SHOOT, "zigzag": ZIGZAG}
+const BEHAVIOURS := {"chase": CHASE, "swarm": SWARM, "charge": CHARGE, "boss_slime": BOSS_SLIME, "shoot": SHOOT, "zigzag": ZIGZAG, "boss_tree": BOSS_TREE}
 
 
 ## One monster kind; [param elite] = multipliers (hp_mul, damage_mul, scale_mul,
@@ -394,6 +396,48 @@ func affix_label(i: int) -> Array:
 	return [String(d.get("name", "")), Color(String(d.get("color", "#ffffff")))]
 
 
+## A warning ring at [param p] that goes off after [param delay] s ([param root]:
+## a Mộc Yêu root, else a death burst).
+func _add_blast(p: Vector2, delay: float, r: float, dmg: float, root: bool) -> void:
+	blast_pos.append(p)
+	blast_t.append(delay)
+	blast_total.append(delay)
+	blast_r.append(r)
+	blast_dmg.append(dmg)
+	blast_root.append(1 if root else 0)
+
+
+## Mộc Yêu (design/bosses.md): walks slowly; every root_every s (enraged:
+## rage_root_every) root_count roots (rage_root_count) erupt after root_delay s,
+## one under the player and the rest within root_spread of it; every
+## summon_every s it calls summon_count monsters of the summon list around it.
+## charge_cd counts the roots, timer the call.
+func _boss_tree(i: int, k: int, dir: Vector2, dist: float, speed: float, delta: float) -> Vector2:
+	var e: Dictionary = k_extra[k]
+	var rage := enraged(i)
+	charge_cd[i] -= delta
+	if charge_cd[i] <= 0.0:
+		charge_cd[i] = float(e.get("rage_root_every" if rage else "root_every", 4.0))
+		var target := pos[i] + dir * dist   # where the player stands (dir, dist run from pos)
+		var n := int(e.get("rage_root_count" if rage else "root_count", 3))
+		var spread := float(e.get("root_spread", 90.0))
+		for r in n:
+			var p := target if r == 0 else target + Vector2.from_angle(_rng.randf() * TAU) * spread * sqrt(_rng.randf())
+			_add_blast(p, float(e.get("root_delay", 0.9)), float(e.get("root_radius", 30.0)), float(e.get("root_damage", 25.0)), true)
+		anim_t[i] = 0.0
+	timer[i] -= delta
+	if timer[i] <= 0.0:
+		timer[i] = float(e.get("summon_every", 12.0))
+		var list: Array = e.get("summon", [])
+		for s in int(e.get("summon_count", 3)):
+			if list.is_empty():
+				break
+			var ki := kind_ids.find(String(list[s % list.size()]))
+			if ki >= 0:
+				_split_q.append([ki, pos[i] + Vector2.from_angle(s * TAU / 3.0 + phase[i]) * 40.0])
+	return dir * speed
+
+
 ## Counts down death bursts; one that goes off with the player inside hurts.
 func _step_blasts(delta: float, player_center: Vector2) -> float:
 	var hit := 0.0
@@ -405,7 +449,11 @@ func _step_blasts(delta: float, player_center: Vector2) -> float:
 			continue
 		if blast_pos[b].distance_to(player_center) < blast_r[b] + player_hit_radius:
 			hit = maxf(hit, blast_dmg[b])
-		blasts_done.append(blast_pos[b])
+		if blast_root[b] == 1:
+			roots_done.append(blast_pos[b])
+		else:
+			blasts_done.append(blast_pos[b])
+		blast_root.remove_at(b)
 		blast_t.remove_at(b)   # packed arrays are values: remove from each one itself
 		blast_r.remove_at(b)
 		blast_dmg.remove_at(b)
@@ -510,6 +558,8 @@ func _velocity(i: int, k: int, dir: Vector2, dist: float, delta: float) -> Vecto
 			return _boss_slime(i, k, dir, speed, delta)
 		SHOOT:
 			return _shooter(i, k, dir, dist, speed, delta)
+		BOSS_TREE:
+			return _boss_tree(i, k, dir, dist, speed, delta)
 		ZIGZAG:   # Ma Trơi: sharp alternating diagonals every zig_time s (design 6A)
 			var e: Dictionary = k_extra[k]
 			var leg := floori((_time + phase[i]) / maxf(0.05, float(e.get("zig_time", 0.5))))
@@ -706,11 +756,8 @@ func _damage(i: int, amount: float, kb: Vector2, source := "") -> void:
 				_split_q.append([base, pos[i] + Vector2(cos(s * 2.1), sin(s * 2.1)) * 14.0])
 		var ex: Dictionary = ad.get("explode", k_extra[kind[i]].get("explode", {}))
 		if not ex.is_empty():   # Bọ Lửa: its body bursts after a warning
-			blast_pos.append(center_of(i))
-			blast_t.append(float(ex.get("delay", 0.8)))
-			blast_total.append(float(ex.get("delay", 0.8)))
-			blast_r.append(float(ex.get("radius", 60.0)))
-			blast_dmg.append(float(ex.get("damage", k_damage[kind[i]] * float(ex.get("damage_mul", 1.0)))))
+			_add_blast(center_of(i), float(ex.get("delay", 0.8)), float(ex.get("radius", 60.0)),
+				float(ex.get("damage", k_damage[kind[i]] * float(ex.get("damage_mul", 1.0)))), false)
 
 
 ## Puts status [param status] on monster [param i]. [param p] holds its numbers

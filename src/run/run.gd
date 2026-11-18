@@ -245,6 +245,8 @@ func _ready() -> void:
 			names.append(String(monsters[m].get("sprite", m)))
 			if monsters[m].has("bolt_sprite"):   # a shooter's bolt
 				names.append(String(monsters[m]["bolt_sprite"]))
+			if monsters[m].has("root_sprite"):   # Mộc Yêu's roots
+				names.append(String(monsters[m]["root_sprite"]))
 	for sk: String in pool.get("skills", {}):
 		var sd: Dictionary = pool["skills"][sk]
 		names.append(String(sd.get("sprite", sk)))
@@ -278,10 +280,10 @@ func _ready() -> void:
 	if _spawn_only != "":   # shots: one species alone, its waves moved to the start
 		var only: Array = []
 		for w: Dictionary in wave_list:
-			if String(w.get("monster", "")) == _spawn_only and not w.has("burst"):
+			if String(w.get("monster", "")) == _spawn_only:
 				var w2 := w.duplicate()
-				w2["t_to"] = float(w2.get("t_to", 300.0)) - float(w2.get("t_from", 0.0))
-				w2["t_from"] = 0.0
+				w2["t_to"] = 1.0 if w.has("burst") else float(w2.get("t_to", 300.0)) - float(w2.get("t_from", 0.0))
+				w2["t_from"] = 1.0 if w.has("burst") else 0.0
 				only.append(w2)
 		wave_list = only
 	waves = WaveScheduler.new(wave_list)
@@ -540,6 +542,13 @@ func _tick(dt: float) -> void:
 	for p in enemies.blasts_done:   # death bursts that went off
 		_add_fx("stomp-i", "burst", _sprite_scale * 1.2, 0.0, -1.0, p)
 	enemies.blasts_done.clear()
+	if not enemies.roots_done.is_empty():
+		Sfx.play("quake")
+	var boss_i := enemies.boss_index()
+	var root_sprite := String(enemies.k_extra[enemies.kind[boss_i]].get("root_sprite", "tree-roots")) if boss_i >= 0 else "tree-roots"
+	for p in enemies.roots_done:   # Mộc Yêu roots spearing up
+		_add_fx(root_sprite, "erupt", _sprite_scale * 1.3, 0.0, -1.0, p)
+	enemies.roots_done.clear()
 	if not enemies.slams.is_empty():
 		Sfx.play("boss_slam")
 	for p in enemies.slams:   # boss landings: a dust ring where it hit the ground
@@ -2270,6 +2279,13 @@ func _draw_boss_warnings() -> void:
 		var p := enemies.blast_pos[b]
 		var r := enemies.blast_r[b]
 		var k := 1.0 - enemies.blast_t[b] / maxf(0.01, enemies.blast_total[b])
+		if enemies.blast_root[b] == 1:   # Mộc Yêu: cracked earth and root tips poking out
+			draw_circle(p, r, Color(0.25, 0.16, 0.08, 0.25 + 0.2 * k))
+			draw_arc(p, r, 0.0, TAU, 40, Color(0.55, 0.8, 0.3, 0.5 + 0.45 * k), 2.0)
+			for t in 5:
+				var q := p + Vector2.from_angle(t * TAU / 5.0 + float(b)) * r * 0.55
+				draw_rect(Rect2(q - Vector2(1.5, 1.5 + 3.0 * k), Vector2(3.0, 3.0 + 3.0 * k)), Color(0.42, 0.27, 0.15))
+			continue
 		draw_circle(p, r * k, Color(1.0, 0.45, 0.1, 0.22))
 		draw_arc(p, r, 0.0, TAU, 40, Color(1.0, 0.55, 0.2, 0.55 + 0.4 * k), 2.0)
 
