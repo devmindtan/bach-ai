@@ -895,7 +895,7 @@ func _milestone_choice(info: Dictionary, pick: Callable) -> Button:
 
 
 const DMG_BAR := 150.0
-const RARITY := {"common": Color("e8e2d0"), "rare": Color("6fb7ff"), "epic": Color("c38df5")}
+const RARITY := {"common": Color("e8e2d0"), "rare": Color("6fb7ff"), "epic": Color("c38df5"), "legendary": Color("f2b64a")}
 
 
 func _damage_table(report: Array) -> GridContainer:
