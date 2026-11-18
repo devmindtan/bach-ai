@@ -46,6 +46,22 @@ func reshow() -> void:
 
 
 ## Level-up with the cards hidden: only a strip on top, the field stays visible.
+## The two level-up view buttons under the title (design/ux/level-up.md): hide
+## the panel to see the field, open the character sheet. Not focusable, so the
+## keys keep moving between the cards only.
+func _view_buttons(root: VBoxContainer) -> void:
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 16)
+	root.add_child(row)
+	for b: Array in [["Ẩn bảng (H)", "hidden"], ["Nhân vật (Tab)", "character"]]:
+		var view: String = b[1]
+		var btn := _button(String(b[0]), func() -> void: run.toggle_level_view(view))
+		btn.custom_minimum_size = Vector2(190, 40)
+		btn.focus_mode = Control.FOCUS_NONE
+		row.add_child(btn)
+
+
 func show_peek() -> void:
 	hide_all()
 	var strip := PanelContainer.new()
@@ -60,7 +76,20 @@ func show_peek() -> void:
 	strip.offset_top = 70
 	add_child(strip)
 	_box = strip
-	strip.add_child(_label("Đang xem chiến trường  ·  H: hiện lại thẻ  ·  Tab: nhân vật", 18, TEXT))
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 14)
+	strip.add_child(row)
+	var l := _label("Đang xem chiến trường", 18, TEXT)
+	l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(l)
+	var back_btn := _button("Hiện thẻ (H)", func() -> void: run.toggle_level_view("hidden"))
+	back_btn.custom_minimum_size = Vector2(160, 36)
+	row.add_child(back_btn)
+	var sheet := _button("Nhân vật (Tab)", func() -> void: run.toggle_level_view("character"))
+	sheet.custom_minimum_size = Vector2(170, 36)
+	sheet.focus_mode = Control.FOCUS_NONE
+	row.add_child(sheet)
+	back_btn.call_deferred("grab_focus")
 
 
 func hide_all() -> void:
@@ -76,9 +105,7 @@ func hide_all() -> void:
 func show_level_up(ids: Array[String], title := "Lên cấp! Chọn một") -> void:
 	_reshow = func() -> void: show_level_up(ids, title)
 	var root := _open(title, false)
-	var hint := _label("Tab: xem nhân vật  ·  H: ẩn bảng", 16, MUTED)
-	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	root.add_child(hint)
+	_view_buttons(root)
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 20)
@@ -93,6 +120,7 @@ func show_level_up(ids: Array[String], title := "Lên cấp! Chọn một") -> v
 func show_skill_pick(card_name: String, ids: Array[String]) -> void:
 	_reshow = func() -> void: show_skill_pick(card_name, ids)
 	var root := _open("%s: chọn một chiêu để +1 số lượng" % card_name, false)
+	_view_buttons(root)
 	var sub := _label("Chỉ chiêu bạn chọn được thêm; các chiêu khác giữ nguyên.", 16, MUTED)
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	root.add_child(sub)
@@ -159,6 +187,7 @@ func _skill_pick_card(sid: String, pick: Callable) -> Button:
 func show_milestone_pick(level: int, ids: Array[String]) -> void:
 	_reshow = func() -> void: show_milestone_pick(level, ids)
 	var root := _open("Mốc cấp %d! Chọn một phần thưởng" % level, false)
+	_view_buttons(root)
 	var sub := _label("Chỉ có tác dụng trong trận này.", 16, MUTED)
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	root.add_child(sub)

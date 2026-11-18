@@ -215,3 +215,20 @@ func test_level_up_view_toggles_between_cards_character_and_hidden() -> void:
 	r.toggle_level_view("hidden")
 	_check(r.level_view == "cards", "no level-up view while playing")
 	r.free()
+
+
+func test_tab_reaches_the_level_up_before_gui_focus() -> void:
+	# user 2026-11-18: Tab moved focus between the cards instead of opening the sheet
+	# (GUI focus eats Tab before _unhandled_input), so run._input takes it first
+	RunInput.register()
+	var r := _run("mage", {})
+	r.state = r.State.LEVEL_UP
+	var ev := InputEventKey.new()
+	ev.keycode = KEY_TAB
+	ev.physical_keycode = KEY_TAB
+	ev.pressed = true
+	_check(r.has_method("_input"), "run handles level-up keys in _input")
+	if r.has_method("_input"):
+		r._input(ev)
+	_check(r.level_view == "character", "Tab opens the character sheet, got %s" % r.level_view)
+	r.free()

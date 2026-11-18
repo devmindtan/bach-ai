@@ -415,6 +415,19 @@ func _process(delta: float) -> void:
 	_hud.queue_redraw()
 
 
+## Level-up view keys come here, before the GUI: Tab is also Godot's focus key and
+## the card buttons ate it (user 2026-11-18), so it is taken and marked handled.
+func _input(event: InputEvent) -> void:
+	if state != State.LEVEL_UP:
+		return
+	var v := "character" if event.is_action_pressed("character") else ("hidden" if event.is_action_pressed("peek") else "")
+	if v == "":
+		return
+	toggle_level_view(v)
+	if is_inside_tree():
+		get_viewport().set_input_as_handled()
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("pause"):
 		if state == State.PLAYING:
@@ -423,10 +436,6 @@ func _unhandled_input(event: InputEvent) -> void:
 			resume()
 	elif event.is_action_pressed("dash") and state == State.PLAYING:
 		try_dash()
-	elif state == State.LEVEL_UP and event.is_action_pressed("character"):
-		toggle_level_view("character")
-	elif state == State.LEVEL_UP and event.is_action_pressed("peek"):
-		toggle_level_view("hidden")
 	elif event.is_action_pressed("character"):
 		if state == State.PLAYING:
 			open_pause()

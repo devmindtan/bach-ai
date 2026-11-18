@@ -16,9 +16,10 @@ nhìn chiến trường; game vẫn dừng trong cả hai chế độ.
 
 ## Hành vi
 
-- Dưới tiêu đề bảng thẻ: dòng gợi ý "Tab: xem nhân vật · H: ẩn bảng".
+- Dưới tiêu đề bảng thẻ: hai nút "Ẩn bảng (H)" và "Nhân vật (Tab)" (bấm chuột được, không nhận focus).
 - **Tab / C** (tay cầm Back): mở trang Nhân vật; nút "Quay lại chọn thẻ (Tab)"; Tab lần nữa quay lại thẻ.
 - **H** (tay cầm LB): ẩn bảng, chỉ còn một dải nhỏ ở trên "Đang xem chiến trường · H: hiện lại thẻ · Tab: nhân vật";
-  H lần nữa hiện lại thẻ.
+  H lần nữa hoặc nút "Hiện thẻ (H)" trên dải hiện lại thẻ.
 - Phím 1/2/3 chỉ chọn thẻ khi bảng thẻ đang hiện (tránh chọn mù).
 - Code: `run.toggle_level_view()`, `RunPanels.show_peek()` / `reshow()`. Test: `milestone_test.gd`.
+- Phím Tab được bắt trong `run._input` (trước GUI): Godot dùng Tab để chuyển focus giữa các nút, nên ở `_unhandled_input` nó không bao giờ tới (lỗi 2026-11-18).
