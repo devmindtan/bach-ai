@@ -1302,6 +1302,7 @@ func _ring_fx(reach: float) -> void:
 	var sheet: SpriteSheet = sheets.get("stomp-i")
 	var hb := SpriteHitbox.of(sheet, "burst", Vector2.ZERO, 1.0) if sheet != null else null
 	var r1 := hb.radius if hb != null and hb.radius > 0.0 else 25.0
+	r1 *= float(sheet.meta.get("px_scale", 1.0)) if sheet != null else 1.0   # _add_fx applies px_scale again
 	_add_fx("stomp-i", "burst", reach / r1, 0.0)
 
 
