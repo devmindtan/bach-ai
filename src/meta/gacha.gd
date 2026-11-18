@@ -72,7 +72,7 @@ func pool(defs: Dictionary, bid: String, cls: String, rarity: String) -> Array:
 ## [param n] pulls on banner [param bid] for [param slot]: pays the gems, keeps the
 ## pity count, adds new items to the bag and gold for duplicates. Returns
 ## [{id, rarity, dup, gold}], or [] when the gems are short.
-func pull(slot: Slot, bid: String, n: int, rng: RandomNumberGenerator) -> Array:
+func pull(slot: Slot, bid: String, n: int, rng: RandomNumberGenerator, now := -1.0) -> Array:
 	if banner(bid).is_empty() or slot.gems < cost(n):
 		return []
 	slot.gems -= cost(n)
@@ -99,4 +99,26 @@ func pull(slot: Slot, bid: String, n: int, rng: RandomNumberGenerator) -> Array:
 		else:
 			slot.profile.add(id)
 		out.append({"id": id, "rarity": r, "dup": dup, "gold": gold})
+	_log(slot, bid, out, Time.get_unix_time_from_system() if now < 0.0 else now)
 	return out
+
+
+## Lịch sử quay: appends [param got] to the banner's log with time [param t]
+## (unix s), keeping the last gacha.json "history_keep" entries.
+func _log(slot: Slot, bid: String, got: Array, t: float) -> void:
+	var log: Array = slot.gacha_log.get(bid, [])
+	for r: Dictionary in got:
+		var e := r.duplicate()
+		e["t"] = t
+		log.append(e)
+	var keep := int(data.get("history_keep", 100))
+	if log.size() > keep:
+		log = log.slice(log.size() - keep)
+	slot.gacha_log[bid] = log
+
+
+## The banner's pulls, newest first.
+static func history(slot: Slot, bid: String) -> Array:
+	var log: Array = slot.gacha_log.get(bid, []).duplicate()
+	log.reverse()
+	return log

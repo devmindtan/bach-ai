@@ -74,3 +74,41 @@ func test_only_wearable_items_and_duplicates_become_gold() -> void:
 			if bool(r["dup"]):
 				dup_gold += int(r["gold"])
 	_check(dup_gold > 0, "100 pulls of a small pool give duplicates turned into gold")
+
+
+func test_history_keeps_the_last_pulls_newest_first() -> void:
+	var g := Gacha.load_default()
+	var s := _slot_for_history()
+	s.gems = 100000
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 3
+	var a := g.pull(s, "weapon", 1, rng, 100.0)
+	var b := g.pull(s, "weapon", 10, rng, 200.0)
+	var h := Gacha.history(s, "weapon")
+	_check(h.size() == 11, "11 pulls logged, got %d" % h.size())
+	_check(is_equal_approx(float(h[0]["t"]), 200.0) and is_equal_approx(float(h[10]["t"]), 100.0), "newest first")
+	_check(String(h[10]["id"]) == String(a[0]["id"]) and String(h[0]["id"]) == String(b[9]["id"]), "same items as the pulls")
+	_check(Gacha.history(s, "armor").is_empty(), "each banner its own log")
+	var keep := int(g.data.get("history_keep", 100))
+	for k in 12:
+		g.pull(s, "weapon", 10, rng, 300.0 + k)
+	_check(Gacha.history(s, "weapon").size() == keep, "capped at history_keep %d" % keep)
+
+
+func test_history_survives_save_and_load() -> void:
+	var g := Gacha.load_default()
+	var s := _slot_for_history()
+	s.gems = 100
+	var rng := RandomNumberGenerator.new()
+	g.pull(s, "armor", 1, rng, 50.0)
+	var copy := _slot_for_history()
+	copy.from_dict(JSON.parse_string(JSON.stringify(s.to_dict())))
+	_check(Gacha.history(copy, "armor").size() == 1, "log saved with the slot")
+
+
+func _slot_for_history() -> Slot:
+	var defs: Dictionary = GameData.load_json("res://assets/data/items.json")["equipment"].duplicate()
+	defs.erase("_doc")
+	var s := Slot.new(defs)
+	s.cls = "knight"
+	return s

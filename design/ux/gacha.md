@@ -9,6 +9,7 @@ Luật: `design/gacha.md` (số liệu trong `assets/data/gacha.json`). Mở t�
 |---|---|
 | Genshin Impact, theo [DotGG: pity systems](https://dotgg.gg/how-gacha-pity-systems-actually-work-soft-pity-hard-pity-and-the-50-50/), [Gamespace: Genshin odds](https://gamespace.com/all-articles/news/genshin-7-1-odds-what-gacha-pulls-really-tell-you/) | Công bố tỉ lệ gốc và mốc pity chắc chắn; bộ đếm pity **riêng từng banner**; nói rõ cái gì đặt lại bộ đếm. |
 | [Shattered: gacha RNG fair](https://shattered.io/is-gacha-rng-provably-fair-explained-2026/), [Bestforandroid: so sánh odds](https://bestforandroid.com/tips/gacha-game-odds-pity-raid-genshin-star-rail/) | Đừng giấu tỉ lệ sau nút "?"; không dùng lời nhắc kiểu "sắp trúng"; quay 1 và quay 10 cùng tỉ lệ, ghi rõ. |
+| Genshin Impact, [Sportskeeda: banner history](https://www.sportskeeda.com/esports/genshin-impact-how-count-pity-using-banner-history-details) | Nút / tab **Lịch sử** ngay trên màn quay; lọc theo banner; mỗi dòng: loại, tên món, thời điểm nhận. |
 
 ## Bố cục
 
@@ -18,3 +19,10 @@ Luật: `design/gacha.md` (số liệu trong `assets/data/gacha.json`). Mở t�
 - Giữa: kết quả lần quay gần nhất, lưới 5 × 2 thẻ: icon trong khung màu độ hiếm, tên, độ hiếm, "Mới" hoặc
   "Trùng → +n vàng". Chưa quay: một dòng hướng dẫn.
 - Phải: bảng tỉ lệ (hiện sẵn, không giấu), luật pity, giá; nút **Quay 1** và **Quay 10** (nút chính), tắt khi thiếu đá.
+
+## Lịch sử quay (2026-11-18)
+
+- Cột giữa có hai tab: **Kết quả** (lượt quay vừa rồi) và **Lịch sử** (banner đang chọn, mới nhất trước).
+- Mỗi dòng: thời điểm (ngày/tháng giờ:phút, giờ máy), tên món theo màu độ hiếm, độ hiếm, "Mới" hoặc "+n vàng" (trùng).
+- Giữ `history_keep` lượt mỗi banner (`gacha.json`, 100); lưu trong slot (`gacha_log`). Bảng cuộn được, căn từ trên.
+- Quay xong tự về tab Kết quả. Ảnh: `production/ui/01k2-gacha-history.png`.

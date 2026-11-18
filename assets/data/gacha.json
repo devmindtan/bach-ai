@@ -1,8 +1,9 @@
 {
-  "_doc": "Gacha (design/gacha.md), paid with gems (Đá) only. cost_per_pull gems a pull (10 pulls = 10x). rates = the published chance of each rarity per pull. pity: the pity_at-th pull since the last legendary on a banner is a legendary (each banner counts its own). A banner gives items of its slots that the slot's class can wear (shared or its own class); a rarity with no such item falls back to the next lower one. A duplicate (an item already owned) becomes dup_gold of its rarity instead. Numbers open for the user to tune (master.md).",
+  "_doc": "Gacha (design/gacha.md), paid with gems (Đá) only. cost_per_pull gems a pull (10 pulls = 10x). rates = the published chance of each rarity per pull. pity: the pity_at-th pull since the last legendary on a banner is a legendary (each banner counts its own). A banner gives items of its slots that the slot's class can wear (shared or its own class); a rarity with no such item falls back to the next lower one. A duplicate (an item already owned) becomes dup_gold of its rarity instead. history_keep = pulls kept per banner in Lịch sử quay. Numbers open for the user to tune (master.md).",
   "cost_per_pull": 10,
   "rates": { "rare": 0.77, "epic": 0.20, "legendary": 0.03 },
   "pity_at": 50,
+  "history_keep": 100,
   "dup_gold": { "common": 20, "rare": 40, "epic": 100, "legendary": 250 },
   "banners": [
     { "id": "weapon", "name": "Vũ khí", "desc": "Kiếm, gậy và vũ khí hiếm.", "slots": ["weapon"] },

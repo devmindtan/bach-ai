@@ -4,7 +4,11 @@ extends Node2D
 ## published rates, the pity rule, the price and the Quay 1 / Quay 10 buttons on
 ## the right. Pulls save at once. Esc goes back to the lobby.
 ##
-## Command line (after `--`), for shots: --gacha-demo (a 10-pull at the start).
+## The middle column has two tabs: Kết quả (the last pull) and Lịch sử (this
+## banner's pulls, newest first, like Genshin's wish history).
+##
+## Command line (after `--`), for shots: --gacha-demo (a 10-pull at the start),
+## --gacha-tab=history (open on Lịch sử).
 
 const LOBBY_SCENE := "res://src/lobby/lobby.tscn"
 const RNAME := {"common": "Thường", "rare": "Hiếm", "epic": "Sử thi", "legendary": "Huyền thoại"}
@@ -16,6 +20,7 @@ var _last: Array = []
 var _rng := RandomNumberGenerator.new()
 var _scroll := Vector2.ZERO
 var _layer: CanvasLayer
+var _tab := "result"                  # "result" | "history"
 
 
 func _ready() -> void:
@@ -34,7 +39,11 @@ func _ready() -> void:
 	_g = Gacha.load_default()
 	if OS.get_cmdline_user_args().has("--gacha-demo"):
 		_slot.gems = maxi(_slot.gems, _g.cost(10))
-		_last = _g.pull(_slot, _bid, 10, _rng)
+		_last = _g.pull(_slot, _bid, 10, _rng, 1763460000.0)   # a fixed time: shots stay identical
+		_slot.gems = maxi(_slot.gems, _g.cost(10))
+		_g.pull(_slot, _bid, 10, _rng, 1763463600.0)   # a second one, so Lịch sử has two times
+	if OS.get_cmdline_user_args().has("--gacha-tab=history"):
+		_tab = "history"
 	_build()
 
 
@@ -63,6 +72,7 @@ func _pull(n: int) -> void:
 	if got.is_empty():
 		return
 	_last = got
+	_tab = "result"
 	Sfx.play("gacha_pull")
 	var best := ""
 	for r: Dictionary in got:
@@ -110,8 +120,20 @@ func _build() -> void:
 	var mv := VBoxContainer.new()
 	mv.add_theme_constant_override("separation", 10)
 	mid.add_child(mv)
-	mv.add_child(UiKit.label("Kết quả", 22, UiKit.TEXT))
-	if _last.is_empty():
+	var tabs := HBoxContainer.new()
+	tabs.add_theme_constant_override("separation", 8)
+	mv.add_child(tabs)
+	for t: Array in [["result", "Kết quả"], ["history", "Lịch sử"]]:
+		var on: bool = _tab == t[0]
+		var tb := UiKit.button(t[1], func() -> void:
+			_tab = t[0]
+			_rebuild(), Vector2(130, 38), 17, UiKit.PANEL_HOVER if on else UiKit.PANEL)
+		if on:
+			tb.add_theme_stylebox_override("normal", UiKit.style(UiKit.PANEL_HOVER, 8, Color.WHITE, 2))
+		tabs.add_child(tb)
+	if _tab == "history":
+		_history(mv)
+	elif _last.is_empty():
 		var hint := UiKit.label("Chọn banner rồi bấm Quay 1 hoặc Quay 10. Món mới vào túi đồ; món trùng đổi thành vàng.", 15, UiKit.MUTED)
 		hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		hint.custom_minimum_size = Vector2(540, 0)
@@ -208,3 +230,49 @@ func _result_card(r: Dictionary) -> PanelContainer:
 	v.add_child(tag)
 	Tip.attach(p, String(d.get("name", r["id"])), String(d.get("desc", "")), col, String(d.get("icon", r["id"])), String(RNAME.get(String(r["rarity"]), "")))
 	return p
+
+
+## Lịch sử quay of the selected banner, newest first: time, item (rarity colour),
+## rarity, new or the duplicate's gold. Scrolls; top-aligned.
+func _history(mv: VBoxContainer) -> void:
+	var rows := Gacha.history(_slot, _bid)
+	var banner_name := String(_g.banner(_bid).get("name", _bid))
+	var head := UiKit.label("Banner %s · %d lượt gần nhất (giữ tối đa %d)" % [banner_name, rows.size(), int(_g.data.get("history_keep", 100))], 14, UiKit.MUTED)
+	mv.add_child(head)
+	if rows.is_empty():
+		mv.add_child(UiKit.label("Chưa quay lượt nào ở banner này.", 15, UiKit.MUTED))
+		return
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	mv.add_child(scroll)
+	var grid := GridContainer.new()
+	grid.columns = 4
+	grid.add_theme_constant_override("h_separation", 14)
+	grid.add_theme_constant_override("v_separation", 6)
+	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var pad := MarginContainer.new()   # room for the scroll bar on the right
+	pad.add_theme_constant_override("margin_right", 18)
+	pad.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(pad)
+	pad.add_child(grid)
+	for h in ["Thời điểm", "Món", "Độ hiếm", ""]:
+		grid.add_child(UiKit.label(h, 13, UiKit.GOLD))
+	for r: Dictionary in rows:
+		var d: Dictionary = _slot.profile.defs.get(String(r["id"]), {})
+		var col: Color = UiKit.RARITY.get(String(r["rarity"]), UiKit.TEXT)
+		grid.add_child(UiKit.label(when(float(r.get("t", 0.0))), 14, UiKit.MUTED))
+		var nm := UiKit.label(String(d.get("name", r["id"])), 15, col)
+		nm.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		grid.add_child(nm)
+		grid.add_child(UiKit.label(String(RNAME.get(String(r["rarity"]), "")), 14, col))
+		grid.add_child(UiKit.label(("+%d vàng" % int(r["gold"])) if bool(r.get("dup", false)) else "Mới", 14,
+			UiKit.MUTED if bool(r.get("dup", false)) else Color("8fe08a")))
+
+
+## "18/11 10:42" in local time for a unix time [param t]. Fixed mode (shots,
+## tests) uses UTC so images do not depend on the machine's time zone.
+static func when(t: float) -> String:
+	var bias := 0 if Prefs.current() == null or Prefs.current().is_fixed() else int(Time.get_time_zone_from_system().get("bias", 0))
+	var d := Time.get_datetime_dict_from_unix_time(int(t) + bias * 60)
+	return "%02d/%02d %02d:%02d" % [d["day"], d["month"], d["hour"], d["minute"]]
