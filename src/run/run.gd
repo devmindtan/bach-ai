@@ -45,6 +45,7 @@ var won_items: Array[String] = []   # equipment won this run (end screen)
 var _gear: Array[String] = []       # --gear=a,b (shots: wear these)   # self casts waiting for their pulse (count > 1)
 var _chest_open := false   # the next level-up panel comes from a chest
 var _chest_sprite := "chest"
+var _essence_sprite := "essence-pickup"
 
 enum State { PLAYING, LEVEL_UP, PAUSED, DEAD, WON }
 
@@ -195,7 +196,8 @@ func _ready() -> void:
 	_gem_sprite = String(items.get("pickups", {}).get("xp_gem", {}).get("sprite", "exp-gem"))
 	_coin_sprite = String(items.get("pickups", {}).get("gold", {}).get("sprite", "gold-coin"))
 	_chest_sprite = String(items.get("pickups", {}).get("chest", {}).get("sprite", "chest"))
-	var names: Array[String] = [String(class_data.get("sprite", "swordsman")), _gem_sprite, _coin_sprite, _chest_sprite, "stomp-i"]
+	_essence_sprite = String(items.get("pickups", {}).get("essence", {}).get("sprite", "essence-pickup"))
+	var names: Array[String] = [String(class_data.get("sprite", "swordsman")), _gem_sprite, _coin_sprite, _chest_sprite, _essence_sprite, "stomp-i"]
 	_buff_defs = items.get("buffs", {})
 	status_defs = GameData.load_json(DATA + "statuses.json").get("statuses", {})
 	for st: String in status_defs:
@@ -562,6 +564,16 @@ func _take_hit(amount: float) -> void:
 	_play_action("hurt")
 
 
+## Tinh hoa a kill drops: run_config.json "essence" (elite / boss), else 0.
+func essence_drop(elite: bool, boss: bool) -> int:
+	var e: Dictionary = cfg.get("essence", {})
+	if boss:
+		return int(e.get("boss", 0))
+	if elite:
+		return int(e.get("elite", 0))
+	return 0
+
+
 func _drops() -> void:
 	if enemies.kill_pos.is_empty():
 		return
@@ -571,6 +583,9 @@ func _drops() -> void:
 		pickups.drop(Pickups.GEM, enemies.kill_pos[i], enemies.kill_xp[i])
 		if enemies.kill_elite[i] == 1:
 			pickups.drop(Pickups.CHEST, enemies.kill_pos[i] + Vector2(-10, 0), 1.0)
+		var ess := essence_drop(enemies.kill_elite[i] == 1, enemies.kill_boss[i] == 1)
+		if ess > 0:   # Tinh hoa: the skill-tree material
+			pickups.drop(Pickups.ESSENCE, enemies.kill_pos[i] + Vector2(0, -12), float(ess))
 		if enemies.kill_boss[i] == 1:
 			_boss_dead = true
 		if heal_frac > 0.0 and (enemies.kill_elite[i] == 1 or enemies.kill_boss[i] == 1):
@@ -1440,8 +1455,10 @@ func xp_needed() -> int:
 
 func _finish(won: bool) -> void:
 	var prefs := Prefs.current()
-	run_result = {"won": won, "stage": stage_number, "collected": gold, "stage_gold": 0, "gems": 0, "first": false}
+	run_result = {"won": won, "stage": stage_number, "collected": gold, "stage_gold": 0, "gems": 0, "first": false,
+		"essence": pickups.essence if pickups != null else 0}
 	if playing_slot != null and stages != null and not prefs.is_fixed():
+		playing_slot.essence += int(run_result["essence"])   # Tinh hoa picked up is kept, won or lost
 		if won:
 			var r := playing_slot.record_win(stage_number, stages)
 			playing_slot.gold += gold   # coins picked up in the run, on top of stage gold
@@ -1558,6 +1575,8 @@ func _draw() -> void:
 			var sh := gem if pickups.kind[i] == Pickups.GEM else coin
 			if pickups.kind[i] == Pickups.CHEST:
 				sh = sheets.get(_chest_sprite)
+			elif pickups.kind[i] == Pickups.ESSENCE:
+				sh = sheets.get(_essence_sprite)
 			if sh != null:
 				sh.draw(self, "idle", clock + i * 0.13, pickups.pos[i], _sprite_scale)
 	_draw_boss_warnings()

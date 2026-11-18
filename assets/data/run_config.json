@@ -5,6 +5,7 @@
   "pickups": { "radius": 70.0, "magnet_speed": 520.0, "collect_radius": 14.0, "gold_chance": 0.12 },
   "player": { "hit_invuln": 0.6 },
   "rewards": { "_doc": "Equipment won: one random item (any slot, fitting the class or shared) when a stage is won; chest_item_chance = chance that opening a chest also gives one.", "win_item": true, "chest_item_chance": 0.25 },
+  "essence": { "_doc": "Tinh hoa (skill-tree material, design/skill-tree.md) a kill drops: elites and bosses only; picked up like other drops and kept for the slot, won or lost.", "elite": 1, "boss": 10 },
   "elite": { "_doc": "Every monster also exists as '<id>@elite' (waves spawn it by that name): hp, damage, size and xp multiplied; it has a gold halo and drops a chest (one extra card pick).", "hp_mul": 10.0, "damage_mul": 1.5, "scale_mul": 1.5, "xp_mul": 8.0 },
   "buffs": { "_doc": "Random buff spawns (items.json buffs): first after first_after s, then every spawn_every [min,max] s one random buff on a ring spawn_ring [min,max] px around the player; it stays lifetime s (blinks the last blink s); at most max_on_field at once; picked up within collect_radius px.", "first_after": 15.0, "spawn_every": [25.0, 40.0], "spawn_ring": [160.0, 300.0], "lifetime": 20.0, "blink": 4.0, "max_on_field": 2, "collect_radius": 22.0 },
   "separation": { "cell": 48.0, "push": 60.0 },

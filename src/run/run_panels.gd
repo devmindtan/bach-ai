@@ -739,6 +739,8 @@ func show_end(won: bool) -> void:
 			parts.append("Đá +%d%s" % [int(rr.get("gems", 0)), " (lần đầu)" if bool(rr.get("first", false)) else ""])
 		else:
 			parts.append("Giữ lại vàng nhặt: +%d" % int(rr.get("collected", 0)))
+		if int(rr.get("essence", 0)) > 0:
+			parts.append("Tinh hoa +%d" % int(rr["essence"]))
 		var reward_l := _label(" · ".join(parts), 17, BORDER if won else MUTED)
 		reward_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		root.add_child(reward_l)

@@ -5,7 +5,7 @@ extends RefCounted
 ## the few Vietnamese names written without marks are listed here on purpose.
 
 const DATA := "res://assets/data/"
-const NO_MARK_OK := ["Nhanh tay"]
+const NO_MARK_OK := ["Nhanh tay", "Tinh hoa"]
 
 var failures: Array[String] = []
 

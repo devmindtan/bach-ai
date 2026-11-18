@@ -15,7 +15,8 @@
       "name": "Rương báu",
       "sprite": "chest",
       "desc": "Quái tinh anh (vòng sáng vàng) rơi ra khi chết. Nhặt được thì chọn thêm 1 thẻ nâng cấp."
-    }
+    },
+    "essence": { "name": "Tinh hoa", "sprite": "essence-pickup", "desc": "Quái tinh anh (1) và boss (10) rơi ra. Nhặt được giữ lại cả khi thua; dùng để mở node cây kỹ năng." }
   },
   "buffs": {
     "haste_rune": {

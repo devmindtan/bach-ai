@@ -107,6 +107,11 @@ func _draw() -> void:
 	x -= 60 + kw
 	_text(font, Vector2(x, _baseline(ROW, 22)), kills, 22)
 	UiIcons.draw(self, "skull", Vector2(x - 22, ROW), 2.0)
+	if run.pickups != null and run.pickups.essence > 0:   # Tinh hoa, once there is some
+		var es := str(run.pickups.essence)
+		x -= 60 + font.get_string_size(es, HORIZONTAL_ALIGNMENT_LEFT, -1, 22).x
+		_text(font, Vector2(x, _baseline(ROW, 22)), es, 22)
+		UiIcons.draw(self, "essence", Vector2(x - 22, ROW), 2.0)
 	_draw_skill_bar(font)
 	_draw_boss_bar(font)
 
