@@ -1,15 +1,94 @@
 {
-  "_doc": "Stages 1..count (design/progression.md). Monster hp x = 1 + hp_lin*(n-1) + hp_quad*(n-1)^2, damage x = 1 + dmg_lin*(n-1), spawn rate x = min(rate_max, 1 + rate_lin*(n-1)) (bursts too). Every boss_every-th stage is a boss stage and a milestone (milestones.json). A region's stages play its waves file (boss stages: boss_waves) unless waves/stage_NNN.json exists. ground = the floor colours. rewards: gold on a win = gold_base + gold_per_stage*n; gems first win gems_first (boss stage gems_boss_first), later wins gems_repeat.",
+  "_doc": "Stages 1..count (design/progression.md). Monster hp x = 1 + hp_lin*(n-1) + hp_quad*(n-1)^2, damage x = 1 + dmg_lin*(n-1), spawn rate x = min(rate_max, 1 + rate_lin*(n-1)) (bursts too). Every boss_every-th stage is a boss stage and a milestone (milestones.json). A region's stages play its waves file (boss stages: boss_waves) unless waves/stage_NNN.json exists. ground = the floor colours. rewards: gold on a win = gold_base + gold_per_stage*n; gems first win gems_first (boss stage gems_boss_first), later wins gems_repeat. music = the region's run song (audio.json); ground.props = decorations RunGround scatters (design/regions.md).",
   "count": 30,
   "boss_every": 10,
-  "scale": { "hp_lin": 0.15, "hp_quad": 0.004, "dmg_lin": 0.06, "rate_lin": 0.03, "rate_max": 2.0 },
-  "rewards": { "gold_base": 20, "gold_per_stage": 5, "gems_first": 10, "gems_boss_first": 50, "gems_repeat": 2 },
+  "scale": {
+    "hp_lin": 0.15,
+    "hp_quad": 0.004,
+    "dmg_lin": 0.06,
+    "rate_lin": 0.03,
+    "rate_max": 2.0
+  },
+  "rewards": {
+    "gold_base": 20,
+    "gold_per_stage": 5,
+    "gems_first": 10,
+    "gems_boss_first": 50,
+    "gems_repeat": 2
+  },
   "regions": [
-    { "id": "meadow", "name": "Đồng cỏ", "from": 1, "to": 10, "waves": "stage_001", "boss_waves": "stage_010",
-      "ground": { "grass": ["2f4a2c", "33502f", "2c4629"], "tuft": "3f6136", "flower": "b8b06a", "outside": "1b2419" } },
-    { "id": "dark_forest", "name": "Rừng Âm U", "from": 11, "to": 20, "waves": "stage_011", "boss_waves": "stage_020",
-      "ground": { "grass": ["223a2c", "26402f", "1f3528"], "tuft": "2f5a3e", "flower": "8a6fb8", "outside": "131c17" } },
-    { "id": "poison_marsh", "name": "Đầm Lầy Độc", "from": 21, "to": 30, "waves": "stage_021", "boss_waves": "stage_030",
-      "ground": { "grass": ["3a3f2a", "40452d", "353a27"], "tuft": "5a6a2e", "flower": "9fd04a", "outside": "1d1f15" } }
+    {
+      "id": "meadow",
+      "name": "Đồng cỏ",
+      "from": 1,
+      "to": 10,
+      "waves": "stage_001",
+      "boss_waves": "stage_010",
+      "ground": {
+        "grass": [
+          "2f4a2c",
+          "33502f",
+          "2c4629"
+        ],
+        "tuft": "3f6136",
+        "flower": "b8b06a",
+        "outside": "1b2419",
+        "props": [
+          "tuft",
+          "flower",
+          "pebble"
+        ]
+      },
+      "music": "run"
+    },
+    {
+      "id": "dark_forest",
+      "name": "Rừng Âm U",
+      "from": 11,
+      "to": 20,
+      "waves": "stage_011",
+      "boss_waves": "stage_020",
+      "ground": {
+        "grass": [
+          "223a2c",
+          "26402f",
+          "1f3528"
+        ],
+        "tuft": "2f5a3e",
+        "flower": "8a6fb8",
+        "outside": "131c17",
+        "props": [
+          "leaves",
+          "mushroom",
+          "stump",
+          "shade"
+        ]
+      },
+      "music": "run_forest"
+    },
+    {
+      "id": "poison_marsh",
+      "name": "Đầm Lầy Độc",
+      "from": 21,
+      "to": 30,
+      "waves": "stage_021",
+      "boss_waves": "stage_030",
+      "ground": {
+        "grass": [
+          "3a3f2a",
+          "40452d",
+          "353a27"
+        ],
+        "tuft": "5a6a2e",
+        "flower": "9fd04a",
+        "outside": "1d1f15",
+        "props": [
+          "puddle",
+          "reed",
+          "bubble"
+        ]
+      },
+      "music": "run_marsh"
+    }
   ]
 }

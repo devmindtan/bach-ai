@@ -1,50 +1,207 @@
 {
   "_doc": "Which sound plays for which event (design/audio.md). sfx ids are files in assets/audio/sfx (gamekit audio). voices: at most this many at once; gap: seconds before the same sound may start again; jitter: random pitch +-; db: level. Skills: the sound of each skill id when it casts.",
-  "default": {"voices": 2, "gap": 0.05, "jitter": 0.04, "db": 0.0},
+  "default": {
+    "voices": 2,
+    "gap": 0.05,
+    "jitter": 0.04,
+    "db": 0.0
+  },
   "sfx": {
-    "ui_click": {"voices": 2, "gap": 0.03, "jitter": 0.0, "db": -4.0},
-    "ui_start": {"voices": 1, "gap": 0.3},
-    "hit": {"voices": 3, "gap": 0.06, "jitter": 0.12, "db": -8.0},
-    "kill": {"voices": 3, "gap": 0.07, "jitter": 0.1, "db": -6.0},
-    "gem": {"voices": 3, "gap": 0.04, "jitter": 0.0, "db": -6.0, "rise": 0.03, "rise_max": 0.6, "rise_reset": 0.6},
-    "coin": {"voices": 2, "gap": 0.06, "db": -3.0},
-    "essence": {"voices": 1, "gap": 0.2},
-    "chest": {"voices": 1, "gap": 0.3},
-    "hurt": {"voices": 1, "gap": 0.2, "jitter": 0.06},
-    "dash": {"voices": 1, "gap": 0.1},
-    "level_up": {"voices": 1, "gap": 0.3},
-    "card_pick": {"voices": 1, "gap": 0.1},
-    "milestone": {"voices": 1, "gap": 0.5},
-    "boss_spawn": {"voices": 1, "gap": 2.0},
-    "boss_slam": {"voices": 1, "gap": 0.2},
-    "win": {"voices": 1, "gap": 1.0},
-    "lose": {"voices": 1, "gap": 1.0},
-    "slash": {"voices": 2, "gap": 0.08, "jitter": 0.08, "db": -6.0},
-    "whirl": {"voices": 1, "gap": 0.2, "db": -6.0},
-    "quake": {"voices": 2, "gap": 0.12, "db": -4.0},
-    "wave": {"voices": 2, "gap": 0.1, "db": -5.0},
-    "holy": {"voices": 2, "gap": 0.12, "db": -5.0},
-    "bolt": {"voices": 2, "gap": 0.08, "jitter": 0.08, "db": -8.0},
-    "fire": {"voices": 2, "gap": 0.1, "db": -5.0},
-    "frost": {"voices": 2, "gap": 0.12, "db": -5.0},
-    "zap": {"voices": 2, "gap": 0.08, "db": -6.0},
-    "gacha_pull": {"voices": 1, "gap": 0.1},
-    "gacha_epic": {"voices": 1, "gap": 0.3},
-    "gacha_legend": {"voices": 1, "gap": 0.5},
-    "enhance": {"voices": 1, "gap": 0.15},
-    "buy": {"voices": 1, "gap": 0.1}
+    "ui_click": {
+      "voices": 2,
+      "gap": 0.03,
+      "jitter": 0.0,
+      "db": -4.0
+    },
+    "ui_start": {
+      "voices": 1,
+      "gap": 0.3
+    },
+    "hit": {
+      "voices": 3,
+      "gap": 0.06,
+      "jitter": 0.12,
+      "db": -8.0
+    },
+    "kill": {
+      "voices": 3,
+      "gap": 0.07,
+      "jitter": 0.1,
+      "db": -6.0
+    },
+    "gem": {
+      "voices": 3,
+      "gap": 0.04,
+      "jitter": 0.0,
+      "db": -6.0,
+      "rise": 0.03,
+      "rise_max": 0.6,
+      "rise_reset": 0.6
+    },
+    "coin": {
+      "voices": 2,
+      "gap": 0.06,
+      "db": -3.0
+    },
+    "essence": {
+      "voices": 1,
+      "gap": 0.2
+    },
+    "chest": {
+      "voices": 1,
+      "gap": 0.3
+    },
+    "hurt": {
+      "voices": 1,
+      "gap": 0.2,
+      "jitter": 0.06
+    },
+    "dash": {
+      "voices": 1,
+      "gap": 0.1
+    },
+    "level_up": {
+      "voices": 1,
+      "gap": 0.3
+    },
+    "card_pick": {
+      "voices": 1,
+      "gap": 0.1
+    },
+    "milestone": {
+      "voices": 1,
+      "gap": 0.5
+    },
+    "boss_spawn": {
+      "voices": 1,
+      "gap": 2.0
+    },
+    "boss_slam": {
+      "voices": 1,
+      "gap": 0.2
+    },
+    "win": {
+      "voices": 1,
+      "gap": 1.0
+    },
+    "lose": {
+      "voices": 1,
+      "gap": 1.0
+    },
+    "slash": {
+      "voices": 2,
+      "gap": 0.08,
+      "jitter": 0.08,
+      "db": -6.0
+    },
+    "whirl": {
+      "voices": 1,
+      "gap": 0.2,
+      "db": -6.0
+    },
+    "quake": {
+      "voices": 2,
+      "gap": 0.12,
+      "db": -4.0
+    },
+    "wave": {
+      "voices": 2,
+      "gap": 0.1,
+      "db": -5.0
+    },
+    "holy": {
+      "voices": 2,
+      "gap": 0.12,
+      "db": -5.0
+    },
+    "bolt": {
+      "voices": 2,
+      "gap": 0.08,
+      "jitter": 0.08,
+      "db": -8.0
+    },
+    "fire": {
+      "voices": 2,
+      "gap": 0.1,
+      "db": -5.0
+    },
+    "frost": {
+      "voices": 2,
+      "gap": 0.12,
+      "db": -5.0
+    },
+    "zap": {
+      "voices": 2,
+      "gap": 0.08,
+      "db": -6.0
+    },
+    "gacha_pull": {
+      "voices": 1,
+      "gap": 0.1
+    },
+    "gacha_epic": {
+      "voices": 1,
+      "gap": 0.3
+    },
+    "gacha_legend": {
+      "voices": 1,
+      "gap": 0.5
+    },
+    "enhance": {
+      "voices": 1,
+      "gap": 0.15
+    },
+    "buy": {
+      "voices": 1,
+      "gap": 0.1
+    }
   },
   "skills": {
-    "blade_arc": "slash", "back_slash": "slash", "whirlwind": "whirl", "earth_strike": "quake", "ground_slam": "quake",
-    "earthquake": "quake", "god_hammer": "quake", "cleave_wave": "wave", "holy_column": "holy", "solar_ray": "holy",
-    "arcane_bolt": "bolt", "void_orb": "bolt", "fireball": "fire", "meteor": "fire", "frost_nova": "frost",
-    "blizzard": "frost", "lightning": "zap", "thunder_javelin": "zap", "storm": "zap", "dash": "dash"
+    "blade_arc": "slash",
+    "back_slash": "slash",
+    "whirlwind": "whirl",
+    "earth_strike": "quake",
+    "ground_slam": "quake",
+    "earthquake": "quake",
+    "god_hammer": "quake",
+    "cleave_wave": "wave",
+    "holy_column": "holy",
+    "solar_ray": "holy",
+    "arcane_bolt": "bolt",
+    "void_orb": "bolt",
+    "fireball": "fire",
+    "meteor": "fire",
+    "frost_nova": "frost",
+    "blizzard": "frost",
+    "lightning": "zap",
+    "thunder_javelin": "zap",
+    "storm": "zap",
+    "dash": "dash"
   },
   "music": {
-    "menu": {"db": -2.0},
-    "run": {"db": -3.0},
-    "boss": {"db": -2.0},
-    "fade": 0.6
+    "menu": {
+      "db": -2.0
+    },
+    "run": {
+      "db": -3.0
+    },
+    "boss": {
+      "db": -2.0
+    },
+    "fade": 0.6,
+    "run_forest": {
+      "db": -3.0
+    },
+    "run_marsh": {
+      "db": -3.0
+    },
+    "challenge": {
+      "db": -3.0
+    }
   },
-  "volume": {"music": 60, "sfx": 80, "step": 20}
+  "volume": {
+    "music": 60,
+    "sfx": 80,
+    "step": 20
+  }
 }

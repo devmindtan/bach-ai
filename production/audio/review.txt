@@ -32,3 +32,6 @@ sfx/buy	0.201s	peak 0.5	rms 0.338
 music/menu	22.857s	peak 0.6	rms 0.116
 music/run	14.545s	peak 0.6	rms 0.109
 music/boss	12.8s	peak 0.62	rms 0.13
+music/run_forest	18.461s	peak 0.6	rms 0.118
+music/run_marsh	16.552s	peak 0.6	rms 0.111
+music/challenge	6.4s	peak 0.6	rms 0.129

@@ -34,6 +34,7 @@ var _stage_arg_set := false
 var _rewards_arg := false
 var stages: Stages
 var stage_ground: Dictionary = {}
+var run_music := "run"   # the song of this stage's region, or the challenge song
 var playing_slot: Slot
 var tree_owner: Slot          # whose skill tree applies (the active slot; the preview one in shots)
 var skill_tree: SkillTree
@@ -177,7 +178,6 @@ var _panels: RunPanels
 func _ready() -> void:
 	_parse_args()
 	RunInput.register()
-	Sfx.music("run")
 	cfg = GameData.load_json(DATA + "run_config.json")
 	stages = Stages.load_default()
 	milestones = Milestones.load_default()
@@ -197,6 +197,10 @@ func _ready() -> void:
 		challenge_id = ""
 		stage = stages.load_stage(stage_number)
 	stage_ground = stages.ground(stage_number)
+	# each region and the challenges have their own song (design/regions.md)
+	run_music = String(Challenges.load_default().data.get("music", "run")) if challenge_id != "" \
+		else String(stages.region(stage_number).get("music", "run"))
+	Sfx.music(run_music)
 	duration = float(stage.get("duration", 300.0))
 	var monsters := GameData.load_json(DATA + "monsters.json")
 	var classes := GameData.load_json(DATA + "classes.json")
@@ -531,7 +535,7 @@ func _tick(dt: float) -> void:
 		var boss := enemies.boss_index() >= 0
 		if boss != _boss_music:
 			_boss_music = boss
-			Sfx.music("boss" if boss else "run")
+			Sfx.music("boss" if boss else run_music)
 			if boss:
 				Sfx.play("boss_spawn")
 	if hp <= 0.0:
