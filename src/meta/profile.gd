@@ -11,12 +11,16 @@ extends RefCounted
 
 const PATH := "user://profile.json"
 const SLOTS := ["head", "chest", "arms", "legs", "weapon"]
+const MAX_PLUS := 5          # Cường hoá: +1..+5 (design/equipment.md)
+const PLUS_STEP := 0.2       # each level adds 20% of the item's own effects
+const PLUS_COST := {"common": 30, "rare": 60, "epic": 120, "legendary": 200}   # gold for +1; x (level + 1)
 
 var defs: Dictionary          # items.json "equipment"
 var bag: Array = []           # item ids owned (one entry per copy)
 var worn := {}                # class id -> {slot: item id}
 var given_starter := false
 var seen: Array = []          # item ids the player has looked at ("MỚI" badge until then)
+var plus := {}                # item id -> enhancement level (Cường hoá), all copies of it share it
 
 
 func _init(p_defs: Dictionary) -> void:
@@ -48,6 +52,42 @@ func is_new(id: String) -> bool:
 func mark_seen(id: String) -> void:
 	if not seen.has(id):
 		seen.append(id)
+
+
+func plus_of(id: String) -> int:
+	return int(plus.get(id, 0))
+
+
+## Gold the next enhancement of [param id] costs (0 at the top level).
+func enhance_cost(id: String) -> int:
+	if plus_of(id) >= MAX_PLUS or not defs.has(id):
+		return 0
+	return int(PLUS_COST.get(String(defs[id].get("rarity", "common")), 30)) * (plus_of(id) + 1)
+
+
+## Raises [param id] one level, paying from [param gold] ({"v": amount}, written
+## back by the caller); false when owned not, at the top or not enough gold.
+func enhance(id: String, gold: Dictionary) -> bool:
+	var cost := enhance_cost(id)
+	if cost <= 0 or not bag.has(id) or int(gold.get("v", 0)) < cost:
+		return false
+	gold["v"] = int(gold["v"]) - cost
+	plus[id] = plus_of(id) + 1
+	return true
+
+
+## The item's effects at its enhancement level.
+func effects_of(id: String) -> Dictionary:
+	var k := 1.0 + PLUS_STEP * plus_of(id)
+	var out := {}
+	var eff: Dictionary = defs.get(id, {}).get("effects", {})
+	for stat: String in eff:
+		var e: Dictionary = eff[stat].duplicate()
+		for key in ["add", "mul"]:
+			if e.has(key):
+				e[key] = float(e[key]) * k
+		out[stat] = e
+	return out
 
 
 func add(id: String) -> void:
@@ -95,7 +135,7 @@ func as_upgrades(cls: String) -> Array:
 	for slot: String in equipped(cls):
 		var id: String = equipped(cls)[slot]
 		var d: Dictionary = defs.get(id, {})
-		out.append({"id": id, "name": d.get("name", id), "kind": "item", "effects": d.get("effects", {})})
+		out.append({"id": id, "name": d.get("name", id), "kind": "item", "effects": effects_of(id)})
 	return out
 
 
@@ -107,7 +147,7 @@ func levels(cls: String) -> Dictionary:
 
 
 func to_dict() -> Dictionary:
-	return {"version": 1, "bag": bag, "worn": worn, "given_starter": given_starter, "seen": seen}
+	return {"version": 1, "bag": bag, "worn": worn, "given_starter": given_starter, "seen": seen, "plus": plus}
 
 
 func from_dict(d: Dictionary) -> void:
@@ -116,3 +156,4 @@ func from_dict(d: Dictionary) -> void:
 	given_starter = bool(d.get("given_starter", false))
 	# saves from before the badges: everything already owned counts as seen
 	seen = Array(d.get("seen", bag.duplicate()))
+	plus = d.get("plus", {})

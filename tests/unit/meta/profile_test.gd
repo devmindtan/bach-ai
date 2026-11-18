@@ -65,3 +65,27 @@ func test_saves_from_before_new_badges_count_everything_as_seen() -> void:
 	var q := Profile.new(ITEMS)
 	q.from_dict({"version": 1, "bag": ["iron_helm", "steel_sword"], "worn": {}})
 	_check(not q.is_new("iron_helm") and not q.is_new("steel_sword"), "old bags do not light up as new")
+
+
+func test_enhancing_costs_gold_and_raises_the_effects() -> void:
+	# design/equipment.md "Cường hoá": +1..+5, each +20% of the item's effects, gold by rarity
+	var p := Profile.new(ITEMS)
+	p.add("iron_helm")
+	p.equip("knight", "iron_helm")
+	var base := float(p.as_upgrades("knight")[0]["effects"]["max_hp"]["add"])
+	var cost: int = p.enhance_cost("iron_helm")
+	_check(cost > 0, "enhancing costs gold")
+	var gold := {"v": cost - 1}
+	_check(not p.enhance("iron_helm", gold), "not enough gold: refused")
+	gold["v"] = cost
+	_check(p.enhance("iron_helm", gold) and gold["v"] == 0 and p.plus_of("iron_helm") == 1, "+1, gold paid")
+	var now := float(p.as_upgrades("knight")[0]["effects"]["max_hp"]["add"])
+	_check(is_equal_approx(now, base * 1.2), "+1 gives +20%%: %s -> %s" % [base, now])
+	_check(p.enhance_cost("iron_helm") > cost, "the next level costs more")
+	for k in 10:
+		gold["v"] = 100000
+		p.enhance("iron_helm", gold)
+	_check(p.plus_of("iron_helm") == Profile.MAX_PLUS, "stops at +%d" % Profile.MAX_PLUS)
+	var q := Profile.new(ITEMS)
+	q.from_dict(p.to_dict())
+	_check(q.plus_of("iron_helm") == Profile.MAX_PLUS, "the level is saved")

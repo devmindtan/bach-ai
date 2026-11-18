@@ -49,3 +49,10 @@ Trạng thái: **bản đầu + tái thiết kế 2026-11-17 (legendary/epic tie
 2. **Nâng cấp / phân rã** đồ bằng vàng (làm cùng đợt cây kỹ năng).
 3. **Thêm đồ theo vùng ải** (vùng tối có tint tím, Đầm Lầy Độc: đất/độc) — sau khi có Sprite Lab hoàn chỉnh cho item.
 4. **Slot-specific legendary mechanic**: ví dụ Mũ Thần Hộ cho slot chính, Gậy Vĩnh Cửu cho slot phụ — cần copeople phase 4.
+
+## Cường hoá (2026-11-18)
+
+- Mỗi món lên được +1 tới +5 bằng vàng; mọi bản trùng của món đó dùng chung bậc. Mỗi bậc thêm 20% hiệu ứng gốc
+  (+5 = ×2,0). Giá bậc tiếp: `giá theo độ hiếm × (bậc hiện tại + 1)`; thường 30, hiếm 60, sử thi 120, huyền thoại 200.
+- Màn trang bị: cột chi tiết ghi "Cường hoá +n/5" và nút "Cường hoá … vàng" (tắt khi thiếu vàng hoặc đã +5);
+  tên món ghi "+n". Code: `Profile.enhance`, `enhance_cost`, `effects_of`; test `profile_test.gd`.

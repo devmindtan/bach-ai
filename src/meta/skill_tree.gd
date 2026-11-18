@@ -139,7 +139,7 @@ static func lasting(slot: Slot, worn = null) -> Array:
 		for k: String in worn:
 			var id := String(worn[k])
 			var d: Dictionary = slot.profile.defs.get(id, {})
-			ups.append({"id": id, "name": d.get("name", id), "kind": "item", "effects": d.get("effects", {})})
+			ups.append({"id": id, "name": d.get("name", id), "kind": "item", "effects": slot.profile.effects_of(id)})
 			lv[id] = 1
 	var t := load_default()
 	ups.append_array(t.as_upgrades(slot))

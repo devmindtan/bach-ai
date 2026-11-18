@@ -494,7 +494,8 @@ func _detail(root: Control) -> void:
 	big_ic.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	bv.add_child(big_ic)
 	# name over the icon area, rarity-tinted
-	var name := UiKit.label(String(d.get("name", _view)), 22, rarity_col)
+	var lv := _prof.plus_of(_view)
+	var name := UiKit.label(String(d.get("name", _view)) + ("  +%d" % lv if lv > 0 else ""), 22, rarity_col)
 	name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	bv.add_child(name)
@@ -551,6 +552,22 @@ func _detail(root: Control) -> void:
 	if changed == 0:
 		v.add_child(UiKit.label("Không đổi chỉ số nào.", 15, UiKit.MUTED))
 	var prefs := Prefs.current()
+	# Cường hoá: +1..+5 with gold, each level +20% of the item's effects
+	var el := UiKit.label("Cường hoá +%d/%d  ·  mỗi bậc +%d%% hiệu ứng" % [lv, Profile.MAX_PLUS, roundi(Profile.PLUS_STEP * 100)], 14, UiKit.MUTED)
+	el.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	v.add_child(el)   # a line of its own: beside the button it pushed the column off screen
+	var cost := _prof.enhance_cost(_view)
+	var eb := UiKit.button(("Cường hoá  %d vàng" % cost) if cost > 0 else "Đã tối đa", func() -> void:
+		var wallet := {"v": _slot_data.gold}
+		if _prof.enhance(_view, wallet):
+			_slot_data.gold = int(wallet["v"])
+			prefs.save_profile()
+			_rebuild(), Vector2(0, 40), 15)
+	eb.disabled = cost <= 0 or _slot_data.gold < cost
+	if cost > 0 and _slot_data.gold < cost:
+		Tip.attach(eb, "Thiếu vàng", "Cần %d vàng, đang có %d." % [cost, _slot_data.gold])
+	eb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	v.add_child(eb)
 	var act := UiKit.button("Bỏ ra" if is_worn else "Mặc  ▶", func() -> void:
 		if is_worn:
 			_prof.unequip(_cls, _sel)
