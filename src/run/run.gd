@@ -2064,7 +2064,13 @@ func _draw() -> void:
 					_affix_tags.append([hc - Vector2(0, hr * 1.6 + 14.0), lab[0], lab[1]])
 				if tint == Color.WHITE:
 					tint = Color(1.0, 0.92, 0.75)
-			enemies.k_sheet[k].draw(self, a[0], a[1], enemies.pos[i], enemies.k_scale[k],
+			var lift := enemies.hop_lift(i) * enemies.k_scale[k]   # a hop: up the arc, the shadow stays down
+			if lift > 0.0:
+				var sr := enemies.k_radius[k]
+				draw_set_transform(enemies.pos[i], 0.0, Vector2(1.0, 0.4))
+				draw_circle(Vector2.ZERO, sr * (1.0 - 0.3 * lift / maxf(1.0, lift + sr)), Color(0, 0, 0, 0.3))
+				draw_set_transform(Vector2.ZERO)
+			enemies.k_sheet[k].draw(self, a[0], a[1], enemies.pos[i] - Vector2(0.0, lift), enemies.k_scale[k],
 				enemies.flip[i] == 1, tint)
 	_draw_bolts()
 	var hero: SpriteSheet = sheets.get(String(class_data.get("sprite", "swordsman")))

@@ -1049,12 +1049,33 @@ func living() -> int:
 
 
 ## Name of the animation monster [param i] plays now, and its local time.
+## How high monster [param i] is drawn above its shadow, px (unscaled): a hop arc
+## of hop_height while a hopper (or the toad boss) is in the air, else 0.
+func hop_lift(i: int) -> float:
+	if i < 0 or i >= count or state[i] != DASH:
+		return 0.0
+	var e: Dictionary = k_extra[kind[i]]
+	if not e.has("hop_height"):
+		return 0.0
+	var ht := maxf(0.05, float(e.get("hop_time", e.get("jump_time", 0.5))))
+	var t := 1.0 - clampf(timer[i] / ht, 0.0, 1.0)
+	return float(e["hop_height"]) * sin(t * PI)
+
+
 func anim_of(i: int) -> Array:
 	var sheet := k_sheet[kind[i]]
 	match state[i]:
 		DYING:
 			return ["death", timer[i]]
-		WINDUP, DASH:
+		WINDUP:   # a hopper crouches before it leaps (design/art/toads.md)
+			if sheet.has_animation("crouch"):
+				return ["crouch", anim_t[i]]
+			if sheet.has_animation("attack"):
+				return ["attack", anim_t[i]]
+		DASH:   # in the air: the jump animation spread over the whole hop
+			if sheet.has_animation("jump"):
+				var ht := maxf(0.05, float(k_extra[kind[i]].get("hop_time", k_extra[kind[i]].get("jump_time", 0.5))))
+				return ["jump", (1.0 - clampf(timer[i] / ht, 0.0, 1.0)) * sheet.duration("jump") * 0.999]
 			if sheet.has_animation("attack"):
 				return ["attack", anim_t[i]]
 	if flash[i] > 0.0 and sheet.has_animation("hurt"):
