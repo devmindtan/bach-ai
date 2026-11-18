@@ -19,7 +19,8 @@
   "fx_lead_frames": 1,
   "fx_outro_min": 0.3,
   "fx_px_scale": 0.5,
-  "frame_max_tall": 128
+  "frame_max_tall": 128,
+  "telegraph_max": 1.2
  },
  "rules": [
   {
@@ -44,7 +45,7 @@
    "id": "snappy",
    "severity": "must",
    "title": "Ra đòn nhanh, đọc được",
-   "text": "Hiệu ứng một lần gây sát thương trước active_start_max giây và hết các frame gây sát thương trong oneshot_max giây; sau đó được có pha kết thúc (đọng lại, tan biến) tối đa outro_max giây (người dùng 2026-11-18: hiệu ứng phải có animation kết thúc rõ). Hiệu ứng lặp (xoáy, vòng) phải có thời lượng (duration) trong data."
+   "text": "Hiệu ứng một lần gây sát thương trước active_start_max giây và hết các frame gây sát thương trong oneshot_max giây; sau đó được có pha kết thúc (đọng lại, tan biến) tối đa outro_max giây (người dùng 2026-11-18: hiệu ứng phải có animation kết thúc rõ). Hiệu ứng lặp (xoáy, vòng) phải có thời lượng (duration) trong data. Chiêu có báo trước (\"telegraph\": true trong data, phải có vòng báo) được trúng muộn tới telegraph_max giây: sát thương lớn và rộng thì người chơi thấy trước (người dùng 2026-11-18, thiên thạch)."
   },
   {
    "id": "directional",

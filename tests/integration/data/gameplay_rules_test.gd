@@ -122,11 +122,13 @@ func test_skills_meet_must_rules() -> void:
 				else:
 					# the readable part (to the end of the hits) is short; an ending may follow (user 2026-11-18)
 					var act: Array = hb.get("active", [0, 0])
-					var hit_end := SpriteHitbox.frame_time(a, int(act[1]) + 1)
-					_check(hit_end <= float(lim["oneshot_max"]), "%s [snappy]: %s hits until %.2fs" % [id, an, hit_end])
+					var start: float = SpriteHitbox.frame_time(a, int(act[0]))
+					var hit_end: float = SpriteHitbox.frame_time(a, int(act[1]) + 1)
+					var hit_from: float = start if bool(p.get("telegraph", false)) else 0.0   # a telegraph's wind-up is not counted
+					_check(hit_end - hit_from <= float(lim["oneshot_max"]), "%s [snappy]: %s hits until %.2fs" % [id, an, hit_end])
 					_check(sheet.duration(an) - hit_end <= float(lim["outro_max"]), "%s [snappy]: %s ending lasts %.2fs" % [id, an, sheet.duration(an) - hit_end])
-					var start := SpriteHitbox.frame_time(a, int(hb.get("active", [0])[0]))
-					_check(start <= float(lim["active_start_max"]), "%s [snappy]: %s first hits at %.2fs" % [id, an, start])
+					var first_max := float(lim["telegraph_max"]) if bool(p.get("telegraph", false)) else float(lim["active_start_max"])
+					_check(start <= first_max, "%s [snappy]: %s first hits at %.2fs" % [id, an, start])
 		_check(reach <= float(lim["reach_max"]) and (flies or reach >= float(lim["reach_min"])), "%s [screen]: reach %.0f px" % [id, reach])
 		_check(float(p.get("cast_range", 0.0)) <= float(lim["cast_range_max"]), "%s [screen]: cast_range %s" % [id, p.get("cast_range")])
 

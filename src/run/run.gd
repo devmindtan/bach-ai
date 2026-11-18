@@ -112,6 +112,7 @@ var _tier_cd := {}
 var _whirl_left := 0.0
 var _whirl_ticks_done := 0
 var _fx: Array[Dictionary] = []
+var zones: Array[Dictionary] = []    # lasting ground zones left by skills ("zone": burn ground, a pulling storm)
 var _end_t := 0.0
 # floating damage numbers (ring buffer, sizes from run_config "ui")
 var _num_pos := PackedVector2Array()
@@ -235,6 +236,8 @@ func _ready() -> void:
 		names.append(String(sd.get("sprite", sk)))
 		for tn in sd.get("impact_tiers", []):
 			names.append(String(tn))
+		if sd.has("zone") and sd["zone"].get("kind", "") == "burn":
+			names.append(String(sd["zone"].get("sprite", "scorch")))
 		for tn in sd.get("tier_sprites", []):
 			names.append(String(tn))
 	for n in names:
@@ -499,6 +502,7 @@ func _tick(dt: float) -> void:
 		_add_fx("stomp-i", "burst", _sprite_scale * 1.6, 0.0, -1.0, p)
 	enemies.slams.clear()
 	_step_fx(dt)
+	step_zones(dt)
 	if not enemies.hit_pos.is_empty():
 		Sfx.play("hit")
 	_step_damage_numbers(dt)
@@ -1136,10 +1140,77 @@ func _add_fx(sprite: String, anim: String, sc: float, damage: float, life := -1.
 	if bool(pool.get("skills", {}).get(source, {}).get("ground_fx", false)):
 		fx["ground"] = true   # lies on the floor (frozen ground): drawn under the monsters
 	_fx.append(fx)
+	var zd: Dictionary = pool.get("skills", {}).get(source, {}).get("zone", {})
+	if not zd.is_empty() and damage > 0.0 and world_pos != null:
+		spawn_zone(zd, sheet, anim, sc, world_pos, source, damage)
 	if source != "":   # a cast: its sound (audio.json "skills"; voices/gap keep it calm)
 		Sfx.skill(source)
 	return fx
 
+
+
+# --- lasting zones (user 2026-11-18): what a skill leaves on the field -------------
+
+## A zone where an effect lands: its centre, radius and start come from the
+## effect sprite's own hitbox (no typed numbers), zd from the skill's "zone":
+## burn: every "tick" s puts "burn" on monsters inside for "time" s (scorch drawn);
+## pull: drags monsters inside toward the centre at "strength" px/s while the
+## effect's damaging frames play (bosses are not moved).
+func spawn_zone(zd: Dictionary, sheet: SpriteSheet, anim: String, sc: float, at: Vector2, src: String, dmg: float) -> void:
+	var hb := SpriteHitbox.of(sheet, anim, at, sc)
+	if hb == null:
+		return
+	var a := sheet.animation(anim)
+	var act: Array = a.get("hitbox", {}).get("active", [0, 0])
+	var start := SpriteHitbox.frame_time(a, int(act[0]))
+	var hits := SpriteHitbox.frame_time(a, int(act[1]) + 1) - start
+	var kind := String(zd.get("kind", "burn"))
+	zones.append({"kind": kind, "pos": hb.center, "r": hb.radius * float(zd.get("radius_mul", 1.0)),
+		"wait": start, "t": float(zd.get("time", hits)), "life": float(zd.get("time", hits)),
+		"tick": 0.0, "src": src, "dmg": dmg, "zd": zd})
+
+
+func step_zones(dt: float) -> void:
+	var k := 0
+	while k < zones.size():
+		var z: Dictionary = zones[k]
+		if float(z["wait"]) > 0.0:
+			z["wait"] = float(z["wait"]) - dt
+			k += 1
+			continue
+		z["t"] = float(z["t"]) - dt
+		if float(z["t"]) <= 0.0:
+			zones.remove_at(k)
+			continue
+		var zd: Dictionary = z["zd"]
+		var c: Vector2 = z["pos"]
+		if z["kind"] == "burn":
+			z["tick"] = float(z["tick"]) - dt
+			if float(z["tick"]) <= 0.0:
+				z["tick"] = float(zd.get("tick", 0.5))
+				for i in enemies.living_within(c, float(z["r"])):
+					enemies.apply_status(i, "burn", zd.get("burn", {"time": 1.0, "dps_mul": 0.15}), float(z["dmg"]), String(z["src"]))
+		elif z["kind"] == "pull":
+			var pull := float(zd.get("strength", 60.0)) * dt
+			for i in enemies.living_within(c, float(z["r"])):
+				if enemies.k_boss[enemies.kind[i]] == 1:
+					continue
+				var d := c - enemies.center_of(i)
+				if d.length() > 2.0:
+					enemies.pos[i] += d.normalized() * minf(pull, d.length())
+		k += 1
+
+
+## Burn zones drawn as scorched ground under the monsters, fading out at the end.
+func _draw_zones() -> void:
+	for z in zones:
+		if z["kind"] != "burn" or float(z["wait"]) > 0.0:
+			continue
+		var sh: SpriteSheet = sheets.get(String(z["zd"].get("sprite", "scorch")))
+		if sh == null:
+			continue
+		var fade := clampf(float(z["t"]) / 0.6, 0.0, 1.0)
+		sh.draw(self, "loop", clock, z["pos"], float(z["r"]) / (sh.frame_size.x * 0.5), false, Color(1, 1, 1, fade))
 
 
 func _fx_pos(fx: Dictionary) -> Vector2:
@@ -1843,6 +1914,7 @@ func _draw() -> void:
 				sh.draw(self, "idle", clock + i * 0.13, pickups.pos[i], _sprite_scale)
 	_draw_boss_warnings()
 	_draw_ground_buffs(view)
+	_draw_zones()
 	_draw_ground_fx()
 	# dying monsters under the living ones
 	for pass_dying in [true, false]:

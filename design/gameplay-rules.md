@@ -56,3 +56,16 @@ Luật dưới đây là **bắt buộc khi thiết kế**; số liệu nằm tr
 | Khung | không có gì bị cắt ở mép (giới hạn bán kính vẽ theo cỡ khung) |
 | Lớp vẽ | hiệu ứng nằm trên đất (`ground_fx` trong data) vẽ dưới quái |
 | Kiểm | `gamekit art run` + xem từng frame trên nền cỏ; `gameplay_rules_test` (fx_craft) + dashboard tab Kỹ năng |
+
+## Chiêu có báo trước và vùng duy trì (người dùng 2026-11-18)
+
+- **Báo trước** (`"telegraph": true` trong skill): chiêu sát thương lớn và rộng có vòng báo, được trúng muộn tới
+  `telegraph_max` (1,2 s); phần gây sát thương sau đó vẫn tối đa `oneshot_max`. Ví dụ: Thiên thạch (vòng báo
+  0,5 s, rơi chậm, trúng ở ~0,9 s).
+- **Vùng duy trì** (`"zone"` trong skill): chiêu để lại vùng trên sân, tâm, bán kính và thời điểm bắt đầu lấy
+  từ hitbox của sprite (không gõ tay):
+  - `burn`: vẽ sprite `scorch` dưới quái trong `time` giây (mờ dần cuối), cứ `tick` giây đốt quái trong vùng
+    (`burn`). Thiên thạch: 3 s, bán kính ×0,8.
+  - `pull`: kéo quái trong vùng về tâm (`strength` px/s) trong lúc frame gây sát thương chạy, trừ boss. Hiện
+    chưa chiêu nào dùng (Bão tuyết không kéo vì đã làm chậm, người dùng 2026-11-18).
+- Kỹ năng sau này gây sát thương duy trì và để lại vệt trên sân thì nên có `zone` tương ứng.

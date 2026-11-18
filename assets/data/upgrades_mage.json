@@ -1,5 +1,5 @@
 {
-  "_doc": "Mage level-up pool. kind skill = an attack the run uses; stat = a modifier. effects apply per level: add (flat) or mul (+fraction). weight = roll weight. skills.<id>.cast says how the run casts it: nearest (one burst on each of the count nearest monsters; at_target puts its damage area on the monster instead of the art anchor, anim_prefix picks the direction animation), self (burst on the hero), random (count[level-1] bursts on random monsters within cast_range), wave (anim_prefix + direction, flies at speed px/s through monsters, count[level-1] directions: nearest, opposite, then the two others), active (player-triggered: the dash; sprite = the hero, anim = its animation). tier_sprites pick the sprite by level. under_hero = the effect is drawn behind the hero (ground effects around it, e.g. the stomp). on_hit = statuses the skill puts on monsters it hits (assets/data/statuses.json), each from a skill level. projectile = flies at speed px/s for duration s toward the nearest monster (count fan out 12 deg); it hits when its fly hitbox (from the sprite) touches a monster: explode = the impact animation hitbox deals the damage, else the fly hitbox does and it pierces pierce more monsters; impact = its hit animation. icon = borrow another card icon. count = casts per level (more targets / waves / pulses); the \"amount\" stat (amount cards) adds one to every skill: blade slashes the next nearest monsters, whirlwind gets more ticks, self casts pulse again 0.25 s apart, nearest casts hit the next nearest monsters. unique = a level milestone skill (milestones.json): never offered as a card until it is picked at level 10/20/30 of a run; it starts at level 1 then. pick_skill = a count card: taking it opens a skill pick and that one skill gets +pick_skill count (only the Đa phép level-milestone reward adds to every skill). min_range = random casts skip monsters closer than this when farther ones exist (a ranged skill).",
+  "_doc": "Mage level-up pool. kind skill = an attack the run uses; stat = a modifier. effects apply per level: add (flat) or mul (+fraction). weight = roll weight. skills.<id>.cast says how the run casts it: nearest (one burst on each of the count nearest monsters; at_target puts its damage area on the monster instead of the art anchor, anim_prefix picks the direction animation), self (burst on the hero), random (count[level-1] bursts on random monsters within cast_range), wave (anim_prefix + direction, flies at speed px/s through monsters, count[level-1] directions: nearest, opposite, then the two others), active (player-triggered: the dash; sprite = the hero, anim = its animation). tier_sprites pick the sprite by level. under_hero = the effect is drawn behind the hero (ground effects around it, e.g. the stomp). on_hit = statuses the skill puts on monsters it hits (assets/data/statuses.json), each from a skill level. projectile = flies at speed px/s for duration s toward the nearest monster (count fan out 12 deg); it hits when its fly hitbox (from the sprite) touches a monster: explode = the impact animation hitbox deals the damage, else the fly hitbox does and it pierces pierce more monsters; impact = its hit animation. icon = borrow another card icon. count = casts per level (more targets / waves / pulses); the \"amount\" stat (amount cards) adds one to every skill: blade slashes the next nearest monsters, whirlwind gets more ticks, self casts pulse again 0.25 s apart, nearest casts hit the next nearest monsters. unique = a level milestone skill (milestones.json): never offered as a card until it is picked at level 10/20/30 of a run; it starts at level 1 then. pick_skill = a count card: taking it opens a skill pick and that one skill gets +pick_skill count (only the Đa phép level-milestone reward adds to every skill). min_range = random casts skip monsters closer than this when farther ones exist (a ranged skill). telegraph: the skill warns first (a ring), its first hit may come up to telegraph_max s in (gameplay_rules snappy). zone: what it leaves on the field from its hit point, sized and timed from the sprite hitbox: burn (scorch sprite, burn status every tick s for time s) or pull (drags monsters to the centre at strength px/s while the hits play).",
   "upgrades": [
     {
       "id": "arcane_bolt",
@@ -483,7 +483,19 @@
           "dps_mul": 0.3,
           "time": 2.5
         }
-      ]
+      ],
+      "telegraph": true,
+      "zone": {
+        "kind": "burn",
+        "sprite": "scorch",
+        "time": 3.0,
+        "radius_mul": 0.8,
+        "tick": 0.5,
+        "burn": {
+          "time": 1.0,
+          "dps_mul": 0.15
+        }
+      }
     },
     "dash": {
       "sprite": "mage",
