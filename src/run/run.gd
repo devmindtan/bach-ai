@@ -486,6 +486,11 @@ func _tick(dt: float) -> void:
 	for p in enemies.bolt_pops:   # monster bolts that burst (hit or out of range)
 		_add_fx(_bolt_sprite_at(p), "pop", _sprite_scale, 0.0, -1.0, p)
 	enemies.bolt_pops.clear()
+	if not enemies.blasts_done.is_empty():
+		Sfx.play("fire")
+	for p in enemies.blasts_done:   # death bursts that went off
+		_add_fx("stomp-i", "burst", _sprite_scale * 1.2, 0.0, -1.0, p)
+	enemies.blasts_done.clear()
 	if not enemies.slams.is_empty():
 		Sfx.play("boss_slam")
 	for p in enemies.slams:   # boss landings: a dust ring where it hit the ground
@@ -2002,6 +2007,12 @@ func _draw_boss_warnings() -> void:
 		var r: float = w[1]
 		draw_circle(p, r, Color(0.9, 0.1, 0.1, 0.16))
 		draw_arc(p, r, 0.0, TAU, 48, Color(1.0, 0.3, 0.3, 0.8), 2.0)
+	for b in enemies.blast_pos.size():   # Bọ Lửa: the ring fills up until it goes off
+		var p := enemies.blast_pos[b]
+		var r := enemies.blast_r[b]
+		var k := 1.0 - enemies.blast_t[b] / maxf(0.01, enemies.blast_total[b])
+		draw_circle(p, r * k, Color(1.0, 0.45, 0.1, 0.22))
+		draw_arc(p, r, 0.0, TAU, 40, Color(1.0, 0.55, 0.2, 0.55 + 0.4 * k), 2.0)
 
 
 ## Afterimages of the hero along the dash path (the camera follows the hero, so

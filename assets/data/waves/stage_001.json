@@ -81,6 +81,13 @@
       "t_to": 300,
       "rate": 0.15,
       "rate_end": 0.9
+    },
+    {
+      "monster": "ember_beetle",
+      "t_from": 90,
+      "t_to": 300,
+      "rate": 0.2,
+      "rate_end": 1.2
     }
   ]
 }

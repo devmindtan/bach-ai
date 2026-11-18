@@ -103,6 +103,13 @@ var bolt_dmg := PackedFloat32Array()
 var bolt_kind := PackedInt32Array()      # the shooter's kind (its bolt sprite, bolt radius)
 var bolt_pops := PackedVector2Array()    # where bolts burst this step (the run draws a pop)
 var _player_center := Vector2.ZERO
+# death bursts ("explode" on a monster, design 6A Bọ Lửa): a warning ring, then a blast
+var blast_pos := PackedVector2Array()
+var blast_t := PackedFloat32Array()      # seconds left before it goes off
+var blast_r := PackedFloat32Array()
+var blast_dmg := PackedFloat32Array()
+var blast_total := PackedFloat32Array()  # its full delay (the ring fills as it counts down)
+var blasts_done := PackedVector2Array()  # blasts that went off this step (the run draws them)
 var vs_status_mul := 0.0        # class passive: extra damage taken by monsters with a status   # set by the run from the class sprite's body
 
 var _hash: SpatialHash
@@ -321,7 +328,27 @@ func step(delta: float, player_pos: Vector2, player_center: Vector2) -> float:
 		pos[n] = pos[n].clamp(Vector2(-arena_half, -arena_half), Vector2(arena_half, arena_half))
 		if not stopped and (center_of(n) - player_center).length() < r + player_hit_radius:
 			contact = maxf(contact, k_damage[k])
-	return maxf(contact, _step_bolts(delta, player_center))
+	return maxf(maxf(contact, _step_bolts(delta, player_center)), _step_blasts(delta, player_center))
+
+
+## Counts down death bursts; one that goes off with the player inside hurts.
+func _step_blasts(delta: float, player_center: Vector2) -> float:
+	var hit := 0.0
+	var b := 0
+	while b < blast_pos.size():
+		blast_t[b] -= delta
+		if blast_t[b] > 0.0:
+			b += 1
+			continue
+		if blast_pos[b].distance_to(player_center) < blast_r[b] + player_hit_radius:
+			hit = maxf(hit, blast_dmg[b])
+		blasts_done.append(blast_pos[b])
+		blast_t.remove_at(b)   # packed arrays are values: remove from each one itself
+		blast_r.remove_at(b)
+		blast_dmg.remove_at(b)
+		blast_total.remove_at(b)
+		blast_pos.remove_at(b)
+	return hit
 
 
 ## Shooter: closes in when far, backs off when the player comes near, strafes in
@@ -566,6 +593,13 @@ func _damage(i: int, amount: float, kb: Vector2, source := "") -> void:
 		kill_boss.append(k_boss[kind[i]])
 		kill_pos.append(pos[i])
 		kill_xp.append(k_xp[kind[i]])
+		var ex: Dictionary = k_extra[kind[i]].get("explode", {})
+		if not ex.is_empty():   # Bọ Lửa: its body bursts after a warning
+			blast_pos.append(center_of(i))
+			blast_t.append(float(ex.get("delay", 0.8)))
+			blast_total.append(float(ex.get("delay", 0.8)))
+			blast_r.append(float(ex.get("radius", 60.0)))
+			blast_dmg.append(float(ex.get("damage", k_damage[kind[i]])))
 
 
 ## Puts status [param status] on monster [param i]. [param p] holds its numbers

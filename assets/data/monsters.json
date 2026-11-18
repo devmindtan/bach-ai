@@ -1,5 +1,5 @@
 {
-  "_doc": "Monster stats at stage 1 (stage scaling comes in phase 3). behaviour: chase | swarm | charge | boss_slime (winds up, jumps to where the player was, slam on landing; split_at fractions of hp spawn split_count split_into). boss: true = HUD bar, the stage is won when it dies. body circle (contact, being hit) comes from the sprite json 'body', not from here. xp = gem value. See design/monsters.md. behaviour shoot (design 6A): keeps keep_range, every shoot_every s within shoot_range winds up (windup s) and fires a bolt (bolt_sprite, bolt_speed px/s, bolt_damage, bolt_range px, bolt_radius).",
+  "_doc": "Monster stats at stage 1 (stage scaling comes in phase 3). behaviour: chase | swarm | charge | boss_slime (winds up, jumps to where the player was, slam on landing; split_at fractions of hp spawn split_count split_into). boss: true = HUD bar, the stage is won when it dies. body circle (contact, being hit) comes from the sprite json 'body', not from here. xp = gem value. See design/monsters.md. behaviour shoot (design 6A): keeps keep_range, every shoot_every s within shoot_range winds up (windup s) and fires a bolt (bolt_sprite, bolt_speed px/s, bolt_damage, bolt_range px, bolt_radius). explode {delay s, radius px, damage}: on death a warning ring at the body, then a blast hurting a player inside (Bọ Lửa).",
   "slime": {
     "sprite": "slime",
     "behaviour": "chase",
@@ -74,5 +74,20 @@
     "bolt_damage": 10.0,
     "bolt_range": 420.0,
     "bolt_radius": 6.0
+  },
+  "ember_beetle": {
+    "name": "Bọ Lửa",
+    "sprite": "ember-beetle",
+    "behaviour": "chase",
+    "hp": 14.0,
+    "damage": 8.0,
+    "speed": 92.0,
+    "xp": 2.0,
+    "scale": 2,
+    "explode": {
+      "delay": 0.8,
+      "radius": 64.0,
+      "damage": 18.0
+    }
   }
 }
