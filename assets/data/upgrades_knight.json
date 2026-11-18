@@ -522,6 +522,13 @@
           "dps_mul": 0.25,
           "time": 2.0
         }
+      ],
+      "impact_tiers": [
+        "solar-ray-impact-i",
+        "solar-ray-impact-ii",
+        "solar-ray-impact-iii",
+        "solar-ray-impact-iv",
+        "solar-ray-impact-v"
       ]
     },
     "god_hammer": {

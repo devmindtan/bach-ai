@@ -1928,7 +1928,9 @@ func _step_shot(fx: Dictionary, dt: float) -> bool:
 			boom["effects"] = fx.get("effects", [])
 		return true
 	enemies.hit_box(hb, float(sh["damage"]), float(fx.get("kb", 140.0)), src, fx.get("effects", []))
-	if sheet.has_animation(impact):
+	if blast != "" and sheets.has(blast):   # the hit flash from the skill's impact sprite (look only)
+		_add_fx(blast, impact, float(fx["scale"]), 0.0, -1.0, p, src)
+	elif sheet.has_animation(impact):
 		_fx.append({"sheet": sheet, "anim": impact, "t": 0.0, "scale": fx["scale"], "damage": 0.0,
 			"done": true, "life": sheet.duration(impact), "pos": p, "follow": false, "source": src})
 	sh["pierce"] = int(sh["pierce"]) - 1
