@@ -4,12 +4,54 @@
   "name": "Hang Vua Thạch Nhầy",
   "duration": 300.0,
   "waves": [
-    { "monster": "slime", "t_from": 0, "t_to": 120, "rate": 1.5, "rate_end": 4.0 },
-    { "monster": "slime", "t_from": 120, "t_to": 300, "rate": 4.0, "rate_end": 0.8 },
-    { "monster": "bat", "t_from": 20, "t_to": 140, "rate": 0.8, "rate_end": 3.0 },
-    { "monster": "bat", "t_from": 140, "t_to": 300, "rate": 3.0, "rate_end": 0.8 },
-    { "monster": "goblin", "t_from": 40, "t_to": 300, "rate": 0.5, "rate_end": 3.5 },
-    { "monster": "goblin@elite", "t_from": 60, "t_to": 60, "burst": 2 },
-    { "monster": "king_slime", "t_from": 120, "t_to": 120, "burst": 1 }
+    {
+      "monster": "slime",
+      "t_from": 0,
+      "t_to": 120,
+      "rate": 1.5,
+      "rate_end": 4.0
+    },
+    {
+      "monster": "slime",
+      "t_from": 120,
+      "t_to": 300,
+      "rate": 4.0,
+      "rate_end": 0.8
+    },
+    {
+      "monster": "bat",
+      "t_from": 20,
+      "t_to": 140,
+      "rate": 0.8,
+      "rate_end": 3.0
+    },
+    {
+      "monster": "bat",
+      "t_from": 140,
+      "t_to": 300,
+      "rate": 3.0,
+      "rate_end": 0.8
+    },
+    {
+      "monster": "goblin",
+      "t_from": 40,
+      "t_to": 300,
+      "rate": 0.5,
+      "rate_end": 3.5
+    },
+    {
+      "monster": "goblin@elite",
+      "t_from": 60,
+      "t_to": 60,
+      "burst": 2,
+      "announce": "2 quái tinh anh xuất hiện!"
+    },
+    {
+      "monster": "king_slime",
+      "t_from": 120,
+      "t_to": 120,
+      "burst": 1,
+      "announce": "Vua Thạch Nhầy đang tới!"
+    }
   ]
 }

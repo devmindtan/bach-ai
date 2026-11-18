@@ -36,7 +36,8 @@
       "monster": "bat",
       "t_from": 120,
       "t_to": 120,
-      "burst": 24
+      "burst": 24,
+      "announce": "Bầy dơi kéo tới!"
     },
     {
       "monster": "goblin",
@@ -49,31 +50,36 @@
       "monster": "bat",
       "t_from": 210,
       "t_to": 210,
-      "burst": 40
+      "burst": 40,
+      "announce": "Bầy dơi kéo tới!"
     },
     {
       "monster": "goblin",
       "t_from": 270,
       "t_to": 270,
-      "burst": 10
+      "burst": 10,
+      "announce": "Yêu tinh tràn tới!"
     },
     {
       "monster": "goblin@elite",
       "t_from": 60,
       "t_to": 60,
-      "burst": 1
+      "burst": 1,
+      "announce": "Quái tinh anh xuất hiện!"
     },
     {
       "monster": "slime@elite",
       "t_from": 150,
       "t_to": 150,
-      "burst": 1
+      "burst": 1,
+      "announce": "Quái tinh anh xuất hiện!"
     },
     {
       "monster": "goblin@elite",
       "t_from": 240,
       "t_to": 240,
-      "burst": 1
+      "burst": 1,
+      "announce": "Quái tinh anh xuất hiện!"
     },
     {
       "monster": "spore",

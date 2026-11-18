@@ -18,19 +18,22 @@
           "monster": "bat",
           "t_from": 60,
           "t_to": 60,
-          "burst": 60
+          "burst": 60,
+          "announce": "Bầy dơi kéo tới!"
         },
         {
           "monster": "bat",
           "t_from": 120,
           "t_to": 120,
-          "burst": 60
+          "burst": 60,
+          "announce": "Bầy dơi kéo tới!"
         },
         {
           "monster": "bat",
           "t_from": 170,
           "t_to": 170,
-          "burst": 60
+          "burst": 60,
+          "announce": "Bầy dơi kéo tới!"
         }
       ]
     },
@@ -65,13 +68,15 @@
           "monster": "king_slime",
           "t_from": 30,
           "t_to": 30,
-          "burst": 1
+          "burst": 1,
+          "announce": "Vua Thạch Nhầy đang tới!"
         },
         {
           "monster": "king_slime",
           "t_from": 90,
           "t_to": 90,
-          "burst": 1
+          "burst": 1,
+          "announce": "Vua Thạch Nhầy đang tới!"
         }
       ]
     }

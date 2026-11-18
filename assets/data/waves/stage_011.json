@@ -3,18 +3,96 @@
   "name": "Rừng Âm U",
   "duration": 300.0,
   "waves": [
-    { "monster": "slime",  "t_from": 0,   "t_to": 80,  "rate": 1.2, "rate_end": 2.6 },
-    { "monster": "slime",  "t_from": 80,  "t_to": 240, "rate": 2.6, "rate_end": 0.4 },
-    { "monster": "bat",    "t_from": 10,  "t_to": 140, "rate": 0.8, "rate_end": 3.0 },
-    { "monster": "bat",    "t_from": 140, "t_to": 300, "rate": 3.0, "rate_end": 1.0 },
-    { "monster": "bat",    "t_from": 90,  "t_to": 90,  "burst": 30 },
-    { "monster": "bat",    "t_from": 180, "t_to": 180, "burst": 40 },
-    { "monster": "goblin", "t_from": 30,  "t_to": 300, "rate": 0.6, "rate_end": 3.6 },
-    { "monster": "goblin", "t_from": 250, "t_to": 250, "burst": 16 },
-    { "monster": "goblin@elite", "t_from": 45,  "t_to": 45,  "burst": 1 },
-    { "monster": "bat@elite",    "t_from": 120, "t_to": 120, "burst": 2 },
-    { "monster": "slime@elite",  "t_from": 170, "t_to": 170, "burst": 1 },
-    { "monster": "goblin@elite", "t_from": 220, "t_to": 220, "burst": 2 },
-    { "monster": "goblin@elite", "t_from": 280, "t_to": 280, "burst": 2 }
+    {
+      "monster": "slime",
+      "t_from": 0,
+      "t_to": 80,
+      "rate": 1.2,
+      "rate_end": 2.6
+    },
+    {
+      "monster": "slime",
+      "t_from": 80,
+      "t_to": 240,
+      "rate": 2.6,
+      "rate_end": 0.4
+    },
+    {
+      "monster": "bat",
+      "t_from": 10,
+      "t_to": 140,
+      "rate": 0.8,
+      "rate_end": 3.0
+    },
+    {
+      "monster": "bat",
+      "t_from": 140,
+      "t_to": 300,
+      "rate": 3.0,
+      "rate_end": 1.0
+    },
+    {
+      "monster": "bat",
+      "t_from": 90,
+      "t_to": 90,
+      "burst": 30,
+      "announce": "Bầy dơi kéo tới!"
+    },
+    {
+      "monster": "bat",
+      "t_from": 180,
+      "t_to": 180,
+      "burst": 40,
+      "announce": "Bầy dơi kéo tới!"
+    },
+    {
+      "monster": "goblin",
+      "t_from": 30,
+      "t_to": 300,
+      "rate": 0.6,
+      "rate_end": 3.6
+    },
+    {
+      "monster": "goblin",
+      "t_from": 250,
+      "t_to": 250,
+      "burst": 16,
+      "announce": "Yêu tinh tràn tới!"
+    },
+    {
+      "monster": "goblin@elite",
+      "t_from": 45,
+      "t_to": 45,
+      "burst": 1,
+      "announce": "Quái tinh anh xuất hiện!"
+    },
+    {
+      "monster": "bat@elite",
+      "t_from": 120,
+      "t_to": 120,
+      "burst": 2,
+      "announce": "2 quái tinh anh xuất hiện!"
+    },
+    {
+      "monster": "slime@elite",
+      "t_from": 170,
+      "t_to": 170,
+      "burst": 1,
+      "announce": "Quái tinh anh xuất hiện!"
+    },
+    {
+      "monster": "goblin@elite",
+      "t_from": 220,
+      "t_to": 220,
+      "burst": 2,
+      "announce": "2 quái tinh anh xuất hiện!"
+    },
+    {
+      "monster": "goblin@elite",
+      "t_from": 280,
+      "t_to": 280,
+      "burst": 2,
+      "announce": "2 quái tinh anh xuất hiện!"
+    }
   ]
 }

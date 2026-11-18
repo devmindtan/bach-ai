@@ -119,7 +119,7 @@ var _rage_t := 0.0                    # seconds the "nổi giận" call still sh
 var _rage_seen := false
 var _boss_hp_share := -1.0
 var wave_call := ""                   # the latest wave call ("Bầy dơi kéo tới!"), shown by the HUD
-var wave_call_t := 0.0            # --boss-hp=0.45 (shots): a boss starts at this share of its hp          # [pos, name, colour] of elite affixes this frame (drawn on top)    # lasting ground zones left by skills ("zone": burn ground, a pulling storm)
+var wave_call_t := 0.0                # seconds the wave call still shows
 var _end_t := 0.0
 # floating damage numbers (ring buffer, sizes from run_config "ui")
 var _num_pos := PackedVector2Array()
