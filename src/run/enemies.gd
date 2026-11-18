@@ -691,6 +691,9 @@ func _boss_slime(i: int, k: int, dir: Vector2, speed: float, delta: float) -> Ve
 				charge_cd[i] = float(e.get("rage_jump_every", 3.0)) if enraged(i) else float(e.get("jump_every", 5.0))
 				timer[i] = float(e.get("volley", {}).get("every", 4.0)) * 0.5
 				slams.append(pos[i] + dash_dir[i] * delta)
+				var pl: Dictionary = e.get("pool", {})   # Cóc Chúa: a poison pool where it lands
+				if not pl.is_empty():
+					add_pool(pos[i] + dash_dir[i] * delta, float(pl.get("time", 4.0)), float(pl.get("radius", 50.0)), float(pl.get("damage", 12.0)))
 				if enraged(i) and e.has("shockwave"):   # phase 2: a ring runs out from the slam
 					wave_pos.append(pos[i] + dash_dir[i] * delta)
 					wave_r.append(k_radius[k])

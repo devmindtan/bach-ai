@@ -51,8 +51,10 @@ func test_waves_are_scaled_by_stage_but_the_boss_stays_single() -> void:
 	var nine := s.load_stage(9)
 	_check(float(nine["waves"][0]["rate"]) > float(one["waves"][0]["rate"]), "stage 9 spawns faster than stage 1 (same file)")
 	var boss_burst := 0
+	var monsters := GameData.load_json("res://assets/data/monsters.json")
 	for w: Dictionary in s.load_stage(30)["waves"]:
-		if String(w.get("monster", "")) == "king_slime":
+		var m: Variant = monsters.get(String(w.get("monster", "")))
+		if m is Dictionary and bool(m.get("boss", false)):   # any region's boss
 			boss_burst = int(w.get("burst", 0))
 	_check(boss_burst == 1, "one boss at stage 30, got %d" % boss_burst)
 

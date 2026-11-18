@@ -25,3 +25,17 @@ không báo, hoặc phủ kín màn (phải còn đường né). **Quyết đị
 
 Sprite: `tree-boss` (48×48), rễ `tree-roots` (`root_sprite`). Code: `Enemies._boss_tree`, `_add_blast(root=true)`;
 vẽ trong `run.gd` (vòng báo rễ, `roots_done`). Test: `tests/unit/run/boss_tree_test.gd`.
+
+## Cóc Chúa (Đầm Lầy Độc, ải 30) · `toad_king`, hành vi `boss_slime` + `pool`
+
+Tham khảo thêm: Nioh, Giant Toad ([Fextralife](https://nioh.wiki.fextralife.com/Giant+Toad)): pha 2 ở 50% máu, cầu
+độc chậm né được; Tomb Raider Reloaded, Giant Frog ([wiki](https://tombraider.fandom.com/wiki/Giant_Frog)): nhảy đè,
+phun độc. **Học:** đòn độc chậm để né, nhảy đè có báo. **Quyết định:** mỗi cú đáp để lại vũng độc lớn, sân hẹp dần.
+
+| Đòn | Pha 1 | Pha 2 (≤ 50% máu) |
+|---|---|---|
+| Nhảy đè (gồng 0,9 s → đáp: 38 sát thương) + **vũng độc** bán kính 56, 5 s | mỗi 4,2 s | mỗi 2,6 s, gồng 0,65 s, sóng xung kích |
+| Phun chùm 7 đạn độc chậm (quạt 70°) | mỗi 3,6 s | như pha 1 |
+| Gọi 4 Cóc Độc ở 75/50/25% máu | | |
+
+Sprite `toad-king` (48×48). Test: `tests/unit/run/boss_toad_test.gd`.

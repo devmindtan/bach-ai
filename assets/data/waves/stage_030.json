@@ -1,5 +1,5 @@
 {
-  "_doc": "Boss stage of Đầm Lầy Độc (stage 30): Vua Thạch Nhầy at 120 s with many marsh elites. The boss's hp is scaled by the stage like every monster (stages.json scale). Won when the boss dies (or at duration).",
+  "_doc": "Boss stage of Đầm Lầy Độc (stage 30): Cóc Chúa (toad_king, design/bosses.md) at 120 s with many marsh elites. The boss's hp is scaled by the stage like every monster (stages.json scale). Won when the boss dies (or at duration).",
   "name": "Hang Vua Thạch Nhầy",
   "duration": 300.0,
   "waves": [
@@ -32,6 +32,20 @@
       "rate_end": 0.8
     },
     {
+      "monster": "toad",
+      "t_from": 20,
+      "t_to": 300,
+      "rate": 0.4,
+      "rate_end": 1.4
+    },
+    {
+      "monster": "bog_spirit",
+      "t_from": 60,
+      "t_to": 300,
+      "rate": 0.15,
+      "rate_end": 0.4
+    },
+    {
       "monster": "goblin",
       "t_from": 15,
       "t_to": 300,
@@ -53,11 +67,11 @@
       "announce": "3 quái tinh anh xuất hiện!"
     },
     {
-      "monster": "king_slime",
+      "monster": "toad_king",
       "t_from": 120,
       "t_to": 120,
       "burst": 1,
-      "announce": "Vua Thạch Nhầy đang tới!"
+      "announce": "Cóc Chúa trồi khỏi đầm!"
     },
     {
       "monster": "goblin@elite",
