@@ -11,6 +11,7 @@ const CHARACTERS_SCENE := "res://src/front/characters.tscn"
 const TITLE_SCENE := "res://src/front/title.tscn"
 const EQUIPMENT_SCENE := "res://src/front/equipment.tscn"
 const STAGE_SCENE := "res://src/front/stage_select.tscn"
+const TREE_SCENE := "res://src/front/skill_tree.tscn"
 const HERO_SCALE := 6.0
 
 const GOLD := Color("c9a65a")
@@ -264,6 +265,11 @@ func _build_ui() -> void:
 	gear.add_theme_font_size_override("font_size", 22)
 	gear.position = Vector2(start_x - 16 - 200, vp.y - BOTTOM_ROW)
 	menu.add_child(gear)
+	var tree := _button("Cây kỹ năng", func() -> void: get_tree().change_scene_to_file(TREE_SCENE))
+	tree.custom_minimum_size = Vector2(200, ROW_H)
+	tree.add_theme_font_size_override("font_size", 22)
+	tree.position = Vector2(start_x - 32 - 400, vp.y - BOTTOM_ROW)
+	menu.add_child(tree)
 	var start := _button("Chọn ải  ▶", func() -> void: get_tree().change_scene_to_file(STAGE_SCENE))
 	start.custom_minimum_size = Vector2(300, ROW_H)
 	start.add_theme_font_size_override("font_size", 26)
@@ -309,6 +315,8 @@ func _tile(icon: String, name: String, value: String, boosted := false) -> Panel
 	var p := PanelContainer.new()
 	p.add_theme_stylebox_override("panel", _style(Color("231d30"), 8))
 	p.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	p.size_flags_stretch_ratio = 1.0
+	p.custom_minimum_size.x = 132   # four equal tiles
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 2)
 	v.alignment = BoxContainer.ALIGNMENT_BEGIN
@@ -325,9 +333,13 @@ func _tile(icon: String, name: String, value: String, boosted := false) -> Panel
 	tex.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	h.add_child(tex)
 	h.add_child(_label(value, 24, Color("8ee08e") if boosted else TEXT))
-	var n := _label(name + (" (có trang bị)" if boosted else ""), 14, MUTED)
+	var n := _label(name, 14, MUTED)
 	n.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(n)
+	# green value = raised by equipment / the skill tree; the tooltip says so (the
+	# label "(có trang bị)" was wrong once the tree raised a stat, and widened the tile)
+	Tip.attach(p, name, ("Đã cộng trang bị và cây kỹ năng của nhân vật." if boosted else "Chỉ số gốc của class."),
+		Color("8ee08e") if boosted else GOLD, icon)
 	return p
 
 

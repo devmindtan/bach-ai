@@ -85,6 +85,11 @@ func _make_preview_slot() -> void:
 	for n in range(1, 11):
 		s.record_win(n, st)
 	s.record_win(10, st)
+	# a little of the skill-tree wallet for shots: Tinh hoa, one node bought, one Tẩy Tủy Đan
+	var tree := SkillTree.load_default()
+	s.essence = 30
+	tree.buy(s, String(tree.branches(hero)[0]["nodes"][0]["id"]))
+	s.pills = 1
 	s.profile.equip(hero, "iron_helm")
 	# a fuller bag for shots of the equipment screen: every item this class can wear
 	for id: String in slot_store().defs:
