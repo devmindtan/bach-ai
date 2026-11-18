@@ -2285,6 +2285,14 @@ func _draw_charge_lanes(view: Rect2) -> void:
 	for i in enemies.count:
 		if not view.has_point(enemies.pos[i]):
 			continue
+		var kk := enemies.kind[i]
+		if enemies.state[i] == Enemies.DASH and enemies.k_behaviour[kk] == Enemies.CHARGE \
+				and bool(enemies.k_extra[kk].get("telegraph", false)):   # Sói Rừng: a red eye streak trails the dash
+			var c := enemies.center_of(i) - Vector2(0.0, enemies.k_radius[kk] * 0.6)
+			var back := -enemies.dash_dir[i].normalized()
+			for q in 3:
+				draw_line(c + back * (8.0 + 12.0 * q), c + back * (22.0 + 12.0 * q), Color(1.0, 0.25, 0.15, 0.55 - 0.15 * q), 3.0 - q)
+			continue
 		var lane := enemies.charge_lane(i)
 		if lane.is_empty():
 			continue
