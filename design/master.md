@@ -20,7 +20,7 @@ chiêu riêng, sức mạnh lâu dài vào cây kỹ năng, trang bị và gacha
 
 ## Lộ trình (tier)
 
-Đợt 1 ✅ · Đợt 2 ✅ · Đợt 3 ✅ (slot, 30 ải, mốc) · Đợt 4 (đang làm) · Đợt 5 (gacha) · Đợt 6 (100 ải) · Đợt 7 (hoàn thiện, Steam) · Đợt 8 (mobile).
+Đợt 1 ✅ · Đợt 2 ✅ · Đợt 3 ✅ (slot, 30 ải, mốc) · Đợt 4 ✅ phần lõi · Đợt 5 ✅ lõi gacha · Đợt 6 (100 ải) · Đợt 7 (hoàn thiện, Steam) · Đợt 8 (mobile).
 
 ## Sơ đồ hệ thống
 
@@ -59,10 +59,10 @@ chiêu riêng, sức mạnh lâu dài vào cây kỹ năng, trang bị và gacha
 | 3 | Quái | ✅ | `design/monsters.md` | slime/dơi/goblin/boss; `waves/stage_NNN.json` |
 | 4 | Class & nội tại | ✅ | `design/classes.md` | 2 class đầu (Kiếm sĩ, Pháp sư) |
 | 5 | Nâng cấp trong trận | ✅ | `assets/data/upgrades_<class>.json` | 6–9 thẻ mỗi class, bậc I–V |
-| 6 | Cây kỹ năng (dài hạn) | 🛠 Đợt 4 | `design/skill-tree.md` | mua bằng Tinh hoa (tinh anh/boss rơi), đặt lại bằng Tẩy Tủy Đan + vàng |
-| 14 | Chế độ Thử thách | 🛠 Đợt 4 | `design/challenge.md` | thử thách luật riêng, rơi Tẩy Tủy Đan |
-| 7 | Trang bị | 🛠 Đợt 4 | `design/equipment.md` | 5 ô, rarity, ngẫu nhiên qua ải |
-| 8 | Gacha | 🛠 Đợt 5 | `design/gacha.md` | **full design** |
+| 6 | Cây kỹ năng (dài hạn) | ✅ | `design/skill-tree.md` | mua bằng Tinh hoa (tinh anh/boss rơi), đặt lại bằng Tẩy Tủy Đan + vàng |
+| 14 | Chế độ Thử thách | ✅ | `design/challenge.md` | thử thách luật riêng, rơi Tẩy Tủy Đan |
+| 7 | Trang bị | ✅ | `design/equipment.md` | 5 ô, độ hiếm, màn trang bị, cường hoá +1..+5 bằng vàng |
+| 8 | Gacha | ✅ lõi | `design/gacha.md` | 2 banner, 10 đá/lượt, pity 50, trùng → vàng |
 | 9 | Mốc cấp 10/20/30 (trong trận) | ✅ | `design/progression.md` (mục mốc) | 6 chiêu độc nhất, 3 nội tại, 3 luật; chỉ trong trận |
 | 10 | Slot nhân vật | ✅ | `design/progression.md` (mục slot) | tối đa 4 slot, schema v1 |
 | 11 | Trang bị rơi (elite) | ✅ | `assets/data/run_config.json` (rewards) | thắng ải 1 món, rương tinh anh 25% |

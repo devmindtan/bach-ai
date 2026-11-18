@@ -104,8 +104,8 @@ từng vùng (đợt 6, hiện các vùng dùng chung thạch nhầy / dơi / y�
 ## Đợt 4: Cây kỹ năng + trang bị · cỡ L
 **Trạng thái (2026-11-18):** cây kỹ năng xong (`design/skill-tree.md`): 3 nhánh × 3 tầng mỗi class, mua bằng
 Tinh hoa (tinh anh rơi 1, boss rơi 10), đặt lại bằng Tẩy Tủy Đan + vàng; chế độ Thử thách (`design/challenge.md`)
-rơi Tẩy Tủy Đan; màn trang bị (búp bê giấy, túi đồ lọc/sắp xếp, so sánh). Còn: cường hoá đồ bằng vàng, dòng phụ /
-hiệu ứng đặc biệt ở đồ hiếm cao, đồ vẽ lên người nhân vật; chơi thử để chỉnh giá node và lượng Tinh hoa rơi.
+rơi Tẩy Tủy Đan; màn trang bị (búp bê giấy, túi đồ lọc/sắp xếp, so sánh); cường hoá đồ +1..+5 bằng vàng. Còn: dòng
+phụ / hiệu ứng đặc biệt ở đồ hiếm cao, đồ vẽ lên người nhân vật; chơi thử để chỉnh giá node và lượng Tinh hoa rơi.
 **Câu hỏi:** đầu tư lâu dài có làm người chơi thấy rõ nhân vật mạnh lên giữa các lượt không?
 - **Cây kỹ năng theo class**: điểm từ vượt ải / lên cấp tài khoản; nhánh (ví dụ Kiếm sĩ: Phòng thủ / Cuồng nộ / Kiếm khí); có nút đặt lại (mất ít vàng).
 - **Trang bị:** ô vũ khí, mũ, áo, găng, giày; độ hiếm (thường → huyền thoại); chỉ số chính + dòng phụ + **hiệu ứng đặc biệt** ở hiếm cao; rơi từ boss/rương.
@@ -113,6 +113,9 @@ hiệu ứng đặc biệt ở đồ hiếm cao, đồ vẽ lên người nhân 
 **Xong khi:** một slot có cây kỹ năng 20 điểm và bộ trang bị mạnh vượt ải 30 nhanh hơn rõ rệt (số đo thời gian/máu còn lại).
 
 ## Đợt 5: Gacha · cỡ M
+**Trạng thái (2026-11-18):** lõi xong (`design/gacha.md`, `assets/data/gacha.json`): 2 banner, 10 đá/lượt, tỉ lệ
+công khai trên màn, pity huyền thoại ở lượt 50 mỗi banner, món trùng đổi vàng; test tỉ lệ 200k lượt. Còn: chốt số
+(tỉ lệ, pity, giá) khi chơi thử; lịch sử quay; nhiệm vụ ngày / thành tựu cho thêm đá; hiệu ứng quay.
 **Câu hỏi:** quay gacha có hồi hộp mà không làm hỏng cân bằng không?
 - Banner vũ khí và banner giáp; tỉ lệ công khai trong game; **bảo hiểm (pity)** sau N lần; trùng → nguyên liệu cường hoá.
 - Đá gacha kiếm trong game: vượt ải (lần đầu nhiều hơn, cày lại ít hơn), boss, nhiệm vụ ngày, thành tựu; lịch sử quay.
