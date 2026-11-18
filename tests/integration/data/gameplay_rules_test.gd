@@ -153,6 +153,9 @@ func test_redrawn_effects_meet_fx_craft() -> void:
 				var hb: Dictionary = a.get("hitbox", {})
 				var act: Array = hb.get("active", [0, 0])
 				_check(int(a.get("frames", 0)) >= int(lim["fx_frames_min"]), "%s/%s [fx_craft]: %d frames" % [n, an, int(a.get("frames", 0))])
+				# the hit area is measured from a drawn hit mask, not the art: rays, debris and
+				# bolts made areas 2x too big (user 2026-11-18)
+				_check(bool(a.get("hit_mask", false)), "%s/%s [fx_craft]: hitbox not measured from a hit mask" % [n, an])
 				_check(int(act[0]) >= int(lim["fx_lead_frames"]), "%s/%s [fx_craft]: no lead-in before the hit" % [n, an])
 				var outro := sh.duration(an) - SpriteHitbox.frame_time(a, int(act[1]) + 1)
 				_check(outro >= float(lim["fx_outro_min"]) - 0.001, "%s/%s [fx_craft]: ending only %.2fs" % [n, an, outro])
