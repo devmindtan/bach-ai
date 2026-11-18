@@ -69,10 +69,12 @@ func test_chain_shock_hits_the_nearest_ones() -> void:
 	r.free()
 
 
-func test_shield_makes_the_hero_invulnerable() -> void:
+func test_shield_grants_phantom_armour() -> void:
 	var r := _run()
 	r.trigger_special(_special("aegis_helm"))
-	_check(r.buffs.invulnerable(), "Khiên từ active")
+	_check(r.buffs.is_active("phantom_ward"), "Khiên ảo active")
+	_check(float(r.stats.get("armor", 0.0)) >= 12.0, "the ward adds 12 armour to every hit")
+	_check(not r.buffs.invulnerable(), "the item ward is not the pickup's full immunity")
 	r.free()
 
 
@@ -117,10 +119,10 @@ func test_low_hp_shield_once_per_cooldown() -> void:
 	var r := _run()
 	r.set_specials([_special("aegis_greaves")])
 	r.step_specials(0.1)
-	_check(not r.buffs.invulnerable(), "full hp: nothing")
+	_check(not r.buffs.is_active("stone_ward"), "full hp: nothing")
 	r.hp = float(r.stats["max_hp"]) * 0.2
 	r.step_specials(0.1)
-	_check(r.buffs.invulnerable(), "low hp: shield")
+	_check(r.buffs.is_active("stone_ward") and r._ward_charges == 1, "low hp: one-hit ward")
 	r.free()
 
 

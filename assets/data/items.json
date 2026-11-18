@@ -86,6 +86,29 @@
       "invulnerable": true,
       "desc": "Trong 5 giây: miễn mọi sát thương, tầm hút vật phẩm ×2.5.",
       "rarity": "epic"
+    },
+    "phantom_ward": {
+      "name": "Khiên ảo",
+      "icon": "item_shield",
+      "aura": "aura-aegis",
+      "aura_layer": "front",
+      "duration": 3.0,
+      "effects": {
+        "armor": {
+          "add": 12.0
+        }
+      },
+      "desc": "Trong 3 giây: giáp ảo +12, mỗi đòn bị giảm 12 sát thương.",
+      "special_only": true
+    },
+    "stone_ward": {
+      "name": "Bàn thạch",
+      "icon": "item_low_hp",
+      "aura": "aura-stoneguard",
+      "aura_layer": "front",
+      "duration": 8.0,
+      "desc": "Trong 8 giây: chặn hoàn toàn một đòn rồi vỡ.",
+      "special_only": true
     }
   },
   "equipment": {
@@ -177,9 +200,9 @@
         "kind": "shield",
         "name": "Thần hộ",
         "every": 15.0,
-        "buff": "magnetic_shield",
+        "buff": "phantom_ward",
         "time": 3.0,
-        "desc": "Mỗi 15 giây: Khiên từ trong 3 giây, miễn mọi sát thương."
+        "desc": "Mỗi 15 giây: giáp ảo +12 trong 3 giây (mỗi đòn trừ 12 sát thương)."
       }
     },
     "iron_chest": {
@@ -360,10 +383,11 @@
         "kind": "low_hp_buff",
         "name": "Bàn thạch",
         "threshold": 0.3,
-        "buff": "magnetic_shield",
-        "time": 3.0,
+        "buff": "stone_ward",
+        "ward": true,
+        "time": 8.0,
         "cooldown": 30.0,
-        "desc": "Máu dưới 30%: Khiên từ 3 giây (30 giây một lần)."
+        "desc": "Máu dưới 30%: vỏ đá chặn trọn một đòn trong 8 giây (30 giây một lần)."
       }
     },
     "iron_gauntlets": {

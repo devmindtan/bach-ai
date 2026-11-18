@@ -51,7 +51,9 @@ func step(dt: float, player_center: Vector2) -> Array:
 	if _next <= 0.0:
 		_next = _rng.randf_range(_every.x, _every.y)
 		if ground.size() < _max_on_field and not defs.is_empty():
-			var ids := defs.keys()
+			# shields granted by equipment are not ground pickups (user 2026-11-18)
+			var ids := defs.keys().filter(func(id: String) -> bool:
+				return not bool((defs.get(id, {}) as Dictionary).get("special_only", false)))
 			var a := _rng.randf() * TAU
 			var r := _rng.randf_range(_ring.x, _ring.y)
 			ground.append({"id": ids[_rng.randi() % ids.size()], "pos": player_center + Vector2(cos(a), sin(a)) * r, "age": 0.0})

@@ -97,6 +97,8 @@ var face_left := false          # the hero is drawn in the side view only; left 
 var attack_dir := Vector2.RIGHT # towards the nearest monster, snapped to the slash's 4 directions
 var hp := 100.0
 var invuln := 0.0
+var _ward_charges := 0     # Bàn thạch: one-hit block, spent on contact
+var _ward_buff := ""       # buff id whose aura shows the ward is still up
 var level := 1
 var xp := 0.0
 var gold := 0
@@ -494,7 +496,13 @@ func _tick(dt: float) -> void:
 	_spawn(clock - dt, clock)
 	var contact := enemies.step(dt, player_pos, player_pos + _hit_center)
 	if contact > 0.0 and invuln <= 0.0 and bench == 0 and not god and not buffs.invulnerable() and _dash_left <= 0.0:
-		_take_hit(contact)
+		if _ward_charges > 0 and _ward_buff != "" and buffs.is_active(_ward_buff):
+			_ward_charges -= 1                    # the stone shell takes the hit and breaks
+			buffs.active.erase(_ward_buff)
+			invuln = maxf(invuln, 0.5)
+			Sfx.play("holy")
+		else:
+			_take_hit(contact)
 	invuln = maxf(0.0, invuln - dt)
 	var had := buffs.active.size()
 	buffs.step(dt, player_pos + _hit_center)
@@ -1415,9 +1423,7 @@ func trigger_special(sp: Dictionary) -> void:
 	var dmg := float(stats.get("damage", 10.0)) * float(sp.get("damage_mul", 1.0))
 	match String(sp.get("kind", "")):
 		"shield":
-			buffs.activate(String(sp.get("buff", "magnetic_shield")), float(sp.get("time", 3.0)))
-			_recompute_stats()
-			Sfx.play("holy")
+			_special_buff(sp)
 		"pulse":
 			var reach := float(sp.get("radius", 150.0)) * float(stats.get("area", 1.0))
 			enemies.hit_circle(center, reach, dmg, float(sp.get("knockback", 160.0)), src)
@@ -1463,7 +1469,11 @@ func _ring_fx(reach: float) -> void:
 func _special_buff(sp: Dictionary) -> void:
 	if buffs == null:
 		return
-	buffs.activate(String(sp.get("buff", "magnetic_shield")), float(sp.get("time", 3.0)))
+	var id := String(sp.get("buff", "magnetic_shield"))
+	buffs.activate(id, float(sp.get("time", 3.0)))
+	if bool(sp.get("ward", false)):   # a one-hit shield, not a timed immunity
+		_ward_charges = 1
+		_ward_buff = id
 	_recompute_stats()
 	Sfx.play("holy")
 
