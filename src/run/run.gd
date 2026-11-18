@@ -2390,6 +2390,10 @@ func _draw_auras(layer: String) -> void:
 		if not buffs.is_active(id):
 			continue
 		var d := buff_def(id)
+		if layer == "back" and d.has("aura_back"):   # far half of a 3D orbit
+			var back: SpriteSheet = sheets.get(String(d.get("aura_back", "")))
+			if back != null and back.has_animation("loop"):
+				back.draw(self, "loop", clock, player_pos, _sprite_scale)
 		if String(d.get("aura_layer", "front")) != layer:
 			continue
 		var sh: SpriteSheet = sheets.get(String(d.get("aura", "")))
