@@ -14,7 +14,11 @@
   "dps_ratio_min": 0.4,
   "dps_ratio_max": 3.0,
   "frame_max_dense": 192,
-  "outro_max": 1.0
+  "outro_max": 1.0,
+  "fx_frames_min": 12,
+  "fx_lead_frames": 1,
+  "fx_outro_min": 0.3,
+  "fx_px_scale": 0.5
  },
  "rules": [
   {
@@ -70,6 +74,12 @@
    "severity": "should",
    "title": "Cân bằng sát thương",
    "text": "Sát thương mỗi giây ở cấp 1 trong dps_ratio_min..dps_ratio_max lần đòn cơ bản của class (damage / cooldown)."
+  },
+  {
+   "id": "fx_craft",
+   "severity": "should",
+   "title": "Hiệu ứng có nghề",
+   "text": "Hiệu ứng vùng một lần (không tính đạn bay fly_*, nhát chém slash_*): ít nhất fx_frames_min frame; có pha mở đầu ít nhất fx_lead_frames frame trước frame gây sát thương; có pha kết thúc (đọng lại, tan biến) dài fx_outro_min..outro_max giây sau frame gây sát thương cuối; vẽ ở mật độ gấp đôi (px_scale = fx_px_scale) bằng sprite-lab/lib/fxkit.py: khối có mặt sáng/tối và viền tối, chớp sáng + tia khi nổ, hạt có vệt, lấp lánh 4 cánh; hình không bị cắt ở mép khung. Bắt buộc với sprite đã vẽ theo chuẩn (có px_scale; test chặn), các sprite cũ hiện cảnh báo trên dashboard (người dùng 2026-11-18)."
   }
  ]
 }

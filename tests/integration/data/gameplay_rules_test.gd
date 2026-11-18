@@ -56,7 +56,7 @@ func _sheets(params: Dictionary, id: String) -> Array[SpriteSheet]:
 
 func test_rules_file_lists_known_rules() -> void:
 	var doc := GameData.load_json(DATA + "gameplay_rules.json")
-	var known := ["auto", "hitbox", "screen", "snappy", "directional", "levels", "small", "class", "dps"]
+	var known := ["auto", "hitbox", "screen", "snappy", "directional", "levels", "small", "class", "dps", "fx_craft"]
 	for r: Dictionary in doc.get("rules", []):
 		_check(known.has(r.get("id")), "unknown rule id %s (checks are code)" % r.get("id"))
 		_check(["must", "should"].has(r.get("severity")), "rule %s: severity must|should" % r.get("id"))
@@ -126,3 +126,33 @@ func test_skills_meet_must_rules() -> void:
 					_check(start <= float(lim["active_start_max"]), "%s [snappy]: %s first hits at %.2fs" % [id, an, start])
 		_check(reach <= float(lim["reach_max"]) and (flies or reach >= float(lim["reach_min"])), "%s [screen]: reach %.0f px" % [id, reach])
 		_check(float(p.get("cast_range", 0.0)) <= float(lim["cast_range_max"]), "%s [screen]: cast_range %s" % [id, p.get("cast_range")])
+
+
+## fx_craft (user 2026-11-18): every effect sprite drawn to the new standard (it has
+## px_scale) must keep it: enough frames, a lead-in before the hits, an ending after
+## them, double density. Older sprites only warn on the dashboard until redrawn.
+func test_redrawn_effects_meet_fx_craft() -> void:
+	var lim: Dictionary = GameData.load_json(DATA + "gameplay_rules.json").get("limits", {})
+	var seen := {}
+	for entry: Array in _skills():
+		var p: Dictionary = entry[4]
+		var names: Array = p.get("tier_sprites", [p.get("sprite", entry[0])]).duplicate()
+		names.append_array(p.get("impact_tiers", []))
+		for n: Variant in names:
+			if seen.has(n):
+				continue
+			seen[n] = true
+			var sh := SpriteSheet.load_dir(SPRITES + String(n), String(n))
+			if sh == null or not sh.meta.has("px_scale"):
+				continue
+			_check(is_equal_approx(float(sh.meta["px_scale"]), float(lim["fx_px_scale"])), "%s [fx_craft]: px_scale %s" % [n, sh.meta["px_scale"]])
+			for an in sh.animation_names():
+				var a := sh.animation(an)
+				if an.begins_with("fly") or an.begins_with("slash") or bool(a.get("loop", false)):
+					continue
+				var hb: Dictionary = a.get("hitbox", {})
+				var act: Array = hb.get("active", [0, 0])
+				_check(int(a.get("frames", 0)) >= int(lim["fx_frames_min"]), "%s/%s [fx_craft]: %d frames" % [n, an, int(a.get("frames", 0))])
+				_check(int(act[0]) >= int(lim["fx_lead_frames"]), "%s/%s [fx_craft]: no lead-in before the hit" % [n, an])
+				var outro := sh.duration(an) - SpriteHitbox.frame_time(a, int(act[1]) + 1)
+				_check(outro >= float(lim["fx_outro_min"]) - 0.001, "%s/%s [fx_craft]: ending only %.2fs" % [n, an, outro])

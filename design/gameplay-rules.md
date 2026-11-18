@@ -29,6 +29,7 @@ Luật dưới đây là **bắt buộc khi thiết kế**; số liệu nằm tr
 | `directional` | bắt buộc | Đòn chém có đủ 4 hướng | Game nhắm quái gần nhất theo 4 hướng |
 | `levels` | bắt buộc | 3–5 cấp, mỗi cấp tăng sát thương hoặc cỡ; bậc sprite I–V = số cấp | Lên cấp phải thấy mạnh hơn |
 | `small` | bắt buộc | Khung × `px_scale` ≤ 96 px; sprite mật độ đôi (`px_scale` 0.5) ≤ 192 px thật | Hiệu năng |
+| `fx_craft` | nên (bắt buộc khi sprite có `px_scale`) | Hiệu ứng vùng một lần: ≥ 12 frame; ≥ 1 frame mở đầu trước frame gây sát thương; pha kết thúc 0,3–1,0 s sau frame gây sát thương cuối; vẽ mật độ gấp đôi (`px_scale` 0.5) bằng `sprite-lab/lib/fxkit.py` | Hiệu ứng thể hiện sức mạnh, xuất hiện và tan rõ ràng (người dùng 2026-11-18) |
 | `class` | nên | Tag `class-<x>` khớp class sở hữu kỹ năng | Bản sắc class (băng/phép cho Pháp sư, kiếm/đất cho Kiếm sĩ) |
 | `dps` | nên | DPS cấp 1 (sát thương × số nhịp trúng / hồi chiêu, một mục tiêu) trong 0,4–3 lần đòn cơ bản của class; chiêu vùng được phép thấp hơn vì trúng nhiều quái | Không có chiêu "phá game" hay vô dụng ngay từ đầu |
 
@@ -39,3 +40,19 @@ Luật dưới đây là **bắt buộc khi thiết kế**; số liệu nằm tr
 - Dashboard (`sprite-lab/serve-viewer.sh` → `games.html`, tab **Luật gameplay**) chấm từng kỹ năng trong game; tab
   **Kỹ năng** cho xem lúc chiêu trúng hình nhân.
 - Sửa ngưỡng: sửa `assets/data/gameplay_rules.json` (và bảng này), rồi chạy lại test.
+
+## Chuẩn vẽ hiệu ứng chiêu (người dùng 2026-11-18)
+
+Áp dụng cho mọi hiệu ứng vùng mới hoặc vẽ lại (luật `fx_craft`; mẫu: Băng nổ `frost-nova-*`):
+
+| Mục | Chuẩn |
+|---|---|
+| Độ phân giải | khung gấp đôi bản logic, `"px_scale": 0.5` trong json; khung thật ≤ 192 px, logic ≤ 96 px |
+| Số frame | ≥ 12 (thường 12–18) |
+| Pha | mở đầu (tụ / báo trước, ≥ 1 frame) → trúng (chớp sáng + tia khi nổ) → đọng lại → tan (dither Bayer, không mờ alpha) |
+| Thời gian | trúng trước 0,4 s, hết frame gây sát thương trước 1,2 s, pha kết thúc 0,3–1,0 s |
+| Khối | dùng `fxkit`: tinh thể / đá có mặt sáng, mặt tối, sống sáng và viền tối (`stack(..., outline)`); hạt có vệt (`streak`); lấp lánh 4 cánh (`sparkle`); vòng nhiều lớp (`ring_band`) |
+| Bậc I–V | bậc sau thêm chi tiết của riêng nó (thêm vòng, rune, cụm tinh thể…), không chỉ to hơn |
+| Khung | không có gì bị cắt ở mép (giới hạn bán kính vẽ theo cỡ khung) |
+| Lớp vẽ | hiệu ứng nằm trên đất (`ground_fx` trong data) vẽ dưới quái |
+| Kiểm | `gamekit art run` + xem từng frame trên nền cỏ; `gameplay_rules_test` (fx_craft) + dashboard tab Kỹ năng |
