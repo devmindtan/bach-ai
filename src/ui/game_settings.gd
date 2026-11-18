@@ -57,6 +57,7 @@ static func current() -> Prefs:
 
 
 func _ready() -> void:
+	UiFonts.install()   # bundled glyph fallbacks, before any screen draws text
 	var forced_hero := ""
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--gk-"):
