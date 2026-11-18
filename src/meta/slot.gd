@@ -21,6 +21,7 @@ var essence := 0              # Tinh hoa: dropped by elites / bosses, buys skill
 var pills := 0                # Tẩy Tủy Đan: won in challenges, pays a skill-tree reset (with gold)
 var tree: Array = []          # skill-tree node ids bought (design/skill-tree.md)
 var challenge_wins := {}      # challenge id -> times won (design/challenge.md)
+var pity := {}                # gacha banner id -> pulls since its last legendary (design/gacha.md)
 var profile: Profile
 
 
@@ -52,7 +53,7 @@ func record_win(n: int, stages: Stages) -> Dictionary:
 func to_dict() -> Dictionary:
 	return {"version": VERSION, "id": id, "name": name, "class": cls, "best": best, "wins": wins,
 		"gold": gold, "gems": gems, "essence": essence, "pills": pills, "tree": tree,
-		"challenge_wins": challenge_wins, "profile": profile.to_dict()}
+		"challenge_wins": challenge_wins, "pity": pity, "profile": profile.to_dict()}
 
 
 ## Fills the slot from [param d]; returns "" or why it cannot be read.
@@ -73,5 +74,6 @@ func from_dict(d: Dictionary) -> String:
 	pills = int(d.get("pills", 0))
 	tree = Array(d.get("tree", []))
 	challenge_wins = d.get("challenge_wins", {})
+	pity = d.get("pity", {})
 	profile.from_dict(d.get("profile", {}))
 	return ""
