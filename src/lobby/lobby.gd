@@ -208,6 +208,9 @@ func _build_ui() -> void:
 	var prof := Prefs.current().profile()
 	var cid := Prefs.current().hero
 	var stats := PlayerStats.compute(base, prof.as_upgrades(cid), prof.levels(cid))
+	if Prefs.current().active_slot != null:   # equipment + skill tree of the character
+		var lasting := SkillTree.lasting(Prefs.current().active_slot)
+		stats = PlayerStats.compute(base, lasting[0], lasting[1])
 	var tiles := HBoxContainer.new()
 	tiles.add_theme_constant_override("separation", 10)
 	cv.add_child(tiles)

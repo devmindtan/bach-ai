@@ -269,7 +269,8 @@ func _slot_panel(panel: PanelContainer, s: Slot) -> void:
 	prog.add_child(UiKit.stat("gem", str(s.gems), "Đá (gacha, đợt 5)"))
 	# stats with the worn equipment
 	var base: Dictionary = cd.get("stats", {})
-	var st := PlayerStats.compute(base, s.profile.as_upgrades(s.cls), s.profile.levels(s.cls))
+	var lasting := SkillTree.lasting(s)   # equipment + skill tree
+	var st := PlayerStats.compute(base, lasting[0], lasting[1])
 	var grid := GridContainer.new()
 	grid.columns = 4
 	grid.add_theme_constant_override("h_separation", 8)

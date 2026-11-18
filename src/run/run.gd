@@ -35,6 +35,8 @@ var _rewards_arg := false
 var stages: Stages
 var stage_ground: Dictionary = {}
 var playing_slot: Slot
+var tree_owner: Slot          # whose skill tree applies (the active slot; the preview one in shots)
+var skill_tree: SkillTree
 var run_result: Dictionary = {}
 var _boss_dead := false
 var _delayed: Array = []
@@ -233,6 +235,7 @@ func _ready() -> void:
 	waves = WaveScheduler.new(stage.get("waves", []))
 	base_stats = class_data.get("stats", {})
 	profile = playing_slot.profile if playing_slot != null else prefs.profile()
+	tree_owner = prefs.active_slot
 	for id in _gear:
 		profile.add(id)
 		profile.equip(class_id, id)
@@ -1366,7 +1369,15 @@ func effect_pool() -> Array:
 		out.append_array(buffs.as_upgrades())
 	if profile != null:
 		out.append_array(profile.as_upgrades(class_id))   # worn equipment
+	if tree_owner != null:
+		out.append_array(_tree().as_upgrades(tree_owner))   # skill tree nodes bought
 	return out
+
+
+func _tree() -> SkillTree:
+	if skill_tree == null:
+		skill_tree = SkillTree.load_default()
+	return skill_tree
 
 
 func effect_levels() -> Dictionary:
@@ -1377,6 +1388,8 @@ func effect_levels() -> Dictionary:
 		out.merge(buffs.levels(), true)
 	if profile != null:
 		out.merge(profile.levels(class_id), true)
+	if tree_owner != null:
+		out.merge(_tree().levels(tree_owner), true)
 	return out
 
 

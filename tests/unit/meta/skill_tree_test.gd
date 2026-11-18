@@ -80,3 +80,22 @@ func test_bought_nodes_change_stats_and_survive_a_save() -> void:
 	var back := _slot()
 	back.from_dict(s.to_dict())
 	_check(back.tree == s.tree and back.essence == s.essence, "tree and Tinh hoa saved on the slot")
+
+
+func test_the_tree_applies_in_a_run() -> void:
+	var t := SkillTree.load_default()
+	var s := _slot()
+	s.essence = 100
+	t.buy(s, "k_fury_1")
+	var Run := load("res://src/run/run.gd")
+	var r: Node = Run.new()
+	var classes := GameData.load_json("res://assets/data/classes.json")
+	r.class_data = classes["knight"]
+	r.pool = GameData.load_json("res://assets/data/upgrades_knight.json")
+	r.base_stats = classes["knight"]["stats"]
+	r._recompute_stats()
+	var plain := float(r.stats["damage"])
+	r.tree_owner = s
+	r._recompute_stats()
+	_check(float(r.stats["damage"]) > plain, "Cuồng nộ I raises damage in the run: %s -> %s" % [plain, r.stats["damage"]])
+	r.free()

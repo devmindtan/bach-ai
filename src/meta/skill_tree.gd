@@ -126,6 +126,27 @@ func levels(slot: Slot) -> Dictionary:
 	return out
 
 
+## A slot's lasting upgrades for PlayerStats: worn equipment + bought nodes,
+## as [upgrades, levels] (lobby, character and equipment screens; the run adds cards).
+## [param worn] overrides what is worn ({slot: item id}) for "what if" comparisons.
+static func lasting(slot: Slot, worn = null) -> Array:
+	var ups := []
+	var lv := {}
+	if worn == null:
+		ups.append_array(slot.profile.as_upgrades(slot.cls))
+		lv.merge(slot.profile.levels(slot.cls), true)
+	else:
+		for k: String in worn:
+			var id := String(worn[k])
+			var d: Dictionary = slot.profile.defs.get(id, {})
+			ups.append({"id": id, "name": d.get("name", id), "kind": "item", "effects": d.get("effects", {})})
+			lv[id] = 1
+	var t := load_default()
+	ups.append_array(t.as_upgrades(slot))
+	lv.merge(t.levels(slot), true)
+	return [ups, lv]
+
+
 func _id_at(cls: String, branch: String, tier: int) -> String:
 	for b: Dictionary in branches(cls):
 		if String(b.get("id", "")) == branch:

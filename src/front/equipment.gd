@@ -567,12 +567,7 @@ func _fmt(f: String, x: float) -> String:
 
 
 ## Stats of the class with [param worn] ({slot: item id}) on.
+## The skill tree counts too, so the numbers match the lobby's.
 func _stats_with(worn: Dictionary) -> Dictionary:
-	var ups := []
-	var lv := {}
-	for slot: String in worn:
-		var id := String(worn[slot])
-		var d: Dictionary = _prof.defs.get(id, {})
-		ups.append({"id": id, "name": d.get("name", id), "kind": "item", "effects": d.get("effects", {})})
-		lv[id] = 1
-	return PlayerStats.compute(_class.get("stats", {}), ups, lv)
+	var lasting := SkillTree.lasting(_slot_data, worn)
+	return PlayerStats.compute(_class.get("stats", {}), lasting[0], lasting[1])
