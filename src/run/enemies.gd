@@ -107,7 +107,14 @@ var _player_center := Vector2.ZERO
 var affix := PackedInt32Array()          # -1 = none
 var affix_ids: Array[String] = []
 var _affix_defs: Array[Dictionary] = []
-var _split_q: Array = []                 # [kind, pos]: monsters to spawn after this step (Phân thân)
+var _split_q: Array = []
+# boss shockwaves (Vua Thạch Nhầy enraged, design 6A): rings running out from a slam
+var wave_pos := PackedVector2Array()
+var wave_r := PackedFloat32Array()
+var wave_max := PackedFloat32Array()
+var wave_hit := PackedInt32Array()       # 1 once it has hit the player (one hit per ring)
+var wave_def: Array[Dictionary] = []
+var raged: Array[int] = []              # boss indices that just turned enraged this step (the run announces it)                 # [kind, pos]: monsters to spawn after this step (Phân thân)
 # death bursts ("explode" on a monster, design 6A Bọ Lửa): a warning ring, then a blast
 var blast_pos := PackedVector2Array()
 var blast_t := PackedFloat32Array()      # seconds left before it goes off
@@ -343,11 +350,34 @@ func step(delta: float, player_pos: Vector2, player_center: Vector2) -> float:
 		pos[n] = pos[n].clamp(Vector2(-arena_half, -arena_half), Vector2(arena_half, arena_half))
 		if not stopped and (center_of(n) - player_center).length() < r + player_hit_radius:
 			contact = maxf(contact, k_damage[k])
+	contact = maxf(contact, _step_waves(delta, player_center))
 	for q: Array in _split_q:   # monsters from Phân thân, spawned after the loop over the living
 		if int(q[0]) >= 0:
 			spawn(kind_ids[int(q[0])], q[1])
 	_split_q.clear()
 	return maxf(maxf(contact, _step_bolts(delta, player_center)), _step_blasts(delta, player_center))
+
+
+## Shockwave rings grow; one hurts the player once when its edge passes over them.
+func _step_waves(delta: float, player_center: Vector2) -> float:
+	var hit := 0.0
+	var w := 0
+	while w < wave_pos.size():
+		var d: Dictionary = wave_def[w]
+		wave_r[w] += float(d.get("speed", 260.0)) * delta
+		var edge := absf(wave_pos[w].distance_to(player_center) - wave_r[w])
+		if wave_hit[w] == 0 and edge < float(d.get("width", 12.0)) * 0.5 + player_hit_radius * 0.5:
+			wave_hit[w] = 1
+			hit = maxf(hit, float(d.get("damage", 20.0)))
+		if wave_r[w] >= wave_max[w]:
+			wave_pos.remove_at(w)
+			wave_r.remove_at(w)
+			wave_max.remove_at(w)
+			wave_hit.remove_at(w)
+			wave_def.remove_at(w)
+			continue
+		w += 1
+	return hit
 
 
 ## The affix of monster [param i] (run_config.json elite.affixes entry), {} when none.
@@ -502,8 +532,15 @@ func _boss_slime(i: int, k: int, dir: Vector2, speed: float, delta: float) -> Ve
 			timer[i] -= delta
 			if timer[i] <= 0.0:
 				state[i] = MOVE
-				charge_cd[i] = float(e.get("jump_every", 5.0))
+				charge_cd[i] = float(e.get("rage_jump_every", 3.0)) if enraged(i) else float(e.get("jump_every", 5.0))
+				timer[i] = float(e.get("volley", {}).get("every", 4.0)) * 0.5
 				slams.append(pos[i] + dash_dir[i] * delta)
+				if enraged(i) and e.has("shockwave"):   # phase 2: a ring runs out from the slam
+					wave_pos.append(pos[i] + dash_dir[i] * delta)
+					wave_r.append(k_radius[k])
+					wave_max.append(float(e["shockwave"].get("max", 300.0)))
+					wave_hit.append(0)
+					wave_def.append(e["shockwave"])
 				_slam_i = i
 				slam_done.emit(pos[i] + dash_dir[i] * delta)
 			return dash_dir[i]
@@ -511,11 +548,27 @@ func _boss_slime(i: int, k: int, dir: Vector2, speed: float, delta: float) -> Ve
 			charge_cd[i] -= delta
 			if charge_cd[i] <= 0.0:
 				state[i] = WINDUP
-				timer[i] = float(e.get("windup", 0.9))
+				timer[i] = float(e.get("rage_windup", 0.6)) if enraged(i) else float(e.get("windup", 0.9))
 				dash_dir[i] = _target
 				anim_t[i] = 0.0
 				return Vector2.ZERO
+			var vo: Dictionary = e.get("volley", {})
+			if not vo.is_empty():   # spits a fan of slow bolts at the player
+				timer[i] -= delta
+				if timer[i] <= 0.0:
+					timer[i] = float(vo.get("every", 4.0))
+					var n := int(vo.get("count", 5))
+					var spread := deg_to_rad(float(vo.get("spread_deg", 50.0)))
+					var aim := (_player_center - center_of(i)).normalized()
+					for b in n:
+						fire_bolt(i, aim.rotated(spread * (float(b) / maxf(1.0, n - 1) - 0.5)))
 	return dir * speed
+
+
+## Boss [param i] is enraged: hp at or below its "rage_at" share (phase 2).
+func enraged(i: int) -> bool:
+	var e: Dictionary = k_extra[kind[i]]
+	return e.has("rage_at") and hp[i] <= k_hp[kind[i]] * float(e["rage_at"])
 
 
 ## Index of the first living boss, or -1.

@@ -113,7 +113,10 @@ var _whirl_left := 0.0
 var _whirl_ticks_done := 0
 var _fx: Array[Dictionary] = []
 var zones: Array[Dictionary] = []
-var _affix_tags: Array = []          # [pos, name, colour] of elite affixes this frame (drawn on top)    # lasting ground zones left by skills ("zone": burn ground, a pulling storm)
+var _affix_tags: Array = []
+var _rage_t := 0.0                    # seconds the "nổi giận" call still shows
+var _rage_seen := false
+var _boss_hp_share := -1.0            # --boss-hp=0.45 (shots): a boss starts at this share of its hp          # [pos, name, colour] of elite affixes this frame (drawn on top)    # lasting ground zones left by skills ("zone": burn ground, a pulling storm)
 var _end_t := 0.0
 # floating damage numbers (ring buffer, sizes from run_config "ui")
 var _num_pos := PackedVector2Array()
@@ -332,6 +335,8 @@ func _parse_args() -> void:
 				_status_all.append(st)
 		elif a.begins_with("--monster-hp="):
 			monster_hp_mul = maxf(0.01, float(a.get_slice("=", 1)))
+		elif a.begins_with("--boss-hp="):
+			_boss_hp_share = float(a.get_slice("=", 1))
 		elif a.begins_with("--gear-plus="):
 			_gear_plus = int(a.get_slice("=", 1))
 		elif a.begins_with("--gear="):
@@ -507,6 +512,15 @@ func _tick(dt: float) -> void:
 	if not enemies.hit_pos.is_empty():
 		Sfx.play("hit")
 	_step_damage_numbers(dt)
+	_rage_t = maxf(0.0, _rage_t - dt)
+	var bi := enemies.boss_index()
+	if bi >= 0 and _boss_hp_share > 0.0:   # shots: show phase 2 without a long fight
+		enemies.hp[bi] = enemies.k_hp[enemies.kind[bi]] * _boss_hp_share
+		_boss_hp_share = -1.0
+	if bi >= 0 and not _rage_seen and enemies.enraged(bi):   # phase 2: called out once
+		_rage_seen = true
+		_rage_t = 2.0
+		Sfx.play("boss_spawn")
 	_boss_check_t -= dt
 	if _boss_check_t <= 0.0:   # the boss song while a boss lives
 		_boss_check_t = 0.5
@@ -1914,6 +1928,7 @@ func _draw() -> void:
 			if sh != null:
 				sh.draw(self, "idle", clock + i * 0.13, pickups.pos[i], _sprite_scale)
 	_draw_boss_warnings()
+	_draw_boss_waves()
 	_draw_ground_buffs(view)
 	_draw_zones()
 	_draw_ground_fx()
@@ -1927,6 +1942,8 @@ func _draw() -> void:
 			var tint := Color(1.0, 0.55, 0.55) if enemies.flash[i] > 0.0 else _status_tint(i)
 			if enemies.state[i] == Enemies.WINDUP:
 				tint = Color(1.0, 0.8, 0.5)
+			if enemies.k_boss[k] == 1 and enemies.enraged(i) and enemies.flash[i] <= 0.0:
+				tint = Color(1.0, 0.62, 0.55)   # enraged: flushed red
 			if enemies.k_elite[k] == 1:   # elite: a gold halo under it
 				var hr := enemies.k_radius[k]
 				var hc := enemies.center_of(i)
@@ -2128,6 +2145,23 @@ func _status_tint(i: int) -> Color:
 
 ## Red circles where a boss is about to land (its slam reach), filling up as the
 ## landing nears.
+func _draw_boss_waves() -> void:
+	for w in enemies.wave_pos.size():
+		var r := enemies.wave_r[w]
+		var p := enemies.wave_pos[w]
+		var wd := float(enemies.wave_def[w].get("width", 12.0))
+		draw_arc(p, r, 0.0, TAU, 72, Color(0.55, 0.95, 0.6, 0.35), wd)
+		draw_arc(p, r, 0.0, TAU, 72, Color(0.85, 1.0, 0.75, 0.95), 3.0)
+	var bi := enemies.boss_index()
+	if bi >= 0 and _rage_t > 0.0:
+		var font := ThemeDB.fallback_font
+		var name := String(enemies.k_extra[enemies.kind[bi]].get("name", "Boss")) + " nổi giận!"
+		var tw := font.get_string_size(name, HORIZONTAL_ALIGNMENT_LEFT, -1, 22).x
+		var at := enemies.center_of(bi) - Vector2(tw * 0.5, enemies.k_radius[enemies.kind[bi]] * 2.0 + 20.0)
+		draw_string_outline(font, at, name, HORIZONTAL_ALIGNMENT_LEFT, -1, 22, 6, Color(0.1, 0.02, 0.02))
+		draw_string(font, at, name, HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color(1.0, 0.4, 0.3))
+
+
 func _draw_boss_warnings() -> void:
 	for w in enemies.boss_telegraphs():
 		var p: Vector2 = w[0]

@@ -71,3 +71,44 @@ func test_chest_pickup_is_counted() -> void:
 	p.drop(Pickups.CHEST, Vector2(5, 0), 1.0)
 	p.step(0.1, Vector2.ZERO, 1.0)
 	_check(p.chests == 1, "one chest collected")
+
+
+func test_boss_enrages_at_half_hp_and_slams_send_a_shockwave() -> void:
+	var monsters := {
+		"blob": {"sprite": "blob", "behaviour": "chase", "hp": 20.0, "damage": 5.0, "speed": 0.0, "xp": 1.0, "scale": 2},
+		"king": {"sprite": "blob", "behaviour": "boss_slime", "hp": 1000.0, "damage": 10.0, "speed": 0.0, "xp": 50.0,
+			"scale": 4, "boss": true, "jump_every": 1.0, "windup": 0.3, "jump_time": 0.3, "slam_damage": 30.0,
+			"rage_at": 0.5, "rage_jump_every": 0.5, "rage_windup": 0.2,
+			"shockwave": {"speed": 300.0, "max": 300.0, "width": 12.0, "damage": 22.0}},
+	}
+	var cfg := {"max_enemies": 50, "separation": {"push": 0.0}}
+	var e := Enemies.new(monsters, cfg, {"blob": _sheet("blob")}, 1)
+	e.spawn("king", Vector2.ZERO)
+	_check(not e.enraged(0), "calm at full hp")
+	var target := Vector2(400, 0)
+	var t := 0.0
+	while t < 1.5:   # a calm slam: no shockwave
+		e.step(0.05, target, target)
+		t += 0.05
+	_check(e.wave_pos.is_empty(), "no shockwave before rage")
+	e.hp[0] = 400.0
+	_check(e.enraged(0), "enraged at 40%% hp")
+	var hit := 0.0
+	t = 0.0
+	var waved := false
+	while t < 3.0:   # the player stands 150 px from where it lands: the ring passes over them
+		hit = maxf(hit, e.step(0.02, target, target))
+		waved = waved or not e.wave_pos.is_empty()
+		t += 0.02
+	_check(waved, "an enraged slam sends a shockwave")
+
+
+func test_boss_spits_a_fan_of_bolts() -> void:
+	var monsters := {"king": {"sprite": "blob", "behaviour": "boss_slime", "hp": 1000.0, "damage": 10.0, "speed": 0.0,
+		"xp": 50.0, "scale": 4, "boss": true, "jump_every": 99.0, "windup": 0.3, "jump_time": 0.3,
+		"volley": {"every": 1.0, "count": 5, "spread_deg": 50.0}, "bolt_speed": 150.0, "bolt_damage": 12.0, "bolt_range": 400.0}}
+	var e := Enemies.new(monsters, {"max_enemies": 10, "separation": {"push": 0.0}}, {"blob": _sheet("blob")}, 1)
+	e.spawn("king", Vector2.ZERO)
+	e.timer[0] = 0.01
+	e.step(0.05, Vector2(300, 0), Vector2(300, 0))
+	_check(e.bolt_pos.size() == 5, "five bolts in a fan, got %d" % e.bolt_pos.size())
