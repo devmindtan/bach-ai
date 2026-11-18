@@ -41,6 +41,7 @@ var freeze_t := PackedFloat32Array()   # frozen: same as stunned, drawn in ice
 var bleed_t := PackedFloat32Array()
 var bleed_dps := PackedFloat32Array()
 var burn_t := PackedFloat32Array()
+var shock_t := PackedFloat32Array()   # shock mark: a later shock hit arcs here
 var burn_dps := PackedFloat32Array()
 var dot_wait := PackedFloat32Array()   # time to the next damage-over-time tick
 var bleed_src := PackedStringArray()
@@ -161,7 +162,7 @@ func _init(monsters: Dictionary, cfg: Dictionary, sheets: Dictionary, seed_value
 	flip.resize(capacity)
 	hp_show.resize(capacity)
 	affix.resize(capacity)
-	for a: Variant in [slow_t, slow_mul, stun_t, freeze_t, bleed_t, bleed_dps, burn_t, burn_dps, dot_wait]:
+	for a: Variant in [slow_t, slow_mul, stun_t, freeze_t, bleed_t, bleed_dps, burn_t, burn_dps, shock_t, dot_wait]:
 		a.resize(capacity)
 	bleed_src.resize(capacity)
 	burn_src.resize(capacity)
@@ -256,6 +257,7 @@ func spawn(id: String, p: Vector2) -> bool:
 	bleed_t[i] = 0.0
 	bleed_dps[i] = 0.0
 	burn_t[i] = 0.0
+	shock_t[i] = 0.0
 	burn_dps[i] = 0.0
 	dot_wait[i] = DOT_TICK
 	return true
@@ -655,7 +657,7 @@ func hit_circle(center: Vector2, radius: float, damage: float, knockback := 90.0
 
 func _damage(i: int, amount: float, kb: Vector2, source := "") -> void:
 	var hp_before := hp[i]
-	if vs_status_mul > 0.0 and (slow_t[i] > 0.0 or stun_t[i] > 0.0 or freeze_t[i] > 0.0 or bleed_t[i] > 0.0 or burn_t[i] > 0.0):
+	if vs_status_mul > 0.0 and (slow_t[i] > 0.0 or stun_t[i] > 0.0 or freeze_t[i] > 0.0 or bleed_t[i] > 0.0 or burn_t[i] > 0.0 or shock_t[i] > 0.0):
 		amount *= 1.0 + vs_status_mul
 	amount *= float(_affix_def(i).get("damage_taken_mul", 1.0))   # Giáp
 	damage_by[source] = float(damage_by.get(source, 0.0)) + minf(amount, maxf(0.0, hp[i]))
@@ -718,7 +720,11 @@ func apply_status(i: int, status: String, p: Dictionary, hit_damage: float, sour
 			burn_dps[i] = maxf(burn_dps[i], hit_damage * float(p.get("dps_mul", 0.3)))
 			burn_src[i] = source
 		"shock":
-			_shock(i, hit_damage * float(p.get("mul", 0.5)), int(p.get("chain", 2)), float(p.get("radius", 90.0)), source)
+			if p.has("chain"):   # item Lôi xích: arcs to the nearest ones
+				_shock(i, hit_damage * float(p.get("mul", 0.5)), int(p.get("chain", 2)), float(p.get("radius", 90.0)), source)
+			else:
+				_shock_spread(i, hit_damage * minf(float(p.get("mul", 0.4)), SHOCK_SPREAD_MAX), source)
+				shock_t[i] = maxf(shock_t[i], float(p.get("time", 3.0)))
 
 
 ## Status timers and damage over time for one living monster.
@@ -728,6 +734,7 @@ func _step_status(i: int, delta: float) -> void:
 		slow_mul[i] = 1.0
 	stun_t[i] = maxf(0.0, stun_t[i] - delta)
 	freeze_t[i] = maxf(0.0, freeze_t[i] - delta)
+	shock_t[i] = maxf(0.0, shock_t[i] - delta)
 	if bleed_t[i] <= 0.0 and burn_t[i] <= 0.0:
 		dot_wait[i] = DOT_TICK
 		return
@@ -741,6 +748,21 @@ func _step_status(i: int, delta: float) -> void:
 		_damage(i, burn_dps[i] * DOT_TICK, Vector2.ZERO, burn_src[i])
 	bleed_t[i] = maxf(0.0, bleed_t[i] - DOT_TICK)
 	burn_t[i] = maxf(0.0, burn_t[i] - DOT_TICK)
+
+
+## Spread damage never reaches half the hit (user 2026-11-18).
+const SHOCK_SPREAD_MAX := 0.45
+
+
+## A shock hit on monster [param i] arcs to every other living monster still
+## carrying the shock mark, [param damage] each (design/gameplay-rules.md).
+func _shock_spread(i: int, damage: float, source: String) -> void:
+	var from := center_of(i)
+	for j in count:
+		if j != i and state[j] != DYING and shock_t[j] > 0.0:
+			shock_lines.append(from)
+			shock_lines.append(center_of(j))
+			_damage(j, damage, Vector2.ZERO, source)
 
 
 ## Shock arcs from monster [param i] to the [param chain] nearest others within
@@ -769,6 +791,7 @@ func statuses_of(i: int) -> Array[String]:
 	if freeze_t[i] > 0.0: out.append("freeze")
 	if bleed_t[i] > 0.0: out.append("bleed")
 	if burn_t[i] > 0.0: out.append("burn")
+	if shock_t[i] > 0.0: out.append("shock")
 	return out
 
 
@@ -895,6 +918,7 @@ func _remove(i: int) -> void:
 		bleed_t[i] = bleed_t[last]
 		bleed_dps[i] = bleed_dps[last]
 		burn_t[i] = burn_t[last]
+		shock_t[i] = shock_t[last]
 		burn_dps[i] = burn_dps[last]
 		dot_wait[i] = dot_wait[last]
 		bleed_src[i] = bleed_src[last]

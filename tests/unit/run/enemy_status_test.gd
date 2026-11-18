@@ -60,16 +60,33 @@ func test_bleed_ticks_damage_credited_to_its_skill() -> void:
 	_check(absf(float(e.damage_by.get("cleave_wave", 0.0)) - 40.0) < 0.5, "credited to cleave_wave")
 
 
-func test_hit_box_applies_effects_and_shock_chains() -> void:
+func test_shock_marks_then_spreads_to_marked_monsters_under_half() -> void:
+	# user 2026-11-18: a first shock hit only marks the monster; a later shock hit
+	# arcs to every monster still marked for less than half the hit
 	var e := _enemies()
 	e.spawn("blob", Vector2(50, 0))
 	e.spawn("blob", Vector2(110, 0))
 	e.spawn("blob", Vector2(400, 0))
 	e.step(0.0001, Vector2(0, 500), Vector2(0, 500))
-	var fx := [{"status": "shock", "chain": 2, "mul": 0.5, "radius": 90.0}, {"status": "slow", "mul": 0.5, "time": 1.0}]
+	var sh := {"status": "shock", "mul": 0.5, "time": 3.0}
+	e.apply_status(0, "shock", sh, 20.0, "bolt")
+	_check(e.statuses_of(0).has("shock"), "the first shock hit marks the monster")
+	_check(is_equal_approx(e.hp[1], 100.0) and is_equal_approx(e.hp[2], 100.0), "nothing spreads from the first mark")
+	_check(e.shock_lines.is_empty(), "no arc with nobody else marked")
+	e.apply_status(2, "shock", sh, 20.0, "bolt")
+	_check(e.hp[0] < 100.0 and e.hp[0] > 90.0, "the marked monster took spread damage under half (10), hp %.1f" % e.hp[0])
+	_check(is_equal_approx(e.hp[1], 100.0), "an unmarked monster takes no spread")
+	_check(e.shock_lines.size() == 2, "one arc to the marked monster, got %d points" % e.shock_lines.size())
+	_run(e, 3.2)
+	_check(not e.statuses_of(0).has("shock"), "the mark wears off after its time")
+
+
+func test_hit_box_applies_effects() -> void:
+	var e := _enemies()
+	e.spawn("blob", Vector2(50, 0))
+	e.step(0.0001, Vector2(0, 500), Vector2(0, 500))
+	var fx := [{"status": "shock", "mul": 0.5, "time": 3.0}, {"status": "slow", "mul": 0.5, "time": 1.0}]
 	e.hit_arc(Vector2.ZERO, Vector2.RIGHT, 70.0, deg_to_rad(40.0), 20.0, 0.0, "bolt", fx)
 	_check(e.hp[0] < 81.0, "the struck monster took the hit")
-	_check(absf(e.hp[1] - 90.0) < 0.5, "shock jumped to the neighbour for 50%%, hp %.1f" % e.hp[1])
-	_check(is_equal_approx(e.hp[2], 100.0), "the far monster is out of shock range")
 	_check(e.statuses_of(0).has("slow"), "slow applied by the hit")
-	_check(e.shock_lines.size() >= 2, "a shock line to draw")
+	_check(e.statuses_of(0).has("shock"), "shock mark applied by the hit")
