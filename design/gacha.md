@@ -6,6 +6,15 @@
 > **Chỉ đá gacha, không mua vàng.** Đá gacha có được bằng chơi; pity luôn kích hoạt. Không có banner trả phí
 > nào trong game này. Nếu sau này thêm IAP, phải tách mô hình (server, anti-cheat) và cân nhắc kỹ — hiện không có.
 
+## Số liệu đang dùng (2026-11-18, `assets/data/gacha.json`, chỉnh được)
+
+- 10 đá / lượt (quay 10 = 100 đá); tỉ lệ hiếm 77%, sử thi 20%, huyền thoại 3%; lượt thứ **50** kể từ món huyền thoại
+  gần nhất chắc chắn ra huyền thoại (80 như bản đầu không với tới được với ~380 đá của 30 ải); mỗi banner đếm riêng.
+- Chỉ ra đồ class của slot mặc được; độ hiếm không có món phù hợp thì lùi xuống bậc dưới.
+- Món trùng đổi thành vàng: thường 20, hiếm 40, sử thi 100, huyền thoại 250 (vàng dùng để cường hoá đồ).
+- Màn: `design/ux/gacha.md`. Code: `src/meta/gacha.gd`; test `tests/unit/meta/gacha_test.gd`.
+- Các mục bên dưới là bản thiết kế đầu; chỗ nào khác số liệu trên thì theo số liệu trên.
+
 ## Nguyên lý
 
 1. **Một loại tiền duy nhất cho gacha: đá gacha (đá quý).** Không có vàng/thẻ gacha.

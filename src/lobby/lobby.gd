@@ -157,6 +157,7 @@ func _build_ui() -> void:
 	var top := HBoxContainer.new()
 	top.add_theme_constant_override("separation", 10)
 	var top_buttons := [_button("Nhân vật", func() -> void: get_tree().change_scene_to_file(CHARACTERS_SCENE)),
+		_button("Gacha", func() -> void: get_tree().change_scene_to_file("res://src/front/gacha.tscn")),
 		_button("Cài đặt", func() -> void: _show_settings(root, menu)),
 		_button("Menu chính", func() -> void: get_tree().change_scene_to_file(TITLE_SCENE))]
 	top.position = Vector2(vp.x - 32 - top_buttons.size() * 140 - (top_buttons.size() - 1) * 10, 26)

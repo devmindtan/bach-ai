@@ -11,6 +11,7 @@
     { "name": "01b-lobby-settings", "spec": "design/ux/front-end.md", "title": "Cài đặt (ở sảnh)", "scene": "res://src/lobby/lobby.tscn", "frames": 30, "args": ["--lobby-settings"] },
     { "name": "01d-equipment", "spec": "design/ux/equipment.md", "title": "Trang bị: búp bê giấy, túi đồ theo ô, so sánh với đồ đang mặc", "scene": "res://src/front/equipment.tscn", "frames": 40, "args": ["--equip-slot=chest", "--equip-view=dragon_chest"] },
     { "name": "01j-trials", "spec": "design/ux/stage-select.md", "title": "Chế độ Thử thách (luật riêng, thưởng Tẩy Tủy Đan)", "scene": "res://src/front/stage_select.tscn", "frames": 30, "args": ["--trials"] },
+    { "name": "01k-gacha", "spec": "design/ux/gacha.md", "title": "Gacha (2 banner, tỉ lệ công khai, pity riêng, quay 10)", "scene": "res://src/front/gacha.tscn", "frames": 30, "args": ["--gacha-demo"] },
     { "name": "01i-skill-tree", "spec": "design/ux/skill-tree.md", "title": "Cây kỹ năng (3 nhánh × 3 tầng, Tinh hoa, đặt lại bằng Tẩy Tủy Đan)", "scene": "res://src/front/skill_tree.tscn", "frames": 30, "args": [] },
     { "name": "01f-stage-select", "spec": "design/ux/stage-select.md", "title": "Chọn ải / chế độ (vùng × ải, chi tiết ải, Bắt đầu)", "scene": "res://src/front/stage_select.tscn", "frames": 40, "args": ["--stage-pick=10"] },
     { "name": "02-run-start", "title": "Vào ải (HUD, ô hồi chiêu)", "scene": "res://src/run/run.tscn", "frames": 240, "args": ["--demo", "--seed=1", "--sim-steps=2"] },
