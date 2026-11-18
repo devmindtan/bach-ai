@@ -11,7 +11,7 @@ extends RefCounted
 ##   e.hit_circle(center, 80.0, 12.0)                           # kills land in kill_pos / kill_xp
 
 enum { MOVE, WINDUP, DASH, DYING }
-enum { CHASE, SWARM, CHARGE, BOSS_SLIME, SHOOT, ZIGZAG, BOSS_TREE, HOP }
+enum { CHASE, SWARM, CHARGE, BOSS_SLIME, SHOOT, ZIGZAG, BOSS_TREE, HOP, SUPPORT }
 
 const HURT_FLASH := 0.12
 const KNOCKBACK_DECAY := 10.0
@@ -125,6 +125,7 @@ var blast_total := PackedFloat32Array()  # its full delay (the ring fills as it 
 var blasts_done := PackedVector2Array()  # blasts that went off this step (the run draws them)
 var blast_root := PackedByteArray()      # 1 = a Mộc Yêu root (drawn as roots, not a burst)
 var roots_done := PackedVector2Array()
+var heal_pulses: Array = []   # [centre, radius] of Hồn Đầm heals this step (the run draws them)
 # poison pools (Cóc Độc, design 6A): hurt a player standing inside until they dry up
 var pool_pos := PackedVector2Array()
 var pool_t := PackedFloat32Array()
@@ -192,7 +193,7 @@ func _init(monsters: Dictionary, cfg: Dictionary, sheets: Dictionary, seed_value
 			_register(id + "@elite", m, sheets.get(String(m.get("sprite", id))), world_scale, elite)
 
 
-const BEHAVIOURS := {"chase": CHASE, "swarm": SWARM, "charge": CHARGE, "boss_slime": BOSS_SLIME, "shoot": SHOOT, "zigzag": ZIGZAG, "boss_tree": BOSS_TREE, "hop": HOP}
+const BEHAVIOURS := {"chase": CHASE, "swarm": SWARM, "charge": CHARGE, "boss_slime": BOSS_SLIME, "shoot": SHOOT, "zigzag": ZIGZAG, "boss_tree": BOSS_TREE, "hop": HOP, "support": SUPPORT}
 
 
 ## One monster kind; [param elite] = multipliers (hp_mul, damage_mul, scale_mul,
@@ -472,6 +473,32 @@ func _step_pools(delta: float, player_center: Vector2) -> float:
 	return hit
 
 
+## Hồn Đầm (design 6A): hovers at keep_range from the player; every heal_every s
+## it heals every other living non-boss monster within heal_radius by heal_pct
+## of its max hp (timer counts the heal).
+func _support(i: int, k: int, dir: Vector2, dist: float, speed: float, delta: float) -> Vector2:
+	var e: Dictionary = k_extra[k]
+	timer[i] -= delta
+	if timer[i] <= 0.0:
+		timer[i] = float(e.get("heal_every", 3.0))
+		var c := center_of(i)
+		var r := float(e.get("heal_radius", 120.0))
+		var pct := float(e.get("heal_pct", 0.25))
+		for j in count:
+			if j == i or state[j] == DYING or k_boss[kind[j]] == 1:
+				continue
+			if center_of(j).distance_to(c) <= r:
+				hp[j] = minf(k_hp[kind[j]], hp[j] + k_hp[kind[j]] * pct)
+		heal_pulses.append([c, r])
+		anim_t[i] = 0.0
+	var keep := float(e.get("keep_range", 220.0))
+	if dist < keep - 20.0:
+		return -dir * speed
+	if dist > keep + 40.0:
+		return dir * speed
+	return dir.orthogonal() * speed * 0.4   # drifts sideways at its range
+
+
 ## Cóc Độc: crawls; every hop_every s within hop_range it crouches (WINDUP,
 ## windup s), leaps to where the player stood in hop_time s and leaves a pool.
 func _hopper(i: int, k: int, dir: Vector2, dist: float, speed: float, delta: float) -> Vector2:
@@ -626,6 +653,8 @@ func _velocity(i: int, k: int, dir: Vector2, dist: float, delta: float) -> Vecto
 			return _boss_slime(i, k, dir, speed, delta)
 		SHOOT:
 			return _shooter(i, k, dir, dist, speed, delta)
+		SUPPORT:
+			return _support(i, k, dir, dist, speed, delta)
 		HOP:
 			return _hopper(i, k, dir, dist, speed, delta)
 		BOSS_TREE:

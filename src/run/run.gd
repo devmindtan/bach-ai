@@ -20,7 +20,7 @@ extends Node2D
 ##   --milestone=N   open the level-N milestone pick at the start (shots)
 ##   --pick-card=ID  take count card ID at the start and open its skill pick (shots)
 ##   --no-auto-pick  the demo stops at the first level-up panel (for shots)
-##   --spawn-only=ID only the waves of this monster spawn, from the start (shots)
+##   --spawn-only=ID[,ID] only the waves of these monsters spawn, from the start (shots)
 ##   --hitboxes      draw hit areas: effects (red while dealing damage), monster
 ##                   bodies, the player's body and pickup radius
 ##   --bench=N       keep N monsters alive around a god-mode autopilot, print
@@ -141,6 +141,7 @@ var offer: Array[String] = []   # forced cards for the first level-up (--offer)
 var forced_walk := Vector2.ZERO
 var pause_at := -1.0
 var level_view := "cards"   # level-up: "cards", "character" (Tab) or "hidden" (H), design/ux/level-up.md
+var _heal_fx: Array = []   # [{p, r, t}] Hồn Đầm heal rings being drawn
 var _spawn_only := ""   # --spawn-only=ID (shots)
 var _level_view_arg := ""   # --level-view=character|hidden (shots): open that view on the first level-up
 var pause_view := ""   # "settings" / "character": the --pause-at pause opens that page (shots)
@@ -280,7 +281,7 @@ func _ready() -> void:
 	if _spawn_only != "":   # shots: one species alone, its waves moved to the start
 		var only: Array = []
 		for w: Dictionary in wave_list:
-			if String(w.get("monster", "")) == _spawn_only:
+			if String(w.get("monster", "")) in _spawn_only.split(","):
 				var w2 := w.duplicate()
 				w2["t_to"] = 1.0 if w.has("burst") else float(w2.get("t_to", 300.0)) - float(w2.get("t_from", 0.0))
 				w2["t_from"] = 1.0 if w.has("burst") else 0.0
@@ -549,6 +550,16 @@ func _tick(dt: float) -> void:
 	for p in enemies.roots_done:   # Mộc Yêu roots spearing up
 		_add_fx(root_sprite, "erupt", _sprite_scale * 1.3, 0.0, -1.0, p)
 	enemies.roots_done.clear()
+	for hp_ in enemies.heal_pulses:   # Hồn Đầm heals: a green ring running out (drawn for 0.5 s)
+		_heal_fx.append({"p": hp_[0], "r": float(hp_[1]), "t": 0.0})
+	enemies.heal_pulses.clear()
+	var hk := 0
+	while hk < _heal_fx.size():
+		_heal_fx[hk]["t"] = float(_heal_fx[hk]["t"]) + dt
+		if float(_heal_fx[hk]["t"]) > 0.5:
+			_heal_fx.remove_at(hk)
+			continue
+		hk += 1
 	if not enemies.slams.is_empty():
 		Sfx.play("boss_slam")
 	for p in enemies.slams:   # boss landings: a dust ring where it hit the ground
@@ -2021,6 +2032,15 @@ func _draw() -> void:
 	_draw_ground_fx()
 	_draw_charge_lanes(view)
 	_draw_pools(view)
+	for h in _heal_fx:   # Hồn Đầm: a green ring sweeping out over the monsters it heals
+		var k := float(h["t"]) / 0.5
+		var r := float(h["r"]) * (0.3 + 0.7 * k)
+		draw_circle(h["p"], r, Color(0.4, 1.0, 0.5, 0.10 * (1.0 - k)))
+		draw_arc(h["p"], r, 0.0, TAU, 48, Color(0.55, 1.0, 0.6, 0.8 * (1.0 - k)), 3.0)
+		for q in 6:
+			var c: Vector2 = h["p"] + Vector2.from_angle(q * TAU / 6.0) * r * 0.7
+			draw_rect(Rect2(c - Vector2(1, 4), Vector2(2, 8)), Color(0.7, 1.0, 0.7, 1.0 - k))   # "+" marks
+			draw_rect(Rect2(c - Vector2(4, 1), Vector2(8, 2)), Color(0.7, 1.0, 0.7, 1.0 - k))
 	# dying monsters under the living ones
 	for pass_dying in [true, false]:
 		for i in enemies.count:

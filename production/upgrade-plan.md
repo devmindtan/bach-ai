@@ -27,7 +27,7 @@ người dùng ưng ý và tự mở. Đợt 6 là nơi nâng cấp giao diện,
 ### 6A · Quái vật và nhịp trận (quan trọng nhất)
 **Tiến độ (2026-11-18):** Đồng cỏ có Nấm Phun (bắn xa) và Bọ Lửa (nổ khi chết); tinh anh có 4 tiền tố
 (`design/elite-affixes.md`); boss Đồng cỏ Vua Thạch Nhầy có phun nhầy hình quạt và pha 2 ở 50% máu (nhảy dày,
-sóng xung kích mỗi cú dậm, ửng đỏ + "nổi giận!"). Nhịp sóng có báo trước (`announce`). Rừng Âm U: Ma Trơi bay zig-zag (`zigzag`), Sói Rừng lao có dải báo (`telegraph`), boss Mộc Yêu (`design/bosses.md`; **phần rễ dưới thân người dùng chưa duyệt, 2026-11-18: cần vẽ lại**). Đầm Lầy Độc: Cóc Độc nhảy để lại vũng độc (`hop`, `pool`). Còn: loài thứ hai và boss đầm lầy.
+sóng xung kích mỗi cú dậm, ửng đỏ + "nổi giận!"). Nhịp sóng có báo trước (`announce`). Rừng Âm U: Ma Trơi bay zig-zag (`zigzag`), Sói Rừng lao có dải báo (`telegraph`), boss Mộc Yêu (`design/bosses.md`; **phần rễ dưới thân người dùng chưa duyệt, 2026-11-18: cần vẽ lại**). Đầm Lầy Độc: Cóc Độc nhảy để lại vũng độc (`hop`, `pool`), Hồn Đầm hồi máu quái quanh nó (`support`). Còn: boss đầm lầy.
 1. **Mỗi vùng 4–5 loài**, mỗi loài một hành vi rõ: bắn xa giữ khoảng cách (đạn chậm, né được), lao có báo trước,
    zig-zag, nổ khi chết (vòng báo), khiên / trâu chặn đường, phân thân, hỗ trợ (hồi máu / tăng tốc quái quanh).
 2. **Tinh anh có tiền tố**: Nhanh, Giáp, Phân thân, Bùng nổ (hiện tên + màu viền).
