@@ -50,6 +50,7 @@ var _gear_plus := 0                   # --gear-plus=N: Cường hoá level of th
 var specials: Array = []              # Hiệu ứng đặc biệt of worn legendary items (Profile.specials)
 var _special_t: Array[float] = []     # per special: seconds to its next trigger (or cooldown left)
 var _item_revive_used := false
+var _special_kills: Array[int] = []   # per special: kills counted toward its next kill_proc
 var _gear: Array[String] = []       # --gear=a,b (shots: wear these)   # self casts waiting for their pulse (count > 1)
 var _chest_open := false   # the next level-up panel comes from a chest
 var _chest_sprite := "chest"
@@ -626,6 +627,7 @@ func _drops() -> void:
 	if enemies.kill_pos.is_empty():
 		return
 	Sfx.play("kill")
+	count_special_kills(enemies.kill_pos.size())
 	var gold_chance := float(cfg.get("pickups", {}).get("gold_chance", 0.1))
 	var heal_frac := heal_on_kill()   # Khát máu: elites and bosses feed the hero
 	for i in enemies.kill_pos.size():
@@ -1200,8 +1202,10 @@ func _step_guardian(dt: float) -> void:
 func set_specials(list: Array) -> void:
 	specials = list
 	_special_t.clear()
+	_special_kills.clear()
 	for sp: Dictionary in specials:
 		_special_t.append(float(sp.get("every", 0.0)))
+		_special_kills.append(0)
 
 
 ## Timed specials: shield, pulse, chain_shock, reset_cd fire every "every" s;
@@ -1210,6 +1214,11 @@ func step_specials(dt: float) -> void:
 	for k in specials.size():
 		var sp: Dictionary = specials[k]
 		_special_t[k] -= dt
+		if sp.get("kind") == "low_hp_buff":   # Bàn thạch: low hp turns the shield on (own cooldown)
+			if _special_t[k] <= 0.0 and hp < float(stats.get("max_hp", 100.0)) * float(sp.get("threshold", 0.3)):
+				_special_t[k] = float(sp.get("cooldown", 30.0))
+				_special_buff(sp)
+			continue
 		if not sp.has("every") or _special_t[k] > 0.0:
 			continue
 		_special_t[k] += float(sp["every"])
@@ -1237,6 +1246,16 @@ func trigger_special(sp: Dictionary) -> void:
 				enemies.apply_status(i, "shock", {"mul": 1.0, "chain": int(sp.get("chain", 2)),
 					"radius": float(sp.get("radius", 120.0))}, dmg, src)
 			Sfx.play("zap")
+		"burn_aura":
+			for i in enemies.living_within(center, float(sp.get("radius", 100.0))):
+				enemies.apply_status(i, "burn", {"time": float(sp.get("time", 2.0)), "dps_mul": float(sp.get("damage_mul", 0.3))},
+					float(stats.get("damage", 10.0)), src)
+		"freeze_nova":
+			var reach := float(sp.get("radius", 150.0)) * float(stats.get("area", 1.0))
+			for i in enemies.living_within(center, reach):
+				enemies.apply_status(i, "freeze", {"time": float(sp.get("time", 1.5))}, 0.0, src)
+			_ring_fx(reach)
+			Sfx.play("frost")
 		"reset_cd":
 			_blade_cd = 0.0
 			if _whirl_left <= 0.0:
@@ -1256,10 +1275,41 @@ func _ring_fx(reach: float) -> void:
 	_add_fx("stomp-i", "burst", reach / r1, 0.0)
 
 
-## Phản chấn: a hit taken sends a damaging shockwave (with its own cooldown).
+## A special's buff (shield / haste ...) for its "time".
+func _special_buff(sp: Dictionary) -> void:
+	if buffs == null:
+		return
+	buffs.activate(String(sp.get("buff", "magnetic_shield")), float(sp.get("time", 3.0)))
+	_recompute_stats()
+	Sfx.play("holy")
+
+
+## kill_proc specials (Huyết quyền, Lưu tinh): every "every_kills" kills heal
+## "heal_frac" of max hp and/or start "buff".
+func count_special_kills(n: int) -> void:
+	for k in specials.size():
+		var sp: Dictionary = specials[k]
+		if sp.get("kind") != "kill_proc":
+			continue
+		_special_kills[k] += n
+		var every := maxi(1, int(sp.get("every_kills", 30)))
+		while _special_kills[k] >= every:
+			_special_kills[k] -= every
+			if sp.has("heal_frac"):
+				heal_max(float(sp["heal_frac"]))
+			if sp.has("buff"):
+				_special_buff(sp)
+
+
+## On a hit taken: Phản chấn sends a damaging shockwave, Phong hành starts its
+## buff; each with its own cooldown.
 func _retaliate() -> void:
 	for k in specials.size():
 		var sp: Dictionary = specials[k]
+		if sp.get("kind") == "hit_buff" and _special_t[k] <= 0.0:
+			_special_t[k] = float(sp.get("cooldown", 8.0))
+			_special_buff(sp)
+			continue
 		if sp.get("kind") != "retaliate" or _special_t[k] > 0.0:
 			continue
 		_special_t[k] = float(sp.get("cooldown", 2.0))

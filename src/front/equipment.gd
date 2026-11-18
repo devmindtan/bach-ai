@@ -9,7 +9,7 @@ extends Node2D
 ## Command line (after `--`), for shots: --equip-slot=<slot>, --equip-view=<item id>, --equip-plus=<0..5>.
 
 const LOBBY_SCENE := "res://src/lobby/lobby.tscn"
-const SLOT_NAME := {"head": "Đầu", "chest": "Ngực", "arms": "Tay", "legs": "Chân", "weapon": "Vũ khí"}
+const SLOT_NAME := {"head": "Mũ", "chest": "Áo", "legs": "Quần", "arms": "Tay", "feet": "Giày", "weapon": "Vũ khí"}
 const RARITY_NAME := {"common": "Thường", "rare": "Hiếm", "epic": "Sử thi", "legendary": "Huyền thoại"}
 const RARITY := {"common": Color("e8e2d0"), "rare": Color("6fb7ff"), "epic": Color("c38df5"), "legendary": Color("f2b64a")}
 const UP := Color("8fe08a")
@@ -21,8 +21,8 @@ const STATS := [["max_hp", "Máu tối đa", "%d", false], ["damage", "Sát thư
 	["magnet", "Tầm hút", "×%.2f", false], ["regen", "Hồi máu", "%.1f/giây", false]]
 # where each slot sits round the hero (left column, local to the doll)
 const DOLL := Vector2(380, 380)
-const SLOT_POS := {"head": Vector2(0, 40), "chest": Vector2(0, 150), "arms": Vector2(300, 40),
-	"legs": Vector2(300, 150), "weapon": Vector2(150, 296)}
+const SLOT_POS := {"head": Vector2(0, 20), "chest": Vector2(0, 130), "legs": Vector2(0, 240),
+	"arms": Vector2(300, 20), "feet": Vector2(300, 130), "weapon": Vector2(300, 240)}   # body top-down on the left
 const CELL := Vector2(76, 76)
 
 var _equip_plus := -1   # --equip-plus (shots)
@@ -212,9 +212,9 @@ func _slot_cell(slot: String, item: String) -> Control:
 	else:
 		Tip.attach(b, "%s: trống" % SLOT_NAME[slot], "Chọn ô này rồi chọn món trong túi để mặc.")
 	if item != "":
-		var ic := UiKit.icon(String(d.get("icon", item)), 52.0)
-		ic.position = (CELL - Vector2(52, 52)) * 0.5   # no anchors: a Button is not a container
-		ic.size = Vector2(52, 52)
+		var ic := UiKit.icon(String(d.get("icon", item)), 48.0)   # 24 px icon x2
+		ic.position = (CELL - ic.custom_minimum_size) * 0.5   # no anchors: a Button is not a container
+		ic.size = ic.custom_minimum_size
 		b.add_child(ic)
 	b.pressed.connect(func() -> void:
 		_sel = slot
@@ -235,7 +235,7 @@ func _slot_cell(slot: String, item: String) -> Control:
 # Inventory practice (design/ux/equipment.md): a few type tabs, a visible sort,
 # a badge on new items until seen, and an upgrade mark against what is worn.
 
-const TABS := [["all", "Tất cả"], ["head", "Đầu"], ["chest", "Ngực"], ["arms", "Tay"], ["legs", "Chân"], ["weapon", "Vũ khí"]]
+const TABS := [["all", "Tất cả"], ["head", "Mũ"], ["chest", "Áo"], ["legs", "Quần"], ["arms", "Tay"], ["feet", "Giày"], ["weapon", "Vũ khí"]]
 const ORDER := ["legendary", "epic", "rare", "common"]
 const MIXED := Color("f2c14e")
 const GOLD_COLOR_FALLBACK := Color("c9a65a")
@@ -270,7 +270,8 @@ func _bag(root: Control) -> void:
 				_sel = t[0]
 				_view = _default_view()
 			_bag_scroll = 0
-			_rebuild(), 56.0))
+			_rebuild(), 0.0))
+		tabs.get_child(tabs.get_child_count() - 1).size_flags_horizontal = Control.SIZE_EXPAND_FILL   # 7 tabs share the column
 	# sort, the active one highlighted
 	var sort := HBoxContainer.new()
 	sort.add_theme_constant_override("separation", 4)
@@ -389,7 +390,7 @@ func _bag_row(id: String) -> Button:
 	box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	box.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	box.add_child(UiKit.icon(String(d.get("icon", id)), 40.0))
+	box.add_child(UiKit.icon(String(d.get("icon", id)), 48.0))
 	h.add_child(box)
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 1)
@@ -496,7 +497,7 @@ func _detail(root: Control) -> void:
 	bv.alignment = BoxContainer.ALIGNMENT_CENTER
 	bv.add_theme_constant_override("separation", 2)
 	banner.add_child(bv)
-	var big_ic := UiKit.icon(String(d.get("icon", _view)), 84.0)
+	var big_ic := UiKit.icon(String(d.get("icon", _view)), 72.0)   # 24 px icon x3
 	big_ic.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	bv.add_child(big_ic)
 	# name over the icon area, rarity-tinted

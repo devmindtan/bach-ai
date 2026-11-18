@@ -78,5 +78,5 @@ func from_dict(d: Dictionary) -> String:
 	challenge_wins = d.get("challenge_wins", {})
 	pity = d.get("pity", {})
 	gacha_log = d.get("gacha_log", {})
-	profile.from_dict(d.get("profile", {}))
+	profile.from_dict(d.get("profile", {}), cls)
 	return ""

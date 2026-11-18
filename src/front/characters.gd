@@ -303,13 +303,13 @@ func _slot_panel(panel: PanelContainer, s: Slot) -> void:
 	if not pv.is_empty():
 		v.add_child(_section("Nội tại"))
 		v.add_child(_feature(String(pv.get("id", "")), String(pv.get("name", "")), String(pv.get("desc", ""))))
-	# worn items: five slots, dim when empty
+	# worn items: six slots, dim when empty
 	v.add_child(_section("Trang bị"))
 	var gear := HBoxContainer.new()
 	gear.add_theme_constant_override("separation", 8)
 	v.add_child(gear)
 	var worn := s.profile.equipped(s.cls)
-	const SLOT_NAMES := {"head": "Đầu", "chest": "Ngực", "arms": "Tay", "legs": "Chân", "weapon": "Vũ khí"}
+	const SLOT_NAMES := {"head": "Mũ", "chest": "Áo", "legs": "Quần", "arms": "Tay", "feet": "Giày", "weapon": "Vũ khí"}
 	for slot: String in Profile.SLOTS:
 		var cell := UiKit.panel(UiKit.PANEL_DARK, 6, UiKit.GOLD if worn.has(slot) else Color("4a4458"))
 		cell.custom_minimum_size = Vector2(52, 52)
@@ -322,7 +322,7 @@ func _slot_panel(panel: PanelContainer, s: Slot) -> void:
 		else:
 			Tip.attach(cell, "%s: trống" % SLOT_NAMES.get(slot, slot), "Mặc đồ ở màn Trang bị (từ sảnh).")
 		if item_id != "":
-			cell.add_child(UiKit.icon(String(d.get("icon", item_id)), 36.0))
+			cell.add_child(UiKit.icon(String(d.get("icon", item_id)), 48.0))
 		gear.add_child(cell)
 	# actions at the bottom
 	var spacer := Control.new()

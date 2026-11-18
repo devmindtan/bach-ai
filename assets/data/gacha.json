@@ -7,6 +7,6 @@
   "dup_gold": { "common": 20, "rare": 40, "epic": 100, "legendary": 250 },
   "banners": [
     { "id": "weapon", "name": "Vũ khí", "desc": "Kiếm, gậy và vũ khí hiếm.", "slots": ["weapon"] },
-    { "id": "armor", "name": "Giáp", "desc": "Mũ, giáp ngực, găng, giày.", "slots": ["head", "chest", "arms", "legs"] }
+    { "id": "armor", "name": "Giáp", "desc": "Mũ, áo, quần, tay, giày.", "slots": ["head", "chest", "legs", "arms", "feet"] }
   ]
 }

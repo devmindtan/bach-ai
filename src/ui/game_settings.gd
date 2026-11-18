@@ -98,7 +98,7 @@ func _make_preview_slot() -> void:
 	s.essence = 30
 	tree.buy(s, String(tree.branches(hero)[0]["nodes"][0]["id"]))
 	s.pills = 1
-	s.profile.equip(hero, "iron_helm")
+	s.profile.equip(hero, "iron_cap" if hero == "knight" else "cloth_hat")
 	# a fuller bag for shots of the equipment screen: every item this class can wear
 	for id: String in slot_store().defs:
 		var d: Dictionary = slot_store().defs[id]

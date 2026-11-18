@@ -10,7 +10,7 @@ extends RefCounted
 ##   PlayerStats.compute(base, pool + p.as_upgrades("knight"), levels.merged(p.levels("knight")))
 
 const PATH := "user://profile.json"
-const SLOTS := ["head", "chest", "arms", "legs", "weapon"]
+const SLOTS := ["head", "chest", "legs", "arms", "feet", "weapon"]   # Mũ, Áo, Quần, Tay, Giày, Vũ khí
 const MAX_PLUS := 5          # Cường hoá: +1..+5 (design/equipment.md)
 const PLUS_STEP := 0.2       # each level adds 20% of the item's own effects
 const PLUS_COST := {"common": 30, "rare": 60, "epic": 120, "legendary": 200}   # gold for +1; x (level + 1)
@@ -180,10 +180,43 @@ func to_dict() -> Dictionary:
 	return {"version": 1, "bag": bag, "worn": worn, "given_starter": given_starter, "seen": seen, "plus": plus}
 
 
-func from_dict(d: Dictionary) -> void:
-	bag = Array(d.get("bag", [])).filter(func(id: Variant) -> bool: return defs.has(String(id)))
-	worn = d.get("worn", {})
+func from_dict(d: Dictionary, cls := "") -> void:
+	var renamed: Dictionary = GameData.load_json("res://assets/data/items.json").get("equipment_renamed", {})
+	bag = []
+	for id: Variant in d.get("bag", []):
+		var nid := _current(String(id), cls, renamed)
+		if defs.has(nid):
+			bag.append(nid)
+	worn = {}
+	var old_worn: Dictionary = d.get("worn", {})
+	for c: String in old_worn:   # old ids, and boots that sat in the old "legs" slot, go to the new item's slot
+		var w := {}
+		for slot: String in old_worn[c]:
+			var nid := _current(String(old_worn[c][slot]), c, renamed)
+			if defs.has(nid) and defs[nid] is Dictionary:
+				w[String(defs[nid].get("slot", slot))] = nid
+		worn[c] = w
 	given_starter = bool(d.get("given_starter", false))
 	# saves from before the badges: everything already owned counts as seen
-	seen = Array(d.get("seen", bag.duplicate()))
-	plus = d.get("plus", {})
+	seen = Array(d.get("seen", bag.duplicate())).map(func(id: Variant) -> String: return _current(String(id), cls, renamed))
+	plus = {}
+	var old_plus: Dictionary = d.get("plus", {})
+	for id: String in old_plus:   # Cường hoá carries over to the renamed item
+		var nid := _current(id, cls, renamed)
+		plus[nid] = maxi(int(plus.get(nid, 0)), int(old_plus[id]))
+
+
+## [param id] itself while the data still has it, else its renamed id.
+func _current(id: String, cls: String, renamed: Dictionary) -> String:
+	return id if defs.has(id) else renamed_id(id, cls, renamed)
+
+
+## The current id of item [param id] from an older save (items.json
+## "equipment_renamed": an id, or {class: id} for items both classes shared).
+static func renamed_id(id: String, cls: String, renamed: Dictionary) -> String:
+	if not renamed.has(id) or id.begins_with("_"):
+		return id
+	var to: Variant = renamed[id]
+	if to is Dictionary:
+		return String(to.get(cls, to.values()[0] if not to.is_empty() else id))
+	return String(to)

@@ -123,7 +123,7 @@ func test_special_opens_at_its_level_and_only_when_worn() -> void:
 
 func test_every_legendary_has_a_known_special_and_every_epic_a_sub() -> void:
 	var eq: Dictionary = GameData.load_json("res://assets/data/items.json")["equipment"]
-	var kinds := ["shield", "retaliate", "pulse", "chain_shock", "revive", "reset_cd"]
+	var kinds := ["shield", "retaliate", "pulse", "chain_shock", "revive", "reset_cd", "low_hp_buff", "kill_proc", "hit_buff", "burn_aura", "freeze_nova"]
 	for id: String in eq:
 		if not eq[id] is Dictionary:
 			continue
@@ -132,3 +132,18 @@ func test_every_legendary_has_a_known_special_and_every_epic_a_sub() -> void:
 			_check(kinds.has(String(eq[id].get("special", {}).get("kind", ""))), "%s: special kind" % id)
 		if r == "epic" or r == "legendary":
 			_check(not eq[id].get("sub", {}).get("effects", {}).is_empty(), "%s: dòng phụ" % id)
+
+
+func test_old_saves_move_to_the_new_items() -> void:
+	var defs: Dictionary = GameData.load_json("res://assets/data/items.json")["equipment"].duplicate()
+	defs.erase("_doc")
+	var old := {"bag": ["iron_helm", "swift_boots", "void_crown", "steel_sword"],
+		"worn": {"mage": {"head": "void_crown", "legs": "swift_boots"}}, "seen": ["iron_helm"],
+		"plus": {"void_crown": 3}}
+	var p := Profile.new(defs)
+	p.from_dict(old, "mage")
+	_check(p.bag.has("cloth_hat") and p.bag.has("cloth_shoes") and p.bag.has("star_hat"), "shared items go to the mage's own, got %s" % [p.bag])
+	_check(p.bag.has("steel_sword"), "an id still in the data stays")
+	_check(p.equipped("mage").get("head", "") == "star_hat", "worn head renamed")
+	_check(p.equipped("mage").get("feet", "") == "cloth_shoes" and not p.equipped("mage").has("legs"), "boots move from the old legs slot to feet, got %s" % [p.equipped("mage")])
+	_check(p.plus_of("star_hat") == 3, "Cường hoá carries over")

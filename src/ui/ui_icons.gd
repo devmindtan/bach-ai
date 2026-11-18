@@ -10,8 +10,10 @@ extends RefCounted
 ##   rect.texture = UiIcons.texture("coin")
 
 const DIR := "res://assets/sprites/custom/ui-icons"
+const GEAR_DIR := "res://assets/sprites/custom/gear-icons"   # 24 px equipment icons (one per item id)
 
 static var _sheet: SpriteSheet
+static var _gear: SpriteSheet
 static var _textures := {}
 
 
@@ -28,10 +30,20 @@ static func draw(canvas: CanvasItem, icon: String, center: Vector2, scale := 2.0
 		s.draw(canvas, icon, 0.0, center, scale)
 
 
-## The icon's frame as a texture (cached), for Controls.
+## The equipment icon sheet (gear-icons).
+static func gear() -> SpriteSheet:
+	if _gear == null:
+		_gear = SpriteSheet.load_dir(GEAR_DIR, "gear-icons")
+	return _gear
+
+
+## The icon's frame as a texture (cached), for Controls: ui-icons first, then
+## gear-icons (item ids).
 static func texture(icon: String) -> Texture2D:
 	if not _textures.has(icon):
 		var s := sheet()
+		if s == null or not s.has_animation(icon):
+			s = gear()
 		if s == null or not s.has_animation(icon):
 			return null
 		var t := AtlasTexture.new()

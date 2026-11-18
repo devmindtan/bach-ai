@@ -82,8 +82,10 @@ func test_items_reference_existing_sprites() -> void:
 		var d: Dictionary = items["pickups"][id]
 		_check(String(d.get("name", "")) != "", "item %s has no name" % id)
 		_check(_sprite_ok(String(d.get("sprite", ""))), "item %s: sprite missing" % id)
-	# equipment: an icon in ui-icons, a known slot, effects PlayerStats knows
-	var icons := SpriteSheet.load_dir(SPRITES + "ui-icons", "ui-icons")
+	# equipment: an icon in gear-icons, a known slot, one class, effects PlayerStats knows;
+	# every class has exactly one item per slot and rarity (design/equipment.md)
+	var icons := SpriteSheet.load_dir(SPRITES + "gear-icons", "gear-icons")
+	var grid := {}
 	var eq: Dictionary = items.get("equipment", {})
 	for id: String in eq:
 		if id.begins_with("_"):
@@ -91,8 +93,16 @@ func test_items_reference_existing_sprites() -> void:
 		var d: Dictionary = eq[id]
 		_check(String(d.get("name", "")) != "", "equipment %s has no name" % id)
 		_check(Profile.SLOTS.has(String(d.get("slot", ""))), "equipment %s: unknown slot %s" % [id, d.get("slot")])
-		_check(icons.has_animation(String(d.get("icon", id))), "equipment %s: icon %s not in ui-icons" % [id, d.get("icon", id)])
+		_check(icons.has_animation(String(d.get("icon", id))), "equipment %s: icon %s not in gear-icons" % [id, d.get("icon", id)])
 		_check(not Dictionary(d.get("effects", {})).is_empty(), "equipment %s has no effects" % id)
+		_check(["knight", "mage"].has(String(d.get("class", ""))), "equipment %s: no class (every item fits one class)" % id)
+		var key := "%s/%s/%s" % [d.get("class"), d.get("slot"), d.get("rarity")]
+		_check(not grid.has(key), "two items for %s: %s and %s" % [key, grid.get(key), id])
+		grid[key] = id
+	for cls in ["knight", "mage"]:
+		for slot: String in Profile.SLOTS:
+			for r in ["common", "rare", "epic", "legendary"]:
+				_check(grid.has("%s/%s/%s" % [cls, slot, r]), "no %s %s %s item" % [cls, slot, r])
 
 
 func test_skill_effects_have_pixel_hitboxes() -> void:

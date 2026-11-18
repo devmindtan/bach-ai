@@ -61,7 +61,7 @@ func test_pulse_fires_every_n_seconds_around_the_hero() -> void:
 func test_chain_shock_hits_the_nearest_ones() -> void:
 	var r := _run()
 	_spawn(r, [Vector2(40, 0), Vector2(80, 0), Vector2(600, 0)])
-	var sp := _special("void_crown")
+	var sp := _special("star_hat")
 	sp["count"] = 2
 	r.trigger_special(sp)
 	_check(r.enemies.hp[0] < 1000.0 and r.enemies.hp[1] < 1000.0, "two nearest hit")
@@ -81,7 +81,7 @@ func test_reset_cd_readies_every_skill() -> void:
 	r._blade_cd = 3.0
 	r._tier_cd["earth_strike"] = 4.0
 	r._dash_cd = 2.0
-	r.trigger_special(_special("void_eternal"))
+	r.trigger_special(_special("star_staff"))
 	_check(r._blade_cd <= 0.0 and float(r._tier_cd["earth_strike"]) <= 0.0 and r._dash_cd <= 0.0, "all cooldowns ready")
 	r.free()
 
@@ -104,10 +104,52 @@ func test_retaliate_on_hit_with_a_cooldown() -> void:
 func test_item_revive_once_per_run() -> void:
 	var r := _run()
 	_check(not r.try_item_revive(), "no item: no revive")
-	r.set_specials([_special("void_heart")])
+	r.set_specials([_special("star_robe")])
 	r.hp = -2.0
 	_check(r.try_item_revive(), "revives")
 	_check(is_equal_approx(r.hp, float(r.stats["max_hp"]) * 0.4), "with 40%% hp, got %s" % r.hp)
 	r.hp = 0.0
 	_check(not r.try_item_revive(), "only once")
+	r.free()
+
+
+func test_low_hp_shield_once_per_cooldown() -> void:
+	var r := _run()
+	r.set_specials([_special("aegis_greaves")])
+	r.step_specials(0.1)
+	_check(not r.buffs.invulnerable(), "full hp: nothing")
+	r.hp = float(r.stats["max_hp"]) * 0.2
+	r.step_specials(0.1)
+	_check(r.buffs.invulnerable(), "low hp: shield")
+	r.free()
+
+
+func test_kill_proc_heals_every_n_kills() -> void:
+	var r := _run()
+	var sp := _special("aegis_gauntlets")
+	r.set_specials([sp])
+	r.hp = 10.0
+	r.count_special_kills(int(sp["every_kills"]) - 1)
+	_check(is_equal_approx(r.hp, 10.0), "not yet")
+	r.count_special_kills(1)
+	_check(r.hp > 10.0, "healed at the Nth kill, hp %s" % r.hp)
+	r.free()
+
+
+func test_hit_buff_starts_haste() -> void:
+	var r := _run()
+	r.set_specials([_special("aegis_boots")])
+	r._take_hit(1.0)
+	_check(r.buffs.active.size() > 0, "Rune tốc độ active")
+	r.free()
+
+
+func test_burn_aura_and_freeze_nova_put_statuses() -> void:
+	var r := _run()
+	_spawn(r, [Vector2(40, 0), Vector2(500, 0)])
+	r.trigger_special(_special("star_pants"))
+	r.trigger_special(_special("star_bracer"))
+	var near: Array = r.enemies.statuses_of(0)
+	_check(near.has("burn") and near.has("freeze"), "near monster burns and freezes, got %s" % [near])
+	_check(r.enemies.statuses_of(1).is_empty(), "far one untouched")
 	r.free()

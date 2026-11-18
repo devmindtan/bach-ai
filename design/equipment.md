@@ -90,3 +90,26 @@ Hiển thị: cột chi tiết của màn trang bị ghi "Dòng phụ: …" và 
 Phần chữ cuộn được, nút Cường hoá / Mặc luôn ở đáy. Bảng sát thương trong trận ghi tên hiệu ứng.
 Code: `Profile.sub_open`, `special_open`, `specials`; `Run.set_specials`, `step_specials`, `trigger_special`,
 `_retaliate`, `try_item_revive`. Test: `profile_test.gd`, `item_special_test.gd`.
+
+## Bộ trang bị 6 ô (người dùng 2026-11-18)
+
+Người dùng chốt: **6 ô** Mũ (`head`), Áo (`chest`), Quần (`legs`), Tay (`arms`), Giày (`feet`), Vũ khí (`weapon`);
+**mỗi class, mỗi ô, mỗi độ hiếm đúng 1 món** (48 món), mọi món chỉ một class mặc được; **thay toàn bộ đồ cũ**, save
+cũ được đổi sang món mới cùng class / ô / độ hiếm (`items.json` → `equipment_renamed`, `Profile.from_dict`), giữ
+mức Cường hoá. `data_consistency_test` chặn thiếu / thừa món theo lưới class × ô × độ hiếm.
+
+| | Thường | Hiếm | Sử thi | Huyền thoại |
+|---|---|---|---|---|
+| Kiếm sĩ | Sắt | Thép (viền xanh) | Rồng (sừng, ngọc đỏ) | Thần Hộ (vàng, cánh, ngọc xanh) |
+| Pháp sư | Vải | Phép (xanh, viền vàng) | Hư không (tím, rune) | Tinh Tú (xanh đêm, sao vàng) |
+
+Chỉ số: mỗi ô của mỗi class có chỉ số gốc theo vai trò (Kiếm sĩ: giáp/máu ở Mũ-Áo-Quần, sát thương ở Tay-Vũ khí,
+tốc độ ở Giày; Pháp sư: hồi chiêu ở Mũ-Tay, máu/vùng ở Áo, hồi máu ở Quần, tốc độ ở Giày, sát thương ở Gậy), nhân
+×1 / ×1,6 / ×2,3 / ×3,2 theo độ hiếm. Dòng phụ sử thi, huyền thoại ×1,5. Hiệu ứng đặc biệt của 12 món huyền thoại:
+Thần hộ, Phản chấn, Bàn thạch (`low_hp_buff`), Huyết quyền (`kill_proc` hồi máu), Phong hành (`hit_buff`), Thánh
+kiếm; Lôi ấn, Tim bất diệt, Hoả y (`burn_aura`), Băng ấn (`freeze_nova`), Lưu tinh (`kill_proc` buff), Vĩnh cửu.
+
+Icon: `sprite-lab/sprites/gear-icons` (24×24, một hình nền mỗi ô, độ hiếm thêm chi tiết + đổi bảng màu), luôn vẽ ở
+bội số nguyên (`UiKit.snap_icon`, test `icon_scale_test`). Tham khảo icon: [Cyangmou Equipment 24×24](https://cyangmou.itch.io/pixel-fantasy-rpg-icons-equipment-2424),
+[Pixelemy 24×24](https://pixelartchemist.itch.io/fantasy-weapon-pixel-art-icon-pack-24x24) (cỡ 24, viền 1 px đều, đọc
+được bằng hình khối).
