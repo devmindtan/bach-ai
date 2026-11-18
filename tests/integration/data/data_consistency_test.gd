@@ -341,3 +341,19 @@ func test_casts_play_an_animation_their_sprite_has() -> void:
 					_check(has_dir, "%s: sprite %s has no %s* direction animations for its nearest cast" % [sk, n, prefix])
 				else:
 					_check(names.has(anim), "%s: sprite %s has no '%s' animation (the %s cast draws nothing)" % [sk, n, anim, how])
+
+
+## User 2026-11-18: a monster that jumps needs a jump animation (not a sliding sprite).
+func test_jumping_monsters_have_crouch_and_jump_animations() -> void:
+	var monsters := GameData.load_json("res://assets/data/monsters.json")
+	for id: String in monsters:
+		var m: Variant = monsters[id]
+		if not m is Dictionary or not (String(m.get("behaviour", "")) == "hop" or m.has("hop_height")):
+			continue
+		var name := String(m.get("sprite", id))
+		var meta := GameData.load_json("res://assets/sprites/custom/%s/%s.json" % [name, name])
+		var anims: Array = []
+		for a: Dictionary in meta.get("animations", []):
+			anims.append(String(a.get("name", "")))
+		_check(anims.has("crouch") and anims.has("jump"), "%s (%s) jumps: needs crouch + jump animations, has %s" % [id, name, anims])
+		_check(m.has("hop_height"), "%s jumps: needs hop_height so the sprite rises" % id)
