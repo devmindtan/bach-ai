@@ -68,6 +68,9 @@ var k_death_time := PackedFloat32Array()
 var k_extra: Array[Dictionary] = []
 var k_elite := PackedByteArray()    # 1 = an elite kind ("<id>@elite", run_config "elite")
 var k_boss := PackedByteArray()     # 1 = a boss (HUD bar, the stage is won when it dies)
+## Boss-specific events, emitted for BossFx (src/run/boss_fx.gd) to draw.
+signal slam_done(pos: Vector2)
+signal split_done(pos: Vector2)
 
 # hits since the last drain_hits() (the run shows them as damage numbers)
 var hit_pos := PackedVector2Array()
@@ -106,6 +109,7 @@ var _slam_i := -1
 
 func _init(monsters: Dictionary, cfg: Dictionary, sheets: Dictionary, seed_value := 0) -> void:
 	_rng.seed = seed_value
+	BossFxNode.attach(self)
 	var world: Dictionary = cfg.get("world", {})
 	var ring: Array = world.get("spawn_ring", [760.0, 860.0])
 	spawn_ring = Vector2(float(ring[0]), float(ring[1]))
@@ -370,6 +374,7 @@ func _boss_slime(i: int, k: int, dir: Vector2, speed: float, delta: float) -> Ve
 				charge_cd[i] = float(e.get("jump_every", 5.0))
 				slams.append(pos[i] + dash_dir[i] * delta)
 				_slam_i = i
+				slam_done.emit(pos[i] + dash_dir[i] * delta)
 			return dash_dir[i]
 		_:
 			charge_cd[i] -= delta
@@ -630,6 +635,7 @@ func _split(i: int, hp_before: float) -> void:
 	for f: Variant in e["split_at"]:
 		var line := float(f) * full
 		if hp_before > line and hp[i] <= line:
+			split_done.emit(pos[i])
 			var n := int(e.get("split_count", 4))
 			for k in n:
 				var a := TAU * k / n + phase[i]
