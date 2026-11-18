@@ -1,78 +1,58 @@
 # Cây kỹ năng lâu dài (đợt 4)
 
-Đợt 4 (`production/roadmap.md`). Dữ liệu: `assets/data/skills_knight.json`, `skills_mage.json`,
-`assets/data/skill_points.json` (điểm tích luỹ per slot). Code: `src/meta/skill_tree.gd` (node),
-`src/meta/skill_store.gd` (lưu lịch sử điểm). Test: `tests/unit/meta/skill_tree_test.gd`.
+Dữ liệu: `assets/data/skill_tree.json` (node theo class), `assets/data/run_config.json` → `essence` (Tinh hoa rơi).
+Code: `src/meta/skill_tree.gd` (mua, mở khoá, đặt lại, hiệu ứng), slot giữ node đã mua và ví. Màn:
+`src/front/skill_tree.tscn` (`design/ux/skill-tree.md`). Test: `tests/unit/meta/skill_tree_test.gd`.
 
-> **Nuôi chất build thành hệ thống lâu dài.** Mỗi slot có cây riêng; build một class đủ sâu đồng nghĩa với
-> mỗi trận bắt đầu mạnh đi rõ rệt. Một slot đã max cây không được mạnh hơn slot mới 3 lần — đủ để quái không biến
-> thành tép, đủ để người chơi thấy tiến trình.
+Quyết định của người dùng (2026-11-18):
+- Node mua bằng **Tinh hoa**, nguyên liệu đặc biệt **rơi từ quái tinh anh và boss** khi cày ải.
+- **Đặt lại cây** cần **Tẩy Tủy Đan** (nguyên liệu hoàn trả) **và vàng**; Tẩy Tủy Đan có ở **chế độ Thử thách**
+  (`design/challenge.md`), cày lại được.
 
-## Nguyên tắc thiết kế
+## Tham khảo
 
-1. **Mỗi điểm là một quyết định.** Không có "tăng +1% sát thương tất cả" — mỗi node nằm trên một nhánh và có
-   một mục tiêu rõ ràng (tầm/đòn/tốc độ/máu/khuộc).
-2. **Nhánh không chéo.** Cây của Kiếm sĩ và Máy pháp sư khác nhau hoàn toàn — không "chung một tài phi hữu".
-3. **Giá tăng theo tầng:** tầng 1 → 1 điểm, tầng 2 → 2 điểm, tầng 3 → 3 điểm (mỗi node).
-4. **Ô có thể khoá.** Ô tầng 2 mở khi cây đó đã có ≥ 3 điểm (tầng 1, bất kỳ node). Ô tầng 3 mở khi có
-   ≥ 5 điểm (tầng ≤ 2). Trước khi đủ điểm: ô mờ, bấm không mở; dòng phụ ghi "Cần n điểm ở nhánh này".
-5. **Hoàn điểm bằng vàng:** nhấn "Đặt lại nốt điểm" ở góc dưới bên phải; hoàn vàng 30% số điểm đã tiêu.
-6. **Không đối xứng tuyệt đối giữa 2 class** — nhánh không hoàn toàn giống nhau; mục tiêu giống nhau nhưng số
-   liệu khác (Ma pháp sư sát thương phép, Kiếm sĩ sát thương cận chiến).
+| Nguồn | Điều lấy |
+|---|---|
+| Vampire Survivors, [PowerUp](https://vampire-survivors.fandom.com/wiki/PowerUp?oldid=5168), [hoàn trả](https://www.siliconera.com/how-to-reset-progress-in-vampire-survivors/) | Nâng cấp vĩnh viễn mua bằng tiền tệ cày được; giá tăng dần; hoàn lại **đủ** khi đặt lại. |
+| Soulstone Survivors, [cây kỹ năng](https://www.gamepressure.com/newsroom/soulstone-survivors-unique-skills-skill-tree-and-prestige/zf4c7a) | Cây chia nhánh theo vai trò (tấn công / phòng thủ / di chuyển), mua bằng tiền tệ riêng rơi trong trận; đặt lại được. |
+| [Wayline: respec design](https://www.wayline.io/blog/respec-your-game-adapting-skill-tree), [Gears Tactics: Reset Token](https://www.inverse.com/gaming/gears-tactics-reset-token-guide-respec-skill-points) | Đặt lại bằng **vật phẩm kiếm từ nội dung khó** làm quyết định có trọng lượng; phải chặn việc nhân đôi tài nguyên khi hoàn trả. |
 
-## Điểm kỹ năng
+## Tiền tệ
 
-- **Nguồn nhận điểm (theo slot):**
-  - Vượt ải lần đầu thứ n: `floor(n / 3)` điểm (ải 3, 6, 9, ..., 30 → 10 điểm tổng).
-  - Mốc đạt lần đầu (10/20/30): mỗi mốc +3 điểm.
-  - Trong trận: điểm kỹ năng không rơi — chỉ sau trận, không ở trong trận.
-- **Giới hạn:** một slot có tối đa 30 điểm (30 ải × 1 + mốc 9). Đây là tổng 30 điểm tối đa cho mỗi slot.
-- **Không tiêu điểm động khi đang chạy trận.** Điểm chỉ chi tiêu ở sảnh, sau trận.
+| Thứ | Có từ đâu | Dùng để |
+|---|---|---|
+| **Tinh hoa** | quái tinh anh rơi 1, boss rơi 10 (`run_config.json` → `essence`); nhặt như vật phẩm; thua vẫn giữ phần đã nhặt | mua node |
+| **Tẩy Tủy Đan** | thắng một thử thách (chế độ Thử thách) | đặt lại cây (1 viên + vàng) |
+| Vàng | đã có | đặt lại cây: `10 × Tinh hoa đã tiêu` (ít nhất 50) |
 
-## Kiếm sĩ — ba nhánh
+Tinh hoa, Tẩy Tủy Đan, vàng thuộc **slot** (mỗi nhân vật một ví).
 
-| Nhánh | Phong cách | Node tầng 1 (1 điểm) | Node tầng 2 (2 điểm) | Node tầng 3 (3 điểm) |
-|---|---|---|---|---|
-| **Cơ học** | Chém nhanh, xoay người | `+8%` hồi chiêu mọi chiêu | `+15%` sát thương vùng | `+20%` tốc độ di chuyển |
-| **Đội hình** | Chém xa, vòng quét | `+10%` vùng đánh (blade_arc, ground_slam, cleave_wave) | `+12%` tầm hút vật phẩm | `+15%` máu tối đa |
-| **Vững chãi** | Giáp, hồi máu, đứng yên | `+1` giáp | `+2` hồi máu/giây | `+20%` máu |
+## Cây
 
-## Pháp sư — ba nhánh
+Mỗi class 3 nhánh × 3 tầng. Tầng 2 cần đã mua tầng 1 cùng nhánh; tầng 3 cần tầng 2. Giá: tầng 1 = 5, tầng 2 = 10,
+tầng 3 = 20 Tinh hoa (cả cây 105). Mỗi node một lần mua; hiệu ứng như một thẻ cấp 1 (cộng vào chỉ số ở mọi trận
+của slot, cả sảnh và màn trang bị thấy).
 
-| Nhánh | Phong cách | Node tầng 1 | Node tầng 2 | Node tầng 3 |
-|---|---|---|---|---|
-| **Tốc độ** | Nhiều đạn, hồi chiêu | `+10%` hồi chiêu mọi chiêu | `+15%` tốc độ đạn của mọi projectile | `+20%` tốc độ di chuyển |
-| **Vùng** | Diện rộng, nổ, phủ | `+15%` vùng đánh (frost_nova, blizzard, storm) | `+15%` sát thương vùng phép (vùng chịu hiệu ứng) | `+20%` máu tối đa |
-| **Tập trung** | Một mục tiêu, Băng/nổ | `+15%` sát thương một mục đối với fireball/arcane_bolt/thunder_javelin/meteor | `+15%` thời gian làm chậm/đóng băng | `+2` hồi máu/giây |
+| Kiếm sĩ | Tầng 1 | Tầng 2 | Tầng 3 |
+|---|---|---|---|
+| **Cuồng nộ** (sát thương) | Sát thương +8% | Vùng đánh +10% | Sát thương +15% |
+| **Thần tốc** (nhịp đánh) | Hồi chiêu −6% | Tốc độ chạy +10% | Hồi chiêu −10% |
+| **Vững chãi** (sống sót) | Giáp +1 | Hồi máu +1/giây | Máu tối đa +20% |
 
-## Giao diện (màn Cây kỹ năng, mở từ sảnh)
+| Pháp sư | Tầng 1 | Tầng 2 | Tầng 3 |
+|---|---|---|---|
+| **Hỏa lực** (sát thương) | Sát thương +8% | Vùng đánh +10% | Sát thương +15% |
+| **Lưu chuyển** (nhịp phép) | Hồi chiêu −8% | Tốc độ chạy +10% | Hồi chiêu −10% |
+| **Hộ mệnh** (sống sót) | Máu tối đa +15 | Hồi máu +1/giây | Tầm hút +30%, máu tối đa +10% |
 
-- Trên: "Cây kỹ năng · <tên nhân vật>" bên trái, điểm khả dụng bên phải ("Điểm: n").
-- Trái (cột 380 px): nhân vật; dưới là **điểm đã tiêu / điểm tối đa**; dưới nữa là **vàng hoàn** (=30 % số điểm đã tiêu × 25 vàng, làm tròn) và nút "Đặt lại" (nút chính).
-- Giữa: ba nhánh, mỗi nhánh một **bảng** gồm 3 ô (tầng 1, 2, 3). Ô đã mở: viền vàng, nội dung sáng. Ô khoá: ô mờ + icon khoá + "Cần n điểm ở nhánh". Cả ô là button; rõ rê-over, focus.
-- Phải (cột 340 px): **chi tiết node đang xem**: tên, mô tả, số liệu trước → sau, xác nhận "Mở" (nút chính) hoặc "Đã mở".
-- Bàn phím: Tab đi qua các node; Enter = mở; Esc = đóng. Tay cầm: LT/RT chọn nhánh, D-pad chọn node, A = mở.
+## Đặt lại
 
-## Dữ liệu mẫu (`assets/data/skill_points_knight.json`)
-
-```json
-{
-  "_doc": "Per-slot skill points (added by winning stages & milestone; spent in the Skill Tree; see design/skill-tree.md).",
-  "points": 4,
-  "spent": [
-    {"branch": "cơ_học", "node": "cd_cap", "cost": 1},
-    {"branch": "đội_hình", "node": "area_plus", "cost": 1}
-  ]
-}
-```
+- Nút "Đặt lại cây" cần 1 Tẩy Tủy Đan và vàng; hoàn **đủ** Tinh hoa đã tiêu, bỏ mọi node.
+- Không đủ thì nút tắt và ghi thiếu gì.
 
 ## Kiểm thử
 
-- `tests/unit/meta/skill_tree_test.gd`: mở node, tính unlock (tầng 2 mở khi đủ tầng 1, tầng 3 khi đủ tầng 2),
-  hoàn điểm (30% vàng), điểm tổng định mốc (floor(n/3) đến 30, chặn ở 30), mỗi node kẹp về min/max của PlayerStats.
-- `tests/integration/meta/skill_points_test.gd`: điểm ghi vào đúng `user://slots/<id>/skill_points.json`; file hỏng không làm mất điểm của slot khác; tạo lại 30 = 10 ải + 9 mốc +1 (tổng 30, không vượt).
-
-## Tiếp theo
-
-- **Cung Thương (Sát thủ) và Cung thủ**: 2 class mở rộng (đợt 6), mỗi class có 3 nhánh riêng.
-- **Node dùng chiêu độc nhất**: mốc 30 Chiêu độc nhất + Cây kỹ năng có node nâng nó (độc lướt, độc thả).
+- Mua: đủ Tinh hoa và đã có tầng trước; trừ đúng giá; không mua lại node đã có; sai class bị từ chối.
+- Đặt lại: cần Tẩy Tủy Đan + vàng; hoàn đúng tổng đã tiêu (không nhân đôi khi đặt lại hai lần).
+- Hiệu ứng: node đã mua đổi chỉ số qua PlayerStats như thẻ.
+- Tinh hoa: tinh anh / boss rơi, nhặt cộng vào trận, hết trận cộng vào slot (thắng hay thua).
