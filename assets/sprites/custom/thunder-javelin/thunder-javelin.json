@@ -453,5 +453,6 @@
       }
     }
   ],
-  "source": "sprite-lab/sprites/thunder-javelin"
+  "source": "sprite-lab/sprites/thunder-javelin",
+  "hires": 2
 }

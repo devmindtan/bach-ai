@@ -453,5 +453,6 @@
       }
     }
   ],
-  "source": "sprite-lab/sprites/solar-ray"
+  "source": "sprite-lab/sprites/solar-ray",
+  "hires": 2
 }

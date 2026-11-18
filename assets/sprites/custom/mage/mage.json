@@ -178,5 +178,6 @@
   "base": [
     "body"
   ],
-  "source": "sprite-lab/sprites/mage"
+  "source": "sprite-lab/sprites/mage",
+  "hires": 4
 }

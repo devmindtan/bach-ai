@@ -184,5 +184,6 @@
   "base": [
     "body"
   ],
-  "source": "sprite-lab/sprites/swordsman"
+  "source": "sprite-lab/sprites/swordsman",
+  "hires": 4
 }

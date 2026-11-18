@@ -33,5 +33,6 @@
       }
     }
   ],
-  "source": "sprite-lab/sprites/meteor-fall-iii"
+  "source": "sprite-lab/sprites/meteor-fall-iii",
+  "hires": 4
 }

@@ -453,5 +453,6 @@
       }
     }
   ],
-  "source": "sprite-lab/sprites/fireball-iii"
+  "source": "sprite-lab/sprites/fireball-iii",
+  "hires": 2
 }

@@ -33,5 +33,6 @@
       }
     }
   ],
-  "source": "sprite-lab/sprites/blizzard-vortex"
+  "source": "sprite-lab/sprites/blizzard-vortex",
+  "hires": 4
 }

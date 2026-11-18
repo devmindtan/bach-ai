@@ -33,5 +33,6 @@
       }
     }
   ],
-  "source": "sprite-lab/sprites/earthquake-rift"
+  "source": "sprite-lab/sprites/earthquake-rift",
+  "hires": 4
 }

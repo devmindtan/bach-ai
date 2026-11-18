@@ -33,5 +33,6 @@
       }
     }
   ],
-  "source": "sprite-lab/sprites/whirlwind"
+  "source": "sprite-lab/sprites/whirlwind",
+  "hires": 4
 }

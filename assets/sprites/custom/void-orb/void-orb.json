@@ -453,5 +453,6 @@
       }
     }
   ],
-  "source": "sprite-lab/sprites/void-orb"
+  "source": "sprite-lab/sprites/void-orb",
+  "hires": 4
 }

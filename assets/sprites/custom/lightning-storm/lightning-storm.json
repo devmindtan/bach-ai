@@ -33,5 +33,6 @@
       }
     }
   ],
-  "source": "sprite-lab/sprites/lightning-storm"
+  "source": "sprite-lab/sprites/lightning-storm",
+  "hires": 4
 }

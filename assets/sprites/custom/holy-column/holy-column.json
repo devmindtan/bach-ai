@@ -33,5 +33,6 @@
       }
     }
   ],
-  "source": "sprite-lab/sprites/holy-column"
+  "source": "sprite-lab/sprites/holy-column",
+  "hires": 4
 }

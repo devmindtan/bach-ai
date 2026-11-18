@@ -453,5 +453,6 @@
       }
     }
   ],
-  "source": "sprite-lab/sprites/arcane-bolt-iv"
+  "source": "sprite-lab/sprites/arcane-bolt-iv",
+  "hires": 2
 }

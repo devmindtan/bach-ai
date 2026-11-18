@@ -117,5 +117,6 @@
       }
     }
   ],
-  "source": "sprite-lab/sprites/war-hammer-strike"
+  "source": "sprite-lab/sprites/war-hammer-strike",
+  "hires": 4
 }

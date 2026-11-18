@@ -129,5 +129,6 @@
       }
     }
   ],
-  "source": "sprite-lab/sprites/sword-slash"
+  "source": "sprite-lab/sprites/sword-slash",
+  "hires": 4
 }

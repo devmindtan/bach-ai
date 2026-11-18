@@ -33,5 +33,6 @@
       }
     }
   ],
-  "source": "sprite-lab/sprites/stomp-i"
+  "source": "sprite-lab/sprites/stomp-i",
+  "hires": 4
 }
