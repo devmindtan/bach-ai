@@ -89,3 +89,46 @@ func test_enhancing_costs_gold_and_raises_the_effects() -> void:
 	var q := Profile.new(ITEMS)
 	q.from_dict(p.to_dict())
 	_check(q.plus_of("iron_helm") == Profile.MAX_PLUS, "the level is saved")
+
+
+const LEGEND := {
+	"crown": {"name": "Vương miện", "slot": "head", "rarity": "legendary", "effects": {"max_hp": {"add": 10.0}},
+		"sub": {"at": 2, "effects": {"max_hp": {"add": 5.0}, "regen": {"add": 1.0}}, "desc": "x"},
+		"special": {"at": 3, "kind": "pulse", "every": 6.0, "name": "Vòng", "desc": "y"}},
+}
+
+
+func test_sub_line_opens_at_its_enhancement_level() -> void:
+	var p := Profile.new(LEGEND)
+	p.add("crown")
+	_check(not p.sub_open("crown") and not p.effects_of("crown").has("regen"), "+0: no dòng phụ")
+	p.plus["crown"] = 2
+	var e := p.effects_of("crown")
+	_check(p.sub_open("crown"), "+2: dòng phụ open")
+	_check(is_equal_approx(float(e["regen"]["add"]), 1.0 * 1.4), "sub enhanced like the main line (x1.4), got %s" % e["regen"])
+	_check(is_equal_approx(float(e["max_hp"]["add"]), 15.0 * 1.4), "a stat in both lines adds up, got %s" % e["max_hp"])
+
+
+func test_special_opens_at_its_level_and_only_when_worn() -> void:
+	var p := Profile.new(LEGEND)
+	p.add("crown")
+	p.plus["crown"] = 3
+	_check(p.specials("knight").is_empty(), "not worn: no special")
+	p.equip("knight", "crown")
+	var sp := p.specials("knight")
+	_check(sp.size() == 1 and sp[0]["kind"] == "pulse" and sp[0]["item"] == "crown", "worn at +3: pulse from crown, got %s" % [sp])
+	p.plus["crown"] = 2
+	_check(p.specials("knight").is_empty(), "+2: still locked")
+
+
+func test_every_legendary_has_a_known_special_and_every_epic_a_sub() -> void:
+	var eq: Dictionary = GameData.load_json("res://assets/data/items.json")["equipment"]
+	var kinds := ["shield", "retaliate", "pulse", "chain_shock", "revive", "reset_cd"]
+	for id: String in eq:
+		if not eq[id] is Dictionary:
+			continue
+		var r := String(eq[id].get("rarity", ""))
+		if r == "legendary":
+			_check(kinds.has(String(eq[id].get("special", {}).get("kind", ""))), "%s: special kind" % id)
+		if r == "epic" or r == "legendary":
+			_check(not eq[id].get("sub", {}).get("effects", {}).is_empty(), "%s: dòng phụ" % id)

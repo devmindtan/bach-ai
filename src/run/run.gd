@@ -46,6 +46,10 @@ var _win_on_boss := true
 var _delayed: Array = []
 var profile: Profile                # equipment (Prefs.current().profile())
 var won_items: Array[String] = []   # equipment won this run (end screen)
+var _gear_plus := 0                   # --gear-plus=N: Cường hoá level of the --gear items (shots)
+var specials: Array = []              # Hiệu ứng đặc biệt of worn legendary items (Profile.specials)
+var _special_t: Array[float] = []     # per special: seconds to its next trigger (or cooldown left)
+var _item_revive_used := false
 var _gear: Array[String] = []       # --gear=a,b (shots: wear these)   # self casts waiting for their pulse (count > 1)
 var _chest_open := false   # the next level-up panel comes from a chest
 var _chest_sprite := "chest"
@@ -254,6 +258,9 @@ func _ready() -> void:
 	for id in _gear:
 		profile.add(id)
 		profile.equip(class_id, id)
+		if _gear_plus > 0:
+			profile.plus[id] = _gear_plus
+	set_specials(profile.specials(class_id) if profile != null else [])
 	for sk: String in class_data.get("start_skills", {}):
 		# keep a higher level forced by --skills
 		levels[sk] = maxi(int(levels.get(sk, 0)), int(class_data["start_skills"][sk]))
@@ -312,6 +319,8 @@ func _parse_args() -> void:
 				_status_all.append(st)
 		elif a.begins_with("--monster-hp="):
 			monster_hp_mul = maxf(0.01, float(a.get_slice("=", 1)))
+		elif a.begins_with("--gear-plus="):
+			_gear_plus = int(a.get_slice("=", 1))
 		elif a.begins_with("--gear="):
 			for id in a.get_slice("=", 1).split(",", false):
 				_gear.append(id)
@@ -434,6 +443,7 @@ func _tick(dt: float) -> void:
 	if buffs.active.size() != had or not buffs.picked_ids().is_empty():
 		_recompute_stats()
 	_step_guardian(dt)
+	step_specials(dt)
 	var before := hp
 	hp = minf(float(stats["max_hp"]), hp + float(stats.get("regen", 0.0)) * dt)
 	healed += maxf(0.0, hp - before)
@@ -598,6 +608,7 @@ func _take_hit(amount: float) -> void:
 	damage_taken += taken
 	invuln = float(cfg.get("player", {}).get("hit_invuln", 0.6))
 	Sfx.play("hurt")
+	_retaliate()
 	_play_action("hurt")
 
 
@@ -975,6 +986,8 @@ func damage_report() -> Array:
 	for k: String in enemies.damage_by:
 		var d := float(enemies.damage_by[k])
 		var u := upgrade(k)
+		if u.is_empty() and profile != null and profile.defs.has(k):   # an item's special effect
+			u = {"name": String(profile.defs[k].get("special", {}).get("name", profile.defs[k].get("name", k)))}
 		rows.append({"id": k, "name": u.get("name", k if k != "" else "Khác"), "damage": d,
 			"share": d / total if total > 0.0 else 0.0, "hits": int(enemies.hits_by.get(k, 0)),
 			"kills": int(enemies.kills_by.get(k, 0)), "dps": d / maxf(1.0, clock)})
@@ -1179,6 +1192,98 @@ func _step_guardian(dt: float) -> void:
 	_guardian_t += _guardian_every
 	buffs.activate(_guardian_buff, _guardian_time)
 	_recompute_stats()
+
+
+# --- Hiệu ứng đặc biệt (legendary items, design/equipment.md) -----------------
+
+## Sets the active item specials and their timers (each "every" starts full).
+func set_specials(list: Array) -> void:
+	specials = list
+	_special_t.clear()
+	for sp: Dictionary in specials:
+		_special_t.append(float(sp.get("every", 0.0)))
+
+
+## Timed specials: shield, pulse, chain_shock, reset_cd fire every "every" s;
+## retaliate's cooldown runs down here too.
+func step_specials(dt: float) -> void:
+	for k in specials.size():
+		var sp: Dictionary = specials[k]
+		_special_t[k] -= dt
+		if not sp.has("every") or _special_t[k] > 0.0:
+			continue
+		_special_t[k] += float(sp["every"])
+		trigger_special(sp)
+
+
+## Fires one timed special now.
+func trigger_special(sp: Dictionary) -> void:
+	var src := String(sp.get("item", ""))
+	var center := player_pos + _hit_center
+	var dmg := float(stats.get("damage", 10.0)) * float(sp.get("damage_mul", 1.0))
+	match String(sp.get("kind", "")):
+		"shield":
+			buffs.activate(String(sp.get("buff", "magnetic_shield")), float(sp.get("time", 3.0)))
+			_recompute_stats()
+			Sfx.play("holy")
+		"pulse":
+			var reach := float(sp.get("radius", 150.0)) * float(stats.get("area", 1.0))
+			enemies.hit_circle(center, reach, dmg, float(sp.get("knockback", 160.0)), src)
+			_ring_fx(reach)
+			Sfx.play("quake")
+		"chain_shock":
+			for i in enemies.nearest_n(center, int(sp.get("count", 6))):
+				enemies.hit_circle(enemies.center_of(i), 8.0, dmg, 0.0, src)
+				enemies.apply_status(i, "shock", {"mul": 1.0, "chain": int(sp.get("chain", 2)),
+					"radius": float(sp.get("radius", 120.0))}, dmg, src)
+			Sfx.play("zap")
+		"reset_cd":
+			_blade_cd = 0.0
+			if _whirl_left <= 0.0:
+				_whirl_cd = 0.0
+			for sid: String in _tier_cd:
+				_tier_cd[sid] = 0.0
+			_dash_cd = 0.0
+			Sfx.play("holy")
+
+
+## A ring burst drawn as big as the damage circle: the scale comes from the
+## sprite's own hitbox radius, so what the player sees is what gets hit.
+func _ring_fx(reach: float) -> void:
+	var sheet: SpriteSheet = sheets.get("stomp-i")
+	var hb := SpriteHitbox.of(sheet, "burst", Vector2.ZERO, 1.0) if sheet != null else null
+	var r1 := hb.radius if hb != null and hb.radius > 0.0 else 25.0
+	_add_fx("stomp-i", "burst", reach / r1, 0.0)
+
+
+## Phản chấn: a hit taken sends a damaging shockwave (with its own cooldown).
+func _retaliate() -> void:
+	for k in specials.size():
+		var sp: Dictionary = specials[k]
+		if sp.get("kind") != "retaliate" or _special_t[k] > 0.0:
+			continue
+		_special_t[k] = float(sp.get("cooldown", 2.0))
+		var dmg := float(stats.get("damage", 10.0)) * float(sp.get("damage_mul", 1.5))
+		var reach := float(sp.get("radius", 130.0)) * float(stats.get("area", 1.0))
+		enemies.hit_circle(player_pos + _hit_center, reach, dmg, float(sp.get("knockback", 260.0)), String(sp.get("item", "")))
+		_ring_fx(reach)
+		Sfx.play("boss_slam")
+
+
+## Tim bất diệt (item revive): once per run, back up with "hp" of max hp. True when
+## it just happened.
+func try_item_revive() -> bool:
+	if _item_revive_used:
+		return false
+	for sp: Dictionary in specials:
+		if sp.get("kind") == "revive":
+			_item_revive_used = true
+			hp = float(stats.get("max_hp", 100.0)) * float(sp.get("hp", 0.4))
+			invuln = float(sp.get("invuln", 2.0))
+			_play_action("hurt")
+			Sfx.play("milestone")
+			return true
+	return false
 
 
 ## Bất tử: the first time hp runs out, the hero stands up with revive_hp of max
@@ -1526,6 +1631,9 @@ func _finish(won: bool) -> void:
 
 
 func _die() -> void:
+	if try_item_revive():
+		print("Item revive: back up at %.0f hp" % hp)
+		return
 	if try_undying():
 		print("Undying: back up at %.0f hp" % hp)
 		return

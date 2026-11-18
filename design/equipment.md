@@ -56,3 +56,37 @@ Trạng thái: **bản đầu + tái thiết kế 2026-11-17 (legendary/epic tie
   (+5 = ×2,0). Giá bậc tiếp: `giá theo độ hiếm × (bậc hiện tại + 1)`; thường 30, hiếm 60, sử thi 120, huyền thoại 200.
 - Màn trang bị: cột chi tiết ghi "Cường hoá +n/5" và nút "Cường hoá … vàng" (tắt khi thiếu vàng hoặc đã +5);
   tên món ghi "+n". Code: `Profile.enhance`, `enhance_cost`, `effects_of`; test `profile_test.gd`.
+
+## Dòng phụ và hiệu ứng đặc biệt (2026-11-18)
+
+### Tham khảo
+
+| Nguồn | Điều lấy |
+|---|---|
+| Survivor.io, [AppGamer: equipment database](https://www.appgamer.com/survivorio/equipment-database), [OneChilledGamer: equipment guide](https://onechilledgamer.com/survivor-io-equipment-guide) | Mỗi món có hiệu ứng **cố định**, mở dần khi nâng bậc (Bone Pendant: bậc cao mở làm chậm quái quanh mình, bậc cao hơn tăng mạnh hiệu ứng). |
+| Archero, [Android Authority: equipment](https://androidauthority.com/archero-equipment-weapon-armor-ring-pet-1087817), [PocketGamer tier list](https://www.pocketgamer.com/archero/tier-list) | Nâng độ hiếm mở thêm khả năng cho món đồ; khả năng là cơ chế (giết ngay quái dưới 30% máu), không chỉ số to hơn. |
+
+**Học / tránh / quyết định:** học cách mở hiệu ứng cố định theo bậc; tránh dòng phụ ngẫu nhiên kiểu Diablo (game
+đã có gacha, thêm một tầng ngẫu nhiên nữa làm người chơi khó so sánh đồ); quyết định: bậc ở đây là **Cường hoá**
+(+1..+5 bằng vàng) vì độ hiếm của mỗi món là cố định.
+
+### Luật
+
+- Đồ **sử thi** và **huyền thoại** có 1 **dòng phụ** (`items.json` → `sub`): chỉ số thêm, mở ở **+2**, cũng được
+  Cường hoá nhân lên như dòng chính.
+- Đồ **huyền thoại** có 1 **hiệu ứng đặc biệt** (`special`), mở ở **+3**: một cơ chế trong trận.
+- Số liệu (`at`, thời gian, bán kính, hệ số sát thương) nằm trong `items.json`, chỉnh không cần sửa code.
+
+| Món | Hiệu ứng đặc biệt (`kind`) |
+|---|---|
+| Mũ Thần Hộ | **Thần hộ** (`shield`): mỗi 15 giây Khiên từ 3 giây |
+| Giáp Thần Hộ | **Phản chấn** (`retaliate`): bị đánh thì chấn sóng 150% sát thương, đẩy lùi; 2 giây một lần |
+| Kiếm Thần Hộ | **Thánh kiếm** (`pulse`): mỗi 6 giây vòng kiếm 250% sát thương quanh người |
+| Vương miện hư không | **Lôi ấn** (`chain_shock`): mỗi 8 giây sét 6 quái gần nhất, lan 2 quái |
+| Áo choàng trái tim | **Tim bất diệt** (`revive`): một lần mỗi trận, đứng dậy với 40% máu |
+| Gậy Vĩnh Cửu | **Vĩnh cửu** (`reset_cd`): mỗi 12 giây mọi chiêu hồi chiêu xong ngay |
+
+Hiển thị: cột chi tiết của màn trang bị ghi "Dòng phụ: …" và "★ Tên: …", mục chưa mở màu nhạt kèm "(mở ở +n)".
+Phần chữ cuộn được, nút Cường hoá / Mặc luôn ở đáy. Bảng sát thương trong trận ghi tên hiệu ứng.
+Code: `Profile.sub_open`, `special_open`, `specials`; `Run.set_specials`, `step_specials`, `trigger_special`,
+`_retaliate`, `try_item_revive`. Test: `profile_test.gd`, `item_special_test.gd`.

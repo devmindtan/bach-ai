@@ -6,7 +6,7 @@ extends Node2D
 ## change against what is worn (▲ green better, ▼ red worse, changed stats only)
 ## and "Mặc" or "Bỏ ra". Changes are saved at once. Esc goes back to the lobby.
 ##
-## Command line (after `--`), for shots: --equip-slot=<slot>, --equip-view=<item id>.
+## Command line (after `--`), for shots: --equip-slot=<slot>, --equip-view=<item id>, --equip-plus=<0..5>.
 
 const LOBBY_SCENE := "res://src/lobby/lobby.tscn"
 const SLOT_NAME := {"head": "Đầu", "chest": "Ngực", "arms": "Tay", "legs": "Chân", "weapon": "Vũ khí"}
@@ -25,6 +25,7 @@ const SLOT_POS := {"head": Vector2(0, 40), "chest": Vector2(0, 150), "arms": Vec
 	"legs": Vector2(300, 150), "weapon": Vector2(150, 296)}
 const CELL := Vector2(76, 76)
 
+var _equip_plus := -1   # --equip-plus (shots)
 var _slot_data: Slot
 var _prof: Profile
 var _cls := ""
@@ -65,6 +66,10 @@ func _ready() -> void:
 			_sort = "new"
 		elif a.begins_with("--equip-view="):
 			_view = a.get_slice("=", 1)
+		elif a.begins_with("--equip-plus="):   # shots: Cường hoá level of the viewed item
+			_equip_plus = int(a.get_slice("=", 1))
+	if _equip_plus >= 0 and _view != "":
+		_prof.plus[_view] = _equip_plus
 	if _view == "":
 		_view = _default_view()
 	_build()
@@ -466,8 +471,8 @@ func _detail(root: Control) -> void:
 	panel.size = panel.custom_minimum_size
 	root.add_child(panel)
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 10)
-	v.alignment = BoxContainer.ALIGNMENT_CENTER
+	v.add_theme_constant_override("separation", 8)
+	v.alignment = BoxContainer.ALIGNMENT_BEGIN   # top-down (AGENTS.md: never centre card content vertically)
 	panel.add_child(v)
 	if _view == "" or not _prof.defs.has(_view):
 		var l := UiKit.label("Chọn một món trong túi để xem.", 17, UiKit.MUTED)
@@ -485,13 +490,13 @@ func _detail(root: Control) -> void:
 	var bstyle := UiKit.style(UiKit.PANEL_DARK, 6, rarity_col, 2)
 	bstyle.set_corner_radius_all(10)
 	banner.add_theme_stylebox_override("panel", bstyle)
-	banner.custom_minimum_size = Vector2(0, 220)
+	banner.custom_minimum_size = Vector2(0, 150)   # room for Dòng phụ / Hiệu ứng đặc biệt below
 	v.add_child(banner)
 	var bv := VBoxContainer.new()
 	bv.alignment = BoxContainer.ALIGNMENT_CENTER
 	bv.add_theme_constant_override("separation", 2)
 	banner.add_child(bv)
-	var big_ic := UiKit.icon(String(d.get("icon", _view)), 120.0)
+	var big_ic := UiKit.icon(String(d.get("icon", _view)), 84.0)
 	big_ic.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	bv.add_child(big_ic)
 	# name over the icon area, rarity-tinted
@@ -512,10 +517,21 @@ func _detail(root: Control) -> void:
 	ml.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	ml.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	bv.add_child(ml)
+	# the text part scrolls; Cường hoá and Mặc stay pinned at the bottom (a legendary
+	# with dòng phụ, hiệu ứng đặc biệt and five stat rows pushed Mặc off the panel)
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	v.add_child(scroll)
+	var body := VBoxContainer.new()
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.add_theme_constant_override("separation", 8)
+	scroll.add_child(body)
 	var desc := UiKit.label(String(d.get("desc", "")), 16, UiKit.TEXT)
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	desc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	v.add_child(desc)
+	body.add_child(desc)
+	_unlock_lines(body, d, _view)
 	# change against what is worn in this slot
 	var worn := _prof.equipped(_cls)
 	var is_worn := String(worn.get(_sel, "")) == _view
@@ -526,7 +542,7 @@ func _detail(root: Control) -> void:
 	cmp_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	cmp_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	head.add_child(cmp_label)
-	v.add_child(head)
+	body.add_child(head)
 	var after := worn.duplicate()
 	if is_worn:
 		after.erase(_sel)
@@ -538,7 +554,7 @@ func _detail(root: Control) -> void:
 	rows.columns = 3
 	rows.add_theme_constant_override("h_separation", 14)
 	rows.add_theme_constant_override("v_separation", 6)
-	v.add_child(rows)
+	body.add_child(rows)
 	var changed := 0
 	for s in STATS:
 		var a := float(now.get(s[0], 0.0))
@@ -551,7 +567,7 @@ func _detail(root: Control) -> void:
 		rows.add_child(UiKit.label("%s → %s" % [_fmt(s[2], a), _fmt(s[2], b)], 15, UiKit.TEXT))
 		rows.add_child(UiKit.label("▲" if better else "▼", 15, UP if better else DOWN))
 	if changed == 0:
-		v.add_child(UiKit.label("Không đổi chỉ số nào.", 15, UiKit.MUTED))
+		body.add_child(UiKit.label("Không đổi chỉ số nào.", 15, UiKit.MUTED))
 	var prefs := Prefs.current()
 	# Cường hoá: +1..+5 with gold, each level +20% of the item's effects
 	var el := UiKit.label("Cường hoá +%d/%d  ·  mỗi bậc +%d%% hiệu ứng" % [lv, Profile.MAX_PLUS, roundi(Profile.PLUS_STEP * 100)], 14, UiKit.MUTED)
@@ -591,3 +607,20 @@ func _fmt(f: String, x: float) -> String:
 func _stats_with(worn: Dictionary) -> Dictionary:
 	var lasting := SkillTree.lasting(_slot_data, worn)
 	return PlayerStats.compute(_class.get("stats", {}), lasting[0], lasting[1])
+
+
+## Dòng phụ and Hiệu ứng đặc biệt of item [param id] (design/equipment.md): the
+## unlocked ones in colour, the locked ones muted with the Cường hoá level that opens them.
+func _unlock_lines(v: VBoxContainer, d: Dictionary, id: String) -> void:
+	var rows := [["sub", "Dòng phụ", UP], ["special", "★ ", UiKit.GOLD]]
+	for r: Array in rows:
+		var e: Dictionary = d.get(r[0], {})
+		if e.is_empty():
+			continue
+		var open := _prof.sub_open(id) if r[0] == "sub" else _prof.special_open(id)
+		var head := (String(r[1]) + ": ") if r[0] == "sub" else (String(r[1]) + String(e.get("name", "")) + ": ")
+		var text := head + String(e.get("desc", "")) + ("" if open else "  (mở ở +%d)" % int(e.get("at", 0)))
+		var l := UiKit.label(text, 14, r[2] if open else UiKit.MUTED)
+		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		v.add_child(l)

@@ -1,5 +1,5 @@
 {
-  "_doc": "Every item in the game. pickups: dropped in a run and collected by walking near (pickups.radius x magnet in run_config.json). buffs: temporary buffs that appear at random near the player (timing in run_config.json buffs) and run for duration s once walked onto; effects work like upgrade effects (PlayerStats), invulnerable blocks all damage, color = HUD timer bar; aura = status sprite drawn around the hero meanwhile (made for the hero: same 48 px frame and feet anchor, each buff in its own zone so auras never overlap; aura_layer back = behind the hero, front = over it, drawn in this order so the shield bubble comes last). Rarity tiers (cosmetic + power curve, buffs/equipment docs in design/buffs.md and design/equipment.md): common < rare < epic < legendary. rarity = shown colour in the gear screen and used for the drops' power level. icon = ui-icons frame. Read by src/run/run.gd and the studio dashboard (tab Vat pham).",
+  "_doc": "Every item in the game. pickups: dropped in a run and collected by walking near (pickups.radius x magnet in run_config.json). buffs: temporary buffs that appear at random near the player (timing in run_config.json buffs) and run for duration s once walked onto; effects work like upgrade effects (PlayerStats), invulnerable blocks all damage, color = HUD timer bar; aura = status sprite drawn around the hero meanwhile (made for the hero: same 48 px frame and feet anchor, each buff in its own zone so auras never overlap; aura_layer back = behind the hero, front = over it, drawn in this order so the shield bubble comes last). Rarity tiers (cosmetic + power curve, buffs/equipment docs in design/buffs.md and design/equipment.md): common < rare < epic < legendary. rarity = shown colour in the gear screen and used for the drops' power level. icon = ui-icons frame. Read by src/run/run.gd and the studio dashboard (tab Vat pham). Equipment \"sub\" (dòng phụ: effects added at Cường hoá level \"at\") and \"special\" (hiệu ứng đặc biệt of legendary items, a run mechanic by \"kind\", unlocked at \"at\"): design/equipment.md.",
   "pickups": {
     "xp_gem": {
       "name": "Ngọc kinh nghiệm",
@@ -16,7 +16,11 @@
       "sprite": "chest",
       "desc": "Quái tinh anh (vòng sáng vàng) rơi ra khi chết. Nhặt được thì chọn thêm 1 thẻ nâng cấp."
     },
-    "essence": { "name": "Tinh hoa", "sprite": "essence-pickup", "desc": "Quái tinh anh (1) và boss (10) rơi ra. Nhặt được giữ lại cả khi thua; dùng để mở node cây kỹ năng." }
+    "essence": {
+      "name": "Tinh hoa",
+      "sprite": "essence-pickup",
+      "desc": "Quái tinh anh (1) và boss (10) rơi ra. Nhặt được giữ lại cả khi thua; dùng để mở node cây kỹ năng."
+    }
   },
   "buffs": {
     "haste_rune": {
@@ -240,7 +244,16 @@
           "add": 20.0
         }
       },
-      "desc": "+2 giáp, +20 máu tối đa."
+      "desc": "+2 giáp, +20 máu tối đa.",
+      "sub": {
+        "at": 2,
+        "effects": {
+          "regen": {
+            "add": 0.5
+          }
+        },
+        "desc": "Hồi máu +0.5/giây."
+      }
     },
     "void_hat": {
       "name": "Mũ hư không",
@@ -256,7 +269,16 @@
           "add": 1.0
         }
       },
-      "desc": "Hồi chiêu −10%, hồi 1 máu/giây."
+      "desc": "Hồi chiêu −10%, hồi 1 máu/giây.",
+      "sub": {
+        "at": 2,
+        "effects": {
+          "magnet": {
+            "mul": 0.2
+          }
+        },
+        "desc": "Tầm hút +20%."
+      }
     },
     "dragon_chest": {
       "name": "Giáp rồng",
@@ -272,7 +294,16 @@
           "add": 25.0
         }
       },
-      "desc": "+4 giáp, +25 máu tối đa."
+      "desc": "+4 giáp, +25 máu tối đa.",
+      "sub": {
+        "at": 2,
+        "effects": {
+          "move_speed": {
+            "mul": 0.06
+          }
+        },
+        "desc": "Tốc độ chạy +6%."
+      }
     },
     "void_robe": {
       "name": "Áo choàng hư không",
@@ -291,7 +322,16 @@
           "mul": 0.1
         }
       },
-      "desc": "+15 máu tối đa, vùng phép +12%, sát thương +10%."
+      "desc": "+15 máu tối đa, vùng phép +12%, sát thương +10%.",
+      "sub": {
+        "at": 2,
+        "effects": {
+          "regen": {
+            "add": 1.0
+          }
+        },
+        "desc": "Hồi máu +1/giây."
+      }
     },
     "dragon_hands": {
       "name": "Găng rồng",
@@ -307,7 +347,16 @@
           "mul": 0.06
         }
       },
-      "desc": "Sát thương +12%, vùng đánh +6%."
+      "desc": "Sát thương +12%, vùng đánh +6%.",
+      "sub": {
+        "at": 2,
+        "effects": {
+          "cooldown": {
+            "mul": -0.05
+          }
+        },
+        "desc": "Hồi chiêu −5%."
+      }
     },
     "void_hands": {
       "name": "Vòng tay hư không",
@@ -323,7 +372,16 @@
           "mul": 0.1
         }
       },
-      "desc": "Hồi chiêu −10%, sát thương +10%."
+      "desc": "Hồi chiêu −10%, sát thương +10%.",
+      "sub": {
+        "at": 2,
+        "effects": {
+          "area": {
+            "mul": 0.06
+          }
+        },
+        "desc": "Vùng đánh +6%."
+      }
     },
     "dragon_boots": {
       "name": "Ủng rồng",
@@ -339,7 +397,16 @@
           "add": 1.0
         }
       },
-      "desc": "Tốc độ chạy +18%, hồi 1 máu/giây."
+      "desc": "Tốc độ chạy +18%, hồi 1 máu/giây.",
+      "sub": {
+        "at": 2,
+        "effects": {
+          "magnet": {
+            "mul": 0.25
+          }
+        },
+        "desc": "Tầm hút +25%."
+      }
     },
     "void_boots": {
       "name": "Giày hư không",
@@ -355,7 +422,16 @@
           "mul": -0.05
         }
       },
-      "desc": "Tầm hút +50%, hồi chiêu −5%."
+      "desc": "Tầm hút +50%, hồi chiêu −5%.",
+      "sub": {
+        "at": 2,
+        "effects": {
+          "move_speed": {
+            "mul": 0.1
+          }
+        },
+        "desc": "Tốc độ chạy +10%."
+      }
     },
     "dragon_blade": {
       "name": "Kiếm rồng",
@@ -371,7 +447,16 @@
           "mul": 0.1
         }
       },
-      "desc": "Sát thương +18%, vùng đánh +10%."
+      "desc": "Sát thương +18%, vùng đánh +10%.",
+      "sub": {
+        "at": 2,
+        "effects": {
+          "max_hp": {
+            "add": 15.0
+          }
+        },
+        "desc": "Máu tối đa +15."
+      }
     },
     "void_staff": {
       "name": "Gậy hư không",
@@ -390,7 +475,16 @@
           "mul": 0.08
         }
       },
-      "desc": "Sát thương +15%, hồi chiêu −8%, vùng phép +8%."
+      "desc": "Sát thương +15%, hồi chiêu −8%, vùng phép +8%.",
+      "sub": {
+        "at": 2,
+        "effects": {
+          "max_hp": {
+            "add": 10.0
+          }
+        },
+        "desc": "Máu tối đa +10."
+      }
     },
     "aegis_helm": {
       "name": "Mũ Thần Hộ",
@@ -406,7 +500,25 @@
           "add": 4.0
         }
       },
-      "desc": "+40 máu tối đa, +4 giáp."
+      "desc": "+40 máu tối đa, +4 giáp.",
+      "sub": {
+        "at": 2,
+        "effects": {
+          "regen": {
+            "add": 1.5
+          }
+        },
+        "desc": "Hồi máu +1.5/giây."
+      },
+      "special": {
+        "at": 3,
+        "kind": "shield",
+        "name": "Thần hộ",
+        "every": 15.0,
+        "buff": "magnetic_shield",
+        "time": 3.0,
+        "desc": "Mỗi 15 giây: Khiên từ trong 3 giây, miễn mọi sát thương."
+      }
     },
     "void_crown": {
       "name": "Vương miện hư không",
@@ -425,7 +537,27 @@
           "add": 2.0
         }
       },
-      "desc": "Hồi chiêu −15%, sát thương +10%, hồi 2 máu/giây."
+      "desc": "Hồi chiêu −15%, sát thương +10%, hồi 2 máu/giây.",
+      "sub": {
+        "at": 2,
+        "effects": {
+          "magnet": {
+            "mul": 0.3
+          }
+        },
+        "desc": "Tầm hút +30%."
+      },
+      "special": {
+        "at": 3,
+        "kind": "chain_shock",
+        "name": "Lôi ấn",
+        "every": 8.0,
+        "count": 6,
+        "damage_mul": 1.2,
+        "chain": 2,
+        "radius": 120.0,
+        "desc": "Mỗi 8 giây: sét đánh 6 quái gần nhất (120% sát thương), lan sang 2 quái bên cạnh."
+      }
     },
     "aegis_chest": {
       "name": "Giáp Thần Hộ",
@@ -444,7 +576,26 @@
           "add": 1.0
         }
       },
-      "desc": "+6 giáp, +40 máu tối đa, hồi 1 máu/giây."
+      "desc": "+6 giáp, +40 máu tối đa, hồi 1 máu/giây.",
+      "sub": {
+        "at": 2,
+        "effects": {
+          "move_speed": {
+            "mul": 0.08
+          }
+        },
+        "desc": "Tốc độ chạy +8%."
+      },
+      "special": {
+        "at": 3,
+        "kind": "retaliate",
+        "name": "Phản chấn",
+        "cooldown": 2.0,
+        "radius": 130.0,
+        "damage_mul": 1.5,
+        "knockback": 260.0,
+        "desc": "Khi bị đánh: chấn sóng quanh người gây 150% sát thương và đẩy lùi (2 giây một lần)."
+      }
     },
     "void_heart": {
       "name": "Áo choàng trái tim",
@@ -463,7 +614,24 @@
           "add": 25.0
         }
       },
-      "desc": "Sát thương +18%, vùng phép +18%, +25 máu tối đa."
+      "desc": "Sát thương +18%, vùng phép +18%, +25 máu tối đa.",
+      "sub": {
+        "at": 2,
+        "effects": {
+          "cooldown": {
+            "mul": -0.08
+          }
+        },
+        "desc": "Hồi chiêu −8%."
+      },
+      "special": {
+        "at": 3,
+        "kind": "revive",
+        "name": "Tim bất diệt",
+        "hp": 0.4,
+        "invuln": 2.0,
+        "desc": "Một lần mỗi trận: hết máu thì đứng dậy với 40% máu, miễn sát thương 2 giây."
+      }
     },
     "aegis_blade": {
       "name": "Kiếm Thần Hộ",
@@ -479,7 +647,26 @@
           "mul": 0.15
         }
       },
-      "desc": "Sát thương +25%, vùng đánh +15%."
+      "desc": "Sát thương +25%, vùng đánh +15%.",
+      "sub": {
+        "at": 2,
+        "effects": {
+          "cooldown": {
+            "mul": -0.08
+          }
+        },
+        "desc": "Hồi chiêu −8%."
+      },
+      "special": {
+        "at": 3,
+        "kind": "pulse",
+        "name": "Thánh kiếm",
+        "every": 6.0,
+        "radius": 150.0,
+        "damage_mul": 2.5,
+        "knockback": 160.0,
+        "desc": "Mỗi 6 giây: một vòng kiếm quanh người gây 250% sát thương."
+      }
     },
     "void_eternal": {
       "name": "Gậy Vĩnh Cửu",
@@ -498,7 +685,23 @@
           "mul": 0.15
         }
       },
-      "desc": "Sát thương +22%, hồi chiêu −12%, vùng phép +15%."
+      "desc": "Sát thương +22%, hồi chiêu −12%, vùng phép +15%.",
+      "sub": {
+        "at": 2,
+        "effects": {
+          "max_hp": {
+            "add": 20.0
+          }
+        },
+        "desc": "Máu tối đa +20."
+      },
+      "special": {
+        "at": 3,
+        "kind": "reset_cd",
+        "name": "Vĩnh cửu",
+        "every": 12.0,
+        "desc": "Mỗi 12 giây: mọi chiêu hồi chiêu xong ngay."
+      }
     }
   }
 }

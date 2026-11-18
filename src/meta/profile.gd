@@ -80,13 +80,43 @@ func enhance(id: String, gold: Dictionary) -> bool:
 func effects_of(id: String) -> Dictionary:
 	var k := 1.0 + PLUS_STEP * plus_of(id)
 	var out := {}
-	var eff: Dictionary = defs.get(id, {}).get("effects", {})
-	for stat: String in eff:
-		var e: Dictionary = eff[stat].duplicate()
-		for key in ["add", "mul"]:
-			if e.has(key):
-				e[key] = float(e[key]) * k
-		out[stat] = e
+	var parts: Array = [defs.get(id, {}).get("effects", {})]
+	if sub_open(id):   # Dòng phụ: added once unlocked, enhanced like the main line
+		parts.append(defs[id]["sub"].get("effects", {}))
+	for eff: Dictionary in parts:
+		for stat: String in eff:
+			var e: Dictionary = out.get(stat, {}).duplicate()
+			for key in ["add", "mul"]:
+				if eff[stat].has(key):
+					e[key] = float(e.get(key, 0.0)) + float(eff[stat][key]) * k
+			out[stat] = e
+	return out
+
+
+## Dòng phụ of [param id] is active: the item has one and its Cường hoá level
+## reached the line's "at" (design/equipment.md).
+func sub_open(id: String) -> bool:
+	var sub: Dictionary = defs.get(id, {}).get("sub", {})
+	return not sub.is_empty() and plus_of(id) >= int(sub.get("at", 0))
+
+
+## Hiệu ứng đặc biệt of [param id] (legendary) is active: Cường hoá reached its "at".
+func special_open(id: String) -> bool:
+	var sp: Dictionary = defs.get(id, {}).get("special", {})
+	return not sp.is_empty() and plus_of(id) >= int(sp.get("at", 0))
+
+
+## Active special effects of what class [param cls] wears: the "special" entries
+## of unlocked items, each with "item" = the item id (the damage source).
+func specials(cls: String) -> Array:
+	var out := []
+	var w := equipped(cls)
+	for slot: String in SLOTS:
+		var id := String(w.get(slot, ""))
+		if id != "" and special_open(id):
+			var sp: Dictionary = defs[id]["special"].duplicate()
+			sp["item"] = id
+			out.append(sp)
 	return out
 
 
