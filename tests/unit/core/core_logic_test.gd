@@ -21,6 +21,19 @@ func _pool() -> Array:
 
 # --- XpCurve -----------------------------------------------------------------
 
+func test_xp_curve_big_gain_gives_at_most_one_level() -> void:
+	# user 2026-11-18: one big pickup (elite x8, boss 200) gave many level-ups at once
+	var c := XpCurve.from_config({"base": 6.0, "growth": 1.22, "flat": 2.0, "max_levels_per_gain": 1, "overflow_keep": 0.5})
+	var r := c.add(1, 0.0, 200.0)
+	_check(int(r[2]) == 1 and int(r[0]) == 2, "200 xp at level 1 gives one level, got %s" % [r])
+	_check(float(r[1]) <= c.xp_to_next(2) * 0.5, "overflow kept at most half the next bar, got %.1f" % float(r[1]))
+
+
+func test_run_config_caps_levels_per_gain() -> void:
+	var cfg := GameData.load_json("res://assets/data/run_config.json")
+	_check(int(cfg["xp"].get("max_levels_per_gain", 0)) == 1, "run_config xp.max_levels_per_gain must be 1")
+
+
 func test_xp_curve_first_levels_follow_formula() -> void:
 	var c := XpCurve.new(6.0, 1.22, 2.0)
 	_check(c.xp_to_next(1) == 6, "L1 should need 6, got %d" % c.xp_to_next(1))

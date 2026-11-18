@@ -13,7 +13,10 @@
     "base": 5.0,
     "growth": 1.22,
     "flat": 2.0,
-    "_formula": "xp_to_next(L) = round(base * growth^(L-1) + flat * (L-1))"
+    "_formula": "xp_to_next(L) = round(base * growth^(L-1) + flat * (L-1))",
+    "max_levels_per_gain": 1,
+    "overflow_keep": 0.5,
+    "_cap_doc": "One xp gain (a gem, an elite, the boss) gives at most max_levels_per_gain levels; the overflow fills at most overflow_keep of the next bar, the rest is lost (user 2026-11-18: many level-ups at once broke the balance)."
   },
   "pickups": {
     "radius": 70.0,

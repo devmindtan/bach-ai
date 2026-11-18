@@ -10,6 +10,10 @@ extends RefCounted
 var base: float
 var growth: float
 var flat: float
+## Most levels one gain can give (0 = no cap) and the share of the next bar the
+## overflow may fill (user 2026-11-18: one big pickup gave many level-ups).
+var max_gain := 0
+var overflow_keep := 0.5
 
 
 func _init(p_base: float, p_growth: float, p_flat: float) -> void:
@@ -20,7 +24,10 @@ func _init(p_base: float, p_growth: float, p_flat: float) -> void:
 
 ## Builds the curve from the "xp" block of run_config.json.
 static func from_config(cfg: Dictionary) -> XpCurve:
-	return XpCurve.new(float(cfg.get("base", 6.0)), float(cfg.get("growth", 1.22)), float(cfg.get("flat", 2.0)))
+	var c := XpCurve.new(float(cfg.get("base", 6.0)), float(cfg.get("growth", 1.22)), float(cfg.get("flat", 2.0)))
+	c.max_gain = int(cfg.get("max_levels_per_gain", 0))
+	c.overflow_keep = clampf(float(cfg.get("overflow_keep", 0.5)), 0.0, 0.99)
+	return c
 
 
 ## XP needed to go from [param level] to level + 1 (at least 1).
@@ -38,4 +45,7 @@ func add(level: int, current: float, xp: float) -> Array:
 		c -= xp_to_next(l)
 		l += 1
 		gained += 1
+		if max_gain > 0 and gained >= max_gain:
+			c = minf(c, floorf(xp_to_next(l) * overflow_keep))
+			break
 	return [l, c, gained]
