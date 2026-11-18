@@ -11,7 +11,7 @@ extends RefCounted
 ##   e.hit_circle(center, 80.0, 12.0)                           # kills land in kill_pos / kill_xp
 
 enum { MOVE, WINDUP, DASH, DYING }
-enum { CHASE, SWARM, CHARGE, BOSS_SLIME, SHOOT }
+enum { CHASE, SWARM, CHARGE, BOSS_SLIME, SHOOT, ZIGZAG }
 
 const HURT_FLASH := 0.12
 const KNOCKBACK_DECAY := 10.0
@@ -184,7 +184,7 @@ func _init(monsters: Dictionary, cfg: Dictionary, sheets: Dictionary, seed_value
 			_register(id + "@elite", m, sheets.get(String(m.get("sprite", id))), world_scale, elite)
 
 
-const BEHAVIOURS := {"chase": CHASE, "swarm": SWARM, "charge": CHARGE, "boss_slime": BOSS_SLIME, "shoot": SHOOT}
+const BEHAVIOURS := {"chase": CHASE, "swarm": SWARM, "charge": CHARGE, "boss_slime": BOSS_SLIME, "shoot": SHOOT, "zigzag": ZIGZAG}
 
 
 ## One monster kind; [param elite] = multipliers (hp_mul, damage_mul, scale_mul,
@@ -510,6 +510,11 @@ func _velocity(i: int, k: int, dir: Vector2, dist: float, delta: float) -> Vecto
 			return _boss_slime(i, k, dir, speed, delta)
 		SHOOT:
 			return _shooter(i, k, dir, dist, speed, delta)
+		ZIGZAG:   # Ma Trơi: sharp alternating diagonals every zig_time s (design 6A)
+			var e: Dictionary = k_extra[k]
+			var leg := floori((_time + phase[i]) / maxf(0.05, float(e.get("zig_time", 0.5))))
+			var side := 1.0 if leg % 2 == 0 else -1.0
+			return dir.rotated(deg_to_rad(float(e.get("zig_angle", 55.0))) * side) * speed
 		_:
 			return dir * speed
 

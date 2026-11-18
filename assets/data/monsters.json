@@ -1,5 +1,5 @@
 {
-  "_doc": "Monster stats at stage 1 (stage scaling comes in phase 3). behaviour: chase | swarm | charge | boss_slime (winds up, jumps to where the player was, slam on landing; split_at fractions of hp spawn split_count split_into). boss: true = HUD bar, the stage is won when it dies. body circle (contact, being hit) comes from the sprite json 'body', not from here. xp = gem value. See design/monsters.md. behaviour shoot (design 6A): keeps keep_range, every shoot_every s within shoot_range winds up (windup s) and fires a bolt (bolt_sprite, bolt_speed px/s, bolt_damage, bolt_range px, bolt_radius). explode {delay s, radius px, damage}: on death a warning ring at the body, then a blast hurting a player inside (Bọ Lửa). Boss phases (design 6A): rage_at (hp share) switches to rage_jump_every / rage_windup and a shockwave ring on every slam {speed px/s, max px, width px, damage}; volley {every s, count, spread_deg} fires bolts (bolt_* keys) in phase 1 and 2.",
+  "_doc": "Monster stats at stage 1 (stage scaling comes in phase 3). behaviour: chase | swarm | charge | boss_slime (winds up, jumps to where the player was, slam on landing; split_at fractions of hp spawn split_count split_into). boss: true = HUD bar, the stage is won when it dies. body circle (contact, being hit) comes from the sprite json 'body', not from here. xp = gem value. See design/monsters.md. behaviour shoot (design 6A): keeps keep_range, every shoot_every s within shoot_range winds up (windup s) and fires a bolt (bolt_sprite, bolt_speed px/s, bolt_damage, bolt_range px, bolt_radius). zigzag (Ma Trơi, design 6A): closes in on legs of zig_time s, turned zig_angle degrees left then right. explode {delay s, radius px, damage}: on death a warning ring at the body, then a blast hurting a player inside (Bọ Lửa). Boss phases (design 6A): rage_at (hp share) switches to rage_jump_every / rage_windup and a shockwave ring on every slam {speed px/s, max px, width px, damage}; volley {every s, count, spread_deg} fires bolts (bolt_* keys) in phase 1 and 2.",
   "slime": {
     "sprite": "slime",
     "behaviour": "chase",
@@ -108,5 +108,17 @@
       "radius": 64.0,
       "damage": 18.0
     }
+  },
+  "wisp": {
+    "name": "Ma Trơi",
+    "sprite": "wisp",
+    "behaviour": "zigzag",
+    "hp": 12.0,
+    "damage": 6.0,
+    "speed": 105.0,
+    "xp": 1.0,
+    "scale": 2,
+    "zig_angle": 55.0,
+    "zig_time": 0.45
   }
 }

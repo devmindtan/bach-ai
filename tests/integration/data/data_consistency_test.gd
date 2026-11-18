@@ -4,7 +4,7 @@ extends RefCounted
 
 const DATA := "res://assets/data/"
 const SPRITES := "res://assets/sprites/custom/"
-const BEHAVIOURS := ["chase", "swarm", "charge", "boss_slime", "shoot"]
+const BEHAVIOURS := ["chase", "swarm", "charge", "boss_slime", "shoot", "zigzag"]
 
 var failures: Array[String] = []
 
