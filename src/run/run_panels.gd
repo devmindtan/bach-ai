@@ -722,6 +722,9 @@ func show_end(won: bool) -> void:
 	var rr: Dictionary = run.run_result if "run_result" in run else {}
 	if not rr.is_empty():
 		title = "Vượt ải %d!" % int(rr.get("stage", 0)) if won else "Thất bại · Ải %d" % int(rr.get("stage", 0))
+		if String(rr.get("challenge", "")) != "":   # a challenge: its name, not the base stage
+			var cname := String(Challenges.load_default().get_def(String(rr["challenge"])).get("name", ""))
+			title = ("Vượt thử thách: %s!" % cname) if won else ("Thất bại · %s" % cname)
 	var root := _open(title)
 	var t := int(run.clock)
 	var row := HBoxContainer.new()
@@ -734,7 +737,10 @@ func show_end(won: bool) -> void:
 	root.add_child(row)
 	if not rr.is_empty():
 		var parts := PackedStringArray()
-		if won:
+		if won and String(rr.get("challenge", "")) != "":
+			parts.append("Vàng +%d +%d (nhặt)" % [int(rr.get("stage_gold", 0)), int(rr.get("collected", 0))])
+			parts.append("Tẩy Tủy Đan +%d%s" % [int(rr.get("pills", 0)), " (lần đầu)" if bool(rr.get("first", false)) else ""])
+		elif won:
 			parts.append("Vàng +%d (ải) +%d (nhặt)" % [int(rr.get("stage_gold", 0)), int(rr.get("collected", 0))])
 			parts.append("Đá +%d%s" % [int(rr.get("gems", 0)), " (lần đầu)" if bool(rr.get("first", false)) else ""])
 		else:

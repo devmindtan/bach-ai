@@ -25,7 +25,10 @@ Sảnh chỉ còn chuẩn bị nhân vật (trang bị, xem chỉ số); không 
 - Trên: "Chọn ải" bên trái; "Quay lại (Esc)" bên phải.
 - Trái (cột 220 px): **chế độ chơi**, mỗi chế độ một nút dọc:
   - **Vượt ải** (đang có): 30 ải, mở dần;
-  - **Vô tận**, **Thử thách**: hiện khoá, dòng phụ "Sắp có" (đợt sau). Bấm không làm gì.
+  - **Thử thách** (`design/challenge.md`): mở khi vượt ải 10 (trước đó khoá, ghi điều kiện). Chọn thì cột giữa là các
+    thẻ thử thách (tên, luật, dựa trên ải nào, thời gian, phần thưởng Tẩy Tủy Đan, số lần đã thắng hoặc điều kiện mở),
+    dưới là khung "Đang có n Tẩy Tủy Đan" và chỗ dùng; cột phải là chi tiết thử thách; Bắt đầu chơi thử thách đó.
+  - **Vô tận**: hiện khoá, dòng phụ "Sắp có". Bấm không làm gì.
 - Giữa: lưới ải của chế độ đang chọn: 3 hàng (vùng: tên vùng ở đầu hàng) × 10 ô. Ô: số ải; ✓ khi đã vượt; viền
   vàng + đầu lâu cho ải boss; mờ khi chưa mở. Ô đang chọn viền trắng.
 - Phải (cột 330 px): **chi tiết ải đang chọn**: tên ải, vùng, BOSS nếu có; thời gian trụ; độ khó so với ải 1

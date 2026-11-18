@@ -27,6 +27,7 @@ var monster_hp := true
 var hero := "knight"                # the class chosen in the lobby (classes.json id)
 var slot_id := ""                   # the selected character slot ("" = legacy profile)
 var stage_target := 1               # the stage the lobby will start
+var challenge_target := ""          # a challenge chosen on the stage screen (design/challenge.md); "" = a stage
 var _fixed := false
 var _profile: Profile                 # screenshots / tests: defaults, never touch the window
 var _store: SlotStore                 # character slots (user://slots, phase 3)

@@ -39,6 +39,8 @@ var tree_owner: Slot          # whose skill tree applies (the active slot; the p
 var skill_tree: SkillTree
 var run_result: Dictionary = {}
 var _boss_dead := false
+var challenge_id := ""        # playing a challenge (design/challenge.md); --challenge=ID for shots
+var _win_on_boss := true
 var _delayed: Array = []
 var profile: Profile                # equipment (Prefs.current().profile())
 var won_items: Array[String] = []   # equipment won this run (end screen)
@@ -169,7 +171,15 @@ func _ready() -> void:
 		if not _stage_arg_set:
 			stage_number = clampi(prefs.stage_target, 1, stages.count())
 	stage_number = clampi(stage_number, 1, stages.count())
-	stage = stages.load_stage(stage_number)
+	if challenge_id == "":
+		challenge_id = prefs.challenge_target
+	if challenge_id != "" and not Challenges.load_default().get_def(challenge_id).is_empty():
+		stage = Challenges.load_default().build(challenge_id)   # a stage with the challenge's rules
+		stage_number = int(Challenges.load_default().get_def(challenge_id).get("base", stage_number))
+		_win_on_boss = bool(stage.get("win_on_boss", true))
+	else:
+		challenge_id = ""
+		stage = stages.load_stage(stage_number)
 	stage_ground = stages.ground(stage_number)
 	duration = float(stage.get("duration", 300.0))
 	var monsters := GameData.load_json(DATA + "monsters.json")
@@ -223,7 +233,7 @@ func _ready() -> void:
 		hero_sheet.compose_layers()
 
 	enemies = Enemies.new(monsters, cfg, sheets, rng.seed)
-	enemies.scale_kinds(stages.hp_mul(stage_number), stages.damage_mul(stage_number))
+	enemies.scale_kinds(stages.hp_mul(stage_number) * float(stage.get("hp_mul", 1.0)), stages.damage_mul(stage_number))
 	for k in enemies.k_hp.size():
 		enemies.k_hp[k] *= monster_hp_mul
 	enemies.vs_status_mul = passive_vs_status()
@@ -330,6 +340,8 @@ func _parse_args() -> void:
 				offer.append(id)
 		elif a.begins_with("--pick-card="):
 			_pick_card = a.get_slice("=", 1)
+		elif a.begins_with("--challenge="):
+			challenge_id = a.get_slice("=", 1)
 		elif a.begins_with("--milestone="):
 			_ms_queue.append(int(a.get_slice("=", 1)))
 		elif a.begins_with("--rewards="):
@@ -451,7 +463,7 @@ func _tick(dt: float) -> void:
 	_step_damage_numbers(dt)
 	if hp <= 0.0:
 		_die()
-	elif (clock >= duration or _boss_dead) and bench == 0:
+	elif (clock >= duration or (_boss_dead and _win_on_boss)) and bench == 0:
 		_win()
 
 
@@ -1459,7 +1471,13 @@ func _finish(won: bool) -> void:
 		"essence": pickups.essence if pickups != null else 0}
 	if playing_slot != null and stages != null and not prefs.is_fixed():
 		playing_slot.essence += int(run_result["essence"])   # Tinh hoa picked up is kept, won or lost
-		if won:
+		if won and challenge_id != "":   # a challenge: Tẩy Tủy Đan, never stage progress
+			var c := Challenges.load_default().record_win(playing_slot, challenge_id)
+			playing_slot.gold += gold
+			run_result["stage_gold"] = int(c["gold"])
+			run_result["pills"] = int(c["pills"])
+			run_result["first"] = bool(c["first"])
+		elif won:
 			var r := playing_slot.record_win(stage_number, stages)
 			playing_slot.gold += gold   # coins picked up in the run, on top of stage gold
 			run_result["stage_gold"] = int(r.get("gold", 0))
@@ -1468,7 +1486,8 @@ func _finish(won: bool) -> void:
 		else:
 			playing_slot.gold += gold   # Thua: chỉ giữ vàng đã nhặt
 		prefs.slot_store().save(playing_slot)
-	run_result["next"] = won and stage_number < (stages.count() if stages != null else 30)
+	run_result["next"] = won and challenge_id == "" and stage_number < (stages.count() if stages != null else 30)
+	run_result["challenge"] = challenge_id
 	run_result["best"] = playing_slot.best if playing_slot != null else 0
 
 

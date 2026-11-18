@@ -11,8 +11,6 @@ extends Node2D
 const LOBBY_SCENE := "res://src/lobby/lobby.tscn"
 const RUN_SCENE := "res://src/run/run.tscn"
 const TILE := Vector2(56, 52)
-const MODES := [["campaign", "Vượt ải", "30 ải, mở dần", true],
-	["endless", "Vô tận", "Sắp có", false], ["trials", "Thử thách", "Sắp có", false]]
 const BOSS_GOLD := Color("f2c14e")
 const TILE_LOCKED := Color("15121e")
 const TILE_CLEARED := Color("1f3a26")
@@ -22,6 +20,9 @@ var _monsters := {}
 var _sheets := {}
 var _slot: Slot
 var _n := 1
+var _mode := "campaign"   # "campaign" or "trials" (design/challenge.md)
+var _ch := ""             # the challenge shown in trials mode
+var _challenges: Challenges
 var _scroll := Vector2.ZERO
 var _layer: CanvasLayer
 
@@ -39,6 +40,15 @@ func _ready() -> void:
 		get_tree().change_scene_to_file.call_deferred("res://src/front/characters.tscn")
 		return
 	_n = clampi(prefs.stage_target, 1, _slot.unlocked(_stages.count()))
+	_challenges = Challenges.load_default()
+	if prefs.challenge_target != "" and _challenges.mode_open(_slot):
+		_mode = "trials"
+		_ch = prefs.challenge_target
+	for a in OS.get_cmdline_user_args():
+		if a == "--trials":   # shots of the challenge mode
+			_mode = "trials"
+	if _ch == "":
+		_ch = _challenges.ids()[0]
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--stage-pick="):
 			_n = clampi(int(a.get_slice("=", 1)), 1, _stages.count())
@@ -72,7 +82,7 @@ func _build() -> void:
 	root.size = get_viewport_rect().size
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_layer.add_child(root)
-	var title := UiKit.label("Chọn ải", 34, UiKit.GOLD)
+	var title := UiKit.label("Chọn ải" if _mode == "campaign" else "Thử thách", 34, UiKit.GOLD)
 	title.position = Vector2(40, 24)
 	root.add_child(title)
 	var who := UiKit.label("%s  ·  đã vượt ải %d" % [_slot.name, _slot.best], 15, UiKit.MUTED)
@@ -88,8 +98,18 @@ func _build() -> void:
 	modes.add_theme_constant_override("separation", 10)
 	root.add_child(modes)
 	modes.add_child(UiKit.label("Chế độ", 16, UiKit.GOLD))
-	for m in MODES:
-		modes.add_child(_mode_button(m[1], m[2], m[3], m[0] == "campaign"))
+	modes.add_child(_mode_button("Vượt ải", "30 ải, mở dần", true, _mode == "campaign", func() -> void:
+		_mode = "campaign"
+		_rebuild()))
+	var t_open := _challenges.mode_open(_slot)
+	modes.add_child(_mode_button("Thử thách", ("%d thử thách" % _challenges.ids().size()) if t_open else "Mở khi vượt ải %d" % _challenges.mode_unlock(),
+		t_open, _mode == "trials", func() -> void:
+		_mode = "trials"
+		_rebuild()))
+	modes.add_child(_mode_button("Vô tận", "Sắp có", false, false, func() -> void: pass))
+	if _mode == "trials":
+		_build_trials(root)
+		return
 
 	# middle: the stage grid, a row per region
 	var grid := VBoxContainer.new()
@@ -162,7 +182,7 @@ func _build() -> void:
 		chosen_tile.call_deferred("grab_focus")
 
 
-func _mode_button(name: String, line: String, open: bool, on: bool) -> Button:
+func _mode_button(name: String, line: String, open: bool, on: bool, cb: Callable) -> Button:
 	var b := Button.new()
 	b.custom_minimum_size = Vector2(220, 64)
 	b.focus_mode = Control.FOCUS_ALL if open else Control.FOCUS_NONE
@@ -180,6 +200,7 @@ func _mode_button(name: String, line: String, open: bool, on: bool) -> Button:
 	b.add_child(v)
 	v.add_child(UiKit.label(name, 20, UiKit.TEXT if open else Color("6a6478")))
 	v.add_child(UiKit.label(line, 13, UiKit.MUTED if open else Color("5a5468")))
+	b.pressed.connect(cb)
 	return b
 
 
@@ -319,5 +340,166 @@ func _monster_box(id: String) -> Control:
 func _start() -> void:
 	if _n > _slot.unlocked(_stages.count()):
 		return
+	Prefs.current().challenge_target = ""
 	Prefs.current().set_value("stage_target", _n)
 	get_tree().change_scene_to_file(RUN_SCENE)
+
+
+# --- challenge mode (design/challenge.md) ------------------------------------------
+
+## The challenges as cards in the middle, the chosen one on the right, then Bắt đầu.
+func _build_trials(root: Control) -> void:
+	var col := VBoxContainer.new()
+	col.position = Vector2(284, 104)
+	col.add_theme_constant_override("separation", 10)
+	root.add_child(col)
+	col.add_child(UiKit.label("Luật riêng, cày lại được; thắng nhận Tẩy Tủy Đan để đặt lại cây kỹ năng.", 15, UiKit.MUTED))
+	var chosen: Button = null
+	for id in _challenges.ids():
+		var card := _challenge_card(id)
+		col.add_child(card)
+		if id == _ch:
+			chosen = card
+	# what the pills are for, under the cards (bottom lined up with the detail column)
+	var info := UiKit.panel(Color(0.09, 0.08, 0.13, 0.9), 16)
+	info.position = Vector2(284, 520)
+	info.custom_minimum_size = Vector2(614, 84)
+	info.size = info.custom_minimum_size
+	root.add_child(info)
+	var ih := HBoxContainer.new()
+	ih.add_theme_constant_override("separation", 14)
+	info.add_child(ih)
+	ih.add_child(UiKit.icon("pill", 40.0))
+	var iv := VBoxContainer.new()
+	iv.add_theme_constant_override("separation", 2)
+	ih.add_child(iv)
+	iv.add_child(UiKit.label("Đang có %d Tẩy Tủy Đan" % _slot.pills, 18, UiKit.TEXT))
+	iv.add_child(UiKit.label("Dùng ở Cây kỹ năng: 1 viên + vàng để đặt lại cây, hoàn đủ Tinh hoa.", 14, UiKit.MUTED))
+	var panel := UiKit.panel(Color(0.09, 0.08, 0.13, 0.96), 18)
+	panel.position = Vector2(root.size.x - 40 - 330, 104)
+	panel.custom_minimum_size = Vector2(330, 500)
+	panel.size = Vector2(330, 500)
+	root.add_child(panel)
+	_challenge_detail(panel)
+	var start := UiKit.button("Bắt đầu  ▶", func() -> void:
+		Prefs.current().challenge_target = _ch
+		get_tree().change_scene_to_file(RUN_SCENE), Vector2(330, 64), 26, UiKit.PRIMARY)
+	start.position = Vector2(root.size.x - 40 - 330, 616)
+	start.disabled = not _challenges.is_open(_slot, _ch)
+	root.add_child(start)
+	if not start.disabled:
+		start.call_deferred("grab_focus")
+	elif chosen != null:
+		chosen.call_deferred("grab_focus")
+
+
+func _challenge_card(id: String) -> Button:
+	var c := _challenges.get_def(id)
+	var open := _challenges.is_open(_slot, id)
+	var on := id == _ch
+	var wins := int(_slot.challenge_wins.get(id, 0))
+	var b := Button.new()
+	b.custom_minimum_size = Vector2(614, 112)
+	b.focus_mode = Control.FOCUS_ALL
+	var border := Color.WHITE if on else (UiKit.GOLD if open else Color("3a3448"))
+	b.add_theme_stylebox_override("normal", UiKit.style(UiKit.PANEL if open else TILE_LOCKED, 12, border, 3 if on else 2))
+	b.add_theme_stylebox_override("disabled", UiKit.style(TILE_LOCKED, 12, border, 2))
+	for st in ["hover", "focus", "pressed"]:
+		b.add_theme_stylebox_override(st, UiKit.style(UiKit.PANEL_HOVER, 12, Color.WHITE, 3))
+	var h := HBoxContainer.new()
+	h.set_anchors_preset(Control.PRESET_FULL_RECT)
+	h.offset_left = 14
+	h.offset_right = -14
+	h.offset_top = 12
+	h.add_theme_constant_override("separation", 14)
+	h.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.add_child(h)
+	var box := UiKit.panel(UiKit.PANEL_DARK, 4, UiKit.GOLD if open else Color("3a3448"))
+	box.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var ic := UiKit.icon("pill", 40.0)
+	ic.modulate = Color.WHITE if open else Color(1, 1, 1, 0.35)
+	box.add_child(ic)
+	h.add_child(box)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 2)
+	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	h.add_child(v)
+	var head := HBoxContainer.new()
+	head.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	v.add_child(head)
+	var nm := UiKit.label(String(c.get("name", id)), 21, UiKit.TEXT if open else Color("6a6478"))
+	nm.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	nm.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	head.add_child(nm)
+	var right := ("Đã thắng %d lần" % wins) if wins > 0 else ("Chưa thắng" if open else "Mở khi vượt ải %d" % int(c.get("unlock", 0)))
+	var rl := UiKit.label(right, 14, Color("8fd08a") if wins > 0 else UiKit.MUTED)
+	rl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	head.add_child(rl)
+	var dl := UiKit.label(String(c.get("desc", "")), 15, UiKit.TEXT if open else Color("6a6478"))
+	dl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	v.add_child(dl)
+	var dur := int(c.get("duration", 300))
+	var ml := UiKit.label("Dựa trên ải %d  ·  %d phút  ·  Tẩy Tủy Đan +%d lần đầu, +%d các lần sau" % [
+		int(c.get("base", 1)), dur / 60, int(_challenges.data.get("pills_first", 2)), int(_challenges.data.get("pills", 1))], 13, UiKit.MUTED)
+	ml.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	v.add_child(ml)
+	b.disabled = not open
+	b.pressed.connect(func() -> void:
+		_ch = id
+		_rebuild())
+	return b
+
+
+func _challenge_detail(panel: PanelContainer) -> void:
+	var c := _challenges.get_def(_ch)
+	var st := _challenges.build(_ch)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 10)
+	panel.add_child(v)
+	v.add_child(UiKit.label(String(c.get("name", _ch)), 30, UiKit.TEXT))
+	var sl := UiKit.label("Dựa trên ải %d · %s" % [int(c.get("base", 1)), String(st.get("region", ""))], 16, UiKit.GOLD)
+	v.add_child(sl)
+	var tags := HBoxContainer.new()
+	tags.add_theme_constant_override("separation", 18)
+	v.add_child(tags)
+	var dur := int(st.get("duration", 180))
+	tags.add_child(UiKit.stat("clock", "%02d:%02d" % [dur / 60, dur % 60], "Thời gian trụ", 16))
+	if bool(st.get("boss", false)):
+		tags.add_child(UiKit.stat("skull", "BOSS", "Có boss; trụ tới hết giờ" if not bool(st.get("win_on_boss", true)) else "Hạ boss là thắng", 16))
+	if not _challenges.is_open(_slot, _ch):
+		v.add_child(UiKit.label("Chưa mở: vượt ải %d trước." % int(c.get("unlock", 0)), 15, Color("ff9a9a")))
+	var d := UiKit.label(String(c.get("desc", "")), 15, UiKit.TEXT)
+	d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	v.add_child(d)
+	v.add_child(UiKit.label("Độ khó (so với ải 1)", 15, UiKit.MUTED))
+	var base := int(c.get("base", 1))
+	var diff := GridContainer.new()
+	diff.columns = 2
+	diff.add_theme_constant_override("h_separation", 24)
+	v.add_child(diff)
+	for row in [["Máu quái", _stages.hp_mul(base) * float(st.get("hp_mul", 1.0))], ["Sát thương quái", _stages.damage_mul(base)]]:
+		diff.add_child(UiKit.label(row[0], 15, UiKit.TEXT))
+		var val := UiKit.label("×%.2f" % float(row[1]), 15, UiKit.TEXT)
+		val.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		val.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		diff.add_child(val)
+	v.add_child(UiKit.label("Quái xuất hiện", 15, UiKit.MUTED))
+	var mons := HBoxContainer.new()
+	mons.add_theme_constant_override("separation", 6)
+	v.add_child(mons)
+	var seen := []
+	for w: Dictionary in st.get("waves", []):
+		var id := String(w.get("monster", "")).get_slice("@", 0)
+		if id != "" and not seen.has(id) and _monsters.has(id):
+			seen.append(id)
+			mons.add_child(_monster_box(id))
+	v.add_child(UiKit.label("Phần thưởng khi thắng", 15, UiKit.MUTED))
+	var rw := HBoxContainer.new()
+	rw.add_theme_constant_override("separation", 18)
+	v.add_child(rw)
+	var first := int(_slot.challenge_wins.get(_ch, 0)) == 0
+	rw.add_child(UiKit.stat("pill", "+%d" % (int(_challenges.data.get("pills_first", 2)) if first else int(_challenges.data.get("pills", 1))), "Tẩy Tủy Đan", 16))
+	rw.add_child(UiKit.stat("coin", "+%d" % int(_stages.rewards(base, false)["gold"]), "Vàng", 16))
+
