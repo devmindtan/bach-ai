@@ -29,6 +29,7 @@ func _run() -> Node:
 		"body": {"anim": "default", "center": [12.0, 12.0], "radius": 6.0}})
 	r.enemies = Enemies.new(monsters, {"max_enemies": 20, "separation": {"push": 0.0}}, {"blob": blob}, 1)
 	r.sheets["stone-ward-break"] = SpriteSheet.load_dir("res://assets/sprites/custom/stone-ward-break", "stone-ward-break")
+	r.sheets["retaliate-shock"] = SpriteSheet.load_dir("res://assets/sprites/custom/retaliate-shock", "retaliate-shock")
 	r._recompute_stats()
 	r.hp = float(r.stats["max_hp"])
 	return r
@@ -102,6 +103,15 @@ func test_retaliate_on_hit_with_a_cooldown() -> void:
 	r.step_specials(2.5)
 	r._take_hit(5.0)
 	_check(r.enemies.hp[0] < after_first, "after the cooldown it fires again")
+	r.free()
+
+
+func test_retaliate_uses_a_slow_shockwave() -> void:
+	var r := _run()
+	r.set_specials([_special("aegis_chest")])
+	r._take_hit(5.0)
+	_check(not r._fx.is_empty() and String(r._fx[0]["anim"]) == "shock", "its own shockwave sprite")
+	_check(float(r._fx[0]["life"]) >= 1.2, "the wave lasts long enough to see")
 	r.free()
 
 

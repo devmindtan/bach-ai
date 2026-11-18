@@ -239,10 +239,18 @@ func _ready() -> void:
 	status_defs = GameData.load_json(DATA + "statuses.json").get("statuses", {})
 	for st: String in status_defs:
 		names.append(String(status_defs[st].get("sprite", "")))
+	for eid: String in items.get("equipment", {}):
+		if eid.begins_with("_"): continue
+		var esp: Dictionary = items["equipment"][eid].get("special", {})
+		if esp.has("fx"):
+			names.append(String(esp["fx"]))
 	for b: String in _buff_defs:
-		names.append(String(_buff_defs[b].get("sprite", b)))
+		if not bool(_buff_defs[b].get("special_only", false)):
+			names.append(String(_buff_defs[b].get("sprite", b)))
 		if _buff_defs[b].has("aura"):
 			names.append(String(_buff_defs[b]["aura"]))
+		if _buff_defs[b].has("aura_back"):
+			names.append(String(_buff_defs[b]["aura_back"]))
 		if _buff_defs[b].has("break_sprite"):   # one-shot when the ward spends its hit
 			names.append(String(_buff_defs[b]["break_sprite"]))
 	for m: String in monsters:
@@ -1454,12 +1462,12 @@ func trigger_special(sp: Dictionary) -> void:
 
 ## A ring burst drawn as big as the damage circle: the scale comes from the
 ## sprite's own hitbox radius, so what the player sees is what gets hit.
-func _ring_fx(reach: float) -> void:
-	var sheet: SpriteSheet = sheets.get("stomp-i")
-	var hb := SpriteHitbox.of(sheet, "burst", Vector2.ZERO, 1.0) if sheet != null else null
+func _ring_fx(reach: float, sprite := "stomp-i", anim := "burst") -> void:
+	var sheet: SpriteSheet = sheets.get(sprite)
+	var hb := SpriteHitbox.of(sheet, anim, Vector2.ZERO, 1.0) if sheet != null else null
 	var r1 := hb.radius if hb != null and hb.radius > 0.0 else 25.0
 	r1 *= float(sheet.meta.get("px_scale", 1.0)) if sheet != null else 1.0   # _add_fx applies px_scale again
-	_add_fx("stomp-i", "burst", reach / r1, 0.0)
+	_add_fx(sprite, anim, reach / r1, 0.0)
 
 
 ## Bàn thạch spends its single charge: the stone shell cracks and flies apart.
@@ -1521,7 +1529,8 @@ func _retaliate() -> void:
 		var dmg := float(stats.get("damage", 10.0)) * float(sp.get("damage_mul", 1.5))
 		var reach := float(sp.get("radius", 130.0)) * float(stats.get("area", 1.0))
 		enemies.hit_circle(player_pos + _hit_center, reach, dmg, float(sp.get("knockback", 260.0)), String(sp.get("item", "")))
-		_ring_fx(reach)
+		var fx_sprite := String(sp.get("fx", "stomp-i"))
+		_ring_fx(reach, fx_sprite, "shock" if fx_sprite == "retaliate-shock" else "burst")
 		Sfx.play("boss_slam")
 
 

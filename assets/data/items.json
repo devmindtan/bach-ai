@@ -292,6 +292,7 @@
         "at": 3,
         "kind": "retaliate",
         "name": "Phản chấn",
+        "fx": "retaliate-shock",
         "cooldown": 2.0,
         "radius": 130.0,
         "damage_mul": 1.5,
