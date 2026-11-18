@@ -129,6 +129,7 @@ công khai trên màn, pity huyền thoại ở lượt 50 mỗi banner, món tr
 **Xong khi:** tỉ lệ thực đo khớp tỉ lệ công bố; người chơi cày đủ đá cho vài lượt quay mỗi buổi chơi (số đo).
 
 ## Đợt 6: Nội dung đủ 100 ải · cỡ XL
+**Kế hoạch nâng cấp (2026-11-18):** `production/upgrade-plan.md` (quái vật, bản đồ, gameplay, giao diện, class mới).
 - 5 vùng × 20 ải (đồng cỏ, nghĩa địa, hang băng, núi lửa, hư không); mỗi vùng 3–4 loài quái mới + 2 boss.
 - Class **Cung thủ** và **Sát thủ** (chiêu và giáp đã có trong Sprite Lab; cần vẽ nhân vật).
 - Tiến hoá chiêu (chiêu cấp 5 + nội tại phù hợp → bản tiến hoá).
@@ -136,6 +137,7 @@ công khai trên màn, pity huyền thoại ở lượt 50 mỗi banner, món tr
 **Xong khi:** ải 100 vượt được với build đầu tư hợp lý, không vượt được với build trống (số đo từ mô phỏng).
 
 ## Đợt 7: Hoàn thiện + Steam · cỡ L
+**🔒 KHOÁ (người dùng 2026-11-18):** không làm, kể cả khi đợt 6 xong, cho tới khi người dùng ưng ý và tự mở.
 **Trạng thái (2026-11-18):** âm thanh xong phần lõi (`design/audio.md`: 31 hiệu ứng + 3 nhạc nền tạo bằng
 `gamekit audio`, âm lượng Nhạc / Hiệu ứng trong Cài đặt); bản 0.2.0 xuất được Linux + Web (font dự phòng cho ký hiệu
 trên Web). Còn: nhạc theo vùng, đổi phím, tay cầm, tiếng Anh, Steam.
@@ -144,6 +146,7 @@ trên Web). Còn: nhạc theo vùng, đổi phím, tay cầm, tiếng Anh, Steam
 - `gamekit export`, kiểm tra trên Windows thật.
 
 ## Đợt 8: Mobile (sau khi có bản PC)
+**🔒 KHOÁ (người dùng 2026-11-18):** không làm, kể cả khi đợt 6 xong, cho tới khi người dùng ưng ý và tự mở.
 - Joystick ảo, UI theo ngón tay, tỉ lệ màn hình; export Android, rồi iOS.
 
 ## Sau đó
