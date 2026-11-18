@@ -45,3 +45,54 @@ func test_last_level_is_a_milestone() -> void:
 	_check(String(pv["milestone"]).ends_with("Cấp tối đa"), "haste 4 -> 5 is the last level, got '%s'" % pv["milestone"])
 	_check(pv["milestones"].has(5), "level 5 marked as milestone")
 	r.free()
+
+
+# Regression (user 2026-11-18 screenshot): with lasting bonuses (skill tree,
+# equipment, milestones, buffs) the "after" side was computed from the cards
+# alone, so it showed a drop: Máu tối đa 105 -> 100, Hồi máu 2.0/s -> 0.5/s,
+# Cầu lửa damage 59 -> 47. "After" must start from the same sources as "now".
+func _run_with_tree(levels: Dictionary, nodes: Array) -> Node:
+	var r: Node = Run.new()
+	var classes := GameData.load_json("res://assets/data/classes.json")
+	r.pool = GameData.load_json("res://assets/data/upgrades_knight.json")
+	r.base_stats = classes["knight"]["stats"]
+	r.class_id = "knight"
+	r.levels = levels
+	var slot := Slot.new({})
+	slot.cls = "knight"
+	slot.tree.assign(nodes)
+	r.tree_owner = slot
+	r._recompute_stats()
+	return r
+
+
+func test_after_keeps_lasting_bonuses_for_stat_cards() -> void:
+	var r := _run_with_tree({"blade_arc": 1}, ["k_guard_1", "k_guard_2", "k_guard_3"])
+	var hp_now := float(r.stats["max_hp"])
+	var pv: Dictionary = r.upgrade_preview("vitality")
+	_check(int(pv["lines"][0][1]) == roundi(hp_now), "now = current max hp %d, got %s" % [roundi(hp_now), pv["lines"][0]])
+	_check(int(pv["lines"][0][2]) > int(pv["lines"][0][1]), "Sinh lực raises max hp, got %s" % [pv["lines"][0]])
+	var rg: Dictionary = r.upgrade_preview("regen")
+	var now_rg := float(String(rg["lines"][0][1]).trim_suffix("/s"))
+	var next_rg := float(String(rg["lines"][0][2]).trim_suffix("/s"))
+	_check(next_rg > now_rg, "Hồi phục raises regen, got %s" % [rg["lines"][0]])
+	r.free()
+
+
+func test_after_keeps_lasting_bonuses_for_skill_cards() -> void:
+	var r := _run_with_tree({"blade_arc": 1, "earth_strike": 2}, ["k_fury_1", "k_fury_2", "k_fury_3"])
+	var pv: Dictionary = r.upgrade_preview("earth_strike")
+	_check(pv["lines"][0][0] == "Sát thương" and int(pv["lines"][0][2]) >= int(pv["lines"][0][1]),
+		"skill damage never drops on its own card, got %s" % [pv["lines"][0]])
+	for line: Array in pv["lines"]:
+		if line[0] == "Cỡ":
+			_check(float(String(line[2]).trim_prefix("×")) >= float(String(line[1]).trim_prefix("×")), "size never drops, got %s" % [line])
+	r.free()
+
+
+func test_skill_card_shows_cooldown() -> void:
+	var r := _run({"blade_arc": 1, "earth_strike": 1})
+	var pv: Dictionary = r.upgrade_preview("earth_strike")
+	var names: Array = pv["lines"].map(func(l: Array) -> String: return l[0])
+	_check(names.has("Hồi chiêu"), "a skill card lists its cooldown, got %s" % [names])
+	r.free()

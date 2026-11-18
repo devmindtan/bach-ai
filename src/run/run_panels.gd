@@ -227,7 +227,7 @@ func _upgrade_card(i: int, id: String) -> Button:
 		change.add_theme_font_size_override("bold_font_size", 15)
 		change.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		change.text = "[right][color=#%s]%s[/color]  →  [b][color=#%s]%s[/color][/b][/right]" % [
-			MUTED.to_html(false), line[1], GAIN.to_html(false), line[2]]
+			MUTED.to_html(false), line[1], (TEXT if line[1] == line[2] else GAIN).to_html(false), line[2]]   # unchanged: not a gain
 		grid.add_child(change)
 	v.add_child(grid)
 	var d := _label(String(u.get("desc", "")), 14, MUTED)

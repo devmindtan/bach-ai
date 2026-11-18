@@ -1339,20 +1339,22 @@ func upgrade_preview(id: String) -> Dictionary:
 	var lv := int(levels.get(id, 0))
 	var nxt := lv + 1
 	var max_lv := int(u.get("max_level", 1))
-	var after_levels := levels.duplicate()
+	# "after" is built from the same sources as the current stats (cards, milestones,
+	# buffs, equipment, skill tree) plus this card one level up; built from the cards
+	# alone it lost every lasting bonus and showed a drop (user 2026-11-18)
+	var after_levels := effect_levels()
 	after_levels[id] = nxt
-	var after := PlayerStats.compute(base_stats, pool.get("upgrades", []), after_levels)
+	var after := PlayerStats.compute(base_stats, effect_pool(), after_levels)
 	var lines := []
 	var skills: Dictionary = pool.get("skills", {})
 	if u.get("kind") == "skill" and skills.has(id):
 		var sp: Dictionary = skills[id]
-		var dmg := func(st: Dictionary) -> float:
-			return float(st["damage"]) * float(sp.get("damage_mul", 1.0)) * PlayerStats.skill_mul(st, "skill_damage." + id)
-		var size := func(st: Dictionary) -> float:
-			return float(st.get("area", 1.0)) * float(sp.get("size_mul", 1.0)) * PlayerStats.skill_mul(st, "skill_area." + id)
-		lines.append(["Sát thương", "—" if lv == 0 else str(roundi(dmg.call(stats))), str(roundi(dmg.call(after)))])
-		if lv == 0 or not is_equal_approx(size.call(stats), size.call(after)):
-			lines.append(["Cỡ", "—" if lv == 0 else "×%.2f" % size.call(stats), "×%.2f" % size.call(after)])
+		lines.append(["Sát thương", "—" if lv == 0 else str(roundi(skill_damage(id, stats))), str(roundi(skill_damage(id, after)))])
+		if lv == 0 or not is_equal_approx(skill_size(id, stats), skill_size(id, after)):
+			lines.append(["Cỡ", "—" if lv == 0 else "×%.2f" % skill_size(id, stats), "×%.2f" % skill_size(id, after)])
+		if sp.has("cooldown"):
+			var cd_now := "—" if lv == 0 else "%.1fs" % skill_cooldown(id, stats)
+			lines.append(["Hồi chiêu", cd_now, "%.1fs" % skill_cooldown(id, after)])
 		# more casts at this level (count grows for dense hordes)
 		var now_n := 0 if lv == 0 else _skill_count(id, sp)
 		levels[id] = nxt
