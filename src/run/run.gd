@@ -2020,6 +2020,7 @@ func _draw() -> void:
 	_draw_zones()
 	_draw_ground_fx()
 	_draw_charge_lanes(view)
+	_draw_pools(view)
 	# dying monsters under the living ones
 	for pass_dying in [true, false]:
 		for i in enemies.count:
@@ -2219,6 +2220,27 @@ func _draw_statuses(view: Rect2) -> void:
 		var sk: SpriteSheet = sheets.get(String(status_defs.get("shock", {}).get("sprite", "")))
 		if sk != null:
 			sk.draw(self, "loop", float(s["t"]), b, _sprite_scale)
+
+
+## Poison pools left by Cóc Độc (design 6A): a toxic green puddle with bubbles,
+## shrinking and fading as it dries up.
+func _draw_pools(view: Rect2) -> void:
+	for b in enemies.pool_pos.size():
+		var p := enemies.pool_pos[b]
+		if not view.grow(60.0).has_point(p):
+			continue
+		var left := clampf(enemies.pool_t[b] / maxf(0.01, enemies.pool_total[b]), 0.0, 1.0)
+		var r := enemies.pool_r[b] * (0.75 + 0.25 * left)
+		var a := 0.35 + 0.35 * minf(1.0, left * 3.0)
+		draw_set_transform(p, 0.0, Vector2(1.0, 0.6))   # flat on the ground
+		draw_circle(Vector2.ZERO, r, Color(0.35, 0.6, 0.12, a))
+		draw_circle(Vector2(-r * 0.2, -r * 0.15), r * 0.6, Color(0.55, 0.85, 0.2, a * 0.8))
+		draw_arc(Vector2.ZERO, r, 0.0, TAU, 32, Color(0.2, 0.35, 0.08, a + 0.2), 2.0)
+		draw_set_transform(Vector2.ZERO)
+		for k in 3:   # bubbles pop in turn
+			var ph := fmod(clock * 1.7 + k * 0.33 + float(b) * 0.21, 1.0)
+			var q := p + Vector2(cos(k * 2.1 + b) * r * 0.5, sin(k * 2.1 + b) * r * 0.3)
+			draw_circle(q, 1.5 + 2.0 * ph, Color(0.75, 1.0, 0.4, a * (1.0 - ph)))
 
 
 ## Telegraphed charges (Sói Rừng, design 6A): the lane a winding-up charger will

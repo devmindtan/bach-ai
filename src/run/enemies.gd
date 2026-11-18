@@ -11,7 +11,7 @@ extends RefCounted
 ##   e.hit_circle(center, 80.0, 12.0)                           # kills land in kill_pos / kill_xp
 
 enum { MOVE, WINDUP, DASH, DYING }
-enum { CHASE, SWARM, CHARGE, BOSS_SLIME, SHOOT, ZIGZAG, BOSS_TREE }
+enum { CHASE, SWARM, CHARGE, BOSS_SLIME, SHOOT, ZIGZAG, BOSS_TREE, HOP }
 
 const HURT_FLASH := 0.12
 const KNOCKBACK_DECAY := 10.0
@@ -124,7 +124,13 @@ var blast_dmg := PackedFloat32Array()
 var blast_total := PackedFloat32Array()  # its full delay (the ring fills as it counts down)
 var blasts_done := PackedVector2Array()  # blasts that went off this step (the run draws them)
 var blast_root := PackedByteArray()      # 1 = a Mộc Yêu root (drawn as roots, not a burst)
-var roots_done := PackedVector2Array()   # roots that erupted this step (the run draws them)
+var roots_done := PackedVector2Array()
+# poison pools (Cóc Độc, design 6A): hurt a player standing inside until they dry up
+var pool_pos := PackedVector2Array()
+var pool_t := PackedFloat32Array()
+var pool_total := PackedFloat32Array()
+var pool_r := PackedFloat32Array()
+var pool_dmg := PackedFloat32Array()   # roots that erupted this step (the run draws them)
 var vs_status_mul := 0.0        # class passive: extra damage taken by monsters with a status   # set by the run from the class sprite's body
 
 var _hash: SpatialHash
@@ -186,7 +192,7 @@ func _init(monsters: Dictionary, cfg: Dictionary, sheets: Dictionary, seed_value
 			_register(id + "@elite", m, sheets.get(String(m.get("sprite", id))), world_scale, elite)
 
 
-const BEHAVIOURS := {"chase": CHASE, "swarm": SWARM, "charge": CHARGE, "boss_slime": BOSS_SLIME, "shoot": SHOOT, "zigzag": ZIGZAG, "boss_tree": BOSS_TREE}
+const BEHAVIOURS := {"chase": CHASE, "swarm": SWARM, "charge": CHARGE, "boss_slime": BOSS_SLIME, "shoot": SHOOT, "zigzag": ZIGZAG, "boss_tree": BOSS_TREE, "hop": HOP}
 
 
 ## One monster kind; [param elite] = multipliers (hp_mul, damage_mul, scale_mul,
@@ -359,7 +365,7 @@ func step(delta: float, player_pos: Vector2, player_center: Vector2) -> float:
 		if int(q[0]) >= 0:
 			spawn(kind_ids[int(q[0])], q[1])
 	_split_q.clear()
-	return maxf(maxf(contact, _step_bolts(delta, player_center)), _step_blasts(delta, player_center))
+	return maxf(maxf(maxf(contact, _step_bolts(delta, player_center)), _step_blasts(delta, player_center)), _step_pools(delta, player_center))
 
 
 ## Shockwave rings grow; one hurts the player once when its edge passes over them.
@@ -436,6 +442,68 @@ func _boss_tree(i: int, k: int, dir: Vector2, dist: float, speed: float, delta: 
 			if ki >= 0:
 				_split_q.append([ki, pos[i] + Vector2.from_angle(s * TAU / 3.0 + phase[i]) * 40.0])
 	return dir * speed
+
+
+## A poison pool at [param p] for [param time] s: a player within [param r] takes
+## [param dmg] (the run's hurt cooldown spaces the hits).
+func add_pool(p: Vector2, time: float, r: float, dmg: float) -> void:
+	pool_pos.append(p)
+	pool_t.append(time)
+	pool_total.append(time)
+	pool_r.append(r)
+	pool_dmg.append(dmg)
+
+
+func _step_pools(delta: float, player_center: Vector2) -> float:
+	var hit := 0.0
+	var b := 0
+	while b < pool_pos.size():
+		pool_t[b] -= delta
+		if pool_t[b] <= 0.0:
+			pool_pos.remove_at(b)
+			pool_t.remove_at(b)
+			pool_total.remove_at(b)
+			pool_r.remove_at(b)
+			pool_dmg.remove_at(b)
+			continue
+		if pool_pos[b].distance_to(player_center) < pool_r[b] + player_hit_radius * 0.5:
+			hit = maxf(hit, pool_dmg[b])
+		b += 1
+	return hit
+
+
+## Cóc Độc: crawls; every hop_every s within hop_range it crouches (WINDUP,
+## windup s), leaps to where the player stood in hop_time s and leaves a pool.
+func _hopper(i: int, k: int, dir: Vector2, dist: float, speed: float, delta: float) -> Vector2:
+	var e: Dictionary = k_extra[k]
+	match state[i]:
+		WINDUP:
+			timer[i] -= delta
+			if timer[i] <= 0.0:
+				state[i] = DASH
+				var ht := float(e.get("hop_time", 0.5))
+				timer[i] = ht
+				dash_dir[i] = (dash_dir[i] - pos[i]) / ht
+				anim_t[i] = 0.0
+			return Vector2.ZERO
+		DASH:
+			timer[i] -= delta
+			if timer[i] <= 0.0:
+				state[i] = MOVE
+				charge_cd[i] = float(e.get("hop_every", 2.5))
+				var pl: Dictionary = e.get("pool", {})
+				if not pl.is_empty():
+					add_pool(pos[i] + dash_dir[i] * delta, float(pl.get("time", 3.0)), float(pl.get("radius", 28.0)), float(pl.get("damage", 8.0)))
+			return dash_dir[i]
+		_:
+			charge_cd[i] -= delta
+			if charge_cd[i] <= 0.0 and dist < float(e.get("hop_range", 240.0)):
+				state[i] = WINDUP
+				timer[i] = float(e.get("windup", 0.4))
+				dash_dir[i] = pos[i] + dir * dist   # where the player stands now
+				anim_t[i] = 0.0
+				return Vector2.ZERO
+			return dir * speed
 
 
 ## Counts down death bursts; one that goes off with the player inside hurts.
@@ -558,6 +626,8 @@ func _velocity(i: int, k: int, dir: Vector2, dist: float, delta: float) -> Vecto
 			return _boss_slime(i, k, dir, speed, delta)
 		SHOOT:
 			return _shooter(i, k, dir, dist, speed, delta)
+		HOP:
+			return _hopper(i, k, dir, dist, speed, delta)
 		BOSS_TREE:
 			return _boss_tree(i, k, dir, dist, speed, delta)
 		ZIGZAG:   # Ma Trơi: sharp alternating diagonals every zig_time s (design 6A)

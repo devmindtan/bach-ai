@@ -1,5 +1,5 @@
 {
-  "_doc": "Region Đầm Lầy Độc (stages 21-29, stages.json): goblins and elites make most of the stage; slimes and bats thin out early. Rates are scaled by the stage (stages.json scale). Same wave rules as stage_001.",
+  "_doc": "Region Đầm Lầy Độc (stages 21-29, stages.json): goblins and elites make most of the stage; slimes and bats thin out early. Rates are scaled by the stage (stages.json scale). Same wave rules as stage_001. Cóc Độc (toad, hops and leaves poison pools) from 30 s; a swarm at 120 s.",
   "name": "Đầm Lầy Độc",
   "duration": 300.0,
   "waves": [
@@ -86,6 +86,20 @@
       "t_to": 260,
       "burst": 3,
       "announce": "3 quái tinh anh xuất hiện!"
+    },
+    {
+      "monster": "toad",
+      "t_from": 30,
+      "t_to": 300,
+      "rate": 0.4,
+      "rate_end": 1.6
+    },
+    {
+      "monster": "toad",
+      "t_from": 120,
+      "t_to": 120,
+      "burst": 14,
+      "announce": "Cóc độc kéo tới!"
     }
   ]
 }
