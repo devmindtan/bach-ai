@@ -19,6 +19,7 @@ static func register() -> void:
 	_add("choose_3", [KEY_3, KEY_KP_3], [JOY_BUTTON_B], [])
 	_add("restart", [KEY_R, KEY_ENTER], [JOY_BUTTON_A], [])
 	_add("character", [KEY_TAB, KEY_C], [JOY_BUTTON_BACK], [])
+	_add("peek", [KEY_H], [JOY_BUTTON_LEFT_SHOULDER], [])   # level-up: hide the cards
 	_add("dash", [KEY_SPACE, KEY_SHIFT], [JOY_BUTTON_RIGHT_SHOULDER], [])
 
 

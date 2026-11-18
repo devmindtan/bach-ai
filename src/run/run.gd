@@ -139,6 +139,8 @@ var auto_pick := true
 var offer: Array[String] = []   # forced cards for the first level-up (--offer)
 var forced_walk := Vector2.ZERO
 var pause_at := -1.0
+var level_view := "cards"   # level-up: "cards", "character" (Tab) or "hidden" (H), design/ux/level-up.md
+var _level_view_arg := ""   # --level-view=character|hidden (shots): open that view on the first level-up
 var pause_view := ""   # "settings" / "character": the --pause-at pause opens that page (shots)
 var god := false
 var buffs: Buffs
@@ -376,6 +378,8 @@ func _parse_args() -> void:
 				offer.append(id)
 		elif a.begins_with("--pick-card="):
 			_pick_card = a.get_slice("=", 1)
+		elif a.begins_with("--level-view="):
+			_level_view_arg = a.get_slice("=", 1)
 		elif a.begins_with("--challenge="):
 			challenge_id = a.get_slice("=", 1)
 		elif a.begins_with("--milestone="):
@@ -419,13 +423,17 @@ func _unhandled_input(event: InputEvent) -> void:
 			resume()
 	elif event.is_action_pressed("dash") and state == State.PLAYING:
 		try_dash()
+	elif state == State.LEVEL_UP and event.is_action_pressed("character"):
+		toggle_level_view("character")
+	elif state == State.LEVEL_UP and event.is_action_pressed("peek"):
+		toggle_level_view("hidden")
 	elif event.is_action_pressed("character"):
 		if state == State.PLAYING:
 			open_pause()
 			_panels.show_character()
 		elif state == State.PAUSED:
 			resume()
-	elif state == State.LEVEL_UP:
+	elif state == State.LEVEL_UP and level_view == "cards":   # no blind picks
 		for i in 3:
 			if event.is_action_pressed("choose_%d" % (i + 1)) and i < choices.size():
 				choose(i)
@@ -1564,8 +1572,27 @@ func _open_level_up() -> void:
 	_demo_pick_t = 0.0
 	if not _chest_open:
 		Sfx.play("level_up")
+	level_view = "cards"
 	_panels.show_level_up(choices, level_up_title(_chest_open))
 	_chest_open = false
+	if _level_view_arg != "":
+		toggle_level_view(_level_view_arg)
+		_level_view_arg = ""
+
+
+## Level-up views (design/ux/level-up.md): [param v] "character" or "hidden"
+## opens that view; asking for the open one goes back to the cards. Only while
+## choosing; the run stays paused in every view.
+func toggle_level_view(v: String) -> void:
+	if state != State.LEVEL_UP:
+		return
+	level_view = "cards" if level_view == v else v
+	if _panels == null:
+		return
+	match level_view:
+		"character": _panels.show_character()
+		"hidden": _panels.show_peek()
+		_: _panels.reshow()
 
 
 ## Applies choice [param index] of the open level-up and continues the run.

@@ -35,6 +35,34 @@ func _fit() -> void:
 	size = get_viewport_rect().size
 
 
+## The level-up panel last shown (cards, skill pick or milestone), to come back to
+## from the character sheet or the hidden view (design/ux/level-up.md).
+var _reshow := Callable()
+
+
+func reshow() -> void:
+	if _reshow.is_valid():
+		_reshow.call()
+
+
+## Level-up with the cards hidden: only a strip on top, the field stays visible.
+func show_peek() -> void:
+	hide_all()
+	var strip := PanelContainer.new()
+	var ps := _style(Color(0.09, 0.08, 0.13, 0.9))
+	ps.content_margin_left = 20
+	ps.content_margin_right = 20
+	ps.content_margin_top = 8
+	ps.content_margin_bottom = 8
+	strip.add_theme_stylebox_override("panel", ps)
+	strip.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	strip.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	strip.offset_top = 70
+	add_child(strip)
+	_box = strip
+	strip.add_child(_label("Đang xem chiến trường  ·  H: hiện lại thẻ  ·  Tab: nhân vật", 18, TEXT))
+
+
 func hide_all() -> void:
 	if _box != null:
 		_box.queue_free()
@@ -46,7 +74,11 @@ func hide_all() -> void:
 ## the milestone reached by this pick, the real before -> after numbers, and the
 ## description. Content reads top-down from the top of the card.
 func show_level_up(ids: Array[String], title := "Lên cấp! Chọn một") -> void:
+	_reshow = func() -> void: show_level_up(ids, title)
 	var root := _open(title, false)
+	var hint := _label("Tab: xem nhân vật  ·  H: ẩn bảng", 16, MUTED)
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	root.add_child(hint)
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 20)
@@ -59,6 +91,7 @@ func show_level_up(ids: Array[String], title := "Lên cấp! Chọn một") -> v
 ## A count card (Thêm đòn / Thêm phép): pick the one skill that gets +1 count.
 ## Each card: the skill's icon, name, its count now -> after.
 func show_skill_pick(card_name: String, ids: Array[String]) -> void:
+	_reshow = func() -> void: show_skill_pick(card_name, ids)
 	var root := _open("%s: chọn một chiêu để +1 số lượng" % card_name, false)
 	var sub := _label("Chỉ chiêu bạn chọn được thêm; các chiêu khác giữ nguyên.", 16, MUTED)
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -124,6 +157,7 @@ func _skill_pick_card(sid: String, pick: Callable) -> Button:
 ## Level milestone (10/20/30): one of three rewards for the rest of this run only
 ## (design/progression.md). Keys 1-3 or a click pick, like a level-up.
 func show_milestone_pick(level: int, ids: Array[String]) -> void:
+	_reshow = func() -> void: show_milestone_pick(level, ids)
 	var root := _open("Mốc cấp %d! Chọn một phần thưởng" % level, false)
 	var sub := _label("Chỉ có tác dụng trong trận này.", 16, MUTED)
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -422,8 +456,10 @@ func show_character() -> void:
 	sub.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	sub.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(sub)
-	var back := _button("Quay lại (Esc)", func() -> void: show_pause())
-	back.custom_minimum_size = Vector2(200, 40)
+	var choosing: bool = run.state == run.State.LEVEL_UP
+	var back := _button("Quay lại chọn thẻ (Tab)" if choosing else "Quay lại (Esc)",
+		func() -> void: run.toggle_level_view("character") if choosing else show_pause())
+	back.custom_minimum_size = Vector2(260 if choosing else 200, 40)
 	head.add_child(back)
 	back.call_deferred("grab_focus")
 	# three scrolling columns

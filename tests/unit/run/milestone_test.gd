@@ -193,3 +193,25 @@ func test_level_up_title_names_source_level_and_picks_left() -> void:
 	t = String(r.level_up_title(true))
 	_check(t.contains("Rương"), "chest pick names the chest, got '%s'" % t)
 	r.free()
+
+
+# --- level-up views (user 2026-11-18: hide the cards or open the character sheet
+# while choosing, to pick the right upgrade) ---
+
+func test_level_up_view_toggles_between_cards_character_and_hidden() -> void:
+	var r := _run("mage", {})
+	r.state = r.State.LEVEL_UP
+	_check(r.level_view == "cards", "the cards show first")
+	r.toggle_level_view("character")
+	_check(r.level_view == "character", "Tab opens the character sheet")
+	r.toggle_level_view("character")
+	_check(r.level_view == "cards", "Tab again goes back to the cards")
+	r.toggle_level_view("hidden")
+	_check(r.level_view == "hidden", "H hides the cards")
+	r.toggle_level_view("character")
+	_check(r.level_view == "character", "Tab from hidden opens the sheet")
+	r.state = r.State.PLAYING
+	r.level_view = "cards"
+	r.toggle_level_view("hidden")
+	_check(r.level_view == "cards", "no level-up view while playing")
+	r.free()
