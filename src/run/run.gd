@@ -228,6 +228,8 @@ func _ready() -> void:
 	for m: String in monsters:
 		if not m.begins_with("_"):
 			names.append(String(monsters[m].get("sprite", m)))
+			if monsters[m].has("bolt_sprite"):   # a shooter's bolt
+				names.append(String(monsters[m]["bolt_sprite"]))
 	for sk: String in pool.get("skills", {}):
 		var sd: Dictionary = pool["skills"][sk]
 		names.append(String(sd.get("sprite", sk)))
@@ -481,6 +483,9 @@ func _tick(dt: float) -> void:
 		pending_levels += 1
 		_chest_open = true
 		_open_level_up()
+	for p in enemies.bolt_pops:   # monster bolts that burst (hit or out of range)
+		_add_fx(_bolt_sprite_at(p), "pop", _sprite_scale, 0.0, -1.0, p)
+	enemies.bolt_pops.clear()
 	if not enemies.slams.is_empty():
 		Sfx.play("boss_slam")
 	for p in enemies.slams:   # boss landings: a dust ring where it hit the ground
@@ -1832,6 +1837,7 @@ func _draw() -> void:
 					tint = Color(1.0, 0.92, 0.75)
 			enemies.k_sheet[k].draw(self, a[0], a[1], enemies.pos[i], enemies.k_scale[k],
 				enemies.flip[i] == 1, tint)
+	_draw_bolts()
 	var hero: SpriteSheet = sheets.get(String(class_data.get("sprite", "swordsman")))
 	if hero != null:
 		var blink := invuln > 0.0 and state == State.PLAYING and int(invuln * 20.0) % 2 == 0
@@ -1913,6 +1919,22 @@ func _draw_fx(under: bool) -> void:
 		var looping: bool = fx["anim"] == "spin" or fx.has("shot")
 		var t := fmod(float(fx["t"]), sh.duration(fx["anim"])) if looping else float(fx["t"])
 		sh.draw(self, fx["anim"], t, _fx_pos(fx), float(fx["scale"]))
+
+
+## Monster bolts (shooters, design 6A): each kind's bolt_sprite, "fly" looping.
+func _draw_bolts() -> void:
+	for b in enemies.bolt_pos.size():
+		var sh: SpriteSheet = sheets.get(String(enemies.k_extra[enemies.bolt_kind[b]].get("bolt_sprite", "")))
+		if sh != null:
+			sh.draw(self, "fly", fmod(clock + b * 0.1, sh.duration("fly")), enemies.bolt_pos[b], _sprite_scale)
+
+
+## The bolt sprite of the shooter kinds (pops are drawn with the first one found).
+func _bolt_sprite_at(_p: Vector2) -> String:
+	for k in enemies.k_extra.size():
+		if enemies.k_extra[k].has("bolt_sprite"):
+			return String(enemies.k_extra[k]["bolt_sprite"])
+	return ""
 
 
 func _drain_shocks(dt: float) -> void:

@@ -1,12 +1,78 @@
 {
-  "_doc": "Monster stats at stage 1 (stage scaling comes in phase 3). behaviour: chase | swarm | charge | boss_slime (winds up, jumps to where the player was, slam on landing; split_at fractions of hp spawn split_count split_into). boss: true = HUD bar, the stage is won when it dies. body circle (contact, being hit) comes from the sprite json 'body', not from here. xp = gem value. See design/monsters.md.",
-  "slime":  { "sprite": "slime",  "behaviour": "chase", "hp": 18.0, "damage": 8.0,  "speed": 42.0,  "xp": 1.0, "scale": 2 },
-  "bat":    { "sprite": "bat",    "behaviour": "swarm", "hp": 8.0,  "damage": 5.0,  "speed": 95.0,  "xp": 1.0, "scale": 2,
-              "wobble": 26.0 },
-  "goblin": { "sprite": "goblin", "behaviour": "charge", "hp": 34.0, "damage": 14.0, "speed": 58.0, "xp": 3.0, "scale": 2,
-              "charge_range": 190.0, "windup": 0.45, "dash_speed": 330.0, "dash_time": 0.35, "charge_cooldown": 2.2 },
-  "king_slime": { "name": "Vua Thạch Nhầy", "sprite": "king-slime", "behaviour": "boss_slime", "boss": true,
-                  "hp": 8000.0, "damage": 18.0, "speed": 30.0, "xp": 200.0, "scale": 5,
-                  "jump_every": 5.0, "windup": 0.9, "jump_time": 0.6, "slam_damage": 35.0, "slam_reach": 2.2,
-                  "split_at": [0.75, 0.5, 0.25], "split_into": "slime", "split_count": 6 }
+  "_doc": "Monster stats at stage 1 (stage scaling comes in phase 3). behaviour: chase | swarm | charge | boss_slime (winds up, jumps to where the player was, slam on landing; split_at fractions of hp spawn split_count split_into). boss: true = HUD bar, the stage is won when it dies. body circle (contact, being hit) comes from the sprite json 'body', not from here. xp = gem value. See design/monsters.md. behaviour shoot (design 6A): keeps keep_range, every shoot_every s within shoot_range winds up (windup s) and fires a bolt (bolt_sprite, bolt_speed px/s, bolt_damage, bolt_range px, bolt_radius).",
+  "slime": {
+    "sprite": "slime",
+    "behaviour": "chase",
+    "hp": 18.0,
+    "damage": 8.0,
+    "speed": 42.0,
+    "xp": 1.0,
+    "scale": 2
+  },
+  "bat": {
+    "sprite": "bat",
+    "behaviour": "swarm",
+    "hp": 8.0,
+    "damage": 5.0,
+    "speed": 95.0,
+    "xp": 1.0,
+    "scale": 2,
+    "wobble": 26.0
+  },
+  "goblin": {
+    "sprite": "goblin",
+    "behaviour": "charge",
+    "hp": 34.0,
+    "damage": 14.0,
+    "speed": 58.0,
+    "xp": 3.0,
+    "scale": 2,
+    "charge_range": 190.0,
+    "windup": 0.45,
+    "dash_speed": 330.0,
+    "dash_time": 0.35,
+    "charge_cooldown": 2.2
+  },
+  "king_slime": {
+    "name": "Vua Thạch Nhầy",
+    "sprite": "king-slime",
+    "behaviour": "boss_slime",
+    "boss": true,
+    "hp": 8000.0,
+    "damage": 18.0,
+    "speed": 30.0,
+    "xp": 200.0,
+    "scale": 5,
+    "jump_every": 5.0,
+    "windup": 0.9,
+    "jump_time": 0.6,
+    "slam_damage": 35.0,
+    "slam_reach": 2.2,
+    "split_at": [
+      0.75,
+      0.5,
+      0.25
+    ],
+    "split_into": "slime",
+    "split_count": 6
+  },
+  "spore": {
+    "name": "Nấm Phun",
+    "sprite": "spore",
+    "behaviour": "shoot",
+    "hp": 22.0,
+    "damage": 8.0,
+    "speed": 48.0,
+    "xp": 2.0,
+    "scale": 2,
+    "keep_range": 230.0,
+    "shoot_range": 340.0,
+    "shoot_every": 2.8,
+    "windup": 0.55,
+    "bolt_sprite": "spore-bolt",
+    "bolt_speed": 140.0,
+    "bolt_damage": 10.0,
+    "bolt_range": 420.0,
+    "bolt_radius": 6.0
+  }
 }

@@ -4,7 +4,7 @@ extends RefCounted
 
 const DATA := "res://assets/data/"
 const SPRITES := "res://assets/sprites/custom/"
-const BEHAVIOURS := ["chase", "swarm", "charge", "boss_slime"]
+const BEHAVIOURS := ["chase", "swarm", "charge", "boss_slime", "shoot"]
 
 var failures: Array[String] = []
 
@@ -61,6 +61,8 @@ func test_waves_reference_existing_monsters() -> void:
 		_check(used.has(m), "monster %s is never spawned (orphan)" % m)
 		_check(_sprite_ok(String(monsters[m].get("sprite", ""))), "monster %s: sprite missing" % m)
 		_check(BEHAVIOURS.has(monsters[m].get("behaviour", "")), "monster %s: unknown behaviour" % m)
+		if monsters[m].get("behaviour", "") == "shoot":   # a shooter needs its bolt sprite
+			_check(_sprite_ok(String(monsters[m].get("bolt_sprite", ""))), "monster %s: bolt_sprite missing" % m)
 
 
 func test_monster_sprites_have_move_and_death() -> void:

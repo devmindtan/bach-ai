@@ -11,7 +11,7 @@ extends RefCounted
 ##   e.hit_circle(center, 80.0, 12.0)                           # kills land in kill_pos / kill_xp
 
 enum { MOVE, WINDUP, DASH, DYING }
-enum { CHASE, SWARM, CHARGE, BOSS_SLIME }
+enum { CHASE, SWARM, CHARGE, BOSS_SLIME, SHOOT }
 
 const HURT_FLASH := 0.12
 const KNOCKBACK_DECAY := 10.0
@@ -95,6 +95,14 @@ var spawn_ring := Vector2(760, 860)
 var despawn_distance := 1300.0
 var arena_half := 1400.0
 var player_hit_radius := 14.0
+# monster bolts (behaviour "shoot", design 6A): slow, straight, dodgeable
+var bolt_pos := PackedVector2Array()
+var bolt_vel := PackedVector2Array()
+var bolt_life := PackedFloat32Array()
+var bolt_dmg := PackedFloat32Array()
+var bolt_kind := PackedInt32Array()      # the shooter's kind (its bolt sprite, bolt radius)
+var bolt_pops := PackedVector2Array()    # where bolts burst this step (the run draws a pop)
+var _player_center := Vector2.ZERO
 var vs_status_mul := 0.0        # class passive: extra damage taken by monsters with a status   # set by the run from the class sprite's body
 
 var _hash: SpatialHash
@@ -150,7 +158,7 @@ func _init(monsters: Dictionary, cfg: Dictionary, sheets: Dictionary, seed_value
 			_register(id + "@elite", m, sheets.get(String(m.get("sprite", id))), world_scale, elite)
 
 
-const BEHAVIOURS := {"chase": CHASE, "swarm": SWARM, "charge": CHARGE, "boss_slime": BOSS_SLIME}
+const BEHAVIOURS := {"chase": CHASE, "swarm": SWARM, "charge": CHARGE, "boss_slime": BOSS_SLIME, "shoot": SHOOT}
 
 
 ## One monster kind; [param elite] = multipliers (hp_mul, damage_mul, scale_mul,
@@ -246,6 +254,7 @@ func center_of(i: int) -> Vector2:
 func step(delta: float, player_pos: Vector2, player_center: Vector2) -> float:
 	_time += delta
 	_target = player_pos
+	_player_center = player_center
 	# 1. timers, and remove monsters whose death animation is over. Removal
 	#    swap-moves the last slot, so it must happen before the hash is built.
 	var i := 0
@@ -312,7 +321,69 @@ func step(delta: float, player_pos: Vector2, player_center: Vector2) -> float:
 		pos[n] = pos[n].clamp(Vector2(-arena_half, -arena_half), Vector2(arena_half, arena_half))
 		if not stopped and (center_of(n) - player_center).length() < r + player_hit_radius:
 			contact = maxf(contact, k_damage[k])
-	return contact
+	return maxf(contact, _step_bolts(delta, player_center))
+
+
+## Shooter: closes in when far, backs off when the player comes near, strafes in
+## between; every shoot_every s within shoot_range it aims (WINDUP: the attack
+## animation is the warning) and spits one bolt at where the player is then.
+func _shooter(i: int, k: int, dir: Vector2, dist: float, speed: float, delta: float) -> Vector2:
+	var e: Dictionary = k_extra[k]
+	charge_cd[i] -= delta
+	if state[i] == WINDUP:
+		timer[i] -= delta
+		if timer[i] <= 0.0:
+			state[i] = MOVE
+			charge_cd[i] = float(e.get("shoot_every", 2.6))
+			fire_bolt(i, (_player_center - center_of(i)).normalized())
+		return Vector2.ZERO
+	var keep := float(e.get("keep_range", 220.0))
+	if charge_cd[i] <= 0.0 and dist < float(e.get("shoot_range", 320.0)):
+		state[i] = WINDUP
+		timer[i] = float(e.get("windup", 0.5))
+		anim_t[i] = 0.0
+		return Vector2.ZERO
+	if dist > keep + 30.0:
+		return dir * speed
+	if dist < keep - 30.0:
+		return -dir * speed * 0.8
+	return dir.orthogonal() * speed * 0.6 * (1.0 if fmod(phase[i], 2.0) < 1.0 else -1.0)
+
+
+## Spawns a bolt from monster [param i] along [param dir] (its kind's bolt_speed,
+## bolt_damage or damage, bolt_range).
+func fire_bolt(i: int, dir: Vector2) -> void:
+	var k := kind[i]
+	var e: Dictionary = k_extra[k]
+	var speed := float(e.get("bolt_speed", 150.0))
+	bolt_pos.append(center_of(i))
+	bolt_vel.append(dir * speed)
+	bolt_life.append(float(e.get("bolt_range", 420.0)) / speed)
+	bolt_dmg.append(float(e.get("bolt_damage", k_damage[k])))
+	bolt_kind.append(k)
+
+
+## Moves bolts; returns the damage of one touching the player (it bursts).
+func _step_bolts(delta: float, player_center: Vector2) -> float:
+	var hit := 0.0
+	var b := 0
+	while b < bolt_pos.size():
+		bolt_pos[b] += bolt_vel[b] * delta
+		bolt_life[b] -= delta
+		var r := float(k_extra[bolt_kind[b]].get("bolt_radius", 5.0))
+		var touch := bolt_pos[b].distance_to(player_center) < r + player_hit_radius
+		if touch or bolt_life[b] <= 0.0:
+			if touch:
+				hit = maxf(hit, bolt_dmg[b])
+			bolt_pops.append(bolt_pos[b])
+			bolt_pos.remove_at(b)
+			bolt_vel.remove_at(b)
+			bolt_life.remove_at(b)
+			bolt_dmg.remove_at(b)
+			bolt_kind.remove_at(b)
+			continue
+		b += 1
+	return hit
 
 
 func _velocity(i: int, k: int, dir: Vector2, dist: float, delta: float) -> Vector2:
@@ -347,6 +418,8 @@ func _velocity(i: int, k: int, dir: Vector2, dist: float, delta: float) -> Vecto
 			return dir * speed
 		BOSS_SLIME:
 			return _boss_slime(i, k, dir, speed, delta)
+		SHOOT:
+			return _shooter(i, k, dir, dist, speed, delta)
 		_:
 			return dir * speed
 

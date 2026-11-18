@@ -4,16 +4,83 @@
   "name": "Đồng cỏ",
   "duration": 300.0,
   "waves": [
-    { "monster": "slime",  "t_from": 0,   "t_to": 100, "rate": 0.8, "rate_end": 3.0 },
-    { "monster": "slime",  "t_from": 100, "t_to": 300, "rate": 3.0, "rate_end": 0.6 },
-    { "monster": "bat",    "t_from": 30,  "t_to": 150, "rate": 0.3, "rate_end": 2.5 },
-    { "monster": "bat",    "t_from": 150, "t_to": 300, "rate": 2.5, "rate_end": 0.6 },
-    { "monster": "bat",    "t_from": 120, "t_to": 120, "burst": 24 },
-    { "monster": "goblin", "t_from": 60,  "t_to": 300, "rate": 0.3, "rate_end": 3.0 },
-    { "monster": "bat",    "t_from": 210, "t_to": 210, "burst": 40 },
-    { "monster": "goblin", "t_from": 270, "t_to": 270, "burst": 10 },
-    { "monster": "goblin@elite", "t_from": 60,  "t_to": 60,  "burst": 1 },
-    { "monster": "slime@elite",  "t_from": 150, "t_to": 150, "burst": 1 },
-    { "monster": "goblin@elite", "t_from": 240, "t_to": 240, "burst": 1 }
+    {
+      "monster": "slime",
+      "t_from": 0,
+      "t_to": 100,
+      "rate": 0.8,
+      "rate_end": 3.0
+    },
+    {
+      "monster": "slime",
+      "t_from": 100,
+      "t_to": 300,
+      "rate": 3.0,
+      "rate_end": 0.6
+    },
+    {
+      "monster": "bat",
+      "t_from": 30,
+      "t_to": 150,
+      "rate": 0.3,
+      "rate_end": 2.5
+    },
+    {
+      "monster": "bat",
+      "t_from": 150,
+      "t_to": 300,
+      "rate": 2.5,
+      "rate_end": 0.6
+    },
+    {
+      "monster": "bat",
+      "t_from": 120,
+      "t_to": 120,
+      "burst": 24
+    },
+    {
+      "monster": "goblin",
+      "t_from": 60,
+      "t_to": 300,
+      "rate": 0.3,
+      "rate_end": 3.0
+    },
+    {
+      "monster": "bat",
+      "t_from": 210,
+      "t_to": 210,
+      "burst": 40
+    },
+    {
+      "monster": "goblin",
+      "t_from": 270,
+      "t_to": 270,
+      "burst": 10
+    },
+    {
+      "monster": "goblin@elite",
+      "t_from": 60,
+      "t_to": 60,
+      "burst": 1
+    },
+    {
+      "monster": "slime@elite",
+      "t_from": 150,
+      "t_to": 150,
+      "burst": 1
+    },
+    {
+      "monster": "goblin@elite",
+      "t_from": 240,
+      "t_to": 240,
+      "burst": 1
+    },
+    {
+      "monster": "spore",
+      "t_from": 60,
+      "t_to": 300,
+      "rate": 0.15,
+      "rate_end": 0.9
+    }
   ]
 }
