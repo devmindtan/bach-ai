@@ -18,7 +18,8 @@
   "fx_frames_min": 12,
   "fx_lead_frames": 1,
   "fx_outro_min": 0.3,
-  "fx_px_scale": 0.5
+  "fx_px_scale": 0.5,
+  "frame_max_tall": 128
  },
  "rules": [
   {
@@ -61,7 +62,7 @@
    "id": "small",
    "severity": "must",
    "title": "Sprite nhỏ, nhẹ",
-   "text": "Khung hình (nhân px_scale) không quá frame_max px; sprite vẽ mật độ gấp đôi (px_scale 0.5) không quá frame_max_dense px thật, để hàng trăm hiệu ứng và quái vẫn chạy 60 fps."
+   "text": "Khung (nhân px_scale) rộng không quá frame_max px và cao không quá frame_max_tall px (hiệu ứng thẳng đứng như sét, cột sáng; người dùng 2026-11-18: sét cao hơn); sprite mật độ gấp đôi (px_scale 0.5) không quá frame_max_dense px thật mỗi chiều ngang, 2 x frame_max_tall chiều cao, để hàng trăm hiệu ứng và quái vẫn chạy 60 fps."
   },
   {
    "id": "class",

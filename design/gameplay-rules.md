@@ -28,7 +28,7 @@ Luật dưới đây là **bắt buộc khi thiết kế**; số liệu nằm tr
 | `snappy` | bắt buộc | Trúng trong 0,4 s đầu, hết frame gây sát thương trong 1,2 s; sau đó pha kết thúc (đọng lại, tan) ≤ 1,0 s; hiệu ứng lặp có `duration` | Phản hồi tức thì, đọc được nhịp; có đoạn kết rõ (người dùng 2026-11-18) |
 | `directional` | bắt buộc | Đòn chém có đủ 4 hướng | Game nhắm quái gần nhất theo 4 hướng |
 | `levels` | bắt buộc | 3–5 cấp, mỗi cấp tăng sát thương hoặc cỡ; bậc sprite I–V = số cấp | Lên cấp phải thấy mạnh hơn |
-| `small` | bắt buộc | Khung × `px_scale` ≤ 96 px; sprite mật độ đôi (`px_scale` 0.5) ≤ 192 px thật | Hiệu năng |
+| `small` | bắt buộc | Khung × `px_scale`: rộng ≤ 96 px, cao ≤ 128 px (hiệu ứng thẳng đứng: sét, cột sáng); sprite mật độ đôi ≤ 192 px thật chiều ngang, ≤ 256 px chiều cao | Hiệu năng |
 | `fx_craft` | nên (bắt buộc khi sprite có `px_scale`) | Hiệu ứng vùng một lần: ≥ 12 frame; ≥ 1 frame mở đầu trước frame gây sát thương; pha kết thúc 0,3–1,0 s sau frame gây sát thương cuối; vẽ mật độ gấp đôi (`px_scale` 0.5) bằng `sprite-lab/lib/fxkit.py` | Hiệu ứng thể hiện sức mạnh, xuất hiện và tan rõ ràng (người dùng 2026-11-18) |
 | `class` | nên | Tag `class-<x>` khớp class sở hữu kỹ năng | Bản sắc class (băng/phép cho Pháp sư, kiếm/đất cho Kiếm sĩ) |
 | `dps` | nên | DPS cấp 1 (sát thương × số nhịp trúng / hồi chiêu, một mục tiêu) trong 0,4–3 lần đòn cơ bản của class; chiêu vùng được phép thấp hơn vì trúng nhiều quái | Không có chiêu "phá game" hay vô dụng ngay từ đầu |

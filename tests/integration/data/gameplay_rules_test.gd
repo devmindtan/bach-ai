@@ -99,8 +99,11 @@ func test_skills_meet_must_rules() -> void:
 				continue
 			# px_scale 0.5 (icefx): drawn at double density, the logical size is what counts
 			var px := float(sheet.meta.get("px_scale", 1.0))
-			var side := maxf(sheet.frame_size.x, sheet.frame_size.y)
-			_check(side * px <= float(lim["frame_max"]) and side <= float(lim["frame_max_dense"]), "%s [small]: %s frame %s" % [id, sheet.name, sheet.frame_size])
+			var fw := sheet.frame_size.x
+			var fh := sheet.frame_size.y
+			var ok_w := fw * px <= float(lim["frame_max"]) and fw <= float(lim["frame_max_dense"])
+			var ok_h := fh * px <= float(lim["frame_max_tall"]) and (px == 1.0 or fh <= 2.0 * float(lim["frame_max_tall"]))
+			_check(ok_w and ok_h, "%s [small]: %s frame %s" % [id, sheet.name, sheet.frame_size])
 			var names := sheet.animation_names()
 			if Array(names).any(func(x: String) -> bool: return x.begins_with("slash_")):
 				for d in DIRS:
