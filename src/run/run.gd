@@ -112,7 +112,8 @@ var _tier_cd := {}
 var _whirl_left := 0.0
 var _whirl_ticks_done := 0
 var _fx: Array[Dictionary] = []
-var zones: Array[Dictionary] = []    # lasting ground zones left by skills ("zone": burn ground, a pulling storm)
+var zones: Array[Dictionary] = []
+var _affix_tags: Array = []          # [pos, name, colour] of elite affixes this frame (drawn on top)    # lasting ground zones left by skills ("zone": burn ground, a pulling storm)
 var _end_t := 0.0
 # floating damage numbers (ring buffer, sizes from run_config "ui")
 var _num_pos := PackedVector2Array()
@@ -1929,7 +1930,12 @@ func _draw() -> void:
 			if enemies.k_elite[k] == 1:   # elite: a gold halo under it
 				var hr := enemies.k_radius[k]
 				var hc := enemies.center_of(i)
-				draw_arc(hc + Vector2(0, hr * 0.6), hr * 1.1, 0.0, TAU, 32, Color(1.0, 0.82, 0.3, 0.45 + 0.25 * sin(clock * 5.0)), 3.0)
+				var lab := enemies.affix_label(i)   # the affix colours the halo and names itself (6A)
+				var hcol: Color = lab[1] if lab[0] != "" else Color(1.0, 0.82, 0.3)
+				hcol.a = 0.5 + 0.3 * sin(clock * 5.0)
+				draw_arc(hc + Vector2(0, hr * 0.6), hr * 1.1, 0.0, TAU, 32, hcol, 3.0)
+				if lab[0] != "":
+					_affix_tags.append([hc - Vector2(0, hr * 1.6 + 14.0), lab[0], lab[1]])
 				if tint == Color.WHITE:
 					tint = Color(1.0, 0.92, 0.75)
 			enemies.k_sheet[k].draw(self, a[0], a[1], enemies.pos[i], enemies.k_scale[k],
@@ -1950,6 +1956,7 @@ func _draw() -> void:
 		_draw_monster_hp(view)
 	if Prefs.current().damage_numbers:
 		_draw_damage_numbers(view)
+	_draw_affix_tags()
 	if show_hitboxes:
 		_draw_hitboxes(view)
 	# hp bar under the hero
@@ -1957,6 +1964,18 @@ func _draw() -> void:
 	var bar := Rect2(player_pos + Vector2(-w * 0.5, 8.0), Vector2(w, 5.0))
 	draw_rect(bar, Color(0.1, 0.05, 0.08))
 	draw_rect(Rect2(bar.position, Vector2(w * clampf(hp / float(stats["max_hp"]), 0.0, 1.0), 5.0)), Color(0.85, 0.2, 0.25))
+
+
+## Elite affix names, collected while drawing the monsters and drawn last so the
+## hero and effects never cover them.
+func _draw_affix_tags() -> void:
+	var font := ThemeDB.fallback_font
+	for t: Array in _affix_tags:
+		var tw := font.get_string_size(t[1], HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x
+		var at: Vector2 = t[0] - Vector2(tw * 0.5, 0)
+		draw_string_outline(font, at, t[1], HORIZONTAL_ALIGNMENT_LEFT, -1, 13, 4, Color(0.05, 0.04, 0.08))
+		draw_string(font, at, t[1], HORIZONTAL_ALIGNMENT_LEFT, -1, 13, t[2])
+	_affix_tags.clear()
 
 
 # --- damage numbers and monster hp bars ------------------------------------------

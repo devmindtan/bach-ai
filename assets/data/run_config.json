@@ -1,15 +1,99 @@
 {
   "_doc": "Per-run tuning (phase 1). Distances in screen pixels at the world scale, times in seconds. See design/game-brief.md.",
-  "world": { "arena_half": 1400.0, "sprite_scale": 2, "spawn_ring": [760.0, 860.0], "despawn_distance": 1300.0 },
-  "xp": { "base": 5.0, "growth": 1.22, "flat": 2.0, "_formula": "xp_to_next(L) = round(base * growth^(L-1) + flat * (L-1))" },
-  "pickups": { "radius": 70.0, "magnet_speed": 520.0, "collect_radius": 14.0, "gold_chance": 0.12 },
-  "player": { "hit_invuln": 0.6 },
-  "rewards": { "_doc": "Equipment won: one random item (any slot, fitting the class or shared) when a stage is won; chest_item_chance = chance that opening a chest also gives one.", "win_item": true, "chest_item_chance": 0.25 },
-  "essence": { "_doc": "Tinh hoa (skill-tree material, design/skill-tree.md) a kill drops: elites and bosses only; picked up like other drops and kept for the slot, won or lost.", "elite": 1, "boss": 10 },
-  "elite": { "_doc": "Every monster also exists as '<id>@elite' (waves spawn it by that name): hp, damage, size and xp multiplied; it has a gold halo and drops a chest (one extra card pick).", "hp_mul": 10.0, "damage_mul": 1.5, "scale_mul": 1.5, "xp_mul": 8.0 },
-  "buffs": { "_doc": "Random buff spawns (items.json buffs): first after first_after s, then every spawn_every [min,max] s one random buff on a ring spawn_ring [min,max] px around the player; it stays lifetime s (blinks the last blink s); at most max_on_field at once; picked up within collect_radius px.", "first_after": 15.0, "spawn_every": [25.0, 40.0], "spawn_ring": [160.0, 300.0], "lifetime": 20.0, "blink": 4.0, "max_on_field": 2, "collect_radius": 22.0 },
-  "separation": { "cell": 48.0, "push": 60.0 },
+  "world": {
+    "arena_half": 1400.0,
+    "sprite_scale": 2,
+    "spawn_ring": [
+      760.0,
+      860.0
+    ],
+    "despawn_distance": 1300.0
+  },
+  "xp": {
+    "base": 5.0,
+    "growth": 1.22,
+    "flat": 2.0,
+    "_formula": "xp_to_next(L) = round(base * growth^(L-1) + flat * (L-1))"
+  },
+  "pickups": {
+    "radius": 70.0,
+    "magnet_speed": 520.0,
+    "collect_radius": 14.0,
+    "gold_chance": 0.12
+  },
+  "player": {
+    "hit_invuln": 0.6
+  },
+  "rewards": {
+    "_doc": "Equipment won: one random item (any slot, fitting the class or shared) when a stage is won; chest_item_chance = chance that opening a chest also gives one.",
+    "win_item": true,
+    "chest_item_chance": 0.25
+  },
+  "essence": {
+    "_doc": "Tinh hoa (skill-tree material, design/skill-tree.md) a kill drops: elites and bosses only; picked up like other drops and kept for the slot, won or lost.",
+    "elite": 1,
+    "boss": 10
+  },
+  "elite": {
+    "_doc": "Every monster also exists as '<id>@elite' (waves spawn it by that name): hp, damage, size and xp multiplied; it has a gold halo and drops a chest (one extra card pick).",
+    "hp_mul": 10.0,
+    "damage_mul": 1.5,
+    "scale_mul": 1.5,
+    "xp_mul": 8.0,
+    "affixes": {
+      "_doc": "Elite affixes (design 6A, user 2026-11-18): each elite rolls one; its halo takes the colour and its name shows above it. speed_mul, damage_taken_mul (armour), split_count (plain monsters of its kind on death), explode (a warning ring then a blast on death; damage_mul x its contact damage). Refs: Diablo 4 / PoE monster modifiers, Risk of Rain 2 readability.",
+      "fast": {
+        "name": "Nhanh",
+        "color": "#5ad8ff",
+        "speed_mul": 1.6
+      },
+      "armored": {
+        "name": "Giáp",
+        "color": "#c8c8e0",
+        "damage_taken_mul": 0.55
+      },
+      "splitter": {
+        "name": "Phân thân",
+        "color": "#8fe08a",
+        "split_count": 3
+      },
+      "explosive": {
+        "name": "Bùng nổ",
+        "color": "#ff7a3a",
+        "explode": {
+          "delay": 0.8,
+          "radius": 72.0,
+          "damage_mul": 1.5
+        }
+      }
+    }
+  },
+  "buffs": {
+    "_doc": "Random buff spawns (items.json buffs): first after first_after s, then every spawn_every [min,max] s one random buff on a ring spawn_ring [min,max] px around the player; it stays lifetime s (blinks the last blink s); at most max_on_field at once; picked up within collect_radius px.",
+    "first_after": 15.0,
+    "spawn_every": [
+      25.0,
+      40.0
+    ],
+    "spawn_ring": [
+      160.0,
+      300.0
+    ],
+    "lifetime": 20.0,
+    "blink": 4.0,
+    "max_on_field": 2,
+    "collect_radius": 22.0
+  },
+  "separation": {
+    "cell": 48.0,
+    "push": 60.0
+  },
   "max_enemies": 600,
-  "ui": { "damage_number_time": 0.7, "damage_number_rise": 36.0, "damage_number_size": 16, "max_damage_numbers": 96,
-          "hp_bar_time": 2.0 }
+  "ui": {
+    "damage_number_time": 0.7,
+    "damage_number_rise": 36.0,
+    "damage_number_size": 16,
+    "max_damage_numbers": 96,
+    "hp_bar_time": 2.0
+  }
 }

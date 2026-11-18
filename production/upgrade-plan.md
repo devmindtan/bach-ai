@@ -25,6 +25,8 @@ người dùng ưng ý và tự mở. Đợt 6 là nơi nâng cấp giao diện,
 ## Đề xuất (theo thứ tự ưu tiên)
 
 ### 6A · Quái vật và nhịp trận (quan trọng nhất)
+**Tiến độ (2026-11-18):** Đồng cỏ có Nấm Phun (bắn xa) và Bọ Lửa (nổ khi chết); tinh anh có 4 tiền tố
+(`design/elite-affixes.md`). Còn: boss riêng của Đồng cỏ, nhịp sóng có báo trước; hai vùng sau.
 1. **Mỗi vùng 4–5 loài**, mỗi loài một hành vi rõ: bắn xa giữ khoảng cách (đạn chậm, né được), lao có báo trước,
    zig-zag, nổ khi chết (vòng báo), khiên / trâu chặn đường, phân thân, hỗ trợ (hồi máu / tăng tốc quái quanh).
 2. **Tinh anh có tiền tố**: Nhanh, Giáp, Phân thân, Bùng nổ (hiện tên + màu viền).

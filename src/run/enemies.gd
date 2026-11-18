@@ -103,6 +103,11 @@ var bolt_dmg := PackedFloat32Array()
 var bolt_kind := PackedInt32Array()      # the shooter's kind (its bolt sprite, bolt radius)
 var bolt_pops := PackedVector2Array()    # where bolts burst this step (the run draws a pop)
 var _player_center := Vector2.ZERO
+# elite affixes (run_config.json elite.affixes, design 6A): one per elite, by index into affix_ids
+var affix := PackedInt32Array()          # -1 = none
+var affix_ids: Array[String] = []
+var _affix_defs: Array[Dictionary] = []
+var _split_q: Array = []                 # [kind, pos]: monsters to spawn after this step (Phân thân)
 # death bursts ("explode" on a monster, design 6A Bọ Lửa): a warning ring, then a blast
 var blast_pos := PackedVector2Array()
 var blast_t := PackedFloat32Array()      # seconds left before it goes off
@@ -148,6 +153,7 @@ func _init(monsters: Dictionary, cfg: Dictionary, sheets: Dictionary, seed_value
 	phase.resize(capacity)
 	flip.resize(capacity)
 	hp_show.resize(capacity)
+	affix.resize(capacity)
 	for a: Variant in [slow_t, slow_mul, stun_t, freeze_t, bleed_t, bleed_dps, burn_t, burn_dps, dot_wait]:
 		a.resize(capacity)
 	bleed_src.resize(capacity)
@@ -155,6 +161,11 @@ func _init(monsters: Dictionary, cfg: Dictionary, sheets: Dictionary, seed_value
 	hp_bar_time = float(cfg.get("ui", {}).get("hp_bar_time", 2.0))
 	var world_scale := float(world.get("sprite_scale", 2))
 	var elite: Dictionary = cfg.get("elite", {})
+	var defs: Dictionary = elite.get("affixes", {})
+	for aid: String in defs:
+		if not aid.begins_with("_"):
+			affix_ids.append(aid)
+			_affix_defs.append(defs[aid])
 	for id: String in monsters:
 		if id.begins_with("_"):
 			continue
@@ -228,6 +239,9 @@ func spawn(id: String, p: Vector2) -> bool:
 	phase[i] = _rng.randf() * TAU
 	flip[i] = 0
 	hp_show[i] = 0.0
+	affix[i] = -1
+	if k_elite[k] == 1 and not affix_ids.is_empty():   # every elite gets one affix
+		affix[i] = _rng.randi() % affix_ids.size()
 	slow_t[i] = 0.0
 	slow_mul[i] = 1.0
 	stun_t[i] = 0.0
@@ -322,13 +336,30 @@ func step(delta: float, player_pos: Vector2, player_center: Vector2) -> float:
 					l2 = 1.0
 				var l := sqrt(l2)
 				push += d / l * (min_d - l) / min_d
+		vel *= float(_affix_def(n).get("speed_mul", 1.0))   # Nhanh
 		vel += push * _push
 		knock[n] = knock[n] * maxf(0.0, 1.0 - KNOCKBACK_DECAY * delta)
 		pos[n] += (vel + knock[n]) * delta
 		pos[n] = pos[n].clamp(Vector2(-arena_half, -arena_half), Vector2(arena_half, arena_half))
 		if not stopped and (center_of(n) - player_center).length() < r + player_hit_radius:
 			contact = maxf(contact, k_damage[k])
+	for q: Array in _split_q:   # monsters from Phân thân, spawned after the loop over the living
+		if int(q[0]) >= 0:
+			spawn(kind_ids[int(q[0])], q[1])
+	_split_q.clear()
 	return maxf(maxf(contact, _step_bolts(delta, player_center)), _step_blasts(delta, player_center))
+
+
+## The affix of monster [param i] (run_config.json elite.affixes entry), {} when none.
+func _affix_def(i: int) -> Dictionary:
+	var a := affix[i]
+	return _affix_defs[a] if a >= 0 and a < _affix_defs.size() else {}
+
+
+## Vietnamese name and colour of monster [param i]'s affix (["", white] when none).
+func affix_label(i: int) -> Array:
+	var d := _affix_def(i)
+	return [String(d.get("name", "")), Color(String(d.get("color", "#ffffff")))]
 
 
 ## Counts down death bursts; one that goes off with the player inside hurts.
@@ -573,6 +604,7 @@ func _damage(i: int, amount: float, kb: Vector2, source := "") -> void:
 	var hp_before := hp[i]
 	if vs_status_mul > 0.0 and (slow_t[i] > 0.0 or stun_t[i] > 0.0 or freeze_t[i] > 0.0 or bleed_t[i] > 0.0 or burn_t[i] > 0.0):
 		amount *= 1.0 + vs_status_mul
+	amount *= float(_affix_def(i).get("damage_taken_mul", 1.0))   # Giáp
 	damage_by[source] = float(damage_by.get(source, 0.0)) + minf(amount, maxf(0.0, hp[i]))
 	hits_by[source] = int(hits_by.get(source, 0)) + 1
 	hp[i] -= amount
@@ -593,13 +625,18 @@ func _damage(i: int, amount: float, kb: Vector2, source := "") -> void:
 		kill_boss.append(k_boss[kind[i]])
 		kill_pos.append(pos[i])
 		kill_xp.append(k_xp[kind[i]])
-		var ex: Dictionary = k_extra[kind[i]].get("explode", {})
+		var ad := _affix_def(i)
+		if ad.has("split_count"):   # Phân thân: plain monsters of its kind pop out
+			var base := kind_of(kind_ids[kind[i]].get_slice("@", 0))
+			for s in int(ad["split_count"]):
+				_split_q.append([base, pos[i] + Vector2(cos(s * 2.1), sin(s * 2.1)) * 14.0])
+		var ex: Dictionary = ad.get("explode", k_extra[kind[i]].get("explode", {}))
 		if not ex.is_empty():   # Bọ Lửa: its body bursts after a warning
 			blast_pos.append(center_of(i))
 			blast_t.append(float(ex.get("delay", 0.8)))
 			blast_total.append(float(ex.get("delay", 0.8)))
 			blast_r.append(float(ex.get("radius", 60.0)))
-			blast_dmg.append(float(ex.get("damage", k_damage[kind[i]])))
+			blast_dmg.append(float(ex.get("damage", k_damage[kind[i]] * float(ex.get("damage_mul", 1.0)))))
 
 
 ## Puts status [param status] on monster [param i]. [param p] holds its numbers
@@ -797,6 +834,7 @@ func _remove(i: int) -> void:
 		phase[i] = phase[last]
 		flip[i] = flip[last]
 		hp_show[i] = hp_show[last]
+		affix[i] = affix[last]
 		slow_t[i] = slow_t[last]
 		slow_mul[i] = slow_mul[last]
 		stun_t[i] = stun_t[last]
