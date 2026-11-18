@@ -299,6 +299,7 @@
     },
     "whirlwind": {
       "sprite": "whirlwind",
+      "under_hero": true,
       "damage_mul": 0.6,
       "size_mul": 1.5,
       "cooldown": 3.2,

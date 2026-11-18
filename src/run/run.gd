@@ -812,7 +812,9 @@ func _skills(dt: float) -> void:
 				_whirl_left = float(w.get("duration", 0.9))
 				_whirl_ticks_done = 0
 				var sc := _sprite_scale * skill_size("whirlwind")
-				_add_fx(String(w.get("sprite", "whirlwind")), "spin", sc, 0.0, _whirl_left)
+				var fx := _add_fx(String(w.get("sprite", "whirlwind")), "spin", sc, 0.0, _whirl_left)
+				if bool(w.get("under_hero", false)) and not fx.is_empty():
+					fx["under"] = true   # a ring around the hero: keep him on top
 				Sfx.skill("whirlwind")
 
 
