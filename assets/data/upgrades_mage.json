@@ -327,6 +327,13 @@
         2,
         3,
         3
+      ],
+      "impact_tiers": [
+        "fireball-blast-i",
+        "fireball-blast-ii",
+        "fireball-blast-iii",
+        "fireball-blast-iv",
+        "fireball-blast-v"
       ]
     },
     "frost_nova": {

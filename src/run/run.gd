@@ -233,6 +233,8 @@ func _ready() -> void:
 	for sk: String in pool.get("skills", {}):
 		var sd: Dictionary = pool["skills"][sk]
 		names.append(String(sd.get("sprite", sk)))
+		for tn in sd.get("impact_tiers", []):
+			names.append(String(tn))
 		for tn in sd.get("tier_sprites", []):
 			names.append(String(tn))
 	for n in names:
@@ -758,6 +760,13 @@ func on_hit(sid: String) -> Array:
 
 
 ## Sprite of a skill at its current level (tier_sprites I-V, else "sprite").
+## The entry of [param names] for skill [param sid]'s level ("" when empty).
+func _tier_name(names: Array, sid: String) -> String:
+	if names.is_empty():
+		return ""
+	return String(names[clampi(int(levels.get(sid, 1)) - 1, 0, names.size() - 1)])
+
+
 func _skill_sprite(sid: String, ts: Dictionary) -> String:
 	var tier_names: Array = ts.get("tier_sprites", [])
 	if tier_names.is_empty():
@@ -888,7 +897,8 @@ func _cast(sid: String, ts: Dictionary, how: String) -> void:
 					continue
 				fx["vel"] = dv * speed
 				fx["shot"] = {"damage": dmg, "explode": bool(ts.get("explode", false)), "pierce": int(ts.get("pierce", 0)),
-					"impact": String(ts.get("impact", "impact")), "wait": 0.0}
+					"impact": String(ts.get("impact", "impact")), "wait": 0.0,
+					"impact_sprite": _tier_name(ts.get("impact_tiers", []), sid)}
 		"wave":
 			# straight at the nearest monster, then behind, then both sides
 			var first := to_target.normalized()
@@ -1905,6 +1915,12 @@ func _step_shot(fx: Dictionary, dt: float) -> bool:
 		return false
 	var src := String(fx.get("source", ""))
 	var impact := String(sh["impact"])
+	var blast := String(sh.get("impact_sprite", ""))   # a blast drawn as its own sprite (firefx, by tier)
+	if bool(sh["explode"]) and blast != "" and sheets.has(blast):
+		var b2 := _add_fx(blast, impact, float(fx["scale"]), float(sh["damage"]), -1.0, p, src, float(fx.get("kb", 140.0)))
+		if not b2.is_empty():
+			b2["effects"] = fx.get("effects", [])
+		return true
 	if bool(sh["explode"]) and sheet.has_animation(impact):
 		var boom := _add_fx(sheet.name, impact, float(fx["scale"]), float(sh["damage"]), -1.0, p, src, float(fx.get("kb", 140.0)))
 		if not boom.is_empty():
