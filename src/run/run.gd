@@ -243,6 +243,8 @@ func _ready() -> void:
 		names.append(String(_buff_defs[b].get("sprite", b)))
 		if _buff_defs[b].has("aura"):
 			names.append(String(_buff_defs[b]["aura"]))
+		if _buff_defs[b].has("break_sprite"):   # one-shot when the ward spends its hit
+			names.append(String(_buff_defs[b]["break_sprite"]))
 	for m: String in monsters:
 		if not m.begins_with("_"):
 			names.append(String(monsters[m].get("sprite", m)))
@@ -496,12 +498,7 @@ func _tick(dt: float) -> void:
 	_spawn(clock - dt, clock)
 	var contact := enemies.step(dt, player_pos, player_pos + _hit_center)
 	if contact > 0.0 and invuln <= 0.0 and bench == 0 and not god and not buffs.invulnerable() and _dash_left <= 0.0:
-		if _ward_charges > 0 and _ward_buff != "" and buffs.is_active(_ward_buff):
-			_ward_charges -= 1                    # the stone shell takes the hit and breaks
-			buffs.active.erase(_ward_buff)
-			invuln = maxf(invuln, 0.5)
-			Sfx.play("holy")
-		else:
+		if not _spend_ward():
 			_take_hit(contact)
 	invuln = maxf(0.0, invuln - dt)
 	var had := buffs.active.size()
@@ -1463,6 +1460,20 @@ func _ring_fx(reach: float) -> void:
 	var r1 := hb.radius if hb != null and hb.radius > 0.0 else 25.0
 	r1 *= float(sheet.meta.get("px_scale", 1.0)) if sheet != null else 1.0   # _add_fx applies px_scale again
 	_add_fx("stomp-i", "burst", reach / r1, 0.0)
+
+
+## Bàn thạch spends its single charge: the stone shell cracks and flies apart.
+func _spend_ward() -> bool:
+	if _ward_charges <= 0 or _ward_buff == "" or not buffs.is_active(_ward_buff):
+		return false
+	_ward_charges -= 1
+	buffs.active.erase(_ward_buff)
+	var brk := String(_buff_defs.get(_ward_buff, {}).get("break_sprite", ""))
+	if brk != "":
+		_add_fx(brk, "break", 1.0, 0.0, -1.0, player_pos + _hit_center)
+	invuln = maxf(invuln, 0.5)
+	Sfx.play("holy")
+	return true
 
 
 ## A special's buff (shield / haste ...) for its "time".

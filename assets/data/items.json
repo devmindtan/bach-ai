@@ -106,6 +106,7 @@
       "name": "Bàn thạch",
       "icon": "item_low_hp",
       "aura": "aura-stoneguard",
+      "break_sprite": "stone-ward-break",
       "aura_layer": "front",
       "duration": 8.0,
       "desc": "Trong 8 giây: chặn hoàn toàn một đòn rồi vỡ.",

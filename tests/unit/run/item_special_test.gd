@@ -22,11 +22,13 @@ func _run() -> Node:
 	r.levels = {"blade_arc": 1}
 	var items := GameData.load_json("res://assets/data/items.json")
 	r.buffs = Buffs.new(items.get("buffs", {}), {}, 1)
+	r._buff_defs = items.get("buffs", {})
 	r.profile = Profile.new(items["equipment"])
 	var monsters := {"blob": {"sprite": "blob", "behaviour": "chase", "hp": 1000.0, "damage": 1.0, "speed": 0.0, "xp": 1.0, "scale": 2}}
 	var blob := SpriteSheet.from_meta("blob", {"frames": 1, "frame_size": [24, 24], "fps": 8.0, "anchor": [12.0, 12.0],
 		"body": {"anim": "default", "center": [12.0, 12.0], "radius": 6.0}})
 	r.enemies = Enemies.new(monsters, {"max_enemies": 20, "separation": {"push": 0.0}}, {"blob": blob}, 1)
+	r.sheets["stone-ward-break"] = SpriteSheet.load_dir("res://assets/sprites/custom/stone-ward-break", "stone-ward-break")
 	r._recompute_stats()
 	r.hp = float(r.stats["max_hp"])
 	return r
@@ -123,6 +125,19 @@ func test_low_hp_shield_once_per_cooldown() -> void:
 	r.hp = float(r.stats["max_hp"]) * 0.2
 	r.step_specials(0.1)
 	_check(r.buffs.is_active("stone_ward") and r._ward_charges == 1, "low hp: one-hit ward")
+	r.free()
+
+
+func test_ward_breaks_after_one_hit() -> void:
+	var r := _run()
+	r.set_specials([_special("aegis_greaves")])
+	r.hp = float(r.stats["max_hp"]) * 0.2
+	r.step_specials(0.1)
+	_check(r._ward_charges == 1, "ward ready")
+	_check(r._spend_ward(), "the first hit is blocked")
+	_check(r._ward_charges == 0 and not r.buffs.is_active("stone_ward"), "the ward is spent")
+	_check(not r._fx.is_empty() and String(r._fx[0]["anim"]) == "break", "the shell shatters")
+	_check(not r._spend_ward(), "a second hit gets through")
 	r.free()
 
 
