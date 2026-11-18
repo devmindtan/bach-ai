@@ -78,10 +78,19 @@ static func dim(center: Control) -> void:
 
 
 ## A ui-icons icon at [param px] pixels, crisp.
+## The largest whole multiple of [param frame] that fits in [param px] (at least
+## one frame): pixel icons stretched by x5.25 drew pixels of uneven width ("méo").
+static func snap_icon(px: float, frame: float) -> float:
+	if frame <= 0.0:
+		return px
+	return maxf(1.0, floorf(px / frame)) * frame
+
+
 static func icon(id: String, px := 20.0) -> TextureRect:
 	var t := TextureRect.new()
 	t.texture = UiIcons.texture(id)
-	t.custom_minimum_size = Vector2(px, px)
+	var side := snap_icon(px, t.texture.get_size().x) if t.texture != null else px
+	t.custom_minimum_size = Vector2(side, side)
 	t.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	t.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	t.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
