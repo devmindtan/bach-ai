@@ -586,6 +586,20 @@ func boss_index() -> int:
 	return -1
 
 
+## The dash lane of charger [param i] while it winds up, [from, to, width], when
+## its kind has "telegraph" (Sói Rừng, design 6A); empty otherwise.
+func charge_lane(i: int) -> Array:
+	if i < 0 or i >= count or state[i] != WINDUP:
+		return []
+	var k := kind[i]
+	var e: Dictionary = k_extra[k]
+	if k_behaviour[k] != CHARGE or not bool(e.get("telegraph", false)):
+		return []
+	var from := center_of(i)
+	var length := float(e.get("dash_speed", 300.0)) * float(e.get("dash_time", 0.35))
+	return [from, from + dash_dir[i].normalized() * length, k_radius[k] * 2.0]
+
+
 ## Where a boss will land (WINDUP: the chosen spot; DASH: its course end) and the
 ## slam reach, for the run to draw the warning circle: [[pos, reach], ...].
 func boss_telegraphs() -> Array:

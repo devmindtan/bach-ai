@@ -1,5 +1,5 @@
 {
-  "_doc": "Region Rừng Âm U (stages 11-19, stages.json): bats come in swarms, goblins take over earlier and elites are more common. Rates are scaled by the stage (stages.json scale). Same wave rules as stage_001. Ma Trơi (wisp, zig-zag flyer, design 6A) joins from 40 s.",
+  "_doc": "Region Rừng Âm U (stages 11-19, stages.json): bats come in swarms, goblins take over earlier and elites are more common. Rates are scaled by the stage (stages.json scale). Same wave rules as stage_001. Ma Trơi (wisp, zig-zag flyer, design 6A) joins from 40 s. Sói Rừng (wolf, telegraphed charger) hunts from 60 s; a pack at 200 s.",
   "name": "Rừng Âm U",
   "duration": 300.0,
   "waves": [
@@ -114,6 +114,20 @@
       "t_to": 280,
       "burst": 2,
       "announce": "2 quái tinh anh xuất hiện!"
+    },
+    {
+      "monster": "wolf",
+      "t_from": 60,
+      "t_to": 300,
+      "rate": 0.3,
+      "rate_end": 1.4
+    },
+    {
+      "monster": "wolf",
+      "t_from": 200,
+      "t_to": 200,
+      "burst": 12,
+      "announce": "Bầy sói săn mồi!"
     }
   ]
 }

@@ -20,6 +20,7 @@ extends Node2D
 ##   --milestone=N   open the level-N milestone pick at the start (shots)
 ##   --pick-card=ID  take count card ID at the start and open its skill pick (shots)
 ##   --no-auto-pick  the demo stops at the first level-up panel (for shots)
+##   --spawn-only=ID only the waves of this monster spawn, from the start (shots)
 ##   --hitboxes      draw hit areas: effects (red while dealing damage), monster
 ##                   bodies, the player's body and pickup radius
 ##   --bench=N       keep N monsters alive around a god-mode autopilot, print
@@ -140,6 +141,7 @@ var offer: Array[String] = []   # forced cards for the first level-up (--offer)
 var forced_walk := Vector2.ZERO
 var pause_at := -1.0
 var level_view := "cards"   # level-up: "cards", "character" (Tab) or "hidden" (H), design/ux/level-up.md
+var _spawn_only := ""   # --spawn-only=ID (shots)
 var _level_view_arg := ""   # --level-view=character|hidden (shots): open that view on the first level-up
 var pause_view := ""   # "settings" / "character": the --pause-at pause opens that page (shots)
 var god := false
@@ -272,7 +274,17 @@ func _ready() -> void:
 		buffs.activate(id)
 	for k in _ground_buffs.size():
 		buffs.ground.append({"id": _ground_buffs[k], "pos": Vector2(120.0 + 70.0 * k, -60.0), "age": 0.0})
-	waves = WaveScheduler.new(stage.get("waves", []))
+	var wave_list: Array = stage.get("waves", [])
+	if _spawn_only != "":   # shots: one species alone, its waves moved to the start
+		var only: Array = []
+		for w: Dictionary in wave_list:
+			if String(w.get("monster", "")) == _spawn_only and not w.has("burst"):
+				var w2 := w.duplicate()
+				w2["t_to"] = float(w2.get("t_to", 300.0)) - float(w2.get("t_from", 0.0))
+				w2["t_from"] = 0.0
+				only.append(w2)
+		wave_list = only
+	waves = WaveScheduler.new(wave_list)
 	base_stats = class_data.get("stats", {})
 	profile = playing_slot.profile if playing_slot != null else prefs.profile()
 	tree_owner = prefs.active_slot
@@ -378,6 +390,8 @@ func _parse_args() -> void:
 				offer.append(id)
 		elif a.begins_with("--pick-card="):
 			_pick_card = a.get_slice("=", 1)
+		elif a.begins_with("--spawn-only="):
+			_spawn_only = a.get_slice("=", 1)
 		elif a.begins_with("--level-view="):
 			_level_view_arg = a.get_slice("=", 1)
 		elif a.begins_with("--challenge="):
@@ -1996,6 +2010,7 @@ func _draw() -> void:
 	_draw_ground_buffs(view)
 	_draw_zones()
 	_draw_ground_fx()
+	_draw_charge_lanes(view)
 	# dying monsters under the living ones
 	for pass_dying in [true, false]:
 		for i in enemies.count:
@@ -2195,6 +2210,25 @@ func _draw_statuses(view: Rect2) -> void:
 		var sk: SpriteSheet = sheets.get(String(status_defs.get("shock", {}).get("sprite", "")))
 		if sk != null:
 			sk.draw(self, "loop", float(s["t"]), b, _sprite_scale)
+
+
+## Telegraphed charges (Sói Rừng, design 6A): the lane a winding-up charger will
+## dash along, red, filling in as the dash comes.
+func _draw_charge_lanes(view: Rect2) -> void:
+	for i in enemies.count:
+		if not view.has_point(enemies.pos[i]):
+			continue
+		var lane := enemies.charge_lane(i)
+		if lane.is_empty():
+			continue
+		var a: Vector2 = lane[0]
+		var b: Vector2 = lane[1]
+		var n := (b - a).orthogonal().normalized() * float(lane[2]) * 0.5
+		var w := float(enemies.k_extra[enemies.kind[i]].get("windup", 0.5))
+		var t := clampf(1.0 - enemies.timer[i] / maxf(0.01, w), 0.0, 1.0)
+		draw_colored_polygon(PackedVector2Array([a + n, b + n, b - n, a - n]), Color(0.9, 0.15, 0.1, 0.12 + 0.18 * t))
+		draw_polyline(PackedVector2Array([a + n, b + n, b - n, a - n, a + n]), Color(1.0, 0.35, 0.25, 0.5 + 0.4 * t), 2.0)
+		draw_line(a, a.lerp(b, t), Color(1.0, 0.5, 0.35, 0.7), 3.0)
 
 
 ## Tint of monster [param i] from its statuses (freeze / burn / slow), or white.
