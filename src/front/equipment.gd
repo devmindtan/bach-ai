@@ -580,6 +580,7 @@ func _detail(root: Control) -> void:
 		var wallet := {"v": _slot_data.gold}
 		if _prof.enhance(_view, wallet):
 			Sfx.play("enhance")
+			Daily.load_default().add(_slot_data, "enhances", 1)
 			_slot_data.gold = int(wallet["v"])
 			prefs.save_profile()
 			_rebuild(), Vector2(0, 40), 15)

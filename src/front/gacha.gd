@@ -73,6 +73,7 @@ func _pull(n: int) -> void:
 		return
 	_last = got
 	_tab = "result"
+	Daily.load_default().add(_slot, "gacha_pulls", n)
 	Sfx.play("gacha_pull")
 	var best := ""
 	for r: Dictionary in got:

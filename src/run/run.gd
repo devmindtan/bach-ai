@@ -50,6 +50,7 @@ var _gear_plus := 0                   # --gear-plus=N: Cường hoá level of th
 var specials: Array = []              # Hiệu ứng đặc biệt of worn legendary items (Profile.specials)
 var _special_t: Array[float] = []     # per special: seconds to its next trigger (or cooldown left)
 var _item_revive_used := false
+var elite_kills := 0                  # elites and bosses downed this run (Nhiệm vụ ngày)
 var _special_kills: Array[int] = []   # per special: kills counted toward its next kill_proc
 var _gear: Array[String] = []       # --gear=a,b (shots: wear these)   # self casts waiting for their pulse (count > 1)
 var _chest_open := false   # the next level-up panel comes from a chest
@@ -635,6 +636,8 @@ func _drops() -> void:
 	var heal_frac := heal_on_kill()   # Khát máu: elites and bosses feed the hero
 	for i in enemies.kill_pos.size():
 		pickups.drop(Pickups.GEM, enemies.kill_pos[i], enemies.kill_xp[i])
+		if enemies.kill_elite[i] == 1 or enemies.kill_boss[i] == 1:
+			elite_kills += 1
 		if enemies.kill_elite[i] == 1:
 			pickups.drop(Pickups.CHEST, enemies.kill_pos[i] + Vector2(-10, 0), 1.0)
 		var ess := essence_drop(enemies.kill_elite[i] == 1, enemies.kill_boss[i] == 1)
@@ -1677,10 +1680,22 @@ func _finish(won: bool) -> void:
 			run_result["first"] = bool(r.get("first", false))
 		else:
 			playing_slot.gold += gold   # Thua: chỉ giữ vàng đã nhặt
+		record_daily(playing_slot, won)
 		prefs.slot_store().save(playing_slot)
 	run_result["next"] = won and challenge_id == "" and stage_number < (stages.count() if stages != null else 30)
 	run_result["challenge"] = challenge_id
 	run_result["best"] = playing_slot.best if playing_slot != null else 0
+
+
+## Nhiệm vụ ngày counters from this run (design/missions.md).
+func record_daily(slot: Slot, won: bool) -> void:
+	var d := Daily.load_default()
+	d.add(slot, "runs", 1)
+	d.add(slot, "kills", enemies.total_kills if enemies != null else 0)
+	d.add(slot, "elite_kills", elite_kills)
+	d.add(slot, "essence", int(run_result.get("essence", 0)))
+	if won:
+		d.add(slot, "challenge_wins" if challenge_id != "" else "stage_wins", 1)
 
 
 func _die() -> void:

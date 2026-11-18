@@ -22,6 +22,7 @@ var pills := 0                # Tẩy Tủy Đan: won in challenges, pays a skil
 var tree: Array = []          # skill-tree node ids bought (design/skill-tree.md)
 var challenge_wins := {}      # challenge id -> times won (design/challenge.md)
 var pity := {}                # gacha banner id -> pulls since its last legendary (design/gacha.md)
+var daily := {}               # Nhiệm vụ ngày: {date, ids, stats, claimed, bonus} (Daily)
 var gacha_log := {}           # gacha banner id -> [{t, id, rarity, dup, gold}], oldest first (Lịch sử quay)
 var profile: Profile
 
@@ -54,7 +55,7 @@ func record_win(n: int, stages: Stages) -> Dictionary:
 func to_dict() -> Dictionary:
 	return {"version": VERSION, "id": id, "name": name, "class": cls, "best": best, "wins": wins,
 		"gold": gold, "gems": gems, "essence": essence, "pills": pills, "tree": tree,
-		"challenge_wins": challenge_wins, "pity": pity, "gacha_log": gacha_log,
+		"challenge_wins": challenge_wins, "pity": pity, "gacha_log": gacha_log, "daily": daily,
 		"profile": profile.to_dict()}
 
 
@@ -78,5 +79,6 @@ func from_dict(d: Dictionary) -> String:
 	challenge_wins = d.get("challenge_wins", {})
 	pity = d.get("pity", {})
 	gacha_log = d.get("gacha_log", {})
+	daily = d.get("daily", {})
 	profile.from_dict(d.get("profile", {}), cls)
 	return ""

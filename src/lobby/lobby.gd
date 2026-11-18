@@ -161,6 +161,7 @@ func _build_ui() -> void:
 	top.add_theme_constant_override("separation", 10)
 	var top_buttons := [_button("Nhân vật", func() -> void: get_tree().change_scene_to_file(CHARACTERS_SCENE)),
 		_button("Gacha", func() -> void: get_tree().change_scene_to_file("res://src/front/gacha.tscn")),
+		_button(_missions_label(), func() -> void: get_tree().change_scene_to_file("res://src/front/missions.tscn")),
 		_button("Cài đặt", func() -> void: _show_settings(root, menu)),
 		_button("Menu chính", func() -> void: get_tree().change_scene_to_file(TITLE_SCENE))]
 	top.position = Vector2(vp.x - 32 - top_buttons.size() * 140 - (top_buttons.size() - 1) * 10, 26)
@@ -457,3 +458,14 @@ func _style(bg: Color, pad: int) -> StyleBoxFlat:
 	s.set_corner_radius_all(4)
 	s.set_content_margin_all(pad)
 	return s
+
+
+## "Nhiệm vụ", with how many rewards wait to be claimed (design/missions.md).
+func _missions_label() -> String:
+	var slot := Prefs.current().active_slot
+	if slot == null:
+		return "Nhiệm vụ"
+	var d := Daily.load_default()
+	d.ensure(slot, "2026-11-18" if Prefs.current().is_fixed() else "")
+	var n := d.ready_count(slot)
+	return "Nhiệm vụ (%d)" % n if n > 0 else "Nhiệm vụ"

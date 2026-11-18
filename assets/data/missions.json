@@ -1,0 +1,15 @@
+{
+  "_doc": "Nhiệm vụ ngày (design/missions.md): each day a slot gets per_day missions from pool (picked from the date and the slot id), each worth gems when its stat reaches target; claiming all of them unlocks bonus_gems. stat = a counter the game adds to (Daily.add): runs, stage_wins, kills, elite_kills, essence, gacha_pulls, enhances, challenge_wins.",
+  "per_day": 4,
+  "bonus_gems": 10,
+  "pool": [
+    { "id": "play_runs", "name": "Ra trận", "desc": "Chơi 3 trận (thắng hay thua).", "stat": "runs", "target": 3, "gems": 5 },
+    { "id": "win_stage", "name": "Vượt ải", "desc": "Thắng 1 ải.", "stat": "stage_wins", "target": 1, "gems": 5 },
+    { "id": "slayer", "name": "Diệt quái", "desc": "Hạ 500 quái.", "stat": "kills", "target": 500, "gems": 5 },
+    { "id": "elite_hunter", "name": "Săn tinh anh", "desc": "Hạ 3 quái tinh anh.", "stat": "elite_kills", "target": 3, "gems": 5 },
+    { "id": "essence", "name": "Nhặt Tinh hoa", "desc": "Nhặt 5 Tinh hoa.", "stat": "essence", "target": 5, "gems": 5 },
+    { "id": "gacha", "name": "Cầu may", "desc": "Quay gacha 1 lượt.", "stat": "gacha_pulls", "target": 1, "gems": 5 },
+    { "id": "enhance", "name": "Rèn đồ", "desc": "Cường hoá 1 lần.", "stat": "enhances", "target": 1, "gems": 5 },
+    { "id": "trial", "name": "Thử thách", "desc": "Thắng 1 thử thách.", "stat": "challenge_wins", "target": 1, "gems": 5 }
+  ]
+}
