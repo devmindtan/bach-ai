@@ -348,7 +348,11 @@ func test_jumping_monsters_have_crouch_and_jump_animations() -> void:
 	var monsters := GameData.load_json("res://assets/data/monsters.json")
 	for id: String in monsters:
 		var m: Variant = monsters[id]
-		if not m is Dictionary or not (String(m.get("behaviour", "")) == "hop" or m.has("hop_height")):
+		# every leaper: hoppers and the jumping bosses; Vua Thạch Nhầy's sprite predates the rule (to redraw)
+		if not m is Dictionary or id in ["king_slime"]:
+			continue
+		var leaps: bool = String(m.get("behaviour", "")) in ["hop", "boss_slime"] or m.has("hop_height")
+		if not leaps:
 			continue
 		var name := String(m.get("sprite", id))
 		var meta := GameData.load_json("res://assets/sprites/custom/%s/%s.json" % [name, name])
