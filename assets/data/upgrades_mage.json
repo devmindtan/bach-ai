@@ -363,7 +363,8 @@
         2,
         3,
         4
-      ]
+      ],
+      "ground_fx": true
     },
     "lightning": {
       "sprite": "lightning-strike",

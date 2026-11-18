@@ -882,7 +882,8 @@ func _cast(sid: String, ts: Dictionary, how: String) -> void:
 			for k in n:
 				var dv := to_target.rotated(deg_to_rad(12.0 * (k - (n - 1) * 0.5)))
 				var anim := _fly_anim(sprite, String(ts.get("anim_prefix", "fly_")), dv)
-				var fx := _add_fx(sprite, anim, sc, 0.0, float(ts.get("duration", 1.2)), center, sid, kb)
+				# leaves from in front of the hero, not from its face (user 2026-11-18)
+				var fx := _add_fx(sprite, anim, sc, 0.0, float(ts.get("duration", 1.2)), center + dv * 18.0, sid, kb)
 				if fx.is_empty():
 					continue
 				fx["vel"] = dv * speed
@@ -1113,10 +1114,13 @@ func _add_fx(sprite: String, anim: String, sc: float, damage: float, life := -1.
 	var sheet: SpriteSheet = sheets.get(sprite)
 	if sheet == null or not sheet.has_animation(anim):
 		return {}
+	sc *= float(sheet.meta.get("px_scale", 1.0))   # drawn at double density (icefx): same size on screen
 	var fx := {"sheet": sheet, "anim": anim, "t": 0.0, "scale": sc, "damage": damage, "done": damage <= 0.0,
 		"life": life if life > 0.0 else sheet.duration(anim),
 		"pos": world_pos, "follow": world_pos == null, "source": source, "kb": knockback,
 		"effects": on_hit(source)}
+	if bool(pool.get("skills", {}).get(source, {}).get("ground_fx", false)):
+		fx["ground"] = true   # lies on the floor (frozen ground): drawn under the monsters
 	_fx.append(fx)
 	if source != "":   # a cast: its sound (audio.json "skills"; voices/gap keep it calm)
 		Sfx.skill(source)
@@ -1824,6 +1828,7 @@ func _draw() -> void:
 				sh.draw(self, "idle", clock + i * 0.13, pickups.pos[i], _sprite_scale)
 	_draw_boss_warnings()
 	_draw_ground_buffs(view)
+	_draw_ground_fx()
 	# dying monsters under the living ones
 	for pass_dying in [true, false]:
 		for i in enemies.count:
@@ -1916,9 +1921,17 @@ func _step_shot(fx: Dictionary, dt: float) -> bool:
 
 ## Skill effects; [param under] = only those drawn behind the hero (ground
 ## effects such as the stomp), else the rest, over it.
+## Effects lying on the floor (skills with "ground_fx"): under the monsters and the hero.
+func _draw_ground_fx() -> void:
+	for fx in _fx:
+		if bool(fx.get("ground", false)):
+			var sh: SpriteSheet = fx["sheet"]
+			sh.draw(self, fx["anim"], float(fx["t"]), _fx_pos(fx), float(fx["scale"]))
+
+
 func _draw_fx(under: bool) -> void:
 	for fx in _fx:
-		if bool(fx.get("under", false)) != under:
+		if bool(fx.get("under", false)) != under or bool(fx.get("ground", false)):
 			continue
 		var sh: SpriteSheet = fx["sheet"]
 		var looping: bool = fx["anim"] == "spin" or fx.has("shot")

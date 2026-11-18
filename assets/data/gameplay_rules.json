@@ -1,37 +1,75 @@
 {
-  "_doc": "Gameplay rules every skill and effect of Bach Ai must meet (design/gameplay-rules.md explains each). Read by tests/integration/data/gameplay_rules_test.gd (must = test fails) and by the studio dashboard (sprite-lab/games.html, tab Luat gameplay). Distances are world px at the game's sprite_scale; times in seconds.",
-  "limits": {
-    "cooldown_min": 0.3,
-    "cooldown_max": 6.0,
-    "reach_min": 24.0,
-    "reach_max": 360.0,
-    "cast_range_max": 560.0,
-    "oneshot_max": 1.2,
-    "active_start_max": 0.4,
-    "frame_max": 96,
-    "levels_min": 3,
-    "levels_max": 5,
-    "dps_ratio_min": 0.4,
-    "dps_ratio_max": 3.0
+ "_doc": "Gameplay rules every skill and effect of Bach Ai must meet (design/gameplay-rules.md explains each). Read by tests/integration/data/gameplay_rules_test.gd (must = test fails) and by the studio dashboard (sprite-lab/games.html, tab Luat gameplay). Distances are world px at the game's sprite_scale; times in seconds.",
+ "limits": {
+  "cooldown_min": 0.3,
+  "cooldown_max": 6.0,
+  "reach_min": 24.0,
+  "reach_max": 360.0,
+  "cast_range_max": 560.0,
+  "oneshot_max": 1.2,
+  "active_start_max": 0.4,
+  "frame_max": 96,
+  "levels_min": 3,
+  "levels_max": 5,
+  "dps_ratio_min": 0.4,
+  "dps_ratio_max": 3.0,
+  "frame_max_dense": 192,
+  "outro_max": 1.0
+ },
+ "rules": [
+  {
+   "id": "auto",
+   "severity": "must",
+   "title": "Tự động, không bấm",
+   "text": "Người chơi chỉ di chuyển. Mọi kỹ năng tự kích hoạt theo hồi chiêu trong khoảng cooldown_min..cooldown_max giây."
   },
-  "rules": [
-    { "id": "auto", "severity": "must", "title": "Tự động, không bấm",
-      "text": "Người chơi chỉ di chuyển. Mọi kỹ năng tự kích hoạt theo hồi chiêu trong khoảng cooldown_min..cooldown_max giây." },
-    { "id": "hitbox", "severity": "must", "title": "Hitbox đo từ pixel",
-      "text": "Mọi animation hiệu ứng game phát đều có hitbox (đo bằng spritekit.fit_hitbox), frame gây sát thương nằm trong animation. Không gõ tay tầm đánh." },
-    { "id": "screen", "severity": "must", "title": "Nằm trong màn hình",
-      "text": "Tầm ảnh hưởng ở cấp tối đa trong reach_min..reach_max px; chiêu bắn ra xa không quá cast_range_max px (màn hình 1280x720, người chơi ở giữa)." },
-    { "id": "snappy", "severity": "must", "title": "Ra đòn nhanh, đọc được",
-      "text": "Hiệu ứng một lần dài không quá oneshot_max giây và gây sát thương trước active_start_max giây; hiệu ứng lặp (xoáy, vòng) phải có thời lượng (duration) trong data." },
-    { "id": "directional", "severity": "must", "title": "Đòn định hướng đủ 4 hướng",
-      "text": "Đòn chém theo hướng có đủ slash_right / slash_left / slash_up / slash_down (game nhắm quái gần nhất rồi chọn hướng)." },
-    { "id": "levels", "severity": "must", "title": "Mạnh lên theo cấp",
-      "text": "Kỹ năng có levels_min..levels_max cấp; mỗi cấp tăng sát thương hoặc cỡ. Có sprite theo bậc (I-V) thì số bậc bằng số cấp." },
-    { "id": "small", "severity": "must", "title": "Sprite nhỏ, nhẹ",
-      "text": "Khung hình không quá frame_max px để hàng trăm hiệu ứng và quái vẫn chạy 60 fps." },
-    { "id": "class", "severity": "should", "title": "Đúng class",
-      "text": "Hiệu ứng có tag class-<class> thì chỉ nằm trong pool của class đó (băng/phép cho Pháp sư, kiếm/đất cho Kiếm sĩ)." },
-    { "id": "dps", "severity": "should", "title": "Cân bằng sát thương",
-      "text": "Sát thương mỗi giây ở cấp 1 trong dps_ratio_min..dps_ratio_max lần đòn cơ bản của class (damage / cooldown)." }
-  ]
+  {
+   "id": "hitbox",
+   "severity": "must",
+   "title": "Hitbox đo từ pixel",
+   "text": "Mọi animation hiệu ứng game phát đều có hitbox (đo bằng spritekit.fit_hitbox), frame gây sát thương nằm trong animation. Không gõ tay tầm đánh."
+  },
+  {
+   "id": "screen",
+   "severity": "must",
+   "title": "Nằm trong màn hình",
+   "text": "Tầm ảnh hưởng ở cấp tối đa trong reach_min..reach_max px; chiêu bắn ra xa không quá cast_range_max px (màn hình 1280x720, người chơi ở giữa)."
+  },
+  {
+   "id": "snappy",
+   "severity": "must",
+   "title": "Ra đòn nhanh, đọc được",
+   "text": "Hiệu ứng một lần gây sát thương trước active_start_max giây và hết các frame gây sát thương trong oneshot_max giây; sau đó được có pha kết thúc (đọng lại, tan biến) tối đa outro_max giây (người dùng 2026-11-18: hiệu ứng phải có animation kết thúc rõ). Hiệu ứng lặp (xoáy, vòng) phải có thời lượng (duration) trong data."
+  },
+  {
+   "id": "directional",
+   "severity": "must",
+   "title": "Đòn định hướng đủ 4 hướng",
+   "text": "Đòn chém theo hướng có đủ slash_right / slash_left / slash_up / slash_down (game nhắm quái gần nhất rồi chọn hướng)."
+  },
+  {
+   "id": "levels",
+   "severity": "must",
+   "title": "Mạnh lên theo cấp",
+   "text": "Kỹ năng có levels_min..levels_max cấp; mỗi cấp tăng sát thương hoặc cỡ. Có sprite theo bậc (I-V) thì số bậc bằng số cấp."
+  },
+  {
+   "id": "small",
+   "severity": "must",
+   "title": "Sprite nhỏ, nhẹ",
+   "text": "Khung hình (nhân px_scale) không quá frame_max px; sprite vẽ mật độ gấp đôi (px_scale 0.5) không quá frame_max_dense px thật, để hàng trăm hiệu ứng và quái vẫn chạy 60 fps."
+  },
+  {
+   "id": "class",
+   "severity": "should",
+   "title": "Đúng class",
+   "text": "Hiệu ứng có tag class-<class> thì chỉ nằm trong pool của class đó (băng/phép cho Pháp sư, kiếm/đất cho Kiếm sĩ)."
+  },
+  {
+   "id": "dps",
+   "severity": "should",
+   "title": "Cân bằng sát thương",
+   "text": "Sát thương mỗi giây ở cấp 1 trong dps_ratio_min..dps_ratio_max lần đòn cơ bản của class (damage / cooldown)."
+  }
+ ]
 }

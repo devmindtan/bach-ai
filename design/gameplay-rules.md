@@ -25,10 +25,10 @@ Luật dưới đây là **bắt buộc khi thiết kế**; số liệu nằm tr
 | `auto` | bắt buộc | Kỹ năng tự kích hoạt, hồi chiêu 0,3–6 s | Không có nút đánh; quá nhanh thì rối, quá chậm thì người chơi không thấy chiêu |
 | `hitbox` | bắt buộc | Mọi animation hiệu ứng game phát có hitbox đo từ pixel | Thấy gì trúng nấy |
 | `screen` | bắt buộc | Tầm ở cấp tối đa 24–360 px (đạn bay: chỉ giới hạn trên); bắn xa ≤ 560 px | Không che màn hình, không đánh trúng thứ người chơi không thấy |
-| `snappy` | bắt buộc | Hiệu ứng một lần ≤ 1,2 s, trúng trong 0,4 s đầu; hiệu ứng lặp có `duration` | Phản hồi tức thì, đọc được nhịp |
+| `snappy` | bắt buộc | Trúng trong 0,4 s đầu, hết frame gây sát thương trong 1,2 s; sau đó pha kết thúc (đọng lại, tan) ≤ 1,0 s; hiệu ứng lặp có `duration` | Phản hồi tức thì, đọc được nhịp; có đoạn kết rõ (người dùng 2026-11-18) |
 | `directional` | bắt buộc | Đòn chém có đủ 4 hướng | Game nhắm quái gần nhất theo 4 hướng |
 | `levels` | bắt buộc | 3–5 cấp, mỗi cấp tăng sát thương hoặc cỡ; bậc sprite I–V = số cấp | Lên cấp phải thấy mạnh hơn |
-| `small` | bắt buộc | Khung ≤ 96 px | Hiệu năng, cùng tỉ lệ pixel |
+| `small` | bắt buộc | Khung × `px_scale` ≤ 96 px; sprite mật độ đôi (`px_scale` 0.5) ≤ 192 px thật | Hiệu năng |
 | `class` | nên | Tag `class-<x>` khớp class sở hữu kỹ năng | Bản sắc class (băng/phép cho Pháp sư, kiếm/đất cho Kiếm sĩ) |
 | `dps` | nên | DPS cấp 1 (sát thương × số nhịp trúng / hồi chiêu, một mục tiêu) trong 0,4–3 lần đòn cơ bản của class; chiêu vùng được phép thấp hơn vì trúng nhiều quái | Không có chiêu "phá game" hay vô dụng ngay từ đầu |
 

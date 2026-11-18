@@ -1,38 +1,58 @@
 {
-  "frames": 8,
+  "frames": 18,
   "frame_size": [
-    72,
-    72
+    144,
+    144
   ],
   "fps": 12.0,
   "loop": false,
   "anchor": [
-    36.0,
-    36.0
+    72.0,
+    72.0
   ],
   "anchor_source": "explicit",
   "animations": [
     {
       "name": "burst",
       "start": 0,
-      "frames": 8,
+      "frames": 18,
       "fps": 12.0,
       "loop": false,
+      "durations_ms": [
+        80.0,
+        80.0,
+        80.0,
+        80.0,
+        70.0,
+        70.0,
+        70.0,
+        70.0,
+        70.0,
+        70.0,
+        70.0,
+        70.0,
+        70.0,
+        70.0,
+        100.0,
+        100.0,
+        110.0,
+        130.0
+      ],
       "hitbox": {
         "shape": "circle",
         "center": [
-          36.0,
-          36.0
+          72.0,
+          72.0
         ],
         "active": [
-          2,
-          6
+          4,
+          13
         ],
-        "radius": 33.0,
+        "radius": 68.0,
         "inner": 0.0
       }
     }
   ],
-  "source": "sprite-lab/sprites/blizzard-vortex",
-  "hires": 4
+  "px_scale": 0.5,
+  "source": "sprite-lab/sprites/blizzard-vortex"
 }

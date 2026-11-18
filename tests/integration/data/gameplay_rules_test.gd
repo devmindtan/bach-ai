@@ -97,7 +97,10 @@ func test_skills_meet_must_rules() -> void:
 			_check(sheet != null, "%s: sprite missing" % id)
 			if sheet == null:
 				continue
-			_check(maxf(sheet.frame_size.x, sheet.frame_size.y) <= float(lim["frame_max"]), "%s [small]: %s frame %s" % [id, sheet.name, sheet.frame_size])
+			# px_scale 0.5 (icefx): drawn at double density, the logical size is what counts
+			var px := float(sheet.meta.get("px_scale", 1.0))
+			var side := maxf(sheet.frame_size.x, sheet.frame_size.y)
+			_check(side * px <= float(lim["frame_max"]) and side <= float(lim["frame_max_dense"]), "%s [small]: %s frame %s" % [id, sheet.name, sheet.frame_size])
 			var names := sheet.animation_names()
 			if Array(names).any(func(x: String) -> bool: return x.begins_with("slash_")):
 				for d in DIRS:
@@ -110,11 +113,15 @@ func test_skills_meet_must_rules() -> void:
 					continue
 				flies = flies or an == "fly"
 				var r := maxf(float(hb.get("half_w", 0)), float(hb.get("half_h", 0))) if hb.get("shape") == "rect" else float(hb.get("radius", 0))
-				reach = maxf(reach, r * scale * size_max)
+				reach = maxf(reach, r * scale * size_max * px)
 				if bool(a.get("loop", true)):
 					_check(p.has("duration"), "%s [snappy]: %s loops but the skill has no duration" % [id, an])
 				else:
-					_check(sheet.duration(an) <= float(lim["oneshot_max"]), "%s [snappy]: %s lasts %.2fs" % [id, an, sheet.duration(an)])
+					# the readable part (to the end of the hits) is short; an ending may follow (user 2026-11-18)
+					var act: Array = hb.get("active", [0, 0])
+					var hit_end := SpriteHitbox.frame_time(a, int(act[1]) + 1)
+					_check(hit_end <= float(lim["oneshot_max"]), "%s [snappy]: %s hits until %.2fs" % [id, an, hit_end])
+					_check(sheet.duration(an) - hit_end <= float(lim["outro_max"]), "%s [snappy]: %s ending lasts %.2fs" % [id, an, sheet.duration(an) - hit_end])
 					var start := SpriteHitbox.frame_time(a, int(hb.get("active", [0])[0]))
 					_check(start <= float(lim["active_start_max"]), "%s [snappy]: %s first hits at %.2fs" % [id, an, start])
 		_check(reach <= float(lim["reach_max"]) and (flies or reach >= float(lim["reach_min"])), "%s [screen]: reach %.0f px" % [id, reach])
