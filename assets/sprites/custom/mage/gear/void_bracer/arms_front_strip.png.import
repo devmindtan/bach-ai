@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://4mwbo644nhry"
-path="res://.godot/imported/swordsman_strip_x4.png-4f440057b5fd080ef002d9f82bf09d00.ctex"
+uid="uid://blbcwffibdmmg"
+path="res://.godot/imported/arms_front_strip.png-58420569ed5aae1d37a30593c73ed818.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/custom/swordsman/swordsman_strip_x4.png"
-dest_files=["res://.godot/imported/swordsman_strip_x4.png-4f440057b5fd080ef002d9f82bf09d00.ctex"]
+source_file="res://assets/sprites/custom/mage/gear/void_bracer/arms_front_strip.png"
+dest_files=["res://.godot/imported/arms_front_strip.png-58420569ed5aae1d37a30593c73ed818.ctex"]
 
 [params]
 

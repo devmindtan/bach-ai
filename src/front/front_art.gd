@@ -42,10 +42,11 @@ static func ellipse(canvas: CanvasItem, c: Vector2, r: Vector2, col: Color) -> v
 	canvas.draw_colored_polygon(pts, col)
 
 
-## The class's hero sheet with its layers composed (null when missing).
-static func hero_sheet(class_data: Dictionary) -> SpriteSheet:
+## The class's hero sheet with its layers composed (null when missing), wearing
+## [param worn] (item ids: their gear layers replace the hero's, sprite-lab hero-gear).
+static func hero_sheet(class_data: Dictionary, worn: Array = []) -> SpriteSheet:
 	var sprite := String(class_data.get("sprite", "swordsman"))
 	var sh := SpriteSheet.load_dir("res://assets/sprites/custom/" + sprite, sprite)
 	if sh != null and not sh.layer_names().is_empty():
-		sh.compose_layers()
+		sh.compose_layers(sh.gear_overrides(worn))
 	return sh

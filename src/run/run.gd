@@ -262,6 +262,9 @@ func _ready() -> void:
 		if _gear_plus > 0:
 			profile.plus[id] = _gear_plus
 	set_specials(profile.specials(class_id) if profile != null else [])
+	var hero_layers: SpriteSheet = sheets.get(String(class_data.get("sprite", "")))
+	if hero_layers != null and not hero_layers.layer_names().is_empty() and profile != null:
+		hero_layers.compose_layers(hero_layers.gear_overrides(profile.equipped(class_id).values()))   # worn items show
 	for sk: String in class_data.get("start_skills", {}):
 		# keep a higher level forced by --skills
 		levels[sk] = maxi(int(levels.get(sk, 0)), int(class_data["start_skills"][sk]))

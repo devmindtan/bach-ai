@@ -179,7 +179,7 @@ func _slot_tile(e: Dictionary) -> Button:
 		row.add_child(bad)
 		b.add_theme_stylebox_override("normal", UiKit.style(Color("2a1a20"), 8, Color("a04848")))
 		return b
-	var box := _hero_box(s.cls, Vector2(76, 76), 2.0)
+	var box := _hero_box(s.cls, Vector2(76, 76), 2.0, 0.0, s.profile.equipped(s.cls).values())
 	box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(box)
 	var v := VBoxContainer.new()
@@ -205,12 +205,17 @@ func _accent(cls: String) -> Color:
 
 ## The class's idle hero at [param scale]: in a dark box with a shadow, or (k > 0) on a
 ## pedestal of size k whose lowest edge stays inside the box (feet 50k + 6 px above it).
-func _hero_box(cls: String, box: Vector2, scale: float, k := 0.0) -> Control:
+func _hero_box(cls: String, box: Vector2, scale: float, k := 0.0, worn: Array = []) -> Control:
 	var pedestal := k > 0.0
 	var c := Control.new()
 	c.custom_minimum_size = box
 	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var sheet: SpriteSheet = _sheets.get(cls)
+	if not worn.is_empty():   # this character's own look: its worn items drawn on the hero
+		var key := cls + ":" + ",".join(PackedStringArray(worn))
+		if not _sheets.has(key):
+			_sheets[key] = FrontArt.hero_sheet(_classes.get(cls, {}), worn)
+		sheet = _sheets[key]
 	var col := _accent(cls)
 	c.draw.connect(func() -> void:
 		var feet := Vector2(box.x * 0.5, box.y - (50.0 * k + 6.0 if pedestal else 6.0))
@@ -242,7 +247,7 @@ func _slot_panel(panel: PanelContainer, s: Slot) -> void:
 	h.add_theme_constant_override("separation", 24)
 	panel.add_child(h)
 	var cd: Dictionary = _classes.get(s.cls, {})
-	h.add_child(_hero_box(s.cls, Vector2(280, 440), 6.0, 0.82))
+	h.add_child(_hero_box(s.cls, Vector2(280, 440), 6.0, 0.82, s.profile.equipped(s.cls).values()))
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 10)
 	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL

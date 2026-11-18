@@ -150,10 +150,12 @@
   "layers": [
     "chest_back",
     "legs_back",
+    "feet_back",
     "arms_back",
     "weapon_back",
     "chest",
     "legs_front",
+    "feet_front",
     "body",
     "head",
     "weapon",
@@ -176,6 +178,10 @@
       "legs_back",
       "legs_front"
     ],
+    "feet": [
+      "feet_back",
+      "feet_front"
+    ],
     "weapon": [
       "weapon_back",
       "weapon"
@@ -184,6 +190,5 @@
   "base": [
     "body"
   ],
-  "source": "sprite-lab/sprites/swordsman",
-  "hires": 4
+  "source": "sprite-lab/sprites/swordsman"
 }

@@ -76,7 +76,9 @@ func _load_class(id: String) -> void:
 	var sprite := String(_class.get("sprite", "swordsman"))
 	_hero = SpriteSheet.load_dir(SPRITES + sprite, sprite)
 	if _hero != null and not _hero.layer_names().is_empty():
-		_hero.compose_layers()   # equipment will pass its layers here
+		var slot := Prefs.current().active_slot
+		var worn: Array = slot.profile.equipped(slot.cls).values() if slot != null and slot.cls == id else []
+		_hero.compose_layers(_hero.gear_overrides(worn))   # worn items drawn on the hero
 
 
 func _unhandled_input(event: InputEvent) -> void:

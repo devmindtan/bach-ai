@@ -55,7 +55,7 @@ func _ready() -> void:
 	_prof = _slot_data.profile
 	_cls = _slot_data.cls
 	_class = GameData.load_json("res://assets/data/classes.json").get(_cls, {})
-	_hero = FrontArt.hero_sheet(_class)
+	_hero = FrontArt.hero_sheet(_class, _prof.equipped(_cls).values())
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--equip-slot="):
 			_sel = a.get_slice("=", 1)
@@ -101,6 +101,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _rebuild() -> void:
 	if _layer != null:
 		_layer.queue_free()
+	_hero = FrontArt.hero_sheet(_class, _prof.equipped(_cls).values())   # worn items show on the hero
 	_build()
 
 
