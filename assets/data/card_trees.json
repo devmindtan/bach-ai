@@ -1,0 +1,178 @@
+{
+  "_doc": "Card trees (design/skill-tree-v2.md, CardTree): per skill card a free-branching tree of multi-rank nodes bought with Mảnh thẻ (slot.shards). Point k (from 0) in a card costs cost_base + cost_step*k. Node: id, name, desc (per rank), col/row (grid place in the tree screen), max_rank, requires (node ids needing rank>=1), requires_points (spent in the card), excludes (keystones), effects (like card effects, per rank: skill_damage/skill_area/skill_cd.<id> mul, skill_count.<id> add), on_hit (statuses added to the skill's hits), glyph (the change symbol drawn on the node icon), keystone (bigger gold frame). shards: where Mảnh thẻ comes from.",
+  "cost_base": 2,
+  "cost_step": 1,
+  "shards": {
+    "win_base": 3,
+    "win_per_5_stages": 1,
+    "boss": 5,
+    "chest": 1,
+    "gacha_dup": 2
+  },
+  "cards": {
+    "blade_arc": {
+      "max_points": 12,
+      "nodes": [
+        {
+          "id": "keen",
+          "name": "Lưỡi bén",
+          "desc": "Sát thương +10% mỗi cấp.",
+          "col": 1,
+          "row": 0,
+          "max_rank": 3,
+          "glyph": "damage",
+          "effects": {
+            "skill_damage.blade_arc": {
+              "mul": 0.1
+            }
+          }
+        },
+        {
+          "id": "wide",
+          "name": "Vung rộng",
+          "desc": "Vùng chém +12% mỗi cấp.",
+          "col": 0,
+          "row": 1,
+          "max_rank": 2,
+          "glyph": "area",
+          "requires": [
+            "keen"
+          ],
+          "effects": {
+            "skill_area.blade_arc": {
+              "mul": 0.12
+            }
+          }
+        },
+        {
+          "id": "quick",
+          "name": "Nhanh tay",
+          "desc": "Hồi chiêu −6% mỗi cấp.",
+          "col": 2,
+          "row": 1,
+          "max_rank": 2,
+          "glyph": "cooldown",
+          "requires": [
+            "keen"
+          ],
+          "effects": {
+            "skill_cd.blade_arc": {
+              "mul": -0.06
+            }
+          }
+        },
+        {
+          "id": "bleed",
+          "name": "Rỉ máu",
+          "desc": "Nhát chém gây chảy máu.",
+          "col": 0,
+          "row": 2,
+          "max_rank": 1,
+          "glyph": "bleed",
+          "requires": [
+            "wide"
+          ],
+          "on_hit": [
+            {
+              "status": "bleed",
+              "dps_mul": 0.15,
+              "time": 2.0
+            }
+          ]
+        },
+        {
+          "id": "heavy",
+          "name": "Mạnh tay",
+          "desc": "Sát thương +12% mỗi cấp.",
+          "col": 1,
+          "row": 2,
+          "max_rank": 2,
+          "glyph": "damage",
+          "requires": [
+            "keen"
+          ],
+          "effects": {
+            "skill_damage.blade_arc": {
+              "mul": 0.12
+            }
+          }
+        },
+        {
+          "id": "twin",
+          "name": "Chém đôi",
+          "desc": "Thêm 1 nhát chém.",
+          "col": 2,
+          "row": 2,
+          "max_rank": 1,
+          "glyph": "count",
+          "requires": [
+            "quick"
+          ],
+          "effects": {
+            "skill_count.blade_arc": {
+              "add": 1
+            }
+          }
+        },
+        {
+          "id": "fire",
+          "name": "Kiếm lửa",
+          "desc": "Nhát chém gây bỏng, sát thương +15%.",
+          "col": 0,
+          "row": 3,
+          "max_rank": 1,
+          "glyph": "burn",
+          "keystone": true,
+          "requires": [
+            "bleed"
+          ],
+          "requires_points": 8,
+          "excludes": [
+            "storm"
+          ],
+          "effects": {
+            "skill_damage.blade_arc": {
+              "mul": 0.15
+            }
+          },
+          "on_hit": [
+            {
+              "status": "burn",
+              "dps_mul": 0.3,
+              "time": 2.0
+            }
+          ]
+        },
+        {
+          "id": "storm",
+          "name": "Kiếm sấm",
+          "desc": "Nhát chém gây giật điện, hồi chiêu −10%.",
+          "col": 2,
+          "row": 3,
+          "max_rank": 1,
+          "glyph": "shock",
+          "keystone": true,
+          "requires": [
+            "twin"
+          ],
+          "requires_points": 8,
+          "excludes": [
+            "fire"
+          ],
+          "effects": {
+            "skill_cd.blade_arc": {
+              "mul": -0.1
+            }
+          },
+          "on_hit": [
+            {
+              "status": "shock",
+              "mul": 0.4,
+              "time": 3.0
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

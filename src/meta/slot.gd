@@ -23,6 +23,10 @@ var tree: Array = []          # skill-tree node ids bought (design/skill-tree.md
 var challenge_wins := {}      # challenge id -> times won (design/challenge.md)
 var pity := {}                # gacha banner id -> pulls since its last legendary (design/gacha.md)
 var daily := {}               # Nhiệm vụ ngày: {date, ids, stats, claimed, bonus} (Daily)
+var shards := 0               # Mảnh thẻ: buys card-tree nodes (design/skill-tree-v2.md)
+var card_trees := {}          # card id -> {node id -> rank} (CardTree)
+var decks: Array = []         # up to 3 decks: {name, cards: [ids]} (design/skill-tree-v2.md §2)
+var deck_active := 0
 var gacha_log := {}           # gacha banner id -> [{t, id, rarity, dup, gold}], oldest first (Lịch sử quay)
 var profile: Profile
 
@@ -56,6 +60,7 @@ func to_dict() -> Dictionary:
 	return {"version": VERSION, "id": id, "name": name, "class": cls, "best": best, "wins": wins,
 		"gold": gold, "gems": gems, "essence": essence, "pills": pills, "tree": tree,
 		"challenge_wins": challenge_wins, "pity": pity, "gacha_log": gacha_log, "daily": daily,
+		"shards": shards, "card_trees": card_trees, "decks": decks, "deck_active": deck_active,
 		"profile": profile.to_dict()}
 
 
@@ -80,5 +85,9 @@ func from_dict(d: Dictionary) -> String:
 	pity = d.get("pity", {})
 	gacha_log = d.get("gacha_log", {})
 	daily = d.get("daily", {})
+	shards = int(d.get("shards", 0))
+	card_trees = d.get("card_trees", {})
+	decks = Array(d.get("decks", []))
+	deck_active = int(d.get("deck_active", 0))
 	profile.from_dict(d.get("profile", {}), cls)
 	return ""
