@@ -891,6 +891,8 @@ func on_hit(sid: String) -> Array:
 	for e: Dictionary in pool.get("skills", {}).get(sid, {}).get("on_hit", []):
 		if lv >= int(e.get("from", 1)):
 			out.append(e)
+	if tree_owner != null and lv > 0:   # statuses the card tree adds (design/skill-tree-v2.md)
+		out.append_array(_card_tree().on_hit(tree_owner, sid))
 	return out
 
 
@@ -920,7 +922,7 @@ func _skill_count(sid: String, ts: Dictionary) -> int:
 ## (Thêm đòn / Thêm phép, one chosen skill each) plus Đa phép (a level milestone,
 ## the only thing adding to every skill).
 func amount_for(sid: String) -> int:
-	return int(skill_extra.get(sid, 0)) + int(stats.get("amount", 0.0))
+	return int(skill_extra.get(sid, 0)) + int(stats.get("amount", 0.0)) + int(stats.get("skill_count." + sid, 0.0))
 
 
 ## The count of skill [param sid] now, as the skill uses it: casts / targets /
@@ -1879,7 +1881,17 @@ func effect_pool() -> Array:
 		out.append_array(profile.as_upgrades(class_id))   # worn equipment
 	if tree_owner != null:
 		out.append_array(_tree().as_upgrades(tree_owner))   # skill tree nodes bought
+		out.append_array(_card_tree().as_upgrades(tree_owner))   # card tree nodes bought (Mảnh thẻ)
 	return out
+
+
+var card_tree: CardTree
+
+
+func _card_tree() -> CardTree:
+	if card_tree == null:
+		card_tree = CardTree.load_default()
+	return card_tree
 
 
 func _tree() -> SkillTree:
@@ -1898,6 +1910,7 @@ func effect_levels() -> Dictionary:
 		out.merge(profile.levels(class_id), true)
 	if tree_owner != null:
 		out.merge(_tree().levels(tree_owner), true)
+		out.merge(_card_tree().levels(tree_owner), true)
 	return out
 
 

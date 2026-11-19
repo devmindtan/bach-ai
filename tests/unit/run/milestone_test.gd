@@ -244,3 +244,21 @@ func test_level_ups_offer_only_the_deck() -> void:
 	_check(ids.has("blade_arc") and ids.has("sharpen"), "deck cards are offered")
 	_check(not ids.has("whirlwind") and not ids.has("haste"), "cards outside the deck are not, got %s" % [ids])
 	r.free()
+
+
+func test_card_tree_nodes_change_the_skill_in_the_run() -> void:
+	# design/skill-tree-v2.md §3: bought nodes apply to the skill from the moment it is taken
+	var r := _run("knight", {"blade_arc": 1})
+	var s := Slot.new({})
+	s.card_trees = {"blade_arc": {"keen": 3, "quick": 2, "twin": 1, "bleed": 1}}
+	r.tree_owner = s
+	r._recompute_stats()
+	var plain := _run("knight", {"blade_arc": 1})
+	_check(absf(r.skill_damage("blade_arc") / plain.skill_damage("blade_arc") - 1.5 / 1.2) < 0.01, "Lưỡi bén x3 adds +30%% to the card mul (1.2 -> 1.5)")
+	_check(r.skill_count_now("blade_arc") == plain.skill_count_now("blade_arc") + 1, "Chém đôi adds a slash")
+	var st := []
+	for e: Dictionary in r.on_hit("blade_arc"):
+		st.append(String(e["status"]))
+	_check(st.has("bleed"), "Rỉ máu adds bleeding on hit, got %s" % [st])
+	r.free()
+	plain.free()
