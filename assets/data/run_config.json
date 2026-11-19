@@ -127,5 +127,13 @@
     "source_names": {
       "event.meteor": "Mưa thiên thạch"
     }
+  },
+  "crit": {
+    "_doc": "Chí mạng (6C.2): chance and mul of direct hits (plus crit_chance / crit_mul effects); a crit on an elite or boss freezes the world hitstop s and shakes shake_crit px; the hero hurt shakes taken x shake_per_hurt px (2..7).",
+    "chance": 0.05,
+    "mul": 1.75,
+    "hitstop": 0.035,
+    "shake_crit": 2.0,
+    "shake_per_hurt": 0.25
   }
 }

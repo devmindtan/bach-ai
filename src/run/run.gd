@@ -132,6 +132,10 @@ var _end_t := 0.0
 # floating damage numbers (ring buffer, sizes from run_config "ui")
 var _num_pos := PackedVector2Array()
 var _num_val := PackedFloat32Array()
+var _num_crit := PackedByteArray()   # 1 = that number is a crit (bigger, orange, "!")
+var shake := ScreenShake.new()       # camera shake (6C.2); Cài đặt can turn it off
+var _hitstop := 0.0                  # s the sim stays frozen after a crit on an elite / boss
+var _crit_cfg: Dictionary = {}
 var _num_t := PackedFloat32Array()   # age in seconds, -1 = free
 var _num_next := 0
 var _num_life := 0.7
@@ -250,6 +254,9 @@ func _ready() -> void:
 	var n_max := maxi(1, int(ui.get("max_damage_numbers", 96)))
 	_num_pos.resize(n_max)
 	_num_val.resize(n_max)
+	_num_crit.resize(n_max)
+	_crit_cfg = cfg.get("crit", {})
+	shake.enabled = Prefs.current().screen_shake
 	_num_t.resize(n_max)
 	_num_t.fill(-1.0)
 
@@ -486,6 +493,8 @@ func _process(delta: float) -> void:
 	if bench > 0 and _bench_frames > 60:
 		_bench_tick_us.append(Time.get_ticks_usec() - t0)
 	_camera.position = player_pos.round()
+	shake.enabled = Prefs.current().screen_shake   # the pause menu's Cài đặt can turn it off mid-run
+	_camera.offset = shake.step(delta, Engine.get_process_frames())
 	queue_redraw()
 	_hud.queue_redraw()
 
@@ -538,6 +547,9 @@ func _tick(dt: float) -> void:
 			choose(0)
 		return
 	if state != State.PLAYING:
+		return
+	if _hitstop > 0.0:   # a crit on an elite / boss: the world holds for a few frames (6C.2)
+		_hitstop -= dt
 		return
 	clock += dt
 	if pause_at >= 0.0 and clock >= pause_at:
@@ -778,6 +790,7 @@ func _spawn(t0: float, t1: float) -> void:
 
 func _take_hit(amount: float) -> void:
 	var taken := maxf(1.0, (amount - float(stats.get("armor", 0.0))) * damage_taken_mul())
+	shake.add(clampf(taken * float(_crit_cfg.get("shake_per_hurt", 0.25)), 2.0, 7.0))   # a boss slam shakes harder
 	hp -= taken
 	damage_taken += taken
 	invuln = float(cfg.get("player", {}).get("hit_invuln", 0.6))
@@ -1912,6 +1925,9 @@ static func _fmt_stat(key: String, v: float) -> String:
 
 func _recompute_stats() -> void:
 	stats = PlayerStats.compute(base_stats, effect_pool(), effect_levels())
+	if enemies != null:   # Chí mạng: run_config.json crit + any crit_chance / crit_mul effects (6C.2)
+		enemies.crit_chance = float(cfg.get("crit", {}).get("chance", 0.0)) + float(stats.get("crit_chance", 0.0))
+		enemies.crit_mul = float(cfg.get("crit", {}).get("mul", 1.75)) + float(stats.get("crit_mul", 0.0))
 
 
 ## Card upgrades plus active buffs (as level-1 upgrades): what the stats are made of.
@@ -2292,9 +2308,13 @@ func _step_damage_numbers(dt: float) -> void:
 			_num_t[i] += dt
 			if _num_t[i] > _num_life:
 				_num_t[i] = -1.0
+	if enemies.crit_heavy > 0:   # a crit landed on an elite / boss: hitstop and a small shake
+		_hitstop = float(_crit_cfg.get("hitstop", 0.035))
+		shake.add(float(_crit_cfg.get("shake_crit", 2.0)))
 	for k in enemies.hit_pos.size():
 		_num_pos[_num_next] = enemies.hit_pos[k] + Vector2(rng.randf_range(-6.0, 6.0), 0.0)
 		_num_val[_num_next] = enemies.hit_val[k]
+		_num_crit[_num_next] = enemies.hit_crit[k] if k < enemies.hit_crit.size() else 0
 		_num_t[_num_next] = 0.0
 		_num_next = (_num_next + 1) % _num_t.size()
 	enemies.drain_hits()
@@ -2717,9 +2737,12 @@ func _draw_damage_numbers(view: Rect2) -> void:
 		var u := t / _num_life
 		var a := 1.0 if u < 0.6 else 1.0 - (u - 0.6) / 0.4
 		var p := (_num_pos[i] - Vector2(30.0, _num_rise * u)).round()
-		var txt := str(maxi(1, roundi(_num_val[i])))
-		draw_string_outline(font, p, txt, HORIZONTAL_ALIGNMENT_CENTER, 60.0, _num_size, 4, Color(0.1, 0.05, 0.08, a))
-		draw_string(font, p, txt, HORIZONTAL_ALIGNMENT_CENTER, 60.0, _num_size, Color(1.0, 0.93, 0.6, a))
+		var crit := _num_crit[i] == 1
+		var txt := str(maxi(1, roundi(_num_val[i]))) + ("!" if crit else "")
+		var sz := roundi(_num_size * 1.4) if crit else _num_size
+		var col := Color(1.0, 0.55, 0.15, a) if crit else Color(1.0, 0.93, 0.6, a)
+		draw_string_outline(font, p, txt, HORIZONTAL_ALIGNMENT_CENTER, 60.0, sz, 5 if crit else 4, Color(0.1, 0.05, 0.08, a))
+		draw_string(font, p, txt, HORIZONTAL_ALIGNMENT_CENTER, 60.0, sz, col)
 
 
 ## Hp bar over each monster hit in the last ui.hp_bar_time seconds.

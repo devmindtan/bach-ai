@@ -78,6 +78,12 @@ signal split_done(pos: Vector2)
 # hits since the last drain_hits() (the run shows them as damage numbers)
 var hit_pos := PackedVector2Array()
 var hit_val := PackedFloat32Array()
+var hit_crit := PackedByteArray()        # 1 = that hit was a crit (its number draws as one)
+var crit_chance := 0.0   # Chí mạng of direct hits (the run sets it from the stats, 6C.2)
+var crit_mul := 1.75
+var _crit_next := false
+var crits_by := {}       # source -> crits landed
+var crit_heavy := 0      # crits on elites / bosses since the last drain_hits (hitstop, shake)
 var hp_bar_time := 2.0
 
 # kills since the last drain_kills() (the run turns them into gems)
@@ -146,6 +152,7 @@ var _hashed_count := 0
 var _push := 60.0
 var _query := PackedInt32Array()
 var _rng := RandomNumberGenerator.new()
+var _crit_rng := RandomNumberGenerator.new()   # its own stream: crit rolls must not shift spawns (a run stays reproducible)
 var _time := 0.0
 var _target := Vector2.ZERO   # the player position this step (boss jump targets)
 var _slam_i := -1
@@ -153,6 +160,7 @@ var _slam_i := -1
 
 func _init(monsters: Dictionary, cfg: Dictionary, sheets: Dictionary, seed_value := 0) -> void:
 	_rng.seed = seed_value
+	_crit_rng.seed = seed_value * 31 + 7
 	BossFxNode.attach(self)
 	var world: Dictionary = cfg.get("world", {})
 	var ring: Array = world.get("spawn_ring", [760.0, 860.0])
@@ -838,7 +846,15 @@ func hit_box(hb: SpriteHitbox, damage: float, knockback := 140.0, source := "", 
 			continue
 		hits += 1
 		var d := c - hb.center
-		_damage(i, damage, d.normalized() * knockback if d.length_squared() > 1.0 else Vector2.ZERO, source)
+		var dmg := damage
+		var crit := not source.begins_with("event.") and crit_chance > 0.0 and _crit_rng.randf() < crit_chance
+		if crit:   # Chí mạng: direct hits only (damage over time and events never crit)
+			dmg *= crit_mul
+			crits_by[source] = int(crits_by.get(source, 0)) + 1
+			if k_elite[kind[i]] == 1 or k_boss[kind[i]] == 1:
+				crit_heavy += 1
+		_crit_next = crit
+		_damage(i, dmg, d.normalized() * knockback if d.length_squared() > 1.0 else Vector2.ZERO, source)
 		for e: Dictionary in effects:
 			apply_status(i, String(e.get("status", "")), e, damage, source)
 	return hits
@@ -882,6 +898,8 @@ func _damage(i: int, amount: float, kb: Vector2, source := "") -> void:
 	hp_show[i] = hp_bar_time
 	hit_pos.append(center_of(i) - Vector2(0.0, k_radius[kind[i]]))
 	hit_val.append(amount)
+	hit_crit.append(1 if _crit_next else 0)
+	_crit_next = false
 	if state[i] != DASH and k_boss[kind[i]] == 0:   # bosses are not knocked back
 		knock[i] += kb
 	_split(i, hp_before)
@@ -1049,6 +1067,8 @@ func nearest_n(p: Vector2, n: int) -> Array[int]:
 func drain_hits() -> void:
 	hit_pos.clear()
 	hit_val.clear()
+	hit_crit.clear()
+	crit_heavy = 0
 
 
 ## Clears the kill buffers (call after turning them into drops).

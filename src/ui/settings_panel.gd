@@ -36,6 +36,8 @@ static func build(on_back: Callable) -> VBoxContainer:
 		func() -> void: Prefs.current().set_value("damage_numbers", not Prefs.current().damage_numbers))
 	_row(col, "Thanh máu quái", func() -> String: return "Hiện" if Prefs.current().monster_hp else "Ẩn",
 		func() -> void: Prefs.current().set_value("monster_hp", not Prefs.current().monster_hp))
+	_row(col, "Rung màn hình", func() -> String: return "Bật" if Prefs.current().screen_shake else "Tắt",
+		func() -> void: Prefs.current().set_value("screen_shake", not Prefs.current().screen_shake))
 	_row(col, "Nhạc", func() -> String: return "%d%%" % Prefs.current().music_volume,
 		func() -> void: Prefs.current().set_value("music_volume", next_volume(Prefs.current().music_volume)))
 	_row(col, "Hiệu ứng âm thanh", func() -> String: return "%d%%" % Prefs.current().sfx_volume,

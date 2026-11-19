@@ -28,6 +28,7 @@ var fullscreen := false
 var scale := 0                      # 0 = auto, else 1..3
 var damage_numbers := true
 var monster_hp := true
+var screen_shake := true   # Rung màn hình (6C.2)
 var music_volume := _volume_default("music", 60)   # 0..100 %, Music bus (design/audio.md)
 var sfx_volume := _volume_default("sfx", 80)       # 0..100 %, SFX bus
 var hero := "knight"                # the class chosen in the lobby (classes.json id)
@@ -287,6 +288,7 @@ func _load() -> void:
 	scale = clampi(int(cfg.get_value("display", "scale", scale)), 0, 3)
 	damage_numbers = bool(cfg.get_value("hud", "damage_numbers", damage_numbers))
 	monster_hp = bool(cfg.get_value("hud", "monster_hp", monster_hp))
+	screen_shake = bool(cfg.get_value("hud", "screen_shake", screen_shake))
 	music_volume = clampi(int(cfg.get_value("audio", "music", music_volume)), 0, 100)
 	sfx_volume = clampi(int(cfg.get_value("audio", "sfx", sfx_volume)), 0, 100)
 	hero = String(cfg.get_value("game", "hero", hero))
@@ -300,6 +302,7 @@ func _save() -> void:
 	cfg.set_value("display", "scale", scale)
 	cfg.set_value("hud", "damage_numbers", damage_numbers)
 	cfg.set_value("hud", "monster_hp", monster_hp)
+	cfg.set_value("hud", "screen_shake", screen_shake)
 	cfg.set_value("audio", "music", music_volume)
 	cfg.set_value("audio", "sfx", sfx_volume)
 	cfg.set_value("game", "hero", hero)

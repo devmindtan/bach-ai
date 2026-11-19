@@ -69,3 +69,16 @@ Luật dưới đây là **bắt buộc khi thiết kế**; số liệu nằm tr
   - `pull`: kéo quái trong vùng về tâm (`strength` px/s) trong lúc frame gây sát thương chạy, trừ boss. Hiện
     chưa chiêu nào dùng (Bão tuyết không kéo vì đã làm chậm, người dùng 2026-11-18).
 - Kỹ năng sau này gây sát thương duy trì và để lại vệt trên sân thì nên có `zone` tương ứng.
+
+## Chí mạng, khựng hình, rung màn (6C.2, 2026-11-19)
+
+Tham khảo: Brotato ([Crit Chance](https://brotato.wiki.spellsandguns.com/Crit_Chance), [Stats](https://brotato.wiki.spellsandguns.com/Stats)): chí mạng cơ
+bản 3% × 2, thẻ cộng thêm tỉ lệ; Vlambeer, "The Art of Screenshake" ([Game Developer](https://gamedeveloper.com/design/vlambeer-co-founder-shares-advice-on-building-better-action-games),
+[Infovore: Making game feel](https://infovore.org/?p=5275)): khựng hình 2–5 khung khi đòn trúng mạnh, rung màn theo lực.
+**Quyết định** (số liệu `run_config.json` crit):
+- Đòn **trực tiếp** (mọi `hit_box`) chí mạng với tỉ lệ `chance` (5%) + hiệu ứng `crit_chance`, sát thương × `mul` (1,75) +
+  `crit_mul`; sát thương theo thời gian (chảy máu, bỏng), giật lan và sự kiện (`event.*`) không chí mạng.
+- Tung xúc xắc chí mạng bằng **bộ sinh số riêng**: không làm lệch lịch sinh quái (lỗi gặp khi làm: dùng chung thì một trận
+  có chí mạng diễn ra khác hẳn; chặn bằng test `crit_test`).
+- Số chí mạng to ×1,4, màu cam, có "!". Chí mạng trúng **tinh anh / boss**: khựng hình 0,035 s + rung 2 px. Người chơi
+  trúng đòn: rung `sát thương × 0,25` px (2–7). Tắt rung: Cài đặt → **Rung màn hình**.
