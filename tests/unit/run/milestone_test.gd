@@ -232,3 +232,15 @@ func test_tab_reaches_the_level_up_before_gui_focus() -> void:
 		r._input(ev)
 	_check(r.level_view == "character", "Tab opens the character sheet, got %s" % r.level_view)
 	r.free()
+
+
+func test_level_ups_offer_only_the_deck() -> void:
+	# design/skill-tree-v2.md §2: a run offers only the active deck's cards (plus milestone uniques)
+	var r := _run("knight", {})
+	r.deck_cards = ["blade_arc", "sharpen"]
+	var ids := []
+	for u: Dictionary in r.deck_pool():
+		ids.append(String(u["id"]))
+	_check(ids.has("blade_arc") and ids.has("sharpen"), "deck cards are offered")
+	_check(not ids.has("whirlwind") and not ids.has("haste"), "cards outside the deck are not, got %s" % [ids])
+	r.free()

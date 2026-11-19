@@ -143,6 +143,7 @@ var offer: Array[String] = []   # forced cards for the first level-up (--offer)
 var forced_walk := Vector2.ZERO
 var pause_at := -1.0
 var level_view := "cards"   # level-up: "cards", "character" (Tab) or "hidden" (H), design/ux/level-up.md
+var deck_cards: Array = []   # the active deck's card ids (design/skill-tree-v2.md §2)
 var bosses_killed := 0   # this run, for Mảnh thẻ
 var chests_opened := 0   # this run, for Mảnh thẻ
 var ring := ChallengeRing.new()   # Vòng thử thách (design/events.md)
@@ -324,6 +325,9 @@ func _ready() -> void:
 	var hero_layers: SpriteSheet = sheets.get(String(class_data.get("sprite", "")))
 	if hero_layers != null and not hero_layers.layer_names().is_empty() and profile != null:
 		hero_layers.compose_layers(hero_layers.gear_overrides(profile.equipped(class_id).values()))   # worn items show
+	var deck_cfg: Dictionary = CardTree.load_default().data.get("deck", {"skills": 8, "stats": 6, "slots": 3})
+	deck_cards = Deck.active(playing_slot if not Prefs.current().is_fixed() else null, pool.get("upgrades", []),
+		class_data.get("start_skills", {}).keys(), deck_cfg)
 	for sk: String in class_data.get("start_skills", {}):
 		# keep a higher level forced by --skills
 		levels[sk] = maxi(int(levels.get(sk, 0)), int(class_data["start_skills"][sk]))
@@ -1665,7 +1669,7 @@ func _open_level_up() -> void:
 			return
 		ms_level = 0
 	ms_level = 0
-	choices = UpgradeRoller.roll(pool.get("upgrades", []), levels, level_up_card_count(), rng)
+	choices = UpgradeRoller.roll(deck_pool(), levels, level_up_card_count(), rng)
 	if not offer.is_empty():
 		choices = offer.duplicate()
 		offer.clear()
@@ -1698,6 +1702,13 @@ func toggle_level_view(v: String) -> void:
 		"character": _panels.show_character()
 		"hidden": _panels.show_peek()
 		_: _panels.reshow()
+
+
+## The cards a level-up may offer: the active deck's cards and the non-deck cards (Deck.filter).
+func deck_pool() -> Array:
+	if deck_cards.is_empty():
+		return pool.get("upgrades", [])
+	return Deck.filter(pool.get("upgrades", []), deck_cards)
 
 
 ## Applies choice [param index] of the open level-up and continues the run.

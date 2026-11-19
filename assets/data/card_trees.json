@@ -1,5 +1,5 @@
 {
-  "_doc": "Card trees (design/skill-tree-v2.md, CardTree): per skill card a free-branching tree of multi-rank nodes bought with Mảnh thẻ (slot.shards). Point k (from 0) in a card costs cost_base + cost_step*k. Node: id, name, desc (per rank), col/row (grid place in the tree screen), max_rank, requires (node ids needing rank>=1), requires_points (spent in the card), excludes (keystones), effects (like card effects, per rank: skill_damage/skill_area/skill_cd.<id> mul, skill_count.<id> add), on_hit (statuses added to the skill's hits), glyph (the change symbol drawn on the node icon), keystone (bigger gold frame). shards: where Mảnh thẻ comes from.",
+  "_doc": "Card trees (design/skill-tree-v2.md, CardTree): per skill card a free-branching tree of multi-rank nodes bought with Mảnh thẻ (slot.shards). Point k (from 0) in a card costs cost_base + cost_step*k. Node: id, name, desc (per rank), col/row (grid place in the tree screen), max_rank, requires (node ids needing rank>=1), requires_points (spent in the card), excludes (keystones), effects (like card effects, per rank: skill_damage/skill_area/skill_cd.<id> mul, skill_count.<id> add), on_hit (statuses added to the skill's hits), glyph (the change symbol drawn on the node icon), keystone (bigger gold frame). shards: where Mảnh thẻ comes from. deck: what a deck holds (skills, stats) and how many decks a slot keeps.",
   "cost_base": 2,
   "cost_step": 1,
   "shards": {
@@ -174,5 +174,10 @@
         }
       ]
     }
+  },
+  "deck": {
+    "skills": 8,
+    "stats": 6,
+    "slots": 3
   }
 }
