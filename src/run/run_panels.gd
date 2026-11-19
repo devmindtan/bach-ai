@@ -814,6 +814,8 @@ func show_end(won: bool) -> void:
 			parts.append("Giữ lại vàng nhặt: +%d" % int(rr.get("collected", 0)))
 		if int(rr.get("essence", 0)) > 0:
 			parts.append("Tinh hoa +%d" % int(rr["essence"]))
+		if int(rr.get("shards", 0)) > 0:   # design/skill-tree-v2.md §4
+			parts.append("Mảnh thẻ +%d" % int(rr["shards"]))
 		var reward_l := _label(" · ".join(parts), 17, BORDER if won else MUTED)
 		reward_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		root.add_child(reward_l)
