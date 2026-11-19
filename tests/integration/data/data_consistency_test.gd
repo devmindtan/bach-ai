@@ -349,7 +349,7 @@ func test_jumping_monsters_have_crouch_and_jump_animations() -> void:
 	for id: String in monsters:
 		var m: Variant = monsters[id]
 		# every leaper: hoppers and the jumping bosses; Vua Thạch Nhầy's sprite predates the rule (to redraw)
-		if not m is Dictionary or id in ["king_slime"]:
+		if not m is Dictionary:
 			continue
 		var leaps: bool = String(m.get("behaviour", "")) in ["hop", "boss_slime"] or m.has("hop_height")
 		if not leaps:

@@ -42,7 +42,7 @@
     "damage": 18.0,
     "speed": 30.0,
     "xp": 200.0,
-    "scale": 5,
+    "scale": 3.4,
     "jump_every": 5.0,
     "windup": 0.9,
     "jump_time": 0.6,
@@ -73,7 +73,8 @@
     "bolt_speed": 150.0,
     "bolt_damage": 12.0,
     "bolt_range": 460.0,
-    "bolt_radius": 6.0
+    "bolt_radius": 6.0,
+    "hop_height": 36.0
   },
   "spore": {
     "name": "Nấm Phun",
