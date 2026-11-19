@@ -46,6 +46,14 @@ nền, vòng chồng nhau, quá nhiều vòng một lúc. **Quyết định:**
   lõi trắng 0,4 s. Câu báo "Mưa thiên thạch! Tránh các vòng đỏ". Cờ chụp `--meteor-at=<giây>`.
 - Test: `tests/unit/run/meteor_shower_test.gd`.
 
-## Còn lại
+## Rương vàng (`Pickups.GOLD_CHEST`)
 
-Rương vàng hiếm.
+Tham khảo: Vampire Survivors, rương cho 1 / 3 / 5 món, rương hiếm hơn cho nhiều hơn ([Steam: luck và số món](https://steamcommunity.com/app/1794680/discussions/0/3201493834358639726),
+[Zi'Appunta: rương vàng](https://rogueranker.com/zi-appunta-vampire-survivors/)); Diablo III, Resplendent Chest ([DiabloWiki](https://di.diablowiki.net/Golden_Chest)):
+hiếm, ánh vàng, chắc chắn có đồ tốt và rải vàng. **Học:** cùng chỗ rơi với rương thường, chỉ hiếm hơn và nhìn là biết.
+**Tránh:** thêm một loại phần thưởng mới khó hiểu. **Quyết định:**
+- Mọi rương rơi ra (tinh anh, Yêu tinh vàng, Vòng thử thách) có 8% là **Rương vàng** (`run_config.json` events.gold_chest).
+- Nhặt: chọn **liền 3 thẻ** (tiêu đề "Rương vàng! Chọn một (còn n lượt)"), **+30 vàng**, **chắc chắn một món trang bị**,
+  tính là 3 rương khi chia Mảnh thẻ.
+- Sprite `chest-gold` (nâng cấp từ `chest`: cùng dáng, thân vàng, khóa ngọc đỏ, sao lấp lánh). Cờ chụp `--gold-chest`.
+- Test: `tests/unit/run/gold_chest_test.gd`.

@@ -8,7 +8,7 @@ extends RefCounted
 ##   p.drop(Pickups.GEM, pos, 3.0)
 ##   var got := p.step(delta, player_center, magnet_mul)   # Vector2(xp, gold)
 
-enum { GEM, COIN, CHEST, ESSENCE }
+enum { GEM, COIN, CHEST, ESSENCE, GOLD_CHEST }
 
 var count := 0
 var capacity := 0
@@ -21,6 +21,7 @@ var radius := 70.0
 var magnet_speed := 520.0
 var collect_radius := 14.0
 var chests := 0   # chests collected and not yet opened (the run opens one per extra pick)
+var gold_chests := 0   # Rương vàng collected and not yet opened (design/events.md)
 var essence := 0  # Tinh hoa picked up this run (skill-tree material, design/skill-tree.md)
 
 
@@ -33,6 +34,11 @@ func _init(cfg: Dictionary, p_capacity := 400) -> void:
 	value.resize(capacity)
 	kind.resize(capacity)
 	pulled.resize(capacity)
+
+
+## CHEST, or GOLD_CHEST with [param gold_chance] (Rương vàng, run_config.json events.gold_chest).
+static func chest_kind(rng: RandomNumberGenerator, gold_chance: float) -> int:
+	return GOLD_CHEST if rng.randf() < gold_chance else CHEST
 
 
 ## Drops an item. When full, its value is added to the oldest item of the same
@@ -70,6 +76,8 @@ func step(delta: float, player_center: Vector2, magnet_mul: float) -> Vector2:
 				got.x += value[i]
 			elif kind[i] == CHEST:
 				chests += 1
+			elif kind[i] == GOLD_CHEST:
+				gold_chests += 1
 			elif kind[i] == ESSENCE:
 				essence += int(value[i])
 			else:

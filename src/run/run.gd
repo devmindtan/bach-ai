@@ -56,7 +56,10 @@ var elite_kills := 0                  # elites and bosses downed this run (Nhi�
 var _special_kills: Array[int] = []   # per special: kills counted toward its next kill_proc
 var _gear: Array[String] = []       # --gear=a,b (shots: wear these)   # self casts waiting for their pulse (count > 1)
 var _chest_open := false   # the next level-up panel comes from a chest
+var _shot_gold_chest := false   # --gold-chest
+var _gold_left := 0         # picks left from an opened Rương vàng (their panels say so)
 var _chest_sprite := "chest"
+var _gold_chest_sprite := "chest-gold"
 var _essence_sprite := "essence-pickup"
 
 enum State { PLAYING, LEVEL_UP, PAUSED, DEAD, WON }
@@ -251,8 +254,9 @@ func _ready() -> void:
 	_gem_sprite = String(items.get("pickups", {}).get("xp_gem", {}).get("sprite", "exp-gem"))
 	_coin_sprite = String(items.get("pickups", {}).get("gold", {}).get("sprite", "gold-coin"))
 	_chest_sprite = String(items.get("pickups", {}).get("chest", {}).get("sprite", "chest"))
+	_gold_chest_sprite = String(items.get("pickups", {}).get("gold_chest", {}).get("sprite", "chest-gold"))
 	_essence_sprite = String(items.get("pickups", {}).get("essence", {}).get("sprite", "essence-pickup"))
-	var names: Array[String] = [String(class_data.get("sprite", "swordsman")), _gem_sprite, _coin_sprite, _chest_sprite, _essence_sprite, "stomp-i"]
+	var names: Array[String] = [String(class_data.get("sprite", "swordsman")), _gem_sprite, _coin_sprite, _chest_sprite, _gold_chest_sprite, _essence_sprite, "stomp-i"]
 	_buff_defs = items.get("buffs", {})
 	status_defs = GameData.load_json(DATA + "statuses.json").get("statuses", {})
 	for st: String in status_defs:
@@ -304,6 +308,8 @@ func _ready() -> void:
 	enemies.vs_status_mul = passive_vs_status()
 	_update_body()
 	pickups = Pickups.new(cfg.get("pickups", {}), 400)
+	if _shot_gold_chest:
+		pickups.drop(Pickups.GOLD_CHEST, player_pos + Vector2(60, 0), 1.0)   # inside the magnet: it is picked up
 	buffs = Buffs.new(_buff_defs, cfg.get("buffs", {}), rng.seed + 7)
 	for id in _forced_buffs:
 		buffs.activate(id)
@@ -379,6 +385,8 @@ func _parse_args() -> void:
 			demo = true
 		elif a.begins_with("--meteor-at="):   # shots: start a meteor shower at this clock time
 			_meteor_times = [float(a.get_slice("=", 1))]
+		elif a == "--gold-chest":   # shots: a Rương vàng on the ground beside the hero
+			_shot_gold_chest = true
 		elif a.begins_with("--seed="):
 			rng.seed = int(a.get_slice("=", 1))
 			seeded = true
@@ -566,7 +574,11 @@ func _tick(dt: float) -> void:
 	if got.x > 0.0:
 		Sfx.play("gem")
 		_gain_xp(got.x)
-	if pickups.chests > 0 and state == State.PLAYING:   # a chest from an elite: one extra pick
+	if pickups.gold_chests > 0 and state == State.PLAYING:   # Rương vàng: several picks, gold, a sure item
+		pickups.gold_chests -= 1
+		open_gold_chest()
+		_open_level_up()
+	elif pickups.chests > 0 and state == State.PLAYING:   # a chest from an elite: one extra pick
 		pickups.chests -= 1
 		Sfx.play("chest")
 		if rng.randf() < float(cfg.get("rewards", {}).get("chest_item_chance", 0.0)):
@@ -787,7 +799,7 @@ func _drops() -> void:
 		if enemies.kill_elite[i] == 1 or enemies.kill_boss[i] == 1:
 			elite_kills += 1
 		if enemies.kill_elite[i] == 1:
-			pickups.drop(Pickups.CHEST, enemies.kill_pos[i] + Vector2(-10, 0), 1.0)
+			_drop_chest(enemies.kill_pos[i] + Vector2(-10, 0))
 		var ess := essence_drop(enemies.kill_elite[i] == 1, enemies.kill_boss[i] == 1)
 		if ess > 0:   # Tinh hoa: the skill-tree material
 			pickups.drop(Pickups.ESSENCE, enemies.kill_pos[i] + Vector2(0, -12), float(ess))
@@ -801,7 +813,7 @@ func _drops() -> void:
 		for g in int(enemies.kill_gold[i]):   # Yêu tinh vàng: a burst of coins
 			pickups.drop(Pickups.COIN, enemies.kill_pos[i] + Vector2.from_angle(g * 2.4) * (10.0 + 3.0 * g), 1.0)
 		if enemies.kill_chest[i] == 1 and enemies.kill_elite[i] == 0:
-			pickups.drop(Pickups.CHEST, enemies.kill_pos[i] + Vector2(0, -14), 1.0)
+			_drop_chest(enemies.kill_pos[i] + Vector2(0, -14))
 	enemies.drain_kills()
 
 
@@ -1661,7 +1673,7 @@ func _log_level(what: String) -> void:
 ## Level-up panel title: where the pick comes from and how many more wait
 ## (user 2026-11-18: several picks in a row read as a bug without it).
 func level_up_title(chest: bool) -> String:
-	var head := "Rương báu! Chọn một" if chest else "Lên cấp %d! Chọn một" % level
+	var head := "Rương vàng! Chọn một" if _gold_left > 0 else ("Rương báu! Chọn một" if chest else "Lên cấp %d! Chọn một" % level)
 	var left := pending_levels - 1
 	return head + (" (còn %d lượt)" % left if left > 0 else "")
 
@@ -1696,6 +1708,7 @@ func _open_level_up() -> void:
 	level_view = "cards"
 	_panels.show_level_up(choices, level_up_title(_chest_open))
 	_chest_open = false
+	_gold_left = maxi(0, _gold_left - 1)
 	if _level_view_arg != "":
 		toggle_level_view(_level_view_arg)
 		_level_view_arg = ""
@@ -1926,6 +1939,25 @@ func effect_levels() -> Dictionary:
 
 ## A random equipment item for this class (shared ones too), added to the profile
 ## and saved; "" when there is none.
+## A chest at [param p]: a Rương vàng with run_config.json events.gold_chest.chance, else a plain one.
+func _drop_chest(p: Vector2) -> void:
+	pickups.drop(Pickups.chest_kind(rng, float(cfg.get("events", {}).get("gold_chest", {}).get("chance", 0.0))), p, 1.0)
+
+
+## Opens a Rương vàng (design/events.md): `picks` card picks in a row, `gold` coins, a sure item,
+## and it counts as `counts_as` chests for Mảnh thẻ.
+func open_gold_chest() -> void:
+	var g: Dictionary = cfg.get("events", {}).get("gold_chest", {})
+	Sfx.play("chest")
+	gold += int(g.get("gold", 30))
+	_win_item()
+	pending_levels += int(g.get("picks", 3))
+	_gold_left = int(g.get("picks", 3))
+	chests_opened += int(g.get("counts_as", 3))
+	_chest_open = true
+	_log_level("gold chest -> +%d picks" % int(g.get("picks", 3)))   # the panel title names it (no wave call over it)
+
+
 func _win_item() -> String:
 	if profile == null:
 		return ""
@@ -2119,6 +2151,8 @@ func _draw() -> void:
 			var sh := gem if pickups.kind[i] == Pickups.GEM else coin
 			if pickups.kind[i] == Pickups.CHEST:
 				sh = sheets.get(_chest_sprite)
+			elif pickups.kind[i] == Pickups.GOLD_CHEST:
+				sh = sheets.get(_gold_chest_sprite)
 			elif pickups.kind[i] == Pickups.ESSENCE:
 				sh = sheets.get(_essence_sprite)
 			if sh != null:
@@ -2390,7 +2424,7 @@ func _step_ring(dt: float) -> void:
 			wave_call_t = 3.0
 	match ring.step(dt, player_pos):
 		"done":
-			pickups.drop(Pickups.CHEST, ring.center, 1.0)
+			_drop_chest(ring.center)
 			for g in int(_ring_cfg.get("gold", 10)):
 				pickups.drop(Pickups.COIN, ring.center + Vector2.from_angle(g * 2.4) * (14.0 + 3.0 * g), 1.0)
 			wave_call = "Hoàn thành thử thách!"
