@@ -39,6 +39,9 @@ var _bag_scroll := 0    # keeps the bag's scroll position across rebuilds
 var _t := 0.0
 var _scroll := Vector2.ZERO
 var _layer: CanvasLayer
+var _slot_buttons := {}   # slot -> its Button round the hero (lit as a drop target while dragging)
+var _drag_lit := false
+var _drag_shot := ""   # --equip-drag=<item>
 
 
 func _ready() -> void:
@@ -66,6 +69,8 @@ func _ready() -> void:
 			_sort = "new"
 		elif a.begins_with("--equip-view="):
 			_view = a.get_slice("=", 1)
+		elif a.begins_with("--equip-drag="):   # shots: the slot a dragged bag item fits, lit
+			_drag_shot = a.get_slice("=", 1)
 		elif a.begins_with("--equip-plus="):   # shots: Cường hoá level of the viewed item
 			_equip_plus = int(a.get_slice("=", 1))
 	if _equip_plus >= 0 and _view != "":
@@ -73,6 +78,8 @@ func _ready() -> void:
 	if _view == "":
 		_view = _default_view()
 	_build()
+	if _drag_shot != "":
+		_light_target(bag_drag_data(_drag_shot))
 
 
 func _default_view() -> String:
@@ -84,6 +91,9 @@ func _default_view() -> String:
 
 
 func _process(delta: float) -> void:
+	if _drag_lit and not get_viewport().gui_is_dragging():
+		_drag_lit = false
+		_rebuild()
 	_t += delta
 	_scroll += Vector2(18.0, 6.0) * delta
 	queue_redraw()
@@ -99,6 +109,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _rebuild() -> void:
+	_slot_buttons.clear()
 	if _layer != null:
 		_layer.queue_free()
 	_hero = FrontArt.hero_sheet(_class, _prof.equipped(_cls).values())   # worn items show on the hero
@@ -115,7 +126,7 @@ func _build() -> void:
 	var title := UiKit.label("Trang bị · %s" % _slot_data.name, 34, UiKit.GOLD)
 	title.position = Vector2(40, 24)
 	root.add_child(title)
-	var sub := UiKit.label("%s  ·  chọn một ô, rồi chọn món trong túi để xem và mặc" % String(_class.get("name", _cls)), 15, UiKit.MUTED)
+	var sub := UiKit.label("%s  ·  bấm món để xem · kéo vào ô để mặc, kéo về túi để tháo" % String(_class.get("name", _cls)), 15, UiKit.MUTED)
 	sub.position = Vector2(42, 70)
 	root.add_child(sub)
 	var back := UiKit.button("Quay lại  (Esc)", func() -> void: get_tree().change_scene_to_file(LOBBY_SCENE), Vector2(180, 42), 17)
@@ -222,6 +233,10 @@ func _slot_cell(slot: String, item: String) -> Control:
 		_filter = slot
 		_view = _default_view()
 		_rebuild())
+	b.set_drag_forwarding(func(_p: Vector2) -> Variant: return _start_drag(b, slot_drag_data(slot)),
+		func(_p: Vector2, data: Variant) -> bool: return can_drop_on_slot(slot, data),
+		func(_p: Vector2, data: Variant) -> void: drop_on_slot(slot, data))
+	_slot_buttons[slot] = b
 	box.add_child(b)
 	var l := UiKit.label(SLOT_NAME[slot], 14, UiKit.TEXT if slot == _sel else UiKit.MUTED)
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -240,6 +255,10 @@ const TABS := [["all", "Tất cả"], ["head", "Mũ"], ["chest", "Áo"], ["legs"
 const ORDER := ["legendary", "epic", "rare", "common"]
 const MIXED := Color("f2c14e")
 const GOLD_COLOR_FALLBACK := Color("c9a65a")
+const BAG_COLS := 5
+const BAG_GAP := 9
+const BAG_CELL := Vector2(64, 64)
+const DROP_OK := Color("8fe08a")
 
 
 func _bag(root: Control) -> void:
@@ -248,6 +267,8 @@ func _bag(root: Control) -> void:
 	panel.custom_minimum_size = Vector2(388, 576)
 	panel.size = panel.custom_minimum_size
 	root.add_child(panel)
+	panel.set_drag_forwarding(Callable(), func(_p: Vector2, data: Variant) -> bool: return can_drop_on_bag(data),
+		func(_p: Vector2, data: Variant) -> void: drop_on_bag(data))
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 8)
 	panel.add_child(v)
@@ -295,12 +316,13 @@ func _bag(root: Control) -> void:
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	v.add_child(scroll)
-	var list := VBoxContainer.new()
-	list.add_theme_constant_override("separation", 6)
-	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var list := GridContainer.new()   # icons only: the detail column already shows the text
+	list.columns = BAG_COLS
+	list.add_theme_constant_override("h_separation", BAG_GAP)
+	list.add_theme_constant_override("v_separation", BAG_GAP)
 	scroll.add_child(list)
 	for id: String in ids:
-		list.add_child(_bag_row(id))
+		list.add_child(_bag_cell(id))
 	scroll.scroll_vertical = _bag_scroll
 	scroll.get_v_scroll_bar().value_changed.connect(func(val: float) -> void: _bag_scroll = int(val))
 
@@ -362,85 +384,116 @@ func _verdict(id: String) -> int:
 	return 1 if up > 0 and down == 0 else (-1 if down > 0 and up == 0 else 0)
 
 
-## One owned item as a compact card: icon + name (rarity color) + rarity · slot +
-## one-line desc; upgrade marker on the right (▲ green better / ▼ red worse / ⇅ mixed /
-## "Đang mặc" green when this is the worn one). The same item owned twice folds to ×n.
-func _bag_row(id: String) -> Button:
+## One owned item as a square cell: the icon in its rarity frame and, top right, "+n" once enhanced
+## (user 2026-11-19: the detail column already shows the text). Click: view it; drag it onto the
+## matching slot round the hero: wear it.
+func _bag_cell(id: String) -> Button:
 	var d: Dictionary = _prof.defs.get(id, {})
 	var rarity := String(d.get("rarity", "common"))
 	var col: Color = RARITY.get(rarity, UiKit.TEXT)
 	var b := Button.new()
-	b.custom_minimum_size = Vector2(340, 64)
+	b.custom_minimum_size = BAG_CELL
 	b.focus_mode = Control.FOCUS_ALL
 	var on := id == _view
-	var bg := Color(col, 0.10).blend(UiKit.PANEL_DARK) if not on else Color(col, 0.18).blend(UiKit.PANEL_DARK)
-	b.add_theme_stylebox_override("normal", UiKit.style(bg, 6, Color.WHITE if on else Color(col, 0.55), 3 if on else 1))
+	var bg := Color(col, 0.18 if on else 0.10).blend(UiKit.PANEL_DARK)
+	b.add_theme_stylebox_override("normal", UiKit.style(bg, 4, Color.WHITE if on else Color(col, 0.8), 3 if on else 2))
 	for st in ["hover", "focus", "pressed"]:
-		b.add_theme_stylebox_override(st, UiKit.style(UiKit.PANEL_HOVER, 6, Color.WHITE, 3))
-	var h := HBoxContainer.new()
-	h.set_anchors_preset(Control.PRESET_FULL_RECT)
-	h.offset_left = 7
-	h.offset_right = -10
-	h.offset_top = 4
-	h.offset_bottom = -4
-	h.add_theme_constant_override("separation", 8)
-	h.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	b.add_child(h)
-	# icon in a rarity frame
-	var box := UiKit.panel(UiKit.PANEL_DARK, 3, col)
-	box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	box.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	box.add_child(UiKit.icon(String(d.get("icon", id)), 48.0))
-	h.add_child(box)
-	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 1)
-	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	v.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	h.add_child(v)
-	var top := HBoxContainer.new()
-	top.add_theme_constant_override("separation", 6)
-	top.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	v.add_child(top)
-	var copies := _prof.bag.count(id)
-	var nl := UiKit.label(String(d.get("name", id)) + ("  ×%d" % copies if copies > 1 else ""), 16, col)
-	nl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	nl.clip_text = true
-	nl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	nl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	top.add_child(nl)
-	if _prof.is_new(id):
-		top.add_child(_badge("MỚI", Color("f2c14e")))
-	var line := String(RARITY_NAME.get(rarity, rarity))
-	if _filter == "all":
-		line += "  ·  " + String(SLOT_NAME.get(String(d.get("slot", "")), ""))
-	var ll := UiKit.label(line, 11, UiKit.MUTED)
-	ll.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	v.add_child(ll)
-	var dl := UiKit.label(String(d.get("desc", "")), 12, UiKit.TEXT)
-	dl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	dl.clip_text = true
-	dl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	dl.custom_minimum_size.y = 0
-	v.add_child(dl)
-	var vd := _verdict(id)
-	var mark: Control
-	if vd == 2:
-		mark = _badge("Đang mặc", UP)
-	else:
-		var sym: String = {1: "▲", -1: "▼", 0: "⇅"}[vd]
-		var mcol: Color = {1: UP, -1: DOWN, 0: MIXED}[vd]
-		mark = UiKit.label(sym, 20, mcol)
-		Tip.attach(mark, {1: "Tốt hơn đồ đang mặc", -1: "Kém hơn đồ đang mặc", 0: "Có chỉ số hơn, có chỉ số kém"}[vd],
-			"So với món đang mặc ở ô %s." % SLOT_NAME.get(String(d.get("slot", "")), ""), mcol)
-	mark.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	h.add_child(mark)
+		b.add_theme_stylebox_override(st, UiKit.style(UiKit.PANEL_HOVER, 4, Color.WHITE, 3))
+	Tip.attach(b, String(d.get("name", id)), String(d.get("desc", "")), col, String(d.get("icon", id)),
+		"%s · %s" % [RARITY_NAME.get(rarity, rarity), SLOT_NAME.get(String(d.get("slot", "")), "")])
+	var ic := UiKit.icon(String(d.get("icon", id)), 48.0)
+	ic.position = (BAG_CELL - ic.custom_minimum_size) * 0.5   # a Button is not a container
+	ic.size = ic.custom_minimum_size
+	ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.add_child(ic)
+	var plus := plus_text(id)
+	if plus != "":
+		var tag := _badge(plus, Color("f2c14e"))
+		var sb: StyleBoxFlat = tag.get_theme_stylebox("panel").duplicate()
+		sb.bg_color = Color("16131e")   # opaque: the icon must not show through the number
+		tag.add_theme_stylebox_override("panel", sb)
+		tag.position = Vector2(BAG_CELL.x - 30, 2)
+		b.add_child(tag)
 	b.pressed.connect(func() -> void:
 		_view = id
 		_sel = String(d.get("slot", _sel))
 		_rebuild())
+	b.set_drag_forwarding(func(_p: Vector2) -> Variant: return _start_drag(b, bag_drag_data(id)), Callable(), Callable())
 	return b
+
+
+## "+n" for an enhanced item, "" otherwise (the bag cell's corner mark).
+func plus_text(id: String) -> String:
+	var n := _prof.plus_of(id)
+	return "+%d" % n if n > 0 else ""
+
+
+func bag_drag_data(id: String) -> Dictionary:
+	return {"from": "bag", "item": id, "slot": String(_prof.defs.get(id, {}).get("slot", ""))}
+
+
+## What dragging slot [param slot] carries: its worn item, or {} when it is empty.
+func slot_drag_data(slot: String) -> Dictionary:
+	var item := String(_prof.equipped(_cls).get(slot, ""))
+	return {} if item == "" else {"from": "slot", "item": item, "slot": slot}
+
+
+func can_drop_on_slot(slot: String, data: Variant) -> bool:
+	return data is Dictionary and String(data.get("from", "")) == "bag" and String(data.get("slot", "")) == slot
+
+
+## Wears the dragged bag item when it fits [param slot]; true when it did.
+func drop_on_slot(slot: String, data: Variant) -> bool:
+	if not can_drop_on_slot(slot, data) or not _prof.equip(_cls, String(data["item"])):
+		return false
+	Sfx.play("buy")
+	_sel = slot
+	_view = String(data["item"])
+	_after_change()
+	return true
+
+
+func can_drop_on_bag(data: Variant) -> bool:
+	return data is Dictionary and String(data.get("from", "")) == "slot"
+
+
+## Takes the dragged worn item off; true when it did.
+func drop_on_bag(data: Variant) -> bool:
+	if not can_drop_on_bag(data):
+		return false
+	_prof.unequip(_cls, String(data["slot"]))
+	_after_change()
+	return true
+
+
+func _after_change() -> void:
+	if is_inside_tree():
+		Prefs.current().save_profile()
+		_hero = FrontArt.hero_sheet(_class, _prof.equipped(_cls).values())
+		_rebuild.call_deferred()   # not during the drop callback of a control being freed
+
+
+## Starts a drag of [param data] with the item's icon under the cursor and lights the slot it fits.
+func _start_drag(from: Control, data: Dictionary) -> Variant:
+	if data.is_empty():
+		return null
+	var d: Dictionary = _prof.defs.get(String(data["item"]), {})
+	var ic := UiKit.icon(String(d.get("icon", data["item"])), 48.0)
+	ic.modulate = Color(1, 1, 1, 0.85)
+	var holder := Control.new()
+	holder.add_child(ic)
+	ic.position = -ic.custom_minimum_size * 0.5
+	from.set_drag_preview(holder)
+	_light_target(data)
+	_drag_lit = true
+	return data
+
+
+## Lights the slot round the hero that a dragged bag item fits (green frame).
+func _light_target(data: Dictionary) -> void:
+	if String(data.get("from", "")) == "bag" and _slot_buttons.has(String(data.get("slot", ""))):
+		var b: Button = _slot_buttons[String(data["slot"])]
+		b.add_theme_stylebox_override("normal", UiKit.style(Color(DROP_OK, 0.15).blend(UiKit.PANEL_DARK), 6, DROP_OK, 4))
 
 
 ## A small rounded label (MỚI, Đang mặc).
