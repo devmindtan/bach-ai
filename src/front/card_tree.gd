@@ -151,7 +151,10 @@ func _node_button(n: Dictionary) -> Control:
 	g.position = Vector2(side - 26, side - 26)
 	b.add_child(g)
 	var lv := UiKit.label("%d/%d" % [r, mx], 14, UiKit.GOLD if r >= mx else (UiKit.TEXT if r > 0 else UiKit.MUTED))
-	lv.position = Vector2(side / 2.0 - 12, side + 2)
+	lv.add_theme_stylebox_override("normal", UiKit.style(Color("100e16"), 3, Color(0, 0, 0, 0), 0))   # the edge passes under it
+	lv.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lv.custom_minimum_size.x = 34
+	lv.position = Vector2(side / 2.0 - 17, side + 2)
 	lv.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	holder.add_child(lv)
 	b.pressed.connect(func() -> void:

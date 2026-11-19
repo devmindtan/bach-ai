@@ -67,7 +67,7 @@ func _run_with_tree(levels: Dictionary, nodes: Array) -> Node:
 
 
 func test_after_keeps_lasting_bonuses_for_stat_cards() -> void:
-	var r := _run_with_tree({"blade_arc": 1}, ["k_guard_1", "k_guard_2", "k_guard_3"])
+	var r := _run_with_tree({"blade_arc": 1}, ["k_root", "k_b2_1", "k_b2_2", "k_b2_3"])
 	var hp_now := float(r.stats["max_hp"])
 	var pv: Dictionary = r.upgrade_preview("vitality")
 	_check(int(pv["lines"][0][1]) == roundi(hp_now), "now = current max hp %d, got %s" % [roundi(hp_now), pv["lines"][0]])
@@ -80,7 +80,7 @@ func test_after_keeps_lasting_bonuses_for_stat_cards() -> void:
 
 
 func test_after_keeps_lasting_bonuses_for_skill_cards() -> void:
-	var r := _run_with_tree({"blade_arc": 1, "earth_strike": 2}, ["k_fury_1", "k_fury_2", "k_fury_3"])
+	var r := _run_with_tree({"blade_arc": 1, "earth_strike": 2}, ["k_root", "k_b0_1", "k_b0_2", "k_b0_3"])
 	var pv: Dictionary = r.upgrade_preview("earth_strike")
 	_check(pv["lines"][0][0] == "Sát thương" and int(pv["lines"][0][2]) >= int(pv["lines"][0][1]),
 		"skill damage never drops on its own card, got %s" % [pv["lines"][0]])

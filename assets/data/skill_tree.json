@@ -1,245 +1,532 @@
 {
-  "_doc": "Skill tree (design/skill-tree.md): per class 3 branches x 3 tiers, bought once each with Tinh hoa (tier_cost by tier); a tier needs the tier before in its branch. effects work like a card at level 1 (PlayerStats). Reset: 1 Tẩy Tủy Đan + gold = max(reset_gold_min, reset_gold_per_essence x Tinh hoa spent), every Tinh hoa refunded.",
-  "tier_cost": [
-    5,
-    10,
-    20
+  "_doc": "Character tree v2 (design/skill-tree-v2.md §1): per class a grid of multi-rank nodes; a rank costs row_cost[row] Tinh hoa, needs every node in requires at rank >= 1, requires_points spent in the tree, no node of excludes bought. Reset: 1 Tẩy Tủy Đan + gold = max(reset_gold_min, reset_gold_per_essence x Tinh hoa spent), every Tinh hoa refunded. legacy_refund: Tinh hoa given back for v1 node ids still in a save.",
+  "row_cost": [
+    3,
+    4,
+    6,
+    8,
+    25
   ],
   "reset_gold_per_essence": 10,
   "reset_gold_min": 50,
+  "legacy_refund": {
+    "k_fury_1": 5,
+    "k_fury_2": 10,
+    "k_fury_3": 20,
+    "k_swift_1": 5,
+    "k_swift_2": 10,
+    "k_swift_3": 20,
+    "k_guard_1": 5,
+    "k_guard_2": 10,
+    "k_guard_3": 20,
+    "m_fire_1": 5,
+    "m_fire_2": 10,
+    "m_fire_3": 20,
+    "m_flow_1": 5,
+    "m_flow_2": 10,
+    "m_flow_3": 20,
+    "m_ward_1": 5,
+    "m_ward_2": 10,
+    "m_ward_3": 20
+  },
   "classes": {
     "knight": [
       {
-        "id": "fury",
-        "name": "Cuồng nộ",
-        "role": "sát thương",
-        "icon": "sharpen",
-        "nodes": [
-          {
-            "id": "k_fury_1",
-            "name": "Cuồng nộ I",
-            "desc": "Sát thương +8%.",
-            "effects": {
-              "damage": {
-                "mul": 0.08
-              }
-            }
-          },
-          {
-            "id": "k_fury_2",
-            "name": "Cuồng nộ II",
-            "desc": "Vùng đánh +10%.",
-            "effects": {
-              "area": {
-                "mul": 0.1
-              }
-            }
-          },
-          {
-            "id": "k_fury_3",
-            "name": "Cuồng nộ III",
-            "desc": "Sát thương +15%.",
-            "effects": {
-              "damage": {
-                "mul": 0.15
-              }
-            }
-          }
-        ]
-      },
-      {
-        "id": "swift",
-        "name": "Thần tốc",
-        "role": "nhịp đánh",
-        "icon": "haste",
-        "nodes": [
-          {
-            "id": "k_swift_1",
-            "name": "Thần tốc I",
-            "desc": "Hồi chiêu −6%.",
-            "effects": {
-              "cooldown": {
-                "mul": -0.06
-              }
-            }
-          },
-          {
-            "id": "k_swift_2",
-            "name": "Thần tốc II",
-            "desc": "Tốc độ chạy +10%.",
-            "effects": {
-              "move_speed": {
-                "mul": 0.1
-              }
-            }
-          },
-          {
-            "id": "k_swift_3",
-            "name": "Thần tốc III",
-            "desc": "Hồi chiêu −10%.",
-            "effects": {
-              "cooldown": {
-                "mul": -0.1
-              }
-            }
-          }
-        ]
-      },
-      {
-        "id": "guard",
-        "name": "Vững chãi",
-        "role": "sống sót",
+        "id": "k_root",
+        "name": "Rèn thân",
+        "desc": "Máu tối đa +5 mỗi cấp.",
+        "col": 2,
+        "row": 0,
+        "max_rank": 3,
         "icon": "toughness",
-        "nodes": [
-          {
-            "id": "k_guard_1",
-            "name": "Vững chãi I",
-            "desc": "Giáp +1.",
-            "effects": {
-              "armor": {
-                "add": 1.0
-              }
-            }
-          },
-          {
-            "id": "k_guard_2",
-            "name": "Vững chãi II",
-            "desc": "Hồi máu +1 mỗi giây.",
-            "effects": {
-              "regen": {
-                "add": 1.0
-              }
-            }
-          },
-          {
-            "id": "k_guard_3",
-            "name": "Vững chãi III",
-            "desc": "Máu tối đa +20%.",
-            "effects": {
-              "max_hp": {
-                "mul": 0.2
-              }
-            }
+        "effects": {
+          "max_hp": {
+            "add": 5
           }
+        }
+      },
+      {
+        "id": "k_b0_1",
+        "name": "Lưỡi sắc",
+        "desc": "Sát thương +5% mỗi cấp.",
+        "col": 0,
+        "row": 1,
+        "max_rank": 3,
+        "icon": "sharpen",
+        "effects": {
+          "damage": {
+            "mul": 0.05
+          }
+        },
+        "requires": [
+          "k_root"
+        ]
+      },
+      {
+        "id": "k_b0_2",
+        "name": "Vung rộng",
+        "desc": "Vùng đánh +6% mỗi cấp.",
+        "col": 0,
+        "row": 2,
+        "max_rank": 2,
+        "icon": "reach",
+        "effects": {
+          "area": {
+            "mul": 0.06
+          }
+        },
+        "requires": [
+          "k_b0_1"
+        ]
+      },
+      {
+        "id": "k_b0_3",
+        "name": "Sát khí",
+        "desc": "Sát thương +8% mỗi cấp.",
+        "col": 0,
+        "row": 3,
+        "max_rank": 2,
+        "icon": "sword",
+        "effects": {
+          "damage": {
+            "mul": 0.08
+          }
+        },
+        "requires": [
+          "k_b0_2"
+        ]
+      },
+      {
+        "id": "k_b1_1",
+        "name": "Nhịp kiếm",
+        "desc": "Hồi chiêu −3% mỗi cấp.",
+        "col": 2,
+        "row": 1,
+        "max_rank": 3,
+        "icon": "haste",
+        "effects": {
+          "cooldown": {
+            "mul": -0.03
+          }
+        },
+        "requires": [
+          "k_root"
+        ]
+      },
+      {
+        "id": "k_b1_2",
+        "name": "Chân nhẹ",
+        "desc": "Tốc độ chạy +5% mỗi cấp.",
+        "col": 2,
+        "row": 2,
+        "max_rank": 2,
+        "icon": "swift",
+        "effects": {
+          "move_speed": {
+            "mul": 0.05
+          }
+        },
+        "requires": [
+          "k_b1_1"
+        ]
+      },
+      {
+        "id": "k_b1_3",
+        "name": "Tốc chiến",
+        "desc": "Hồi chiêu −5% mỗi cấp.",
+        "col": 2,
+        "row": 3,
+        "max_rank": 2,
+        "icon": "clock",
+        "effects": {
+          "cooldown": {
+            "mul": -0.05
+          }
+        },
+        "requires": [
+          "k_b1_2"
+        ]
+      },
+      {
+        "id": "k_b2_1",
+        "name": "Giáp dày",
+        "desc": "Giáp +1 mỗi cấp.",
+        "col": 4,
+        "row": 1,
+        "max_rank": 3,
+        "icon": "shield",
+        "effects": {
+          "armor": {
+            "add": 1
+          }
+        },
+        "requires": [
+          "k_root"
+        ]
+      },
+      {
+        "id": "k_b2_2",
+        "name": "Hồi sức",
+        "desc": "Hồi máu +0,5/giây mỗi cấp.",
+        "col": 4,
+        "row": 2,
+        "max_rank": 2,
+        "icon": "regen",
+        "effects": {
+          "regen": {
+            "add": 0.5
+          }
+        },
+        "requires": [
+          "k_b2_1"
+        ]
+      },
+      {
+        "id": "k_b2_3",
+        "name": "Mình đồng",
+        "desc": "Máu tối đa +8% mỗi cấp.",
+        "col": 4,
+        "row": 3,
+        "max_rank": 2,
+        "icon": "vitality",
+        "effects": {
+          "max_hp": {
+            "mul": 0.08
+          }
+        },
+        "requires": [
+          "k_b2_2"
+        ]
+      },
+      {
+        "id": "k_key_0",
+        "name": "Cuồng huyết",
+        "desc": "Sát thương +25%, máu tối đa −15%.",
+        "col": 0,
+        "row": 4,
+        "max_rank": 1,
+        "icon": "bloodthirst",
+        "effects": {
+          "damage": {
+            "mul": 0.25
+          },
+          "max_hp": {
+            "mul": -0.15
+          }
+        },
+        "requires": [
+          "k_b0_3"
+        ],
+        "keystone": true,
+        "requires_points": 12,
+        "excludes": [
+          "k_key_1",
+          "k_key_2"
+        ]
+      },
+      {
+        "id": "k_key_1",
+        "name": "Bão kiếm",
+        "desc": "Hồi chiêu −15%, sát thương −8%.",
+        "col": 2,
+        "row": 4,
+        "max_rank": 1,
+        "icon": "storm",
+        "effects": {
+          "cooldown": {
+            "mul": -0.15
+          },
+          "damage": {
+            "mul": -0.08
+          }
+        },
+        "requires": [
+          "k_b1_3"
+        ],
+        "keystone": true,
+        "requires_points": 12,
+        "excludes": [
+          "k_key_0",
+          "k_key_2"
+        ]
+      },
+      {
+        "id": "k_key_2",
+        "name": "Bất động",
+        "desc": "Giáp +3, máu tối đa +20%, tốc độ chạy −10%.",
+        "col": 4,
+        "row": 4,
+        "max_rank": 1,
+        "icon": "guardian",
+        "effects": {
+          "armor": {
+            "add": 3
+          },
+          "max_hp": {
+            "mul": 0.2
+          },
+          "move_speed": {
+            "mul": -0.1
+          }
+        },
+        "requires": [
+          "k_b2_3"
+        ],
+        "keystone": true,
+        "requires_points": 12,
+        "excludes": [
+          "k_key_0",
+          "k_key_1"
         ]
       }
     ],
     "mage": [
       {
-        "id": "fire",
+        "id": "m_root",
+        "name": "Linh căn",
+        "desc": "Máu tối đa +5 mỗi cấp.",
+        "col": 2,
+        "row": 0,
+        "max_rank": 3,
+        "icon": "toughness",
+        "effects": {
+          "max_hp": {
+            "add": 5
+          }
+        }
+      },
+      {
+        "id": "m_b0_1",
         "name": "Hỏa lực",
-        "role": "sát thương",
+        "desc": "Sát thương +5% mỗi cấp.",
+        "col": 0,
+        "row": 1,
+        "max_rank": 3,
         "icon": "arcane_power",
-        "nodes": [
-          {
-            "id": "m_fire_1",
-            "name": "Hỏa lực I",
-            "desc": "Sát thương +8%.",
-            "effects": {
-              "damage": {
-                "mul": 0.08
-              }
-            }
-          },
-          {
-            "id": "m_fire_2",
-            "name": "Hỏa lực II",
-            "desc": "Vùng đánh +10%.",
-            "effects": {
-              "area": {
-                "mul": 0.1
-              }
-            }
-          },
-          {
-            "id": "m_fire_3",
-            "name": "Hỏa lực III",
-            "desc": "Sát thương +15%.",
-            "effects": {
-              "damage": {
-                "mul": 0.15
-              }
-            }
+        "effects": {
+          "damage": {
+            "mul": 0.05
           }
+        },
+        "requires": [
+          "m_root"
         ]
       },
       {
-        "id": "flow",
+        "id": "m_b0_2",
+        "name": "Phép rộng",
+        "desc": "Vùng phép +6% mỗi cấp.",
+        "col": 0,
+        "row": 2,
+        "max_rank": 2,
+        "icon": "wide_magic",
+        "effects": {
+          "area": {
+            "mul": 0.06
+          }
+        },
+        "requires": [
+          "m_b0_1"
+        ]
+      },
+      {
+        "id": "m_b0_3",
+        "name": "Cộng hưởng",
+        "desc": "Sát thương +8% mỗi cấp.",
+        "col": 0,
+        "row": 3,
+        "max_rank": 2,
+        "icon": "elemental_resonance",
+        "effects": {
+          "damage": {
+            "mul": 0.08
+          }
+        },
+        "requires": [
+          "m_b0_2"
+        ]
+      },
+      {
+        "id": "m_b1_1",
         "name": "Lưu chuyển",
-        "role": "nhịp phép",
+        "desc": "Hồi chiêu −3% mỗi cấp.",
+        "col": 2,
+        "row": 1,
+        "max_rank": 3,
         "icon": "quick_cast",
-        "nodes": [
-          {
-            "id": "m_flow_1",
-            "name": "Lưu chuyển I",
-            "desc": "Hồi chiêu −8%.",
-            "effects": {
-              "cooldown": {
-                "mul": -0.08
-              }
-            }
-          },
-          {
-            "id": "m_flow_2",
-            "name": "Lưu chuyển II",
-            "desc": "Tốc độ chạy +10%.",
-            "effects": {
-              "move_speed": {
-                "mul": 0.1
-              }
-            }
-          },
-          {
-            "id": "m_flow_3",
-            "name": "Lưu chuyển III",
-            "desc": "Hồi chiêu −10%.",
-            "effects": {
-              "cooldown": {
-                "mul": -0.1
-              }
-            }
+        "effects": {
+          "cooldown": {
+            "mul": -0.03
           }
+        },
+        "requires": [
+          "m_root"
         ]
       },
       {
-        "id": "ward",
-        "name": "Hộ mệnh",
-        "role": "sống sót",
-        "icon": "mana_shield",
-        "nodes": [
-          {
-            "id": "m_ward_1",
-            "name": "Hộ mệnh I",
-            "desc": "Máu tối đa +15.",
-            "effects": {
-              "max_hp": {
-                "add": 15.0
-              }
-            }
-          },
-          {
-            "id": "m_ward_2",
-            "name": "Hộ mệnh II",
-            "desc": "Hồi máu +1 mỗi giây.",
-            "effects": {
-              "regen": {
-                "add": 1.0
-              }
-            }
-          },
-          {
-            "id": "m_ward_3",
-            "name": "Hộ mệnh III",
-            "desc": "Tầm hút +30%, máu tối đa +10%.",
-            "effects": {
-              "magnet": {
-                "mul": 0.3
-              },
-              "max_hp": {
-                "mul": 0.1
-              }
-            }
+        "id": "m_b1_2",
+        "name": "Bước gió",
+        "desc": "Tốc độ chạy +5% mỗi cấp.",
+        "col": 2,
+        "row": 2,
+        "max_rank": 2,
+        "icon": "boot",
+        "effects": {
+          "move_speed": {
+            "mul": 0.05
           }
+        },
+        "requires": [
+          "m_b1_1"
+        ]
+      },
+      {
+        "id": "m_b1_3",
+        "name": "Niệm nhanh",
+        "desc": "Hồi chiêu −5% mỗi cấp.",
+        "col": 2,
+        "row": 3,
+        "max_rank": 2,
+        "icon": "clock",
+        "effects": {
+          "cooldown": {
+            "mul": -0.05
+          }
+        },
+        "requires": [
+          "m_b1_2"
+        ]
+      },
+      {
+        "id": "m_b2_1",
+        "name": "Hộ mệnh",
+        "desc": "Hồi máu +0,5/giây mỗi cấp.",
+        "col": 4,
+        "row": 1,
+        "max_rank": 3,
+        "icon": "regen",
+        "effects": {
+          "regen": {
+            "add": 0.5
+          }
+        },
+        "requires": [
+          "m_root"
+        ]
+      },
+      {
+        "id": "m_b2_2",
+        "name": "Thu hút",
+        "desc": "Tầm hút +15% mỗi cấp.",
+        "col": 4,
+        "row": 2,
+        "max_rank": 2,
+        "icon": "magnet",
+        "effects": {
+          "magnet": {
+            "mul": 0.15
+          }
+        },
+        "requires": [
+          "m_b2_1"
+        ]
+      },
+      {
+        "id": "m_b2_3",
+        "name": "Khiên phép",
+        "desc": "Máu tối đa +8% mỗi cấp.",
+        "col": 4,
+        "row": 3,
+        "max_rank": 2,
+        "icon": "mana_shield",
+        "effects": {
+          "max_hp": {
+            "mul": 0.08
+          }
+        },
+        "requires": [
+          "m_b2_2"
+        ]
+      },
+      {
+        "id": "m_key_0",
+        "name": "Ma lực cuồng",
+        "desc": "Sát thương +25%, máu tối đa −15%.",
+        "col": 0,
+        "row": 4,
+        "max_rank": 1,
+        "icon": "void_orb",
+        "effects": {
+          "damage": {
+            "mul": 0.25
+          },
+          "max_hp": {
+            "mul": -0.15
+          }
+        },
+        "requires": [
+          "m_b0_3"
+        ],
+        "keystone": true,
+        "requires_points": 12,
+        "excludes": [
+          "m_key_1",
+          "m_key_2"
+        ]
+      },
+      {
+        "id": "m_key_1",
+        "name": "Song pháp",
+        "desc": "Hồi chiêu −15%, sát thương −8%.",
+        "col": 2,
+        "row": 4,
+        "max_rank": 1,
+        "icon": "twin_cast",
+        "effects": {
+          "cooldown": {
+            "mul": -0.15
+          },
+          "damage": {
+            "mul": -0.08
+          }
+        },
+        "requires": [
+          "m_b1_3"
+        ],
+        "keystone": true,
+        "requires_points": 12,
+        "excludes": [
+          "m_key_0",
+          "m_key_2"
+        ]
+      },
+      {
+        "id": "m_key_2",
+        "name": "Bất tử",
+        "desc": "Giáp +3, máu tối đa +20%, tốc độ chạy −10%.",
+        "col": 4,
+        "row": 4,
+        "max_rank": 1,
+        "icon": "undying",
+        "effects": {
+          "armor": {
+            "add": 3
+          },
+          "max_hp": {
+            "mul": 0.2
+          },
+          "move_speed": {
+            "mul": -0.1
+          }
+        },
+        "requires": [
+          "m_b2_3"
+        ],
+        "keystone": true,
+        "requires_points": 12,
+        "excludes": [
+          "m_key_0",
+          "m_key_1"
         ]
       }
     ]

@@ -26,8 +26,26 @@ số; bộ thẻ chọn trước trận. **Tránh:** cây khổng lồ khó đ�
 | Bộ thẻ | **8 chiêu + 6 thẻ chỉ số**, lưu 3 bộ |
 | Phạm vi đợt này | **Bộ thẻ + cây thẻ cho các thẻ chiêu**; cây nhân vật giữ như cũ; thẻ chỉ số làm sau |
 
-## 1. Cây nhân vật
-Giữ nguyên (`design/skill-tree.md`) trong đợt này.
+## 1. Cây nhân vật (v2, người dùng 2026-11-19: "còn skill tree của nhân vật")
+Cây 3 nhánh × 3 tầng mua một lần (`design/skill-tree.md`) đổi sang **cùng kiểu với cây thẻ**: nút tròn trên lưới,
+nhiều cấp, toả nhánh tự do, nút then chốt; vẫn mua bằng **Tinh hoa**, đặt lại vẫn cần **Tẩy Tủy Đan + vàng**.
+
+Tham khảo thêm:
+
+| Nguồn | Điều lấy |
+|---|---|
+| Path of Exile, keystone ([PoE2 wiki: Keystone](https://www.poe2wiki.net/wiki/Keystone_passive_skill), [Prima: passive tree guide](https://primagames.com/gaming/path-of-exile-passive-skill-tree-guide), [PCGamesN](https://www.pcgamesn.com/path-of-exile-2/passive-skill-tree)) | Nút then chốt **vừa lợi vừa hại**, đổi cách chơi; chọn một hướng build. |
+| Last Epoch, cây bị động ([hỗ trợ chính thức: điểm vào cây Mastery](https://support.lastepoch.com/hc/en-us/articles/46363282865435-Can-I-spend-Passive-points-in-the-Mastery-trees), [Maxroll](https://maxroll.gg/last-epoch/resources/passives-and-skills)) | Nút mạnh **khoá theo tổng điểm đã tiêu** (20 điểm cây gốc), nút nhiều cấp. |
+
+**Học:** nút nhiều cấp nhỏ ở gần gốc, then chốt đánh đổi ở cuối, khoá bằng tổng điểm. **Tránh:** nút "+x%" lặp tên
+"I/II/III"; mỗi nút một icon riêng (icon chỉ số tương ứng). **Quyết định:**
+- Mỗi lớp 13 nút: gốc (hàng 0) → 3 nhánh sát thương / nhịp đánh / sống sót, mỗi nhánh 3 nút (hàng 1–3, 2–3 cấp) →
+  3 nút then chốt hàng 4, **loại trừ nhau**, cần **đã dùng 12 điểm** trong cây.
+- Giá mỗi cấp theo hàng: `row_cost` = [3, 4, 6, 8, 25] Tinh hoa (cả cây ≈ 150).
+- Then chốt có cái giá: Cuồng huyết (sát thương +25%, máu −15%), Bão kiếm (hồi chiêu −15%, sát thương −8%), Bất
+  động (giáp +3, máu +20%, tốc chạy −10%); pháp sư tương tự.
+- Ô lưu cũ còn node cũ (`k_fury_1`…): **hoàn đủ Tinh hoa** theo `legacy_refund` rồi bỏ node.
+- Ô lưu giữ `tree` là danh sách id; mỗi lần mua thêm id một lần (cấp = số lần xuất hiện).
 
 ## 2. Bộ thẻ mang vào trận
 - **Bộ sưu tập** của lớp = mọi thẻ trong `upgrades_<class>.json`. Bộ thẻ: **8 chiêu + 6 thẻ chỉ số**; chiêu khởi đầu

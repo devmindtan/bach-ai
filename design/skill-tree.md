@@ -1,5 +1,8 @@
 # Cây kỹ năng lâu dài (đợt 4)
 
+> **Đã thay bằng cây v2** (`design/skill-tree-v2.md` §1, 2026-11-19): phần cây 3×3 dưới đây là bản cũ; tiền tệ
+> và đặt lại vẫn giữ.
+
 Dữ liệu: `assets/data/skill_tree.json` (node theo class), `assets/data/run_config.json` → `essence` (Tinh hoa rơi).
 Code: `src/meta/skill_tree.gd` (mua, mở khoá, đặt lại, hiệu ứng), slot giữ node đã mua và ví. Màn:
 `src/front/skill_tree.tscn` (`design/ux/skill-tree.md`). Test: `tests/unit/meta/skill_tree_test.gd`.

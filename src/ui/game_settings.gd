@@ -97,7 +97,8 @@ func _make_preview_slot() -> void:
 	# a little of the skill-tree wallet for shots: Tinh hoa, one node bought, one Tẩy Tủy Đan
 	var tree := SkillTree.load_default()
 	s.essence = 30
-	tree.buy(s, String(tree.branches(hero)[0]["nodes"][0]["id"]))
+	tree.buy(s, String(tree.nodes(hero)[0]["id"]))
+	tree.buy(s, String(tree.nodes(hero)[0]["id"]))
 	s.pills = 1
 	# Mảnh thẻ and a started Chém kiếm tree for shots of the deck / card-tree screens
 	s.shards = 40

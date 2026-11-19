@@ -36,7 +36,7 @@ func test_win_earn_spend_save_and_reload() -> void:
 	_check(s.best == 10 and s.gold > 0 and s.gems >= 100, "10 stages: best 10, gold %d, gems %d" % [s.gold, s.gems])
 	s.essence += 12   # elites / bosses picked up over those runs
 	var tree := SkillTree.load_default()
-	_check(tree.buy(s, "k_fury_1"), "a skill-tree node bought with Tinh hoa")
+	_check(tree.buy(s, "k_root"), "a skill-tree node bought with Tinh hoa")
 	var g := Gacha.load_default()
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 42
@@ -58,7 +58,7 @@ func test_win_earn_spend_save_and_reload() -> void:
 	var spent := tree.spent(s)
 	var ess := s.essence
 	_check(tree.reset(s) and s.essence == ess + spent and s.pills == 1, "the tree reset refunds Tinh hoa, takes a pill")
-	tree.buy(s, "k_fury_1")
+	tree.buy(s, "k_root")
 	store.save(s)
 	var back: Slot = store.load_slot(s.id)["slot"]
 	_check(back != null, "the slot loads back")
@@ -67,7 +67,7 @@ func test_win_earn_spend_save_and_reload() -> void:
 		return
 	_check(back.best == 10 and back.gems == s.gems and back.gold == s.gold and back.essence == s.essence and back.pills == 1,
 		"progress and wallet saved")
-	_check(back.tree == ["k_fury_1"] and back.profile.plus_of(weapon) == 1 and back.profile.equipped("knight").get("weapon", "") == weapon,
+	_check(back.tree == ["k_root"] and back.profile.plus_of(weapon) == 1 and back.profile.equipped("knight").get("weapon", "") == weapon,
 		"tree, enhancement and worn weapon saved")
 	# what a run of this character computes
 	var base: Dictionary = GameData.load_json("res://assets/data/classes.json")["knight"]["stats"]
