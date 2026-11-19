@@ -1194,7 +1194,10 @@ func damage_report() -> Array:
 		var u := upgrade(k)
 		if u.is_empty() and profile != null and profile.defs.has(k):   # an item's special effect
 			u = {"name": String(profile.defs[k].get("special", {}).get("name", profile.defs[k].get("name", k)))}
-		rows.append({"id": k, "name": u.get("name", k if k != "" else "Khác"), "damage": d,
+		var ev_names: Dictionary = cfg.get("events", {}).get("source_names", {})
+		if u.is_empty() and ev_names.has(k):   # an in-run event (Mưa thiên thạch)
+			u = {"name": String(ev_names[k])}
+		rows.append({"id": k, "name": u.get("name", "Khác"), "damage": d,   # never a raw id
 			"share": d / total if total > 0.0 else 0.0, "hits": int(enemies.hits_by.get(k, 0)),
 			"kills": int(enemies.kills_by.get(k, 0)), "dps": d / maxf(1.0, clock)})
 	rows.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a["damage"] > b["damage"])
@@ -2523,7 +2526,7 @@ func _step_meteors(dt: float) -> void:
 	for p: Vector2 in meteors.step(dt, player_pos, rng):
 		_meteor_fx.append({"p": p, "t": 0.4})
 		Sfx.play("quake")
-		enemies.hit_circle(p, meteors.radius, float(_meteor_cfg.get("monster_damage", 80.0)), 120.0, "meteor")
+		enemies.hit_circle(p, meteors.radius, float(_meteor_cfg.get("monster_damage", 80.0)), 120.0, MeteorShower.SOURCE)
 		if meteors.hits(p, player_pos) and invuln <= 0.0 and not god and not buffs.invulnerable() and _dash_left <= 0.0:
 			if not _spend_ward():
 				_take_hit(float(_meteor_cfg.get("player_damage", 12.0)))

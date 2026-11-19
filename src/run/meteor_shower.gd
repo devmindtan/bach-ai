@@ -9,6 +9,8 @@ extends RefCounted
 ##   shower.start(cfg)          # run_config.json events.meteor
 ##   for p in shower.step(dt, player_pos, rng): if shower.hits(p, player_pos): ...
 
+const SOURCE := "event.meteor"   # damage source id (run_config.json events.source_names)
+
 var active := false
 var marks: Array = []   # [{p: Vector2, t: seconds left before it lands}]
 var radius := 36.0
