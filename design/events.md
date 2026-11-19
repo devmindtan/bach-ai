@@ -19,6 +19,18 @@ có câu báo, chậm hơn người chơi một chút.
 - Code: `Enemies._flee`, `gold_trail`, `escaped`, `kill_gold`, `kill_chest`; `spawn_dist` cho quái sự kiện xuất hiện gần.
   Test: `tests/unit/run/flee_test.gd`.
 
+## Vòng thử thách (`ChallengeRing`)
+
+Tham khảo thêm: Risk of Rain 2, vùng giữ của dịch chuyển / Void Fields ([wiki Shrines](https://riskofrain2.wiki.gg/wiki/Shrines),
+[Void Fields](https://riskofrain2.wiki.gg/wiki/Void_Fields), [Focused Convergence](https://rogueranker.com/focused-convergence-ror2/)):
+chỉ tích năng khi đứng trong vùng; vùng nhỏ thì nhanh. **Quyết định:** vòng bán kính 70 cách người chơi 220 px (kẹp
+trong bản đồ), đứng trong tổng 8 s thì xong (ra ngoài giữ nguyên tiến độ), hạn 30 s; xong rơi rương + 10 vàng.
+
+- Mỗi vùng một lần (`stages.json` regions[].events: Đồng cỏ 70 s, Rừng 90 s, Đầm 110 s); không có ở chế độ thử thách.
+- Số liệu ở `run_config.json` events.ring. Vẽ: vòng vàng dẹt trên đất, cung tiến độ, số giây còn lại; câu báo khi
+  mở, khi xong ("Hoàn thành thử thách!") và khi hỏng ("Thử thách thất bại").
+- Test: `tests/unit/run/challenge_ring_test.gd` (gồm lỗi vòng nằm ngoài biên bản đồ).
+
 ## Còn lại
 
-Vòng thử thách (đứng trong vòng N giây nhận rương), mưa thiên thạch có báo, rương vàng hiếm.
+Mưa thiên thạch có báo, rương vàng hiếm.

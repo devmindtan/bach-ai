@@ -143,6 +143,9 @@ var offer: Array[String] = []   # forced cards for the first level-up (--offer)
 var forced_walk := Vector2.ZERO
 var pause_at := -1.0
 var level_view := "cards"   # level-up: "cards", "character" (Tab) or "hidden" (H), design/ux/level-up.md
+var ring := ChallengeRing.new()   # Vòng thử thách (design/events.md)
+var _ring_cfg: Dictionary = {}
+var _ring_times: Array = []      # clock times this run's region opens a ring
 var _heal_fx: Array = []   # [{p, r, t}] Hồn Đầm heal rings being drawn
 var _spawn_only := ""   # --spawn-only=ID (shots)
 var _level_view_arg := ""   # --level-view=character|hidden (shots): open that view on the first level-up
@@ -204,6 +207,11 @@ func _ready() -> void:
 		challenge_id = ""
 		stage = stages.load_stage(stage_number)
 	stage_ground = stages.ground(stage_number)
+	_ring_cfg = cfg.get("events", {}).get("ring", {})
+	_ring_times = []
+	for ev: Dictionary in stages.region(stage_number).get("events", []):
+		if String(ev.get("kind", "")) == "ring" and challenge_id == "":
+			_ring_times.append(float(ev.get("t", 60.0)))
 	# each region and the challenges have their own song (design/regions.md)
 	run_music = String(Challenges.load_default().data.get("music", "run")) if challenge_id != "" \
 		else String(stages.region(stage_number).get("music", "run"))
@@ -506,6 +514,7 @@ func _tick(dt: float) -> void:
 		return
 	_move_player(dt)
 	_spawn(clock - dt, clock)
+	_step_ring(dt)
 	var contact := enemies.step(dt, player_pos, player_pos + _hit_center)
 	if contact > 0.0 and invuln <= 0.0 and bench == 0 and not god and not buffs.invulnerable() and _dash_left <= 0.0:
 		if not _spend_ward():
@@ -2079,6 +2088,7 @@ func _draw() -> void:
 	_draw_ground_buffs(view)
 	_draw_zones()
 	_draw_ground_fx()
+	_draw_ring()
 	_draw_charge_lanes(view)
 	_draw_pools(view)
 	for h in _heal_fx:   # Hồn Đầm: a green ring sweeping out over the monsters it heals
@@ -2325,6 +2335,46 @@ func _draw_pools(view: Rect2) -> void:
 			var ph := fmod(clock * 1.7 + k * 0.33 + float(b) * 0.21, 1.0)
 			var q := p + Vector2(cos(k * 2.1 + b) * r * 0.5, sin(k * 2.1 + b) * r * 0.3)
 			draw_circle(q, 1.5 + 2.0 * ph, Color(0.75, 1.0, 0.4, a * (1.0 - ph)))
+
+
+## Vòng thử thách (design/events.md): opens at the region's event times near the player; stand
+## inside to charge it; done drops a chest and coins, time out fails it.
+func _step_ring(dt: float) -> void:
+	for t: float in _ring_times:
+		if clock - dt < t and t <= clock and not ring.active:
+			var d := float(_ring_cfg.get("distance", 220.0))
+			ring.start(player_pos + Vector2.from_angle(rng.randf() * TAU) * d, float(_ring_cfg.get("radius", 70.0)),
+				float(_ring_cfg.get("need", 8.0)), float(_ring_cfg.get("limit", 30.0)), _arena_half)
+			wave_call = "Vòng thử thách! Đứng trong vòng %d giây" % roundi(ring.need)
+			wave_call_t = 3.0
+	match ring.step(dt, player_pos):
+		"done":
+			pickups.drop(Pickups.CHEST, ring.center, 1.0)
+			for g in int(_ring_cfg.get("gold", 10)):
+				pickups.drop(Pickups.COIN, ring.center + Vector2.from_angle(g * 2.4) * (14.0 + 3.0 * g), 1.0)
+			wave_call = "Hoàn thành thử thách!"
+			wave_call_t = 2.5
+			Sfx.play("chest")
+		"fail":
+			wave_call = "Thử thách thất bại"
+			wave_call_t = 2.0
+
+
+func _draw_ring() -> void:
+	if not ring.active:
+		return
+	var c := ring.center
+	var pulse := 0.5 + 0.5 * sin(clock * 4.0)
+	draw_set_transform(c, 0.0, Vector2(1.0, 0.55))   # flat on the ground
+	draw_circle(Vector2.ZERO, ring.radius, Color(1.0, 0.85, 0.3, 0.10 + (0.12 if ring.inside else 0.0)))
+	draw_arc(Vector2.ZERO, ring.radius, 0.0, TAU, 64, Color(1.0, 0.85, 0.35, 0.5 + 0.3 * pulse), 3.0)
+	draw_arc(Vector2.ZERO, ring.radius - 6.0, -PI / 2.0, -PI / 2.0 + TAU * ring.progress(), 64, Color(1.0, 0.95, 0.5), 5.0)
+	draw_set_transform(Vector2.ZERO)
+	var font := ThemeDB.fallback_font
+	var txt := "%d s" % ceili(ring.time_left())
+	var at := c + Vector2(-12.0, -ring.radius * 0.55 - 10.0)
+	draw_string_outline(font, at, txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, 4, Color(0.05, 0.04, 0.08))
+	draw_string(font, at, txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color(1.0, 0.92, 0.5))
 
 
 ## Telegraphed charges (Sói Rừng, design 6A): the lane a winding-up charger will

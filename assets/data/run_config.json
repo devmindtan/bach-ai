@@ -98,5 +98,15 @@
     "damage_number_size": 16,
     "max_damage_numbers": 96,
     "hp_bar_time": 2.0
+  },
+  "events": {
+    "_doc": "6B events (design/events.md). ring = Vòng thử thách: opens `distance` px from the player at the region's event times (stages.json regions[].events), radius px, need = seconds inside to complete, limit = seconds before it fails, gold = coins dropped with the chest.",
+    "ring": {
+      "distance": 220.0,
+      "radius": 70.0,
+      "need": 8.0,
+      "limit": 30.0,
+      "gold": 10
+    }
   }
 }
