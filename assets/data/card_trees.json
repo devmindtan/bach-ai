@@ -173,6 +173,1965 @@
           ]
         }
       ]
+    },
+    "whirlwind": {
+      "max_points": 12,
+      "nodes": [
+        {
+          "id": "core",
+          "name": "Gió xoáy",
+          "desc": "Sát thương +10% mỗi cấp.",
+          "col": 1,
+          "row": 0,
+          "max_rank": 3,
+          "glyph": "damage",
+          "effects": {
+            "skill_damage.whirlwind": {
+              "mul": 0.1
+            }
+          }
+        },
+        {
+          "id": "area",
+          "name": "Xoáy rộng",
+          "desc": "Vùng +12% mỗi cấp.",
+          "col": 0,
+          "row": 1,
+          "max_rank": 2,
+          "glyph": "area",
+          "requires": [
+            "core"
+          ],
+          "effects": {
+            "skill_area.whirlwind": {
+              "mul": 0.12
+            }
+          }
+        },
+        {
+          "id": "quick",
+          "name": "Xoáy nhanh",
+          "desc": "Hồi chiêu −6% mỗi cấp.",
+          "col": 2,
+          "row": 1,
+          "max_rank": 2,
+          "glyph": "cooldown",
+          "requires": [
+            "core"
+          ],
+          "effects": {
+            "skill_cd.whirlwind": {
+              "mul": -0.06
+            }
+          }
+        },
+        {
+          "id": "status_bleed",
+          "name": "Gió cắt",
+          "desc": "Đòn gây chảy máu.",
+          "col": 0,
+          "row": 2,
+          "max_rank": 1,
+          "glyph": "bleed",
+          "requires": [
+            "area"
+          ],
+          "on_hit": [
+            {
+              "status": "bleed",
+              "dps_mul": 0.15,
+              "time": 2.0
+            }
+          ]
+        },
+        {
+          "id": "heavy",
+          "name": "Lưỡi gió",
+          "desc": "Sát thương +12% mỗi cấp.",
+          "col": 1,
+          "row": 2,
+          "max_rank": 2,
+          "glyph": "damage",
+          "requires": [
+            "core"
+          ],
+          "effects": {
+            "skill_damage.whirlwind": {
+              "mul": 0.12
+            }
+          }
+        },
+        {
+          "id": "count",
+          "name": "Thêm vòng xoáy",
+          "desc": "Số lượng +1.",
+          "col": 2,
+          "row": 2,
+          "max_rank": 1,
+          "glyph": "count",
+          "requires": [
+            "quick"
+          ],
+          "effects": {
+            "skill_count.whirlwind": {
+              "add": 1
+            }
+          }
+        },
+        {
+          "id": "key_burn",
+          "name": "Bão lửa",
+          "desc": "Đòn gây bỏng, sát thương +15%.",
+          "col": 0,
+          "row": 3,
+          "max_rank": 1,
+          "glyph": "burn",
+          "keystone": true,
+          "requires": [
+            "status_bleed"
+          ],
+          "requires_points": 8,
+          "excludes": [
+            "key_freeze"
+          ],
+          "effects": {
+            "skill_damage.whirlwind": {
+              "mul": 0.15
+            }
+          },
+          "on_hit": [
+            {
+              "status": "burn",
+              "dps_mul": 0.3,
+              "time": 2.0
+            }
+          ]
+        },
+        {
+          "id": "key_freeze",
+          "name": "Bão băng",
+          "desc": "Đòn gây đóng băng, vùng +15%.",
+          "col": 2,
+          "row": 3,
+          "max_rank": 1,
+          "glyph": "freeze",
+          "keystone": true,
+          "requires": [
+            "count"
+          ],
+          "requires_points": 8,
+          "excludes": [
+            "key_burn"
+          ],
+          "effects": {
+            "skill_area.whirlwind": {
+              "mul": 0.15
+            }
+          },
+          "on_hit": [
+            {
+              "status": "freeze",
+              "time": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    "earth_strike": {
+      "max_points": 12,
+      "nodes": [
+        {
+          "id": "core",
+          "name": "Đất rung",
+          "desc": "Sát thương +10% mỗi cấp.",
+          "col": 1,
+          "row": 0,
+          "max_rank": 3,
+          "glyph": "damage",
+          "effects": {
+            "skill_damage.earth_strike": {
+              "mul": 0.1
+            }
+          }
+        },
+        {
+          "id": "area",
+          "name": "Nứt rộng",
+          "desc": "Vùng +12% mỗi cấp.",
+          "col": 0,
+          "row": 1,
+          "max_rank": 2,
+          "glyph": "area",
+          "requires": [
+            "core"
+          ],
+          "effects": {
+            "skill_area.earth_strike": {
+              "mul": 0.12
+            }
+          }
+        },
+        {
+          "id": "quick",
+          "name": "Dậm liền",
+          "desc": "Hồi chiêu −6% mỗi cấp.",
+          "col": 2,
+          "row": 1,
+          "max_rank": 2,
+          "glyph": "cooldown",
+          "requires": [
+            "core"
+          ],
+          "effects": {
+            "skill_cd.earth_strike": {
+              "mul": -0.06
+            }
+          }
+        },
+        {
+          "id": "status_bleed",
+          "name": "Đá vụn",
+          "desc": "Đòn gây chảy máu.",
+          "col": 0,
+          "row": 2,
+          "max_rank": 1,
+          "glyph": "bleed",
+          "requires": [
+            "area"
+          ],
+          "on_hit": [
+            {
+              "status": "bleed",
+              "dps_mul": 0.15,
+              "time": 2.0
+            }
+          ]
+        },
+        {
+          "id": "heavy",
+          "name": "Đất nặng",
+          "desc": "Sát thương +12% mỗi cấp.",
+          "col": 1,
+          "row": 2,
+          "max_rank": 2,
+          "glyph": "damage",
+          "requires": [
+            "core"
+          ],
+          "effects": {
+            "skill_damage.earth_strike": {
+              "mul": 0.12
+            }
+          }
+        },
+        {
+          "id": "count",
+          "name": "Thêm vết nứt",
+          "desc": "Số lượng +1.",
+          "col": 2,
+          "row": 2,
+          "max_rank": 1,
+          "glyph": "count",
+          "requires": [
+            "quick"
+          ],
+          "effects": {
+            "skill_count.earth_strike": {
+              "add": 1
+            }
+          }
+        },
+        {
+          "id": "key_burn",
+          "name": "Nham thạch",
+          "desc": "Đòn gây bỏng, sát thương +15%.",
+          "col": 0,
+          "row": 3,
+          "max_rank": 1,
+          "glyph": "burn",
+          "keystone": true,
+          "requires": [
+            "status_bleed"
+          ],
+          "requires_points": 8,
+          "excludes": [
+            "key_shock"
+          ],
+          "effects": {
+            "skill_damage.earth_strike": {
+              "mul": 0.15
+            }
+          },
+          "on_hit": [
+            {
+              "status": "burn",
+              "dps_mul": 0.3,
+              "time": 2.0
+            }
+          ]
+        },
+        {
+          "id": "key_shock",
+          "name": "Địa chấn sét",
+          "desc": "Đòn gây giật điện, hồi chiêu −10%.",
+          "col": 2,
+          "row": 3,
+          "max_rank": 1,
+          "glyph": "shock",
+          "keystone": true,
+          "requires": [
+            "count"
+          ],
+          "requires_points": 8,
+          "excludes": [
+            "key_burn"
+          ],
+          "effects": {
+            "skill_cd.earth_strike": {
+              "mul": -0.1
+            }
+          },
+          "on_hit": [
+            {
+              "status": "shock",
+              "mul": 0.4,
+              "time": 3.0
+            }
+          ]
+        }
+      ]
+    },
+    "ground_slam": {
+      "max_points": 12,
+      "nodes": [
+        {
+          "id": "core",
+          "name": "Dậm mạnh",
+          "desc": "Sát thương +10% mỗi cấp.",
+          "col": 1,
+          "row": 0,
+          "max_rank": 3,
+          "glyph": "damage",
+          "effects": {
+            "skill_damage.ground_slam": {
+              "mul": 0.1
+            }
+          }
+        },
+        {
+          "id": "area",
+          "name": "Sóng rộng",
+          "desc": "Vùng +12% mỗi cấp.",
+          "col": 0,
+          "row": 1,
+          "max_rank": 2,
+          "glyph": "area",
+          "requires": [
+            "core"
+          ],
+          "effects": {
+            "skill_area.ground_slam": {
+              "mul": 0.12
+            }
+          }
+        },
+        {
+          "id": "quick",
+          "name": "Dậm nhanh",
+          "desc": "Hồi chiêu −6% mỗi cấp.",
+          "col": 2,
+          "row": 1,
+          "max_rank": 2,
+          "glyph": "cooldown",
+          "requires": [
+            "core"
+          ],
+          "effects": {
+            "skill_cd.ground_slam": {
+              "mul": -0.06
+            }
+          }
+        },
+        {
+          "id": "status_slow",
+          "name": "Đất lún",
+          "desc": "Đòn gây làm chậm.",
+          "col": 0,
+          "row": 2,
+          "max_rank": 1,
+          "glyph": "slow",
+          "requires": [
+            "area"
+          ],
+          "on_hit": [
+            {
+              "status": "slow",
+              "mul": 0.6,
+              "time": 1.5
+            }
+          ]
+        },
+        {
+          "id": "heavy",
+          "name": "Búa đất",
+          "desc": "Sát thương +12% mỗi cấp.",
+          "col": 1,
+          "row": 2,
+          "max_rank": 2,
+          "glyph": "damage",
+          "requires": [
+            "core"
+          ],
+          "effects": {
+            "skill_damage.ground_slam": {
+              "mul": 0.12
+            }
+          }
+        },
+        {
+          "id": "count",
+          "name": "Dậm đôi",
+          "desc": "Số lượng +1.",
+          "col": 2,
+          "row": 2,
+          "max_rank": 1,
+          "glyph": "count",
+          "requires": [
+            "quick"
+          ],
+          "effects": {
+            "skill_count.ground_slam": {
+              "add": 1
+            }
+          }
+        },
+        {
+          "id": "key_burn",
+          "name": "Dậm lửa",
+          "desc": "Đòn gây bỏng, sát thương +15%.",
+          "col": 0,
+          "row": 3,
+          "max_rank": 1,
+          "glyph": "burn",
+          "keystone": true,
+          "requires": [
+            "status_slow"
+          ],
+          "requires_points": 8,
+          "excludes": [
+            "key_shock"
+          ],
+          "effects": {
+            "skill_damage.ground_slam": {
+              "mul": 0.15
+            }
+          },
+          "on_hit": [
+            {
+              "status": "burn",
+              "dps_mul": 0.3,
+              "time": 2.0
+            }
+          ]
+        },
+        {
+          "id": "key_shock",
+          "name": "Dậm sấm",
+          "desc": "Đòn gây giật điện, vùng +15%.",
+          "col": 2,
+          "row": 3,
+          "max_rank": 1,
+          "glyph": "shock",
+          "keystone": true,
+          "requires": [
+            "count"
+          ],
+          "requires_points": 8,
+          "excludes": [
+            "key_burn"
+          ],
+          "effects": {
+            "skill_area.ground_slam": {
+              "mul": 0.15
+            }
+          },
+          "on_hit": [
+            {
+              "status": "shock",
+              "mul": 0.4,
+              "time": 3.0
+            }
+          ]
+        }
+      ]
+    },
+    "cleave_wave": {
+      "max_points": 12,
+      "nodes": [
+        {
+          "id": "core",
+          "name": "Sóng sắc",
+          "desc": "Sát thương +10% mỗi cấp.",
+          "col": 1,
+          "row": 0,
+          "max_rank": 3,
+          "glyph": "damage",
+          "effects": {
+            "skill_damage.cleave_wave": {
+              "mul": 0.1
+            }
+          }
+        },
+        {
+          "id": "area",
+          "name": "Sóng rộng",
+          "desc": "Vùng +12% mỗi cấp.",
+          "col": 0,
+          "row": 1,
+          "max_rank": 2,
+          "glyph": "area",
+          "requires": [
+            "core"
+          ],
+          "effects": {
+            "skill_area.cleave_wave": {
+              "mul": 0.12
+            }
+          }
+        },
+        {
+          "id": "quick",
+          "name": "Phóng nhanh",
+          "desc": "Hồi chiêu −6% mỗi cấp.",
+          "col": 2,
+          "row": 1,
+          "max_rank": 2,
+          "glyph": "cooldown",
+          "requires": [
+            "core"
+          ],
+          "effects": {
+            "skill_cd.cleave_wave": {
+              "mul": -0.06
+            }
+          }
+        },
+        {
+          "id": "status_slow",
+          "name": "Sóng lạnh",
+          "desc": "Đòn gây làm chậm.",
+          "col": 0,
+          "row": 2,
+          "max_rank": 1,
+          "glyph": "slow",
+          "requires": [
+            "area"
+          ],
+          "on_hit": [
+            {
+              "status": "slow",
+              "mul": 0.6,
+              "time": 1.5
+            }
+          ]
+        },
+        {
+          "id": "heavy",
+          "name": "Sóng nặng",
+          "desc": "Sát thương +12% mỗi cấp.",
+          "col": 1,
+          "row": 2,
+          "max_rank": 2,
+          "glyph": "damage",
+          "requires": [
+            "core"
+          ],
+          "effects": {
+            "skill_damage.cleave_wave": {
+              "mul": 0.12
+            }
+          }
+        },
+        {
+          "id": "count",
+          "name": "Thêm sóng",
+          "desc": "Số lượng +1.",
+          "col": 2,
+          "row": 2,
+          "max_rank": 1,
+          "glyph": "count",
+          "requires": [
+            "quick"
+          ],
+          "effects": {
+            "skill_count.cleave_wave": {
+              "add": 1
+            }
+          }
+        },
+        {
+          "id": "key_burn",
+          "name": "Sóng lửa",
+          "desc": "Đòn gây bỏng, sát thương +15%.",
+          "col": 0,
+          "row": 3,
+          "max_rank": 1,
+          "glyph": "burn",
+          "keystone": true,
+          "requires": [
+            "status_slow"
+          ],
+          "requires_points": 8,
+          "excludes": [
+            "key_shock"
+          ],
+          "effects": {
+            "skill_damage.cleave_wave": {
+              "mul": 0.15
+            }
+          },
+          "on_hit": [
+            {
+              "status": "burn",
+              "dps_mul": 0.3,
+              "time": 2.0
+            }
+          ]
+        },
+        {
+          "id": "key_shock",
+          "name": "Sóng sấm",
+          "desc": "Đòn gây giật điện, hồi chiêu −10%.",
+          "col": 2,
+          "row": 3,
+          "max_rank": 1,
+          "glyph": "shock",
+          "keystone": true,
+          "requires": [
+            "count"
+          ],
+          "requires_points": 8,
+          "excludes": [
+            "key_burn"
+          ],
+          "effects": {
+            "skill_cd.cleave_wave": {
+              "mul": -0.1
+            }
+          },
+          "on_hit": [
+            {
+              "status": "shock",
+              "mul": 0.4,
+              "time": 3.0
+            }
+          ]
+        }
+      ]
+    },
+    "holy_column": {
+      "max_points": 12,
+      "nodes": [
+        {
+          "id": "core",
+          "name": "Thánh quang",
+          "desc": "Sát thương +10% mỗi cấp.",
+          "col": 1,
+          "row": 0,
+          "max_rank": 3,
+          "glyph": "damage",
+          "effects": {
+            "skill_damage.holy_column": {
+              "mul": 0.1
+            }
+          }
+        },
+        {
+          "id": "area",
+          "name": "Cột rộng",
+          "desc": "Vùng +12% mỗi cấp.",
+          "col": 0,
+          "row": 1,
+          "max_rank": 2,
+          "glyph": "area",
+          "requires": [
+            "core"
+          ],
+          "effects": {
+            "skill_area.holy_column": {
+              "mul": 0.12
+            }
+          }
+        },
+        {
+          "id": "quick",
+          "name": "Gọi nhanh",
+          "desc": "Hồi chiêu −6% mỗi cấp.",
+          "col": 2,
+          "row": 1,
+          "max_rank": 2,
+          "glyph": "cooldown",
+          "requires": [
+            "core"
+          ],
+          "effects": {
+            "skill_cd.holy_column": {
+              "mul": -0.06
+            }
+          }
+        },
+        {
+          "id": "status_stun",
+          "name": "Phán xét",
+          "desc": "Đòn gây choáng.",
+          "col": 0,
+          "row": 2,
+          "max_rank": 1,
+          "glyph": "stun",
+          "requires": [
+            "area"
+          ],
+          "on_hit": [
+            {
+              "status": "stun",
+              "time": 0.6
+            }
+          ]
+        },
+        {
+          "id": "heavy",
+          "name": "Ánh sáng chói",
+          "desc": "Sát thương +12% mỗi cấp.",
+          "col": 1,
+          "row": 2,
+          "max_rank": 2,
+          "glyph": "damage",
+          "requires": [
+            "core"
+          ],
+          "effects": {
+            "skill_damage.holy_column": {
+              "mul": 0.12
+            }
+          }
+        },
+        {
+          "id": "count",
+          "name": "Thêm cột",
+          "desc": "Số lượng +1.",
+          "col": 2,
+          "row": 2,
+          "max_rank": 1,
+          "glyph": "count",
+          "requires": [
+            "quick"
+          ],
+          "effects": {
+            "skill_count.holy_column": {
+              "add": 1
+            }
+          }
+        },
+        {
+          "id": "key_burn",
+          "name": "Lửa thánh",
+          "desc": "Đòn gây bỏng, sát thương +15%.",
+          "col": 0,
+          "row": 3,
+          "max_rank": 1,
+          "glyph": "burn",
+          "keystone": true,
+          "requires": [
+            "status_stun"
+          ],
+          "requires_points": 8,
+          "excludes": [
+            "key_shock"
+          ],
+          "effects": {
+            "skill_damage.holy_column": {
+              "mul": 0.15
+            }
+          },
+          "on_hit": [
+            {
+              "status": "burn",
+              "dps_mul": 0.3,
+              "time": 2.0
+            }
+          ]
+        },
+        {
+          "id": "key_shock",
+          "name": "Sấm thánh",
+          "desc": "Đòn gây giật điện, hồi chiêu −10%.",
+          "col": 2,
+          "row": 3,
+          "max_rank": 1,
+          "glyph": "shock",
+          "keystone": true,
+          "requires": [
+            "count"
+          ],
+          "requires_points": 8,
+          "excludes": [
+            "key_burn"
+          ],
+          "effects": {
+            "skill_cd.holy_column": {
+              "mul": -0.1
+            }
+          },
+          "on_hit": [
+            {
+              "status": "shock",
+              "mul": 0.4,
+              "time": 3.0
+            }
+          ]
+        }
+      ]
+    },
+    "dash": {
+      "max_points": 12,
+      "nodes": [
+        {
+          "id": "core",
+          "name": "Lướt mạnh",
+          "desc": "Sát thương +10% mỗi cấp.",
+          "col": 1,
+          "row": 0,
+          "max_rank": 3,
+          "glyph": "damage",
+          "effects": {
+            "skill_damage.dash": {
+              "mul": 0.1
+            }
+          }
+        },
+        {
+          "id": "area",
+          "name": "Lướt rộng",
+          "desc": "Vùng +12% mỗi cấp.",
+          "col": 0,
+          "row": 1,
+          "max_rank": 2,
+          "glyph": "area",
+          "requires": [
+            "core"
+          ],
+          "effects": {
+            "skill_area.dash": {
+              "mul": 0.12
+            }
+          }
+        },
+        {
+          "id": "quick",
+          "name": "Lướt nhanh",
+          "desc": "Hồi chiêu −6% mỗi cấp.",
+          "col": 2,
+          "row": 1,
+          "max_rank": 2,
+          "glyph": "cooldown",
+          "requires": [
+            "core"
+          ],
+          "effects": {
+            "skill_cd.dash": {
+              "mul": -0.06
+            }
+          }
+        },
+        {
+          "id": "status_stun",
+          "name": "Va choáng",
+          "desc": "Đòn gây choáng.",
+          "col": 0,
+          "row": 2,
+          "max_rank": 1,
+          "glyph": "stun",
+          "requires": [
+            "area"
+          ],
+          "on_hit": [
+            {
+              "status": "stun",
+              "time": 0.6
+            }
+          ]
+        },
+        {
+          "id": "heavy",
+          "name": "Xung kích",
+          "desc": "Sát thương +12% mỗi cấp.",
+          "col": 1,
+          "row": 2,
+          "max_rank": 2,
+          "glyph": "damage",
+          "requires": [
+            "core"
+          ],
+          "effects": {
+            "skill_damage.dash": {
+              "mul": 0.12
+            }
+          }
+        },
+        {
+          "id": "count",
+          "name": "Lướt kép",
+          "desc": "Số lượng +1.",
+          "col": 2,
+          "row": 2,
+          "max_rank": 1,
+          "glyph": "count",
+          "requires": [
+            "quick"
+          ],
+          "effects": {
+            "skill_count.dash": {
+              "add": 1
+            }
+          }
+        },
+        {
+          "id": "key_burn",
+          "name": "Vệt lửa",
+          "desc": "Đòn gây bỏng, sát thương +15%.",
+          "col": 0,
+          "row": 3,
+          "max_rank": 1,
+          "glyph": "burn",
+          "keystone": true,
+          "requires": [
+            "status_stun"
+          ],
+          "requires_points": 8,
+          "excludes": [
+            "key_shock"
+          ],
+          "effects": {
+            "skill_damage.dash": {
+              "mul": 0.15
+            }
+          },
+          "on_hit": [
+            {
+              "status": "burn",
+              "dps_mul": 0.3,
+              "time": 2.0
+            }
+          ]
+        },
+        {
+          "id": "key_shock",
+          "name": "Vệt sấm",
+          "desc": "Đòn gây giật điện, hồi chiêu −10%.",
+          "col": 2,
+          "row": 3,
+          "max_rank": 1,
+          "glyph": "shock",
+          "keystone": true,
+          "requires": [
+            "count"
+          ],
+          "requires_points": 8,
+          "excludes": [
+            "key_burn"
+          ],
+          "effects": {
+            "skill_cd.dash": {
+              "mul": -0.1
+            }
+          },
+          "on_hit": [
+            {
+              "status": "shock",
+              "mul": 0.4,
+              "time": 3.0
+            }
+          ]
+        }
+      ]
+    },
+    "arcane_bolt": {
+      "max_points": 12,
+      "nodes": [
+        {
+          "id": "core",
+          "name": "Phép sắc",
+          "desc": "Sát thương +10% mỗi cấp.",
+          "col": 1,
+          "row": 0,
+          "max_rank": 3,
+          "glyph": "damage",
+          "effects": {
+            "skill_damage.arcane_bolt": {
+              "mul": 0.1
+            }
+          }
+        },
+        {
+          "id": "area",
+          "name": "Tia lớn",
+          "desc": "Vùng +12% mỗi cấp.",
+          "col": 0,
+          "row": 1,
+          "max_rank": 2,
+          "glyph": "area",
+          "requires": [
+            "core"
+          ],
+          "effects": {
+            "skill_area.arcane_bolt": {
+              "mul": 0.12
+            }
+          }
+        },
+        {
+          "id": "quick",
+          "name": "Niệm nhanh",
+          "desc": "Hồi chiêu −6% mỗi cấp.",
+          "col": 2,
+          "row": 1,
+          "max_rank": 2,
+          "glyph": "cooldown",
+          "requires": [
+            "core"
+          ],
+          "effects": {
+            "skill_cd.arcane_bolt": {
+              "mul": -0.06
+            }
+          }
+        },
+        {
+          "id": "status_slow",
+          "name": "Tia lạnh",
+          "desc": "Đòn gây làm chậm.",
+          "col": 0,
+          "row": 2,
+          "max_rank": 1,
+          "glyph": "slow",
+          "requires": [
+            "area"
+          ],
+          "on_hit": [
+            {
+              "status": "slow",
+              "mul": 0.6,
+              "time": 1.5
+            }
+          ]
+        },
+        {
+          "id": "heavy",
+          "name": "Tia mạnh",
+          "desc": "Sát thương +12% mỗi cấp.",
+          "col": 1,
+          "row": 2,
+          "max_rank": 2,
+          "glyph": "damage",
+          "requires": [
+            "core"
+          ],
+          "effects": {
+            "skill_damage.arcane_bolt": {
+              "mul": 0.12
+            }
+          }
+        },
+        {
+          "id": "count",
+          "name": "Thêm tia",
+          "desc": "Số lượng +1.",
+          "col": 2,
+          "row": 2,
+          "max_rank": 1,
+          "glyph": "count",
+          "requires": [
+            "quick"
+          ],
+          "effects": {
+            "skill_count.arcane_bolt": {
+              "add": 1
+            }
+          }
+        },
+        {
+          "id": "key_burn",
+          "name": "Tia lửa",
+          "desc": "Đòn gây bỏng, sát thương +15%.",
+          "col": 0,
+          "row": 3,
+          "max_rank": 1,
+          "glyph": "burn",
+          "keystone": true,
+          "requires": [
+            "status_slow"
+          ],
+          "requires_points": 8,
+          "excludes": [
+            "key_shock"
+          ],
+          "effects": {
+            "skill_damage.arcane_bolt": {
+              "mul": 0.15
+            }
+          },
+          "on_hit": [
+            {
+              "status": "burn",
+              "dps_mul": 0.3,
+              "time": 2.0
+            }
+          ]
+        },
+        {
+          "id": "key_shock",
+          "name": "Tia sét",
+          "desc": "Đòn gây giật điện, hồi chiêu −10%.",
+          "col": 2,
+          "row": 3,
+          "max_rank": 1,
+          "glyph": "shock",
+          "keystone": true,
+          "requires": [
+            "count"
+          ],
+          "requires_points": 8,
+          "excludes": [
+            "key_burn"
+          ],
+          "effects": {
+            "skill_cd.arcane_bolt": {
+              "mul": -0.1
+            }
+          },
+          "on_hit": [
+            {
+              "status": "shock",
+              "mul": 0.4,
+              "time": 3.0
+            }
+          ]
+        }
+      ]
+    },
+    "fireball": {
+      "max_points": 12,
+      "nodes": [
+        {
+          "id": "core",
+          "name": "Lửa nóng",
+          "desc": "Sát thương +10% mỗi cấp.",
+          "col": 1,
+          "row": 0,
+          "max_rank": 3,
+          "glyph": "damage",
+          "effects": {
+            "skill_damage.fireball": {
+              "mul": 0.1
+            }
+          }
+        },
+        {
+          "id": "area",
+          "name": "Nổ rộng",
+          "desc": "Vùng +12% mỗi cấp.",
+          "col": 0,
+          "row": 1,
+          "max_rank": 2,
+          "glyph": "area",
+          "requires": [
+            "core"
+          ],
+          "effects": {
+            "skill_area.fireball": {
+              "mul": 0.12
+            }
+          }
+        },
+        {
+          "id": "quick",
+          "name": "Ném nhanh",
+          "desc": "Hồi chiêu −6% mỗi cấp.",
+          "col": 2,
+          "row": 1,
+          "max_rank": 2,
+          "glyph": "cooldown",
+          "requires": [
+            "core"
+          ],
+          "effects": {
+            "skill_cd.fireball": {
+              "mul": -0.06
+            }
+          }
+        },
+        {
+          "id": "status_slow",
+          "name": "Khói cay",
+          "desc": "Đòn gây làm chậm.",
+          "col": 0,
+          "row": 2,
+          "max_rank": 1,
+          "glyph": "slow",
+          "requires": [
+            "area"
+          ],
+          "on_hit": [
+            {
+              "status": "slow",
+              "mul": 0.6,
+              "time": 1.5
+            }
+          ]
+        },
+        {
+          "id": "heavy",
+          "name": "Lửa dữ",
+          "desc": "Sát thương +12% mỗi cấp.",
+          "col": 1,
+          "row": 2,
+          "max_rank": 2,
+          "glyph": "damage",
+          "requires": [
+            "core"
+          ],
+          "effects": {
+            "skill_damage.fireball": {
+              "mul": 0.12
+            }
+          }
+        },
+        {
+          "id": "count",
+          "name": "Thêm cầu lửa",
+          "desc": "Số lượng +1.",
+          "col": 2,
+          "row": 2,
+          "max_rank": 1,
+          "glyph": "count",
+          "requires": [
+            "quick"
+          ],
+          "effects": {
+            "skill_count.fireball": {
+              "add": 1
+            }
+          }
+        },
+        {
+          "id": "key_burn",
+          "name": "Hỏa ngục",
+          "desc": "Đòn gây bỏng, sát thương +15%.",
+          "col": 0,
+          "row": 3,
+          "max_rank": 1,
+          "glyph": "burn",
+          "keystone": true,
+          "requires": [
+            "status_slow"
+          ],
+          "requires_points": 8,
+          "excludes": [
+            "key_shock"
+          ],
+          "effects": {
+            "skill_damage.fireball": {
+              "mul": 0.15
+            }
+          },
+          "on_hit": [
+            {
+              "status": "burn",
+              "dps_mul": 0.3,
+              "time": 2.0
+            }
+          ]
+        },
+        {
+          "id": "key_shock",
+          "name": "Lửa sấm",
+          "desc": "Đòn gây giật điện, vùng +15%.",
+          "col": 2,
+          "row": 3,
+          "max_rank": 1,
+          "glyph": "shock",
+          "keystone": true,
+          "requires": [
+            "count"
+          ],
+          "requires_points": 8,
+          "excludes": [
+            "key_burn"
+          ],
+          "effects": {
+            "skill_area.fireball": {
+              "mul": 0.15
+            }
+          },
+          "on_hit": [
+            {
+              "status": "shock",
+              "mul": 0.4,
+              "time": 3.0
+            }
+          ]
+        }
+      ]
+    },
+    "frost_nova": {
+      "max_points": 12,
+      "nodes": [
+        {
+          "id": "core",
+          "name": "Băng giá",
+          "desc": "Sát thương +10% mỗi cấp.",
+          "col": 1,
+          "row": 0,
+          "max_rank": 3,
+          "glyph": "damage",
+          "effects": {
+            "skill_damage.frost_nova": {
+              "mul": 0.1
+            }
+          }
+        },
+        {
+          "id": "area",
+          "name": "Nổ rộng",
+          "desc": "Vùng +12% mỗi cấp.",
+          "col": 0,
+          "row": 1,
+          "max_rank": 2,
+          "glyph": "area",
+          "requires": [
+            "core"
+          ],
+          "effects": {
+            "skill_area.frost_nova": {
+              "mul": 0.12
+            }
+          }
+        },
+        {
+          "id": "quick",
+          "name": "Niệm nhanh",
+          "desc": "Hồi chiêu −6% mỗi cấp.",
+          "col": 2,
+          "row": 1,
+          "max_rank": 2,
+          "glyph": "cooldown",
+          "requires": [
+            "core"
+          ],
+          "effects": {
+            "skill_cd.frost_nova": {
+              "mul": -0.06
+            }
+          }
+        },
+        {
+          "id": "status_bleed",
+          "name": "Băng cứa",
+          "desc": "Đòn gây chảy máu.",
+          "col": 0,
+          "row": 2,
+          "max_rank": 1,
+          "glyph": "bleed",
+          "requires": [
+            "area"
+          ],
+          "on_hit": [
+            {
+              "status": "bleed",
+              "dps_mul": 0.15,
+              "time": 2.0
+            }
+          ]
+        },
+        {
+          "id": "heavy",
+          "name": "Băng dày",
+          "desc": "Sát thương +12% mỗi cấp.",
+          "col": 1,
+          "row": 2,
+          "max_rank": 2,
+          "glyph": "damage",
+          "requires": [
+            "core"
+          ],
+          "effects": {
+            "skill_damage.frost_nova": {
+              "mul": 0.12
+            }
+          }
+        },
+        {
+          "id": "count",
+          "name": "Nổ đôi",
+          "desc": "Số lượng +1.",
+          "col": 2,
+          "row": 2,
+          "max_rank": 1,
+          "glyph": "count",
+          "requires": [
+            "quick"
+          ],
+          "effects": {
+            "skill_count.frost_nova": {
+              "add": 1
+            }
+          }
+        },
+        {
+          "id": "key_freeze",
+          "name": "Băng vĩnh cửu",
+          "desc": "Đòn gây đóng băng, sát thương +15%.",
+          "col": 0,
+          "row": 3,
+          "max_rank": 1,
+          "glyph": "freeze",
+          "keystone": true,
+          "requires": [
+            "status_bleed"
+          ],
+          "requires_points": 8,
+          "excludes": [
+            "key_shock"
+          ],
+          "effects": {
+            "skill_damage.frost_nova": {
+              "mul": 0.15
+            }
+          },
+          "on_hit": [
+            {
+              "status": "freeze",
+              "time": 1.0
+            }
+          ]
+        },
+        {
+          "id": "key_shock",
+          "name": "Băng sấm",
+          "desc": "Đòn gây giật điện, hồi chiêu −10%.",
+          "col": 2,
+          "row": 3,
+          "max_rank": 1,
+          "glyph": "shock",
+          "keystone": true,
+          "requires": [
+            "count"
+          ],
+          "requires_points": 8,
+          "excludes": [
+            "key_freeze"
+          ],
+          "effects": {
+            "skill_cd.frost_nova": {
+              "mul": -0.1
+            }
+          },
+          "on_hit": [
+            {
+              "status": "shock",
+              "mul": 0.4,
+              "time": 3.0
+            }
+          ]
+        }
+      ]
+    },
+    "lightning": {
+      "max_points": 12,
+      "nodes": [
+        {
+          "id": "core",
+          "name": "Sét mạnh",
+          "desc": "Sát thương +10% mỗi cấp.",
+          "col": 1,
+          "row": 0,
+          "max_rank": 3,
+          "glyph": "damage",
+          "effects": {
+            "skill_damage.lightning": {
+              "mul": 0.1
+            }
+          }
+        },
+        {
+          "id": "area",
+          "name": "Sét rộng",
+          "desc": "Vùng +12% mỗi cấp.",
+          "col": 0,
+          "row": 1,
+          "max_rank": 2,
+          "glyph": "area",
+          "requires": [
+            "core"
+          ],
+          "effects": {
+            "skill_area.lightning": {
+              "mul": 0.12
+            }
+          }
+        },
+        {
+          "id": "quick",
+          "name": "Gọi nhanh",
+          "desc": "Hồi chiêu −6% mỗi cấp.",
+          "col": 2,
+          "row": 1,
+          "max_rank": 2,
+          "glyph": "cooldown",
+          "requires": [
+            "core"
+          ],
+          "effects": {
+            "skill_cd.lightning": {
+              "mul": -0.06
+            }
+          }
+        },
+        {
+          "id": "status_stun",
+          "name": "Sét choáng",
+          "desc": "Đòn gây choáng.",
+          "col": 0,
+          "row": 2,
+          "max_rank": 1,
+          "glyph": "stun",
+          "requires": [
+            "area"
+          ],
+          "on_hit": [
+            {
+              "status": "stun",
+              "time": 0.6
+            }
+          ]
+        },
+        {
+          "id": "heavy",
+          "name": "Sét dữ",
+          "desc": "Sát thương +12% mỗi cấp.",
+          "col": 1,
+          "row": 2,
+          "max_rank": 2,
+          "glyph": "damage",
+          "requires": [
+            "core"
+          ],
+          "effects": {
+            "skill_damage.lightning": {
+              "mul": 0.12
+            }
+          }
+        },
+        {
+          "id": "count",
+          "name": "Thêm tia sét",
+          "desc": "Số lượng +1.",
+          "col": 2,
+          "row": 2,
+          "max_rank": 1,
+          "glyph": "count",
+          "requires": [
+            "quick"
+          ],
+          "effects": {
+            "skill_count.lightning": {
+              "add": 1
+            }
+          }
+        },
+        {
+          "id": "key_burn",
+          "name": "Sét lửa",
+          "desc": "Đòn gây bỏng, sát thương +15%.",
+          "col": 0,
+          "row": 3,
+          "max_rank": 1,
+          "glyph": "burn",
+          "keystone": true,
+          "requires": [
+            "status_stun"
+          ],
+          "requires_points": 8,
+          "excludes": [
+            "key_freeze"
+          ],
+          "effects": {
+            "skill_damage.lightning": {
+              "mul": 0.15
+            }
+          },
+          "on_hit": [
+            {
+              "status": "burn",
+              "dps_mul": 0.3,
+              "time": 2.0
+            }
+          ]
+        },
+        {
+          "id": "key_freeze",
+          "name": "Sét băng",
+          "desc": "Đòn gây đóng băng, vùng +15%.",
+          "col": 2,
+          "row": 3,
+          "max_rank": 1,
+          "glyph": "freeze",
+          "keystone": true,
+          "requires": [
+            "count"
+          ],
+          "requires_points": 8,
+          "excludes": [
+            "key_burn"
+          ],
+          "effects": {
+            "skill_area.lightning": {
+              "mul": 0.15
+            }
+          },
+          "on_hit": [
+            {
+              "status": "freeze",
+              "time": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    "thunder_javelin": {
+      "max_points": 12,
+      "nodes": [
+        {
+          "id": "core",
+          "name": "Giáo sắc",
+          "desc": "Sát thương +10% mỗi cấp.",
+          "col": 1,
+          "row": 0,
+          "max_rank": 3,
+          "glyph": "damage",
+          "effects": {
+            "skill_damage.thunder_javelin": {
+              "mul": 0.1
+            }
+          }
+        },
+        {
+          "id": "area",
+          "name": "Giáo to",
+          "desc": "Vùng +12% mỗi cấp.",
+          "col": 0,
+          "row": 1,
+          "max_rank": 2,
+          "glyph": "area",
+          "requires": [
+            "core"
+          ],
+          "effects": {
+            "skill_area.thunder_javelin": {
+              "mul": 0.12
+            }
+          }
+        },
+        {
+          "id": "quick",
+          "name": "Phóng nhanh",
+          "desc": "Hồi chiêu −6% mỗi cấp.",
+          "col": 2,
+          "row": 1,
+          "max_rank": 2,
+          "glyph": "cooldown",
+          "requires": [
+            "core"
+          ],
+          "effects": {
+            "skill_cd.thunder_javelin": {
+              "mul": -0.06
+            }
+          }
+        },
+        {
+          "id": "status_bleed",
+          "name": "Giáo xuyên",
+          "desc": "Đòn gây chảy máu.",
+          "col": 0,
+          "row": 2,
+          "max_rank": 1,
+          "glyph": "bleed",
+          "requires": [
+            "area"
+          ],
+          "on_hit": [
+            {
+              "status": "bleed",
+              "dps_mul": 0.15,
+              "time": 2.0
+            }
+          ]
+        },
+        {
+          "id": "heavy",
+          "name": "Giáo nặng",
+          "desc": "Sát thương +12% mỗi cấp.",
+          "col": 1,
+          "row": 2,
+          "max_rank": 2,
+          "glyph": "damage",
+          "requires": [
+            "core"
+          ],
+          "effects": {
+            "skill_damage.thunder_javelin": {
+              "mul": 0.12
+            }
+          }
+        },
+        {
+          "id": "count",
+          "name": "Thêm giáo",
+          "desc": "Số lượng +1.",
+          "col": 2,
+          "row": 2,
+          "max_rank": 1,
+          "glyph": "count",
+          "requires": [
+            "quick"
+          ],
+          "effects": {
+            "skill_count.thunder_javelin": {
+              "add": 1
+            }
+          }
+        },
+        {
+          "id": "key_burn",
+          "name": "Giáo lửa",
+          "desc": "Đòn gây bỏng, sát thương +15%.",
+          "col": 0,
+          "row": 3,
+          "max_rank": 1,
+          "glyph": "burn",
+          "keystone": true,
+          "requires": [
+            "status_bleed"
+          ],
+          "requires_points": 8,
+          "excludes": [
+            "key_freeze"
+          ],
+          "effects": {
+            "skill_damage.thunder_javelin": {
+              "mul": 0.15
+            }
+          },
+          "on_hit": [
+            {
+              "status": "burn",
+              "dps_mul": 0.3,
+              "time": 2.0
+            }
+          ]
+        },
+        {
+          "id": "key_freeze",
+          "name": "Giáo băng",
+          "desc": "Đòn gây đóng băng, hồi chiêu −10%.",
+          "col": 2,
+          "row": 3,
+          "max_rank": 1,
+          "glyph": "freeze",
+          "keystone": true,
+          "requires": [
+            "count"
+          ],
+          "requires_points": 8,
+          "excludes": [
+            "key_burn"
+          ],
+          "effects": {
+            "skill_cd.thunder_javelin": {
+              "mul": -0.1
+            }
+          },
+          "on_hit": [
+            {
+              "status": "freeze",
+              "time": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    "meteor": {
+      "max_points": 12,
+      "nodes": [
+        {
+          "id": "core",
+          "name": "Thiên thạch",
+          "desc": "Sát thương +10% mỗi cấp.",
+          "col": 1,
+          "row": 0,
+          "max_rank": 3,
+          "glyph": "damage",
+          "effects": {
+            "skill_damage.meteor": {
+              "mul": 0.1
+            }
+          }
+        },
+        {
+          "id": "area",
+          "name": "Hố rộng",
+          "desc": "Vùng +12% mỗi cấp.",
+          "col": 0,
+          "row": 1,
+          "max_rank": 2,
+          "glyph": "area",
+          "requires": [
+            "core"
+          ],
+          "effects": {
+            "skill_area.meteor": {
+              "mul": 0.12
+            }
+          }
+        },
+        {
+          "id": "quick",
+          "name": "Gọi nhanh",
+          "desc": "Hồi chiêu −6% mỗi cấp.",
+          "col": 2,
+          "row": 1,
+          "max_rank": 2,
+          "glyph": "cooldown",
+          "requires": [
+            "core"
+          ],
+          "effects": {
+            "skill_cd.meteor": {
+              "mul": -0.06
+            }
+          }
+        },
+        {
+          "id": "status_stun",
+          "name": "Chấn động",
+          "desc": "Đòn gây choáng.",
+          "col": 0,
+          "row": 2,
+          "max_rank": 1,
+          "glyph": "stun",
+          "requires": [
+            "area"
+          ],
+          "on_hit": [
+            {
+              "status": "stun",
+              "time": 0.6
+            }
+          ]
+        },
+        {
+          "id": "heavy",
+          "name": "Đá nặng",
+          "desc": "Sát thương +12% mỗi cấp.",
+          "col": 1,
+          "row": 2,
+          "max_rank": 2,
+          "glyph": "damage",
+          "requires": [
+            "core"
+          ],
+          "effects": {
+            "skill_damage.meteor": {
+              "mul": 0.12
+            }
+          }
+        },
+        {
+          "id": "count",
+          "name": "Thêm thiên thạch",
+          "desc": "Số lượng +1.",
+          "col": 2,
+          "row": 2,
+          "max_rank": 1,
+          "glyph": "count",
+          "requires": [
+            "quick"
+          ],
+          "effects": {
+            "skill_count.meteor": {
+              "add": 1
+            }
+          }
+        },
+        {
+          "id": "key_burn",
+          "name": "Lửa trời",
+          "desc": "Đòn gây bỏng, sát thương +15%.",
+          "col": 0,
+          "row": 3,
+          "max_rank": 1,
+          "glyph": "burn",
+          "keystone": true,
+          "requires": [
+            "status_stun"
+          ],
+          "requires_points": 8,
+          "excludes": [
+            "key_freeze"
+          ],
+          "effects": {
+            "skill_damage.meteor": {
+              "mul": 0.15
+            }
+          },
+          "on_hit": [
+            {
+              "status": "burn",
+              "dps_mul": 0.3,
+              "time": 2.0
+            }
+          ]
+        },
+        {
+          "id": "key_freeze",
+          "name": "Sao băng",
+          "desc": "Đòn gây đóng băng, vùng +15%.",
+          "col": 2,
+          "row": 3,
+          "max_rank": 1,
+          "glyph": "freeze",
+          "keystone": true,
+          "requires": [
+            "count"
+          ],
+          "requires_points": 8,
+          "excludes": [
+            "key_burn"
+          ],
+          "effects": {
+            "skill_area.meteor": {
+              "mul": 0.15
+            }
+          },
+          "on_hit": [
+            {
+              "status": "freeze",
+              "time": 1.0
+            }
+          ]
+        }
+      ]
     }
   },
   "deck": {
