@@ -42,7 +42,7 @@
     "damage": 18.0,
     "speed": 30.0,
     "xp": 200.0,
-    "scale": 3.4,
+    "scale": 3.0,
     "jump_every": 5.0,
     "windup": 0.9,
     "jump_time": 0.6,

@@ -32,6 +32,9 @@ func test_monsters_meet_creature_v1() -> void:
 		for a: Dictionary in meta.get("animations", []):
 			frames[String(a.get("name", ""))] = int(a.get("frames", 0))
 		var need: Dictionary = BOSS_MIN if bool(m.get("boss", false)) else MIN
+		if bool(m.get("boss", false)):   # user 2026-11-19: a boss has at least one side of 48 px
+			var fs: Array = meta.get("frame_size", [0, 0])
+			_check(maxi(int(fs[0]), int(fs[1])) >= 48, "%s: boss frame %s needs one side >= 48 px" % [name, fs])
 		for anim: String in need:
 			_check(int(frames.get(anim, 0)) >= int(need[anim]),
 				"%s: %s has %d frames, creature-v1 needs >= %d" % [name, anim, int(frames.get(anim, 0)), need[anim]])
