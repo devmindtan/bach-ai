@@ -13,6 +13,9 @@ extends Node2D
 const LOBBY_SCENE := "res://src/lobby/lobby.tscn"
 const RNAME := {"common": "Thường", "rare": "Hiếm", "epic": "Sử thi", "legendary": "Huyền thoại"}
 
+var _reveal := false   # the next build flips the result cards in (a pull just happened)
+var _flips: Array = []
+var _reveal_shot := "--reveal-shot" in OS.get_cmdline_user_args()   # shots: reveal even in the fixed preview
 var _slot: Slot
 var _g: Gacha
 var _bid := "weapon"
@@ -44,6 +47,7 @@ func _ready() -> void:
 		_g.pull(_slot, _bid, 10, _rng, 1763463600.0)   # a second one, so Lịch sử has two times
 	if OS.get_cmdline_user_args().has("--gacha-tab=history"):
 		_tab = "history"
+	_reveal = _reveal_shot and not _last.is_empty()   # --reveal-shot: flip the demo pull in
 	_build()
 
 
@@ -83,6 +87,7 @@ func _pull(n: int) -> void:
 		Sfx.play("gacha_legend" if best == "legendary" else "gacha_epic")
 	if not Prefs.current().is_fixed():
 		Prefs.current().slot_store().save(_slot)
+	_reveal = not Prefs.current().is_fixed() or _reveal_shot
 	_rebuild()
 
 
@@ -146,7 +151,15 @@ func _build() -> void:
 		grid.add_theme_constant_override("v_separation", 8)
 		mv.add_child(grid)
 		for r: Dictionary in _last:
-			grid.add_child(_result_card(r))
+			var card := _result_card(r)
+			var holder := Control.new()   # a plain parent: a flip's back must cover the card, not sit inside its margins
+			holder.custom_minimum_size = card.custom_minimum_size
+			card.set_anchors_preset(Control.PRESET_FULL_RECT)
+			holder.add_child(card)
+			grid.add_child(holder)
+		if _reveal:   # the pull just made flips in; rebuilding the same result later does not
+			_reveal = false
+			_reveal_cards.call_deferred(grid, _last)
 	# right: rates, pity rule, price, buttons
 	var right := UiKit.panel(Color(0.09, 0.08, 0.13, 0.94), 16)
 	right.position = Vector2(916, 112)
@@ -206,6 +219,30 @@ func _banner_button(b: Dictionary) -> Button:
 		_bid = id
 		_rebuild())
 	return btn
+
+
+## Pull reveal (6D.2, after Genshin / Star Rail colour-coded wishes): the cards flip in one by one;
+## a back's border tells the rarity before the face (rare blue, epic purple, legendary gold), an epic
+## waits a beat and a legendary longer, and both pop as they turn. Any press shows everything.
+func _reveal_cards(grid: Control, got: Array) -> void:
+	var borders := []
+	var holds := []
+	var pops := []
+	for r: Dictionary in got:
+		var rar := String(r["rarity"])
+		borders.append(UiKit.RARITY.get(rar, UiKit.GOLD) if rar != "common" else Color("4a4458"))
+		holds.append({"legendary": 0.45, "epic": 0.2}.get(rar, 0.0))
+		pops.append(rar == "legendary" or rar == "epic")
+	CardFlip.finish(_flips)
+	_flips = CardFlip.flip_in(grid.get_children(), borders, holds, pops)
+
+
+func _input(event: InputEvent) -> void:
+	if _flips.is_empty():
+		return
+	if (event is InputEventKey or event is InputEventMouseButton or event is InputEventJoypadButton) and event.is_pressed():
+		if CardFlip.finish(_flips):
+			get_viewport().set_input_as_handled()   # this press only skips the reveal
 
 
 func _result_card(r: Dictionary) -> PanelContainer:

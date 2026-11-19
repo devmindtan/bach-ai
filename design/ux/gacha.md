@@ -26,3 +26,13 @@ Luật: `design/gacha.md` (số liệu trong `assets/data/gacha.json`). Mở t�
 - Mỗi dòng: thời điểm (ngày/tháng giờ:phút, giờ máy), tên món theo màu độ hiếm, độ hiếm, "Mới" hoặc "+n vàng" (trùng).
 - Giữ `history_keep` lượt mỗi banner (`gacha.json`, 100); lưu trong slot (`gacha_log`). Bảng cuộn được, căn từ trên.
 - Quay xong tự về tab Kết quả. Ảnh: `production/ui/01k2-gacha-history.png`.
+
+## Hiệu ứng mở kết quả (6D.2, 2026-11-19)
+
+Tham khảo: màu báo độ hiếm khi quay của Genshin / Honkai Star Rail / Wuthering Waves ([Hostedgg: gacha reveal colour culture](https://hostedgg.com/blog/gacha-pull-reveal-color-culture),
+[Twinfinite: 4★ vs 5★ trong Star Rail](https://twinfinite.net/guides/difference-between-4-star-5-star-pulls-in-honkai-star-rail/),
+[Samurai Gamers: WuWa rarity indicator](https://samurai-gamers.com/wuthering-waves/wuwa-wish-rarity-indicator-guide/)): màu lạnh = thường, tím
+= hiếm cao, vàng = cao nhất; bỏ qua hiệu ứng không đổi kết quả. **Quyết định:** quay xong, các thẻ lật từ mặt sau lần
+lượt (`CardFlip`, chung với thẻ lên cấp); **viền mặt sau báo độ hiếm** trước khi lật (thường xám, hiếm xanh, sử thi tím,
+huyền thoại vàng); sử thi chờ thêm 0,2 s, huyền thoại 0,45 s, cả hai **nảy** khi lộ mặt. Bấm bất kỳ: hiện hết ngay. Đổi tab
+hay dựng lại màn không lật lại. Bản xem trước cố định không lật; cờ chụp `--gacha-demo --reveal-shot`.
