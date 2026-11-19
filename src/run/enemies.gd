@@ -101,6 +101,7 @@ var kills_by := {}
 var spawn_ring := Vector2(760, 860)
 var despawn_distance := 1300.0
 var arena_half := 1400.0
+var obstacles: Obstacles = null   # the stage's rocks / trees: monsters slide round them (design/obstacles.md)
 var player_hit_radius := 14.0
 # monster bolts (behaviour "shoot", design 6A): slow, straight, dodgeable
 var bolt_pos := PackedVector2Array()
@@ -368,6 +369,8 @@ func step(delta: float, player_pos: Vector2, player_center: Vector2) -> float:
 		knock[n] = knock[n] * maxf(0.0, 1.0 - KNOCKBACK_DECAY * delta)
 		pos[n] += (vel + knock[n]) * delta
 		pos[n] = pos[n].clamp(Vector2(-arena_half, -arena_half), Vector2(arena_half, arena_half))
+		if obstacles != null:
+			pos[n] = obstacles.push_out(pos[n], r)
 		if not stopped and (center_of(n) - player_center).length() < r + player_hit_radius:
 			contact = maxf(contact, k_damage[k])
 	contact = maxf(contact, _step_waves(delta, player_center))

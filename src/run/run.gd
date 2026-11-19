@@ -26,6 +26,7 @@ extends Node2D
 ##   --bench=N       keep N monsters alive around a god-mode autopilot, print
 ##                   frame timings after 600 frames, then quit
 
+const PLAYER_BODY := 8.0   # the hero's foot radius against rocks and trees
 const DATA := "res://assets/data/"
 const SPRITES := "res://assets/sprites/custom/"
 const STEP := 1.0 / 60.0
@@ -152,6 +153,7 @@ var chests_opened := 0   # this run, for Mảnh thẻ
 var ring := ChallengeRing.new()   # Vòng thử thách (design/events.md)
 var _ring_cfg: Dictionary = {}
 var _ring_times: Array = []      # clock times this run's region opens a ring
+var obstacles: Obstacles = null   # the stage's rocks / trees / poison pools (design/obstacles.md)
 var meteors := MeteorShower.new()   # Mưa thiên thạch (design/events.md)
 var _meteor_cfg: Dictionary = {}
 var _meteor_times: Array = []    # clock times this run's region starts a shower
@@ -275,6 +277,8 @@ func _ready() -> void:
 			names.append(String(_buff_defs[b]["aura_back"]))
 		if _buff_defs[b].has("break_sprite"):   # one-shot when the ward spends its hit
 			names.append(String(_buff_defs[b]["break_sprite"]))
+	for kind: Dictionary in stages.region(stage_number).get("obstacles", {}).get("solid", []):
+		names.append(String(kind.get("sprite", "")))
 	for m: String in monsters:
 		if not m.begins_with("_"):
 			names.append(String(monsters[m].get("sprite", m)))
@@ -302,6 +306,9 @@ func _ready() -> void:
 		hero_sheet.compose_layers()
 
 	enemies = Enemies.new(monsters, cfg, sheets, rng.seed)
+	if challenge_id == "" and bench == 0:   # the region's props, seeded by the stage (same map every time)
+		obstacles = Obstacles.new(stages.region(stage_number).get("obstacles", {}), _arena_half, stage_number * 7919 + 13)
+		enemies.obstacles = obstacles
 	enemies.scale_kinds(stages.hp_mul(stage_number) * float(stage.get("hp_mul", 1.0)), stages.damage_mul(stage_number))
 	for k in enemies.k_hp.size():
 		enemies.k_hp[k] *= monster_hp_mul
@@ -539,6 +546,7 @@ func _tick(dt: float) -> void:
 	_spawn(clock - dt, clock)
 	_step_ring(dt)
 	_step_meteors(dt)
+	_step_pools_hazard(dt)
 	var contact := enemies.step(dt, player_pos, player_pos + _hit_center)
 	if contact > 0.0 and invuln <= 0.0 and bench == 0 and not god and not buffs.invulnerable() and _dash_left <= 0.0:
 		if not _spend_ward():
@@ -668,6 +676,8 @@ func _move_player(dt: float) -> void:
 			_update_body()
 		player_pos += dir.limit_length(1.0) * float(stats["move_speed"]) * dt
 		player_pos = player_pos.clamp(Vector2(-_arena_half, -_arena_half), Vector2(_arena_half, _arena_half))
+		if obstacles != null:
+			player_pos = obstacles.push_out(player_pos, PLAYER_BODY)
 	_action_left = maxf(0.0, _action_left - dt)
 	if _action_left <= 0.0:
 		_set_anim("run" if _moving else "idle")
@@ -705,6 +715,8 @@ func _dash_step(dt: float) -> void:
 	var step := minf(dt, _dash_left)
 	player_pos += _dash_dir * dist / total * step
 	player_pos = player_pos.clamp(Vector2(-_arena_half, -_arena_half), Vector2(_arena_half, _arena_half))
+	if obstacles != null:
+		player_pos = obstacles.push_out(player_pos, PLAYER_BODY)
 	_dash_left -= step
 	# two cuts along the path: covering the half just travelled each time
 	var r := dist * 0.25 + float(sp.get("hit_radius", 26.0))
@@ -2144,6 +2156,8 @@ func _set_anim(anim: String) -> void:
 func _draw() -> void:
 	var view := Rect2(_camera.position - get_viewport_rect().size * 0.5, get_viewport_rect().size).grow(64.0)
 	RunGround.draw(self, view, _arena_half, stage_ground)
+	_draw_hazard_pools()
+	_draw_obstacles(view, false)
 	var gem: SpriteSheet = sheets.get(_gem_sprite)
 	var coin: SpriteSheet = sheets.get(_coin_sprite)
 	for i in pickups.count:
@@ -2225,6 +2239,7 @@ func _draw() -> void:
 		_draw_dash_trail(hero)
 		hero.draw(self, _anim, _anim_t, player_pos, _sprite_scale, face_left, tint)
 		_draw_auras("front")
+	_draw_obstacles(view, true)   # a tree the hero walks behind: drawn again, see-through, over the hero
 	_draw_statuses(view)
 	_draw_fx(false)
 	if Prefs.current().monster_hp:
@@ -2433,6 +2448,56 @@ func _step_ring(dt: float) -> void:
 		"fail":
 			wave_call = "Thử thách thất bại"
 			wave_call_t = 2.0
+
+
+## Vũng độc (design/obstacles.md): standing in a poison pool loses pool_dps hp a second (no armor,
+## no hurt flinch, so walking through is a choice, not a stun).
+func _step_pools_hazard(dt: float) -> void:
+	if obstacles == null or obstacles.pools.is_empty() or god or buffs.invulnerable():
+		return
+	if obstacles.in_pool(player_pos):
+		var d := obstacles.pool_dps * dt
+		hp -= d
+		damage_taken += d
+
+
+## Solid props: the foot's shadow first, then the sprite on its anchor. [param front]: only those whose
+## foot is below the hero and that cover it, drawn see-through so the hero stays visible behind them.
+func _draw_obstacles(view: Rect2, front: bool) -> void:
+	if obstacles == null:
+		return
+	for s: Dictionary in obstacles.solids:
+		var p: Vector2 = s["p"]
+		if not view.has_point(p):
+			continue
+		var sh: SpriteSheet = sheets.get(String(s["sprite"]))
+		if sh == null:
+			continue
+		if front:
+			var size := sh.frame_size * _sprite_scale
+			var behind := player_pos.y < p.y and player_pos.y > p.y - size.y and absf(player_pos.x - p.x) < size.x * 0.45
+			if not behind:
+				continue
+			sh.draw(self, "idle", 0.0, p, _sprite_scale, false, Color(1, 1, 1, 0.5))
+		else:
+			sh.draw(self, "idle", 0.0, p, _sprite_scale)
+
+
+func _draw_hazard_pools() -> void:
+	if obstacles == null:
+		return
+	for pl: Dictionary in obstacles.pools:
+		var p: Vector2 = pl["p"]
+		var r := float(pl["r"])
+		draw_set_transform(p, 0.0, Vector2(1.0, 0.55))
+		draw_circle(Vector2.ZERO, r, Color(0.35, 0.55, 0.1, 0.55))
+		draw_circle(Vector2(-r * 0.2, -r * 0.15), r * 0.65, Color(0.55, 0.8, 0.15, 0.45))
+		draw_arc(Vector2.ZERO, r, 0.0, TAU, 40, Color(0.2, 0.3, 0.05, 0.9), 2.0)
+		draw_set_transform(Vector2.ZERO)
+		for k in 3:   # bubbles rising and popping
+			var ph := fmod(clock * 1.3 + k * 0.37 + p.x * 0.01, 1.0)
+			var q := p + Vector2(cos(k * 2.3 + p.y) * r * 0.5, sin(k * 2.3 + p.x) * r * 0.25)
+			draw_circle(q, 1.5 + 2.5 * ph, Color(0.75, 1.0, 0.35, 0.8 * (1.0 - ph)))
 
 
 ## Mưa thiên thạch (design/events.md): at the region's event time meteors are marked near the player

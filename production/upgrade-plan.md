@@ -36,7 +36,7 @@ sóng xung kích mỗi cú dậm). Nhịp sóng có báo trước (`announce`). 
    Vẽ quái mới trong Sprite Lab (pixel-sprite), mỗi loài đủ di chuyển / đòn / trúng đòn / chết.
 
 ### 6B · Bản đồ
-**Tiến độ (2026-11-19):** sự kiện Yêu Tinh Vàng, Vòng thử thách, Mưa thiên thạch, Rương vàng (`design/events.md`). Còn: vật cản, nền theo vùng.
+**Tiến độ (2026-11-19):** sự kiện Yêu Tinh Vàng, Vòng thử thách, Mưa thiên thạch, Rương vàng (`design/events.md`), vật cản theo vùng (`design/obstacles.md`). Còn: nền theo vùng.
 1. Vật cản và trang trí theo vùng (đá, cây, mộ, vũng độc) để có đường né và góc kẹt.
 2. Sự kiện: quái vàng bỏ chạy (rơi nhiều vàng), vòng thử thách (đứng trong vòng N giây nhận rương), mưa
    thiên thạch có báo, rương vàng hiếm.
