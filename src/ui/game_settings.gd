@@ -33,6 +33,7 @@ var sfx_volume := _volume_default("sfx", 80)       # 0..100 %, SFX bus
 var hero := "knight"                # the class chosen in the lobby (classes.json id)
 var slot_id := ""                   # the selected character slot ("" = legacy profile)
 var stage_target := 1               # the stage the lobby will start
+var card_target := ""               # the card the card-tree screen opens (design/ux/card-tree.md)
 var challenge_target := ""          # a challenge chosen on the stage screen (design/challenge.md); "" = a stage
 var _fixed := false
 var _profile: Profile                 # screenshots / tests: defaults, never touch the window
@@ -98,6 +99,12 @@ func _make_preview_slot() -> void:
 	s.essence = 30
 	tree.buy(s, String(tree.branches(hero)[0]["nodes"][0]["id"]))
 	s.pills = 1
+	# Mảnh thẻ and a started Chém kiếm tree for shots of the deck / card-tree screens
+	s.shards = 40
+	if hero == "knight":
+		var ct := CardTree.load_default()
+		for nid in ["keen", "keen", "keen", "wide", "quick"]:
+			ct.buy(s, "blade_arc", nid)
 	s.profile.equip(hero, "iron_cap" if hero == "knight" else "cloth_hat")
 	# a fuller bag for shots of the equipment screen: every item this class can wear
 	for id: String in slot_store().defs:

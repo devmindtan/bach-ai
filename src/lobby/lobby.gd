@@ -12,6 +12,7 @@ const TITLE_SCENE := "res://src/front/title.tscn"
 const EQUIPMENT_SCENE := "res://src/front/equipment.tscn"
 const STAGE_SCENE := "res://src/front/stage_select.tscn"
 const TREE_SCENE := "res://src/front/skill_tree.tscn"
+const DECK_SCENE := "res://src/front/deck.tscn"
 const HERO_SCALE := 6.0
 
 const GOLD := Color("c9a65a")
@@ -160,6 +161,7 @@ func _build_ui() -> void:
 	var top := HBoxContainer.new()
 	top.add_theme_constant_override("separation", 10)
 	var top_buttons := [_button("Nhân vật", func() -> void: get_tree().change_scene_to_file(CHARACTERS_SCENE)),
+		_button("Bộ thẻ", func() -> void: get_tree().change_scene_to_file(DECK_SCENE)),
 		_button("Gacha", func() -> void: get_tree().change_scene_to_file("res://src/front/gacha.tscn")),
 		_button(_missions_label(), func() -> void: get_tree().change_scene_to_file("res://src/front/missions.tscn")),
 		_button("Cài đặt", func() -> void: _show_settings(root, menu)),

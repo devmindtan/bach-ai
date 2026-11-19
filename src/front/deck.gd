@@ -1,0 +1,250 @@
+extends Node2D
+## The deck screen (design/ux/deck.md, rules in design/skill-tree-v2.md §2): three deck tabs; the
+## class's cards in a grid (skills, then stats), cards in the deck framed gold with a tick, the starting
+## skill locked; the viewed card on the right with add / remove and, for a skill card with a tree, its
+## points and the "Cây thẻ" button; the deck counts and "Bộ mặc định" below. Changes save at once.
+##
+## Command line (after `--`), for shots: --deck-view=<card id>.
+
+const LOBBY_SCENE := "res://src/lobby/lobby.tscn"
+const TREE_SCENE := "res://src/front/card_tree.tscn"
+const TILE := Vector2(104, 104)
+
+var _slot: Slot
+var _ups: Array = []
+var _start: Array = []
+var _cfg := {}
+var _trees: CardTree
+var _view := ""
+var _scroll := Vector2.ZERO
+var _layer: CanvasLayer
+
+
+func _ready() -> void:
+	Sfx.music("menu")
+	var prefs := Prefs.current()
+	if prefs.is_fixed():
+		prefs.ensure_preview_slot()
+	elif prefs.active_slot == null:
+		prefs.ensure_slots()
+	_slot = prefs.active_slot
+	if _slot == null:
+		get_tree().change_scene_to_file.call_deferred("res://src/front/characters.tscn")
+		return
+	var cls: Dictionary = GameData.load_json("res://assets/data/classes.json").get(_slot.cls, {})
+	_ups = GameData.load_json("res://assets/data/" + String(cls.get("upgrades", ""))).get("upgrades", [])
+	_start = cls.get("start_skills", {}).keys()
+	_trees = CardTree.load_default()
+	_cfg = _trees.data.get("deck", {"skills": 8, "stats": 6, "slots": 3})
+	_ensure_decks()
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--deck-view="):
+			_view = a.get_slice("=", 1)
+	if _view == "":
+		_view = String(_start[0]) if not _start.is_empty() else ""
+	_build()
+
+
+## The slot always has cfg.slots decks; an empty one starts as the default deck.
+func _ensure_decks() -> void:
+	while _slot.decks.size() < int(_cfg.get("slots", 3)):
+		_slot.decks.append({"name": "Bộ %d" % (_slot.decks.size() + 1), "cards": Deck.default_cards(_ups, _start, _cfg)})
+	_slot.deck_active = clampi(_slot.deck_active, 0, _slot.decks.size() - 1)
+
+
+func _cards() -> Array:
+	return _slot.decks[_slot.deck_active].get("cards", [])
+
+
+func _set_cards(cards: Array) -> void:
+	_slot.decks[_slot.deck_active]["cards"] = cards
+	_save()
+
+
+func _process(delta: float) -> void:
+	_scroll += Vector2(18.0, 6.0) * delta
+	queue_redraw()
+
+
+func _draw() -> void:
+	FrontArt.backdrop(self, _scroll, get_viewport_rect().size)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel"):
+		get_tree().change_scene_to_file(LOBBY_SCENE)
+
+
+func _save() -> void:
+	if not Prefs.current().is_fixed():
+		Prefs.current().slot_store().save(_slot)
+
+
+func _rebuild() -> void:
+	if _layer != null:
+		_layer.queue_free()
+	_build()
+
+
+func _card(id: String) -> Dictionary:
+	for u: Dictionary in _ups:
+		if String(u.get("id", "")) == id:
+			return u
+	return {}
+
+
+func _build() -> void:
+	_layer = CanvasLayer.new()
+	add_child(_layer)
+	var root := Control.new()
+	root.size = get_viewport_rect().size
+	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_layer.add_child(root)
+	var title := UiKit.label("Bộ thẻ · %s" % _slot.name, 34, UiKit.GOLD)
+	title.position = Vector2(40, 24)
+	root.add_child(title)
+	var wallet := _shard_stat("%d Mảnh thẻ" % _slot.shards, "Mảnh thẻ: thắng ải, hạ boss, mở rương, gacha trùng; mở nút cây thẻ.", 16)
+	wallet.position = Vector2(42, 72)
+	root.add_child(wallet)
+	var back := UiKit.button("Quay lại  (Esc)", func() -> void: get_tree().change_scene_to_file(LOBBY_SCENE), Vector2(180, 42), 17)
+	back.position = Vector2(root.size.x - 40 - 180, 28)
+	root.add_child(back)
+	# deck tabs
+	var tabs := HBoxContainer.new()
+	tabs.add_theme_constant_override("separation", 10)
+	tabs.position = Vector2(40, 108)
+	root.add_child(tabs)
+	for i in _slot.decks.size():
+		var on := i == _slot.deck_active
+		var t := UiKit.button(String(_slot.decks[i].get("name", "Bộ %d" % (i + 1))), func() -> void:
+			_slot.deck_active = i
+			_save()
+			_rebuild(), Vector2(120, 38), 17)
+		if on:
+			t.add_theme_stylebox_override("normal", UiKit.style(Color("3a3020"), 8, UiKit.GOLD, 3))
+		tabs.add_child(t)
+	# collection grid: skills, then stats
+	var y := 160.0
+	for kind in ["skill", "stat"]:
+		var head := UiKit.label("Chiêu" if kind == "skill" else "Chỉ số", 20, UiKit.GOLD)
+		head.position = Vector2(40, y)
+		root.add_child(head)
+		y += 30.0
+		var grid := GridContainer.new()
+		grid.columns = 7
+		grid.add_theme_constant_override("h_separation", 8)
+		grid.add_theme_constant_override("v_separation", 8)
+		grid.position = Vector2(40, y)
+		root.add_child(grid)
+		var n := 0
+		for u: Dictionary in _ups:
+			if String(u.get("kind", "")) == kind and Deck.is_deck_card(u):
+				grid.add_child(_tile(u))
+				n += 1
+		y += ceilf(n / 7.0) * (TILE.y + 8) + 12
+	_detail(root)
+
+
+func _tile(u: Dictionary) -> Button:
+	var id := String(u["id"])
+	var in_deck := _cards().has(id)
+	var on := id == _view
+	var b := Button.new()
+	b.custom_minimum_size = TILE
+	b.focus_mode = Control.FOCUS_ALL
+	var border := Color.WHITE if on else (UiKit.GOLD if in_deck else Color("4a4458"))
+	b.add_theme_stylebox_override("normal", UiKit.style(Color("3a3020") if in_deck else UiKit.PANEL_DARK, 6, border, 3 if on or in_deck else 2))
+	for st in ["hover", "focus", "pressed"]:
+		b.add_theme_stylebox_override(st, UiKit.style(UiKit.PANEL_HOVER, 6, Color.WHITE, 3))
+	var v := VBoxContainer.new()
+	v.set_anchors_preset(Control.PRESET_FULL_RECT)
+	v.alignment = BoxContainer.ALIGNMENT_BEGIN
+	v.offset_top = 8
+	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.add_child(v)
+	var ic := UiKit.icon(id, 48.0)
+	ic.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	ic.modulate = Color.WHITE if in_deck else Color(0.6, 0.6, 0.65)
+	v.add_child(ic)
+	var nm := UiKit.label(String(u.get("name", id)), 13, UiKit.TEXT if in_deck else UiKit.MUTED)
+	nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	nm.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	nm.custom_minimum_size.x = TILE.x - 8
+	nm.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	v.add_child(nm)
+	if in_deck:   # the tick, or a lock on the starting skill
+		var mark := UiKit.label("★" if _start.has(id) else "✓", 16, UiKit.GOLD)   # ★ = the locked starting skill
+		mark.position = Vector2(TILE.x - 22, 2)
+		mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		b.add_child(mark)
+	b.pressed.connect(func() -> void:
+		_view = id
+		_rebuild())
+	if on:
+		b.call_deferred("grab_focus")
+	return b
+
+
+func _detail(root: Control) -> void:
+	var x := 40 + 7 * (TILE.x + 8) + 24
+	var w := root.size.x - 40 - x
+	var panel := UiKit.panel(Color(0.09, 0.08, 0.13, 0.94), 16)
+	panel.position = Vector2(x, 160)
+	panel.custom_minimum_size = Vector2(w, 0)
+	root.add_child(panel)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 8)
+	panel.add_child(v)
+	var u := _card(_view)
+	if not u.is_empty():
+		var head := HBoxContainer.new()
+		head.add_theme_constant_override("separation", 12)
+		v.add_child(head)
+		head.add_child(UiKit.icon(_view, 48.0))
+		var hv := VBoxContainer.new()
+		head.add_child(hv)
+		hv.add_child(UiKit.label(String(u.get("name", _view)), 24, UiKit.GOLD))
+		hv.add_child(UiKit.label("Chiêu" if String(u["kind"]) == "skill" else "Thẻ chỉ số", 14, UiKit.MUTED))
+		var d := UiKit.label(String(u.get("desc", "")), 15, UiKit.TEXT)
+		d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		d.custom_minimum_size.x = w - 40
+		v.add_child(d)
+		var in_deck := _cards().has(_view)
+		var why := Deck.why_not_remove(_cards(), _view, _start) if in_deck else Deck.why_not_add(_cards(), _ups, _view, _cfg)
+		var act := UiKit.button("Bỏ khỏi bộ" if in_deck else "Thêm vào bộ", func() -> void:
+			_set_cards(Deck.remove(_cards(), _view, _start) if in_deck else _cards() + [_view])
+			_rebuild(), Vector2(w - 40, 44), 18, UiKit.PRIMARY)
+		act.disabled = why != ""
+		v.add_child(act)
+		if why != "":
+			var wl := UiKit.label(why, 14, Color("ff9a8a"))
+			wl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			v.add_child(wl)
+		if not _trees.tree(_view).is_empty():
+			v.add_child(UiKit.label("Cây thẻ: %d / %d điểm" % [_trees.points(_slot, _view), int(_trees.tree(_view).get("max_points", 0))], 16, UiKit.TEXT))
+			var card := _view
+			v.add_child(UiKit.button("Cây thẻ  ▶", func() -> void:
+				Prefs.current().card_target = card
+				get_tree().change_scene_to_file(TREE_SCENE), Vector2(w - 40, 44), 18))
+		elif String(u["kind"]) == "skill":
+			v.add_child(UiKit.label("Cây thẻ: sắp có", 14, UiKit.MUTED))
+	var sep := HSeparator.new()
+	v.add_child(sep)
+	v.add_child(UiKit.label("Chiêu %d/%d  ·  Chỉ số %d/%d" % [Deck.count(_cards(), _ups, "skill"), int(_cfg.get("skills", 8)),
+		Deck.count(_cards(), _ups, "stat"), int(_cfg.get("stats", 6))], 18, UiKit.TEXT))
+	v.add_child(UiKit.button("Bộ mặc định", func() -> void:
+		_set_cards(Deck.default_cards(_ups, _start, _cfg))
+		_rebuild(), Vector2(w - 40, 40), 16))
+
+
+## Mảnh thẻ in the wallet: the 12 px glyph drawn x2 (UiKit.stat would draw it at x1, too small).
+func _shard_stat(text: String, tip: String, font := 16) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	row.mouse_filter = Control.MOUSE_FILTER_STOP
+	Tip.attach(row, tip)
+	row.add_child(UiKit.icon("shard", 24.0))
+	var l := UiKit.label(text, font, UiKit.TEXT)
+	l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(l)
+	return row
