@@ -53,6 +53,7 @@ var shock_lines := PackedVector2Array()
 # per kind (index = kind id)
 var kind_ids: Array[String] = []
 var k_sheet: Array[SpriteSheet] = []
+var k_rage_sheet: Array = []   # SpriteSheet or null: drawn while the boss is enraged (rage_sprite)
 var k_behaviour := PackedInt32Array()
 var k_hp := PackedFloat32Array()
 var k_damage := PackedFloat32Array()
@@ -188,6 +189,7 @@ func _init(monsters: Dictionary, cfg: Dictionary, sheets: Dictionary, seed_value
 			continue
 		var m: Dictionary = monsters[id]
 		_register(id, m, sheets.get(String(m.get("sprite", id))), world_scale, {})
+		k_rage_sheet[-1] = sheets.get(String(m.get("rage_sprite", "")))
 		# every monster also has an elite kind, spawned by waves as "<id>@elite"
 		if not elite.is_empty() and not bool(m.get("boss", false)):
 			_register(id + "@elite", m, sheets.get(String(m.get("sprite", id))), world_scale, elite)
@@ -202,6 +204,7 @@ func _register(id: String, m: Dictionary, sheet: SpriteSheet, world_scale: float
 	var is_elite := not elite.is_empty()
 	kind_ids.append(id)
 	k_sheet.append(sheet)
+	k_rage_sheet.append(null)
 	k_behaviour.append(BEHAVIOURS.get(String(m.get("behaviour", "chase")), CHASE))
 	k_hp.append(float(m.get("hp", 10.0)) * float(elite.get("hp_mul", 1.0)))
 	k_damage.append(float(m.get("damage", 5.0)) * float(elite.get("damage_mul", 1.0)))
@@ -1060,6 +1063,15 @@ func hop_lift(i: int) -> float:
 	var ht := maxf(0.05, float(e.get("hop_time", e.get("jump_time", 0.5))))
 	var t := 1.0 - clampf(timer[i] / ht, 0.0, 1.0)
 	return float(e["hop_height"]) * sin(t * PI)
+
+
+## The sheet monster [param i] is drawn with: its rage sheet (rage_sprite, a red body)
+## while it is enraged (user 2026-11-19), else its own.
+func sheet_of(i: int) -> SpriteSheet:
+	var k := kind[i]
+	if k_rage_sheet[k] != null and enraged(i):
+		return k_rage_sheet[k]
+	return k_sheet[k]
 
 
 func anim_of(i: int) -> Array:

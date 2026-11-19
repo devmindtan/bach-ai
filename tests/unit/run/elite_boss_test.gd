@@ -112,3 +112,18 @@ func test_boss_spits_a_fan_of_bolts() -> void:
 	e.timer[0] = 0.01
 	e.step(0.05, Vector2(300, 0), Vector2(300, 0))
 	_check(e.bolt_pos.size() == 5, "five bolts in a fan, got %d" % e.bolt_pos.size())
+
+
+func test_enraged_boss_swaps_to_its_rage_sprite() -> void:
+	# user 2026-11-19: below a fixed hp the king's body turns red (a red sheet, a tint cannot make green red)
+	var m := {"b": {"sprite": "b", "behaviour": "boss_slime", "boss": true, "hp": 100.0, "damage": 5.0, "speed": 10.0,
+		"xp": 1.0, "rage_at": 0.5, "rage_sprite": "b-rage"}}
+	var meta := {"frames": 1, "frame_size": [48, 48], "fps": 8.0, "anchor": [24.0, 47.0],
+		"body": {"anim": "default", "center": [24.0, 30.0], "radius": 14.0}}
+	var normal := SpriteSheet.from_meta("b", meta)
+	var rage := SpriteSheet.from_meta("b-rage", meta)
+	var e := Enemies.new(m, {"max_enemies": 4, "separation": {"push": 0.0}}, {"b": normal, "b-rage": rage}, 1)
+	e.spawn("b", Vector2(300, 0))
+	_check(e.sheet_of(0) == normal, "calm: the normal sheet")
+	e.hp[0] = 40.0
+	_check(e.sheet_of(0) == rage, "below rage_at: the rage sheet")

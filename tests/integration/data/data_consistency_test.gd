@@ -361,3 +361,14 @@ func test_jumping_monsters_have_crouch_and_jump_animations() -> void:
 			anims.append(String(a.get("name", "")))
 		_check(anims.has("crouch") and anims.has("jump"), "%s (%s) jumps: needs crouch + jump animations, has %s" % [id, name, anims])
 		_check(m.has("hop_height"), "%s jumps: needs hop_height so the sprite rises" % id)
+
+
+## User 2026-11-19: Vua Thạch Nhầy only jumps and stomps (no spit), and below rage_at its body turns red
+## and it attacks faster.
+func test_king_slime_stomps_only_and_rages_red() -> void:
+	var k: Dictionary = GameData.load_json("res://assets/data/monsters.json")["king_slime"]
+	_check(not k.has("volley"), "king_slime must not spit (no volley)")
+	_check(float(k.get("rage_at", 0.0)) > 0.0, "king_slime has a fixed rage_at hp share")
+	_check(float(k.get("rage_jump_every", 99.0)) < float(k.get("jump_every", 0.0)), "rage stomps come faster")
+	var rs := String(k.get("rage_sprite", ""))
+	_check(rs != "" and FileAccess.file_exists("res://assets/sprites/custom/%s/%s.json" % [rs, rs]), "king_slime has its red rage sprite")

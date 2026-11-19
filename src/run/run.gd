@@ -258,6 +258,8 @@ func _ready() -> void:
 			names.append(String(monsters[m].get("sprite", m)))
 			if monsters[m].has("bolt_sprite"):   # a shooter's bolt
 				names.append(String(monsters[m]["bolt_sprite"]))
+			if monsters[m].has("rage_sprite"):   # a boss's red body while enraged
+				names.append(String(monsters[m]["rage_sprite"]))
 			if monsters[m].has("root_sprite"):   # Mộc Yêu's roots
 				names.append(String(monsters[m]["root_sprite"]))
 	for sk: String in pool.get("skills", {}):
@@ -2083,8 +2085,8 @@ func _draw() -> void:
 			var tint := Color(1.0, 0.55, 0.55) if enemies.flash[i] > 0.0 else _status_tint(i)
 			if enemies.state[i] == Enemies.WINDUP:
 				tint = Color(1.0, 0.8, 0.5)
-			if enemies.k_boss[k] == 1 and enemies.enraged(i) and enemies.flash[i] <= 0.0:
-				tint = Color(1.0, 0.62, 0.55)   # enraged: flushed red
+			if enemies.k_boss[k] == 1 and enemies.enraged(i) and enemies.flash[i] <= 0.0 and enemies.k_rage_sheet[k] == null:
+				tint = Color(1.0, 0.62, 0.55)   # enraged: flushed red (bosses without a red rage sheet)
 			if enemies.k_elite[k] == 1:   # elite: a gold halo under it
 				var hr := enemies.k_radius[k]
 				var hc := enemies.center_of(i)
@@ -2102,7 +2104,7 @@ func _draw() -> void:
 				draw_set_transform(enemies.pos[i], 0.0, Vector2(1.0, 0.4))
 				draw_circle(Vector2.ZERO, sr * (1.0 - 0.3 * lift / maxf(1.0, lift + sr)), Color(0, 0, 0, 0.3))
 				draw_set_transform(Vector2.ZERO)
-			enemies.k_sheet[k].draw(self, a[0], a[1], enemies.pos[i] - Vector2(0.0, lift), enemies.k_scale[k],
+			enemies.sheet_of(i).draw(self, a[0], a[1], enemies.pos[i] - Vector2(0.0, lift), enemies.k_scale[k],
 				enemies.flip[i] == 1, tint)
 	_draw_bolts()
 	var hero: SpriteSheet = sheets.get(String(class_data.get("sprite", "swordsman")))
