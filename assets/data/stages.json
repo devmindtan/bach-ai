@@ -1,5 +1,5 @@
 {
-  "_doc": "Stages 1..count (design/progression.md). Monster hp x = 1 + hp_lin*(n-1) + hp_quad*(n-1)^2, damage x = 1 + dmg_lin*(n-1), spawn rate x = min(rate_max, 1 + rate_lin*(n-1)) (bursts too). Every boss_every-th stage is a boss stage and a milestone (milestones.json). A region's stages play its waves file (boss stages: boss_waves) unless waves/stage_NNN.json exists. ground = the floor colours. rewards: gold on a win = gold_base + gold_per_stage*n; gems first win gems_first (boss stage gems_boss_first), later wins gems_repeat. music = the region's run song (audio.json); ground.props = decorations RunGround scatters (design/regions.md). events: in-run events of the region (design/events.md): {kind: ring | meteor, t: seconds}. obstacles: the region's props (design/obstacles.md): solid [{sprite, radius (foot, blocks), count}], pools {count, radius, dps} (poison, hurts but does not block), clear_start px free round the start, spacing px between props.",
+  "_doc": "Stages 1..count (design/progression.md). Monster hp x = 1 + hp_lin*(n-1) + hp_quad*(n-1)^2, damage x = 1 + dmg_lin*(n-1), spawn rate x = min(rate_max, 1 + rate_lin*(n-1)) (bursts too). Every boss_every-th stage is a boss stage and a milestone (milestones.json). A region's stages play its waves file (boss stages: boss_waves) unless waves/stage_NNN.json exists. ground = the floor colours. rewards: gold on a win = gold_base + gold_per_stage*n; gems first win gems_first (boss stage gems_boss_first), later wins gems_repeat. music = the region's run song (audio.json); ground.props = decorations RunGround scatters (design/regions.md). events: in-run events of the region (design/events.md): {kind: ring | meteor, t: seconds}. obstacles: the region's props (design/obstacles.md): solid [{sprite, radius (foot, blocks), count}], pools {count, radius, dps} (poison, hurts but does not block), clear_start px free round the start, spacing px between props. ground.patch = terrain patches in clusters (RunGround): kind dirt | water | clover, color, share of tiles, seed (each region its own layout).",
   "count": 30,
   "boss_every": 10,
   "scale": {
@@ -37,7 +37,13 @@
           "tuft",
           "flower",
           "pebble"
-        ]
+        ],
+        "patch": {
+          "kind": "clover",
+          "color": "38582f",
+          "share": 0.18,
+          "seed": 1
+        }
       },
       "music": "run",
       "events": [
@@ -83,7 +89,13 @@
           "mushroom",
           "stump",
           "shade"
-        ]
+        ],
+        "patch": {
+          "kind": "dirt",
+          "color": "3a3122",
+          "share": 0.28,
+          "seed": 2
+        }
       },
       "music": "run_forest",
       "events": [
@@ -128,7 +140,13 @@
           "puddle",
           "reed",
           "bubble"
-        ]
+        ],
+        "patch": {
+          "kind": "water",
+          "color": "2a3d38",
+          "share": 0.32,
+          "seed": 3
+        }
       },
       "music": "run_marsh",
       "events": [
