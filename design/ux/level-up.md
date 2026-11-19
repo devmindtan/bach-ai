@@ -31,3 +31,14 @@ Tham khảo: Vampire Survivors / Hades mở lựa chọn bằng hiệu ứng ng�
 sang mặt trước, lệch nhau 0,08 s, mỗi nửa vòng 0,09 s (cả bộ ~0,45 s). Bấm chuột / phím / nút tay cầm trong lúc lật thì
 lật xong ngay (lần bấm đó không chọn thẻ). Mở lại cùng bộ (Tab, Ẩn bảng) không lật lại. Bản xem trước cố định (ảnh
 chụp giao diện) không lật; cờ chụp `--level-now --flip-shot` để chụp hiệu ứng.
+
+## Đổi / Loại / Bỏ qua (6C.3, 2026-11-19)
+
+Tham khảo: Vampire Survivors, PowerUp Reroll / Banish / Skip ([Gamepur: PowerUps](https://gamepur.com/?p=354223), [Fandom: PowerUp](https://vampire-survivors.fandom.com/wiki/PowerUp?oldid=5168),
+[Prima: banish](https://primagames.com/?p=67903)): số lượt giới hạn mỗi trận; Loại bỏ hẳn một món khỏi lựa chọn đến hết trận.
+**Quyết định** (`run_config.json` level_actions): hàng nút dưới thẻ, mỗi nút ghi số lượt còn; hết lượt thì tắt.
+- **Đổi (R)** ×2: 3 thẻ mới. **Loại (X)** ×1: bấm để bật chế độ loại (thẻ viền đỏ, nút ghi "Chọn thẻ để loại…"),
+  thẻ bấm tiếp theo rời bộ thẻ đến hết trận, rồi chia bộ mới. **Bỏ qua** ×2: không lấy thẻ, +10 vàng; **không có phím**
+  (S cũng là phím đi, lỡ tay mất một cấp).
+- Chỉ có ở thẻ thường (không ở mốc cấp, không ở bước chọn chiêu của thẻ số lượng). Bộ thẻ mới thì tắt chế độ loại.
+- Cờ chụp `--level-now --banish-mode`. Test `tests/unit/run/level_actions_test.gd`.

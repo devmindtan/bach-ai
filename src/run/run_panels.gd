@@ -18,6 +18,7 @@ const MILESTONE := Color("ffd36b")
 const PIP_LOCKED := Color("1b1726")    # level not reached yet (dark, with a visible edge)
 const PIP_EDGE := Color("6b6380")
 
+var banish_mode := false   # Loại armed: the next card clicked is banished
 var _flipped: Array[String] = []   # the hand that already flipped in
 var _flip_tweens: Array = []       # [tween, card, back] while cards flip
 var _flip_shot := "--flip-shot" in OS.get_cmdline_user_args()   # shots: flip even in the fixed preview
@@ -107,6 +108,8 @@ func hide_all() -> void:
 ## description. Content reads top-down from the top of the card.
 func show_level_up(ids: Array[String], title := "Lên cấp! Chọn một") -> void:
 	_reshow = func() -> void: show_level_up(ids, title)
+	if ids != _flipped:
+		banish_mode = false   # a new hand: Loại is not armed
 	var root := _open(title, false)
 	_view_buttons(root)
 	var row := HBoxContainer.new()
@@ -116,10 +119,41 @@ func show_level_up(ids: Array[String], title := "Lên cấp! Chọn một") -> v
 	for i in ids.size():
 		row.add_child(_upgrade_card(i, ids[i]))
 	_fit_cards.call_deferred(row)
+	_action_buttons(root)
 	if ids != _flipped:   # a new hand flips in; the same hand shown again (Tab, Ẩn bảng) does not
 		_flipped = ids.duplicate()
 		if not Prefs.current().is_fixed() or _flip_shot:
 			_flip_in.call_deferred(row)
+
+
+## Đổi / Loại / Bỏ qua under the cards (6C.3): each with its key and the charges left; a spent one is
+## disabled. Loại arms banish mode: the cards turn red-framed and the next card clicked leaves the deck.
+func _action_buttons(root: VBoxContainer) -> void:
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 16)
+	root.add_child(row)
+	var gold := int(run.cfg.get("level_actions", {}).get("skip_gold", 0))
+	var acts := [
+		["Đổi (R)  ×%d" % run.rerolls, run.rerolls, func() -> void: run.reroll(), "Đổi cả 3 thẻ lấy 3 thẻ khác."],
+		[("Chọn thẻ để loại…" if banish_mode else "Loại (X)  ×%d" % run.banishes), run.banishes, func() -> void: toggle_banish(), "Bỏ hẳn một thẻ khỏi bộ thẻ đến hết trận, rồi đổi thẻ."],
+		["Bỏ qua  ×%d  · +%d vàng" % [run.skips, gold], run.skips, func() -> void: run.skip_level(), "Không lấy thẻ lần này, nhận vàng."]]
+	for a: Array in acts:
+		var btn := _button(String(a[0]), a[2])
+		btn.custom_minimum_size = Vector2(230, 40)
+		btn.focus_mode = Control.FOCUS_NONE
+		btn.disabled = int(a[1]) <= 0
+		Tip.attach(btn, String(a[0]).get_slice("  ", 0), String(a[3]))
+		row.add_child(btn)
+
+
+## Arms / disarms Loại (banish mode) and redraws the hand.
+func toggle_banish() -> void:
+	if run.banishes <= 0:
+		return
+	banish_mode = not banish_mode
+	if _reshow.is_valid():
+		_reshow.call()
 
 
 ## Level-up cards flip in from their backs one after another (6D.2, CardFlip); any press finishes them.
@@ -325,7 +359,14 @@ func _upgrade_card(i: int, id: String) -> Button:
 	v.add_child(d)
 	var idx := i
 	b.set_meta("sfx", "card_pick")   # Sfx: a card, not a plain click
-	b.pressed.connect(func() -> void: run.choose(idx))
+	b.pressed.connect(func() -> void:
+		if banish_mode:   # Loại: this card leaves the deck instead of being taken
+			banish_mode = false
+			run.banish(idx)
+		else:
+			run.choose(idx))
+	if banish_mode:
+		b.add_theme_stylebox_override("normal", _style(CARD, Color("ff6a5a")))
 	if i == 0:
 		b.call_deferred("grab_focus")
 	return b

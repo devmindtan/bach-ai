@@ -135,5 +135,12 @@
     "hitstop": 0.035,
     "shake_crit": 2.0,
     "shake_per_hurt": 0.25
+  },
+  "level_actions": {
+    "_doc": "Level-up actions per run (6C.3, after Vampire Survivors Reroll / Banish / Skip): reroll = Đổi (new hand), banish = Loại (card out of the deck for the run, then a new hand), skip = Bỏ qua (no card, skip_gold gold).",
+    "reroll": 2,
+    "banish": 1,
+    "skip": 2,
+    "skip_gold": 10
   }
 }

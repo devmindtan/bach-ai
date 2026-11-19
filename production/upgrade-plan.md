@@ -45,7 +45,7 @@ sóng xung kích mỗi cú dậm). Nhịp sóng có báo trước (`announce`). 
 ### 6C · Gameplay
 1. **Tiến hoá chiêu**: chiêu cấp tối đa + thẻ chỉ số phù hợp → bản tiến hoá (hình mới, cơ chế mới), mở trong rương.
 2. ✓ **Chí mạng** + khựng hình nhẹ / rung màn (2026-11-19, `design/gameplay-rules.md`).
-3. **Đổi / bỏ / bỏ qua thẻ** khi lên cấp (số lượt giới hạn) để build có chủ đích.
+3. ✓ **Đổi / bỏ / bỏ qua thẻ** khi lên cấp (số lượt giới hạn) để build có chủ đích (2026-11-19, `design/ux/level-up.md`).
 4. **Hồi máu nhặt được** (thịt / bình) rơi từ vật cản phá được.
 5. Mở rộng 100 ải (5 vùng × 20) sau khi 6A–6B ổn ở 3 vùng đầu; mô phỏng cân bằng headless.
 

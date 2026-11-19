@@ -107,6 +107,10 @@ var _ward_buff := ""       # buff id whose aura shows the ward is still up
 var level := 1
 var xp := 0.0
 var gold := 0
+var rerolls := 0   # Đổi charges left this run (6C.3)
+var banishes := 0  # Loại charges left
+var skips := 0     # Bỏ qua charges left
+var banished: Array[String] = []   # cards out of the deck for this run
 var clock := 0.0
 var duration := 300.0
 var pending_levels := 0
@@ -256,6 +260,7 @@ func _ready() -> void:
 	_num_val.resize(n_max)
 	_num_crit.resize(n_max)
 	_crit_cfg = cfg.get("crit", {})
+	reset_level_actions()
 	shake.enabled = Prefs.current().screen_shake
 	_num_t.resize(n_max)
 	_num_t.fill(-1.0)
@@ -328,6 +333,8 @@ func _ready() -> void:
 	if _level_now:
 		pending_levels += 1
 		_open_level_up.call_deferred()
+		if "--banish-mode" in OS.get_cmdline_user_args():   # shots: Loại armed
+			(func() -> void: _panels.toggle_banish()).call_deferred()
 	buffs = Buffs.new(_buff_defs, cfg.get("buffs", {}), rng.seed + 7)
 	for id in _forced_buffs:
 		buffs.activate(id)
@@ -504,6 +511,16 @@ func _process(delta: float) -> void:
 func _input(event: InputEvent) -> void:
 	if state != State.LEVEL_UP:
 		return
+	if event is InputEventKey and event.pressed and not event.echo and level_view == "cards":   # Đổi / Loại / Bỏ qua
+		var done := true
+		match event.keycode:
+			KEY_R: reroll()
+			KEY_X:
+				if _panels != null: _panels.toggle_banish()
+			_: done = false   # Bỏ qua has no key: S also walks, a tap must not throw a level away
+		if done:
+			get_viewport().set_input_as_handled()
+			return
 	var v := "character" if event.is_action_pressed("character") else ("hidden" if event.is_action_pressed("peek") else "")
 	if v == "":
 		return
@@ -1727,7 +1744,7 @@ func _open_level_up() -> void:
 			return
 		ms_level = 0
 	ms_level = 0
-	choices = UpgradeRoller.roll(deck_pool(), levels, level_up_card_count(), rng)
+	deal_hand()
 	if not offer.is_empty():
 		choices = offer.duplicate()
 		offer.clear()
@@ -1765,9 +1782,74 @@ func toggle_level_view(v: String) -> void:
 
 ## The cards a level-up may offer: the active deck's cards and the non-deck cards (Deck.filter).
 func deck_pool() -> Array:
-	if deck_cards.is_empty():
-		return pool.get("upgrades", [])
-	return Deck.filter(pool.get("upgrades", []), deck_cards)
+	var cards: Array = pool.get("upgrades", []) if deck_cards.is_empty() else Deck.filter(pool.get("upgrades", []), deck_cards)
+	if banished.is_empty():
+		return cards
+	return cards.filter(func(u: Dictionary) -> bool: return not banished.has(String(u.get("id", ""))))   # Loại (6C.3)
+
+
+## A new level-up hand from the deck (banished cards left out); the panel shows it.
+func deal_hand() -> void:
+	choices = UpgradeRoller.roll(deck_pool(), levels, level_up_card_count(), rng)
+	if not choices.is_empty():   # an empty deck must not leave the run stuck in LEVEL_UP
+		state = State.LEVEL_UP
+
+
+## Charges of Đổi / Loại / Bỏ qua for a new run (run_config.json level_actions, 6C.3).
+func reset_level_actions() -> void:
+	var la: Dictionary = cfg.get("level_actions", {})
+	rerolls = int(la.get("reroll", 0))
+	banishes = int(la.get("banish", 0))
+	skips = int(la.get("skip", 0))
+	banished.clear()
+
+
+func _can_act() -> bool:
+	return state == State.LEVEL_UP and ms_level == 0 and skill_pick == 0   # cards only, not milestones or a count pick
+
+
+## Đổi: a new hand for one charge; false (nothing changes) without one.
+func reroll() -> bool:
+	if rerolls <= 0 or not _can_act():
+		return false
+	rerolls -= 1
+	deal_hand()
+	_flip_reshow()
+	return true
+
+
+## Loại: card [param index] leaves the deck for the rest of the run, then a new hand.
+func banish(index: int) -> bool:
+	if banishes <= 0 or not _can_act() or index < 0 or index >= choices.size():
+		return false
+	banishes -= 1
+	banished.append(choices[index])
+	deal_hand()
+	_flip_reshow()
+	return true
+
+
+## Bỏ qua: the level is used without a card, for skip_gold gold.
+func skip_level() -> bool:
+	if skips <= 0 or not _can_act():
+		return false
+	skips -= 1
+	gold += int(cfg.get("level_actions", {}).get("skip_gold", 0))
+	Sfx.play("coin")
+	_log_level("skip -> +gold")
+	pending_levels -= 1
+	state = State.PLAYING
+	if _panels == null:
+		return true
+	_panels.hide_all()
+	if pending_levels > 0:
+		_open_level_up()
+	return true
+
+
+func _flip_reshow() -> void:
+	if _panels != null:
+		_panels.show_level_up(choices, level_up_title(_chest_open))
 
 
 ## Applies choice [param index] of the open level-up and continues the run.
