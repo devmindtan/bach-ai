@@ -782,8 +782,6 @@ func _drops() -> void:
 
 func _skills(dt: float) -> void:
 	var skills: Dictionary = pool.get("skills", {})
-	if clock < 0.05:
-		printerr("DBG keys=", skills.keys(), " levels=", levels)
 	if levels.get("blade_arc", 0) > 0:
 		var s: Dictionary = skills["blade_arc"]
 		_blade_cd -= dt
