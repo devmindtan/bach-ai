@@ -50,7 +50,7 @@ sóng xung kích mỗi cú dậm). Nhịp sóng có báo trước (`announce`). 
 5. Mở rộng 100 ải (5 vùng × 20) sau khi 6A–6B ổn ở 3 vùng đầu; mô phỏng cân bằng headless.
 
 ### 6D · Giao diện và cảm giác
-1. Trong trận: mũi tên chỉ boss / tinh anh ngoài màn, thanh máu boss lớn trên đỉnh màn, báo đợt quái.
+1. ✓ (2026-11-19, `design/ux/hud.md`) Trong trận: mũi tên chỉ boss / tinh anh ngoài màn, thanh máu boss lớn trên đỉnh màn, báo đợt quái.
 2. Hiệu ứng: lật thẻ khi lên cấp, quay gacha theo độ hiếm, số sát thương chí mạng.
 3. Màn kết quả: sát thương từng chiêu (biểu đồ), thời gian sống, quái hạ, phần thưởng.
 4. Icon chiêu / thẻ 24 px như icon trang bị (đồng bộ, không méo).

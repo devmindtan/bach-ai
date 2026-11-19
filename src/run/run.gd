@@ -2256,6 +2256,11 @@ func _draw() -> void:
 	draw_rect(Rect2(bar.position, Vector2(w * clampf(hp / float(stats["max_hp"]), 0.0, 1.0), 5.0)), Color(0.85, 0.2, 0.25))
 
 
+## The camera centre in world space (the HUD's edge arrows measure from it).
+func camera_center() -> Vector2:
+	return _camera.position if _camera != null else player_pos
+
+
 ## Elite affix names, collected while drawing the monsters and drawn last so the
 ## hero and effects never cover them.
 func _draw_affix_tags() -> void:

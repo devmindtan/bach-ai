@@ -13,8 +13,18 @@ const TEXT := Color("f2ecd8")
 const MUTED := Color("b9b2a0")
 const SHADOW := Color(0, 0, 0, 0.7)
 
+const TRAIL_HOLD := 0.5    # s the boss bar's recent-damage trail waits before catching up
+const TRAIL_SPEED := 0.8   # bar widths a second it then shrinks
+const EDGE_MARGIN := 26.0
+const TOP_BAND := 96.0     # xp bar, hp, clock, boss bar: arrows stay below
+const BOTTOM_BAND := 84.0  # skill bar: arrows stay above
+const POINT_MAX := 6       # elite arrows at most (the nearest)
+
 var run: Node
 var _gear: TextureButton
+var _trail := 1.0          # boss bar trail (fraction of max hp)
+var _trail_hold := 0.0
+var _trail_boss := -1
 
 
 func _ready() -> void:
@@ -114,6 +124,7 @@ func _draw() -> void:
 		_text(font, Vector2(x, _baseline(ROW, 22)), es, 22)
 		UiIcons.draw(self, "essence", Vector2(x - 22, ROW), 2.0)
 	_draw_skill_bar(font)
+	_draw_pointers()
 	_draw_boss_bar(font)
 
 
@@ -123,6 +134,83 @@ const SLOT_GAP := 8.0
 const SLOT_BOTTOM := 18.0   # gap under the bar
 const COOL := Color(0.02, 0.02, 0.05, 0.72)
 const ACTIVE := Color("ffd36b")
+
+
+## Where an arrow for a target in direction [param dir] from [param from] meets the edge of [param area].
+static func edge_point(from: Vector2, dir: Vector2, area: Rect2) -> Vector2:
+	var t := INF
+	if dir.x > 0.0001:
+		t = minf(t, (area.end.x - from.x) / dir.x)
+	elif dir.x < -0.0001:
+		t = minf(t, (area.position.x - from.x) / dir.x)
+	if dir.y > 0.0001:
+		t = minf(t, (area.end.y - from.y) / dir.y)
+	elif dir.y < -0.0001:
+		t = minf(t, (area.position.y - from.y) / dir.y)
+	return from if t == INF else from + dir * t
+
+
+## One step of the boss bar's recent-damage trail: [trail, hold]. A drop starts a TRAIL_HOLD wait
+## (hold > 0), then the trail shrinks at TRAIL_SPEED (hold < 0) until it meets the bar; a rising bar
+## lifts it at once.
+static func trail_step(trail: float, frac: float, hold: float, dt: float) -> Array:
+	if frac >= trail:
+		return [frac, 0.0]
+	if hold == 0.0:
+		return [trail, TRAIL_HOLD]
+	if hold > 0.0:
+		var h := hold - dt
+		return [trail, h if h > 0.0 else -1.0]
+	var t := maxf(frac, trail - TRAIL_SPEED * dt)
+	return [t, 0.0 if t <= frac else -1.0]
+
+
+## Arrows at the screen edge for the boss (red, bigger) and the nearest elites (gold) off screen;
+## nearer targets draw bolder (after Warframe players' notes and Starship Survivors' edge arrows).
+func _draw_pointers() -> void:
+	var e = run.enemies
+	if e == null:
+		return
+	var sc := maxf(0.01, Prefs.current().current_scale())
+	var vp := get_viewport_rect().size / sc
+	var area := Rect2(EDGE_MARGIN, TOP_BAND, vp.x - EDGE_MARGIN * 2.0, vp.y - TOP_BAND - BOTTOM_BAND)
+	var cam: Vector2 = run.camera_center()
+	var half := vp * 0.5
+	var elites := []
+	for i in e.count:
+		if e.state[i] == Enemies.DYING:
+			continue
+		var boss: bool = e.k_boss[e.kind[i]] == 1
+		if not boss and e.k_elite[e.kind[i]] != 1:
+			continue
+		var d: Vector2 = e.pos[i] - cam
+		if absf(d.x) < half.x and absf(d.y) < half.y:
+			continue   # on screen
+		if boss:
+			_pointer(area, d, Color("ff4a5a"), 1.0, d.length(), true)
+		else:
+			elites.append([d.length(), d])
+	elites.sort_custom(func(a: Array, b: Array) -> bool: return a[0] < b[0])
+	for k in mini(POINT_MAX, elites.size()):
+		_pointer(area, elites[k][1], Color("f2c14e"), 0.75, elites[k][0], false)
+
+
+func _pointer(area: Rect2, d: Vector2, col: Color, size: float, dist: float, boss: bool) -> void:
+	var dir := d.normalized()
+	var p := edge_point(area.get_center(), dir, area)
+	var near := clampf(1.0 - (dist - 700.0) / 900.0, 0.35, 1.0)   # just off screen: bold; far: faint
+	var s := (24.0 + 8.0 * near) * size   # long and narrow: a fat triangle reads as no direction at 1x
+	var c := Color(col, 0.55 + 0.45 * near)
+	var side := dir.orthogonal()
+	var tip := p + dir * s * 0.55
+	var back := p - dir * s * 0.45
+	var notch := p - dir * s * 0.2   # a notched tail: an arrowhead, not a wedge
+	var pts := PackedVector2Array([tip, back + side * s * 0.32, notch, back - side * s * 0.32])
+	var out := PackedVector2Array([tip + dir * 2.5, back + side * (s * 0.32 + 2.5) - dir * 1.5, notch - dir * 2.0, back - side * (s * 0.32 + 2.5) - dir * 1.5])
+	draw_colored_polygon(out, Color(0.05, 0.03, 0.05, c.a))
+	draw_colored_polygon(pts, c)
+	if boss:   # a skull behind the arrow names it
+		UiIcons.draw(self, "skull", p - dir * s * 1.1, 2.0)
 
 
 ## The boss's name and hp under the clock while one is alive.
@@ -147,13 +235,33 @@ func _draw_boss_bar(font: Font) -> void:
 	var w := 520.0
 	var bar := Rect2(roundf(size.x * 0.5 - w * 0.5), ROW + 40, w, 16)
 	var name := String(run.enemies.k_extra[k].get("name", run.enemies.kind_ids[k]))
+	var enraged: bool = run.enemies.enraged(i)
+	var back := Rect2(bar.position.x - (110.0 if enraged else 12.0), bar.position.y - 28.0, 0.0, bar.size.y + 36.0)
+	back.end.x = bar.end.x + 64.0
+	draw_rect(back, Color(0.05, 0.03, 0.05, 0.62))   # a backdrop: the name stays readable over a crowd
 	_centered(font, Vector2(size.x * 0.5, bar.position.y - 6), name, 18)
-	draw_rect(bar.grow(2), Color(0.05, 0.03, 0.05, 0.9))
+	draw_rect(bar.grow(2), Color(0.05, 0.03, 0.05))   # opaque: the crowd must not show through the empty part
 	var frac := clampf(run.enemies.hp[i] / run.enemies.k_hp[k], 0.0, 1.0)
+	if i != _trail_boss:   # a new boss: the trail starts full (bosses spawn full; a shot's --boss-hp shows the trail)
+		_trail_boss = i
+		_trail = 1.0
+		_trail_hold = 0.0
+	var ts := trail_step(_trail, frac, _trail_hold, get_process_delta_time())
+	_trail = ts[0]
+	_trail_hold = ts[1]
+	draw_rect(Rect2(bar.position, Vector2(bar.size.x * _trail, bar.size.y)), Color("f2d0c0"))   # recent damage
 	draw_rect(Rect2(bar.position, Vector2(bar.size.x * frac, bar.size.y)), Color("b0203a"))
 	draw_rect(Rect2(bar.position, Vector2(bar.size.x * frac, 4)), Color("ff6a7a"))
 	for f in [0.25, 0.5, 0.75]:   # split marks
 		draw_rect(Rect2(bar.position.x + bar.size.x * f - 1, bar.position.y, 2, bar.size.y), Color(0, 0, 0, 0.6))
+	var ex: Dictionary = run.enemies.k_extra[k]
+	if ex.has("rage_at"):   # where the boss turns enraged: a gold notch over the bar
+		var rx := bar.position.x + bar.size.x * float(ex["rage_at"])
+		draw_rect(Rect2(rx - 2, bar.position.y - 4, 4, bar.size.y + 8), Color("f2c14e"))
+	var pct := "%d%%" % ceili(frac * 100.0)
+	_text(font, Vector2(bar.end.x + 10, bar.position.y + 14), pct, 16)
+	if enraged:
+		_text(font, Vector2(bar.position.x - 96, bar.position.y + 14), "NỔI GIẬN", 16, Color("ff6a5a"))
 
 
 ## The class passive's icon after the hp bar: dim while it waits for its
