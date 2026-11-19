@@ -128,6 +128,13 @@
       "t_to": 200,
       "burst": 12,
       "announce": "Bầy sói săn mồi!"
+    },
+    {
+      "monster": "gold_goblin",
+      "t_from": 140,
+      "t_to": 140,
+      "burst": 1,
+      "announce": "Yêu tinh vàng xuất hiện! Đuổi theo!"
     }
   ]
 }

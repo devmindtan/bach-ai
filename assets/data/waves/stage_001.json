@@ -94,6 +94,13 @@
       "t_to": 300,
       "rate": 0.2,
       "rate_end": 1.2
+    },
+    {
+      "monster": "gold_goblin",
+      "t_from": 100,
+      "t_to": 100,
+      "burst": 1,
+      "announce": "Yêu tinh vàng xuất hiện! Đuổi theo!"
     }
   ]
 }

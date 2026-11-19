@@ -26,8 +26,8 @@ người dùng ưng ý và tự mở. Đợt 6 là nơi nâng cấp giao diện,
 
 ### 6A · Quái vật và nhịp trận (quan trọng nhất)
 **Tiến độ (2026-11-18):** Đồng cỏ có Nấm Phun (bắn xa) và Bọ Lửa (nổ khi chết); tinh anh có 4 tiền tố
-(`design/elite-affixes.md`); boss Đồng cỏ Vua Thạch Nhầy có phun nhầy hình quạt và pha 2 ở 50% máu (nhảy dày,
-sóng xung kích mỗi cú dậm, ửng đỏ + "nổi giận!"). Nhịp sóng có báo trước (`announce`). Rừng Âm U: Ma Trơi bay zig-zag (`zigzag`), Sói Rừng lao có dải báo (`telegraph`), boss Mộc Yêu (`design/bosses.md`; bản nhiều rễ cong gai góc 2026-11-18 **chờ người dùng duyệt**). Đầm Lầy Độc: Cóc Độc nhảy để lại vũng độc (`hop`, `pool`), Hồn Đầm hồi máu quái quanh nó (`support`), boss Cóc Chúa. **6A xong ba vùng.**
+(`design/elite-affixes.md`); boss Đồng cỏ Vua Thạch Nhầy chỉ nhảy dậm, pha phẫn nộ ở 50% máu (thân đỏ + dấu tức giận, dậm dày hơn,
+sóng xung kích mỗi cú dậm). Nhịp sóng có báo trước (`announce`). Rừng Âm U: Ma Trơi bay zig-zag (`zigzag`), Sói Rừng lao có dải báo (`telegraph`), boss Mộc Yêu (`design/bosses.md`; bản nhiều rễ cong gai góc 2026-11-18 **chờ người dùng duyệt**). Đầm Lầy Độc: Cóc Độc nhảy để lại vũng độc (`hop`, `pool`), Hồn Đầm hồi máu quái quanh nó (`support`), boss Cóc Chúa. **6A xong ba vùng.**
 1. **Mỗi vùng 4–5 loài**, mỗi loài một hành vi rõ: bắn xa giữ khoảng cách (đạn chậm, né được), lao có báo trước,
    zig-zag, nổ khi chết (vòng báo), khiên / trâu chặn đường, phân thân, hỗ trợ (hồi máu / tăng tốc quái quanh).
 2. **Tinh anh có tiền tố**: Nhanh, Giáp, Phân thân, Bùng nổ (hiện tên + màu viền).
@@ -36,6 +36,7 @@ sóng xung kích mỗi cú dậm, ửng đỏ + "nổi giận!"). Nhịp sóng c
    Vẽ quái mới trong Sprite Lab (pixel-sprite), mỗi loài đủ di chuyển / đòn / trúng đòn / chết.
 
 ### 6B · Bản đồ
+**Tiến độ (2026-11-19):** sự kiện Yêu Tinh Vàng (`design/events.md`). Còn: vật cản, các sự kiện khác, nền theo vùng.
 1. Vật cản và trang trí theo vùng (đá, cây, mộ, vũng độc) để có đường né và góc kẹt.
 2. Sự kiện: quái vàng bỏ chạy (rơi nhiều vàng), vòng thử thách (đứng trong vòng N giây nhận rương), mưa
    thiên thạch có báo, rương vàng hiếm.

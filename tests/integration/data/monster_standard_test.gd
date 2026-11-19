@@ -28,6 +28,8 @@ func test_monsters_meet_creature_v1() -> void:
 			continue
 		seen[name] = true
 		var meta := GameData.load_json("res://assets/sprites/custom/%s/%s.json" % [name, name])
+		if String(meta.get("variant_of", "")) in LEGACY:   # a recolour waits with its base sprite
+			continue
 		var frames := {}
 		for a: Dictionary in meta.get("animations", []):
 			frames[String(a.get("name", ""))] = int(a.get("frames", 0))

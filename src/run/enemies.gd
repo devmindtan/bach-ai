@@ -11,7 +11,7 @@ extends RefCounted
 ##   e.hit_circle(center, 80.0, 12.0)                           # kills land in kill_pos / kill_xp
 
 enum { MOVE, WINDUP, DASH, DYING }
-enum { CHASE, SWARM, CHARGE, BOSS_SLIME, SHOOT, ZIGZAG, BOSS_TREE, HOP, SUPPORT }
+enum { CHASE, SWARM, CHARGE, BOSS_SLIME, SHOOT, ZIGZAG, BOSS_TREE, HOP, SUPPORT, FLEE }
 
 const HURT_FLASH := 0.12
 const KNOCKBACK_DECAY := 10.0
@@ -42,6 +42,7 @@ var bleed_t := PackedFloat32Array()
 var bleed_dps := PackedFloat32Array()
 var burn_t := PackedFloat32Array()
 var shock_t := PackedFloat32Array()   # shock mark: a later shock hit arcs here
+var flee_t := PackedFloat32Array()    # Yêu tinh vàng: seconds spent fleeing (the portal opens at flee_time)
 var burn_dps := PackedFloat32Array()
 var dot_wait := PackedFloat32Array()   # time to the next damage-over-time tick
 var bleed_src := PackedStringArray()
@@ -84,6 +85,10 @@ var kill_pos := PackedVector2Array()
 var kill_xp := PackedFloat32Array()
 var kill_elite := PackedByteArray()   # 1 = the kill was an elite (drops a chest)
 var kill_boss := PackedByteArray()
+var kill_gold := PackedFloat32Array()   # coins the kill drops (gold_drop, Yêu tinh vàng)
+var kill_chest := PackedByteArray()     # 1 = the kill drops a chest (elites, chest_drop)
+var gold_trail := PackedVector2Array()  # coins dropped by fleeing monsters this step
+var escaped := PackedVector2Array()     # where fleeing monsters escaped through their portal this step
 ## Boss landings since the last drain (positions, for the run to draw the dust).
 var slams := PackedVector2Array()
 var total_kills := 0
@@ -172,7 +177,7 @@ func _init(monsters: Dictionary, cfg: Dictionary, sheets: Dictionary, seed_value
 	flip.resize(capacity)
 	hp_show.resize(capacity)
 	affix.resize(capacity)
-	for a: Variant in [slow_t, slow_mul, stun_t, freeze_t, bleed_t, bleed_dps, burn_t, burn_dps, shock_t, dot_wait]:
+	for a: Variant in [slow_t, slow_mul, stun_t, freeze_t, bleed_t, bleed_dps, burn_t, burn_dps, shock_t, flee_t, dot_wait]:
 		a.resize(capacity)
 	bleed_src.resize(capacity)
 	burn_src.resize(capacity)
@@ -195,7 +200,7 @@ func _init(monsters: Dictionary, cfg: Dictionary, sheets: Dictionary, seed_value
 			_register(id + "@elite", m, sheets.get(String(m.get("sprite", id))), world_scale, elite)
 
 
-const BEHAVIOURS := {"chase": CHASE, "swarm": SWARM, "charge": CHARGE, "boss_slime": BOSS_SLIME, "shoot": SHOOT, "zigzag": ZIGZAG, "boss_tree": BOSS_TREE, "hop": HOP, "support": SUPPORT}
+const BEHAVIOURS := {"chase": CHASE, "swarm": SWARM, "charge": CHARGE, "boss_slime": BOSS_SLIME, "shoot": SHOOT, "zigzag": ZIGZAG, "boss_tree": BOSS_TREE, "hop": HOP, "support": SUPPORT, "flee": FLEE}
 
 
 ## One monster kind; [param elite] = multipliers (hp_mul, damage_mul, scale_mul,
@@ -270,6 +275,7 @@ func spawn(id: String, p: Vector2) -> bool:
 	bleed_dps[i] = 0.0
 	burn_t[i] = 0.0
 	shock_t[i] = 0.0
+	flee_t[i] = 0.0
 	burn_dps[i] = 0.0
 	dot_wait[i] = DOT_TICK
 	return true
@@ -476,6 +482,36 @@ func _step_pools(delta: float, player_center: Vector2) -> float:
 	return hit
 
 
+## Yêu tinh vàng (design/events.md, after Diablo's treasure goblin): never attacks; runs straight away
+## from the player dropping a coin every trail_every s; after flee_time it stops and channels a portal
+## (WINDUP, channel s); a hit interrupts it (back to running); when the channel ends it escapes.
+func _flee(i: int, k: int, dir: Vector2, speed: float, delta: float) -> Vector2:
+	var e: Dictionary = k_extra[k]
+	match state[i]:
+		WINDUP:
+			if flash[i] > 0.0:   # hit while channelling: the portal breaks
+				state[i] = MOVE
+				flee_t[i] = float(e.get("flee_time", 15.0)) - 2.0
+				return -dir * speed
+			timer[i] -= delta
+			if timer[i] <= 0.0:
+				escaped.append(pos[i])
+				state[i] = DYING   # gone through the portal: no kill, no drops
+				timer[i] = 99.0
+			return Vector2.ZERO
+		_:
+			flee_t[i] += delta
+			var every := float(e.get("trail_every", 1.0))
+			if floorf(flee_t[i] / every) > floorf((flee_t[i] - delta) / every):
+				gold_trail.append(pos[i])
+			if flee_t[i] >= float(e.get("flee_time", 15.0)):
+				state[i] = WINDUP
+				timer[i] = float(e.get("channel", 2.0))
+				anim_t[i] = 0.0
+				return Vector2.ZERO
+			return -dir * speed
+
+
 ## Hồn Đầm (design 6A): hovers at keep_range from the player; every heal_every s
 ## it heals every other living non-boss monster within heal_radius by heal_pct
 ## of its max hp (timer counts the heal).
@@ -656,6 +692,8 @@ func _velocity(i: int, k: int, dir: Vector2, dist: float, delta: float) -> Vecto
 			return _boss_slime(i, k, dir, speed, delta)
 		SHOOT:
 			return _shooter(i, k, dir, dist, speed, delta)
+		FLEE:
+			return _flee(i, k, dir, speed, delta)
 		SUPPORT:
 			return _support(i, k, dir, dist, speed, delta)
 		HOP:
@@ -854,6 +892,8 @@ func _damage(i: int, amount: float, kb: Vector2, source := "") -> void:
 		kill_boss.append(k_boss[kind[i]])
 		kill_pos.append(pos[i])
 		kill_xp.append(k_xp[kind[i]])
+		kill_gold.append(float(k_extra[kind[i]].get("gold_drop", 0)))
+		kill_chest.append(1 if bool(k_extra[kind[i]].get("chest_drop", false)) else 0)
 		var ad := _affix_def(i)
 		if ad.has("split_count"):   # Phân thân: plain monsters of its kind pop out
 			var base := kind_of(kind_ids[kind[i]].get_slice("@", 0))
@@ -1010,6 +1050,8 @@ func drain_hits() -> void:
 
 ## Clears the kill buffers (call after turning them into drops).
 func drain_kills() -> void:
+	kill_gold.clear()
+	kill_chest.clear()
 	kill_pos.clear()
 	kill_xp.clear()
 	kill_elite.clear()
@@ -1120,6 +1162,7 @@ func _remove(i: int) -> void:
 		bleed_dps[i] = bleed_dps[last]
 		burn_t[i] = burn_t[last]
 		shock_t[i] = shock_t[last]
+		flee_t[i] = flee_t[last]
 		burn_dps[i] = burn_dps[last]
 		dot_wait[i] = dot_wait[last]
 		bleed_src[i] = bleed_src[last]

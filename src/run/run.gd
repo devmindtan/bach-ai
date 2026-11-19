@@ -713,7 +713,11 @@ func _spawn(t0: float, t1: float) -> void:
 		wave_call_t = 2.6
 		Sfx.play("boss_spawn")
 	for id in waves.advance(t0, t1):
-		enemies.spawn(id, enemies.ring_point(player_pos))
+		var near := float(enemies.k_extra[enemies.kind_of(id)].get("spawn_dist", 0.0)) if enemies.kind_of(id) >= 0 else 0.0
+		if near > 0.0:   # event monsters (Yêu tinh vàng) appear on screen, not on the far spawn ring
+			enemies.spawn(id, player_pos + Vector2.from_angle(rng.randf() * TAU) * near)
+		else:
+			enemies.spawn(id, enemies.ring_point(player_pos))
 
 
 func _take_hit(amount: float) -> void:
@@ -737,6 +741,15 @@ func essence_drop(elite: bool, boss: bool) -> int:
 
 
 func _drops() -> void:
+	for p in enemies.gold_trail:   # Yêu tinh vàng drops coins as it runs (a trail to follow)
+		pickups.drop(Pickups.COIN, p, 1.0)
+	enemies.gold_trail.clear()
+	if not enemies.escaped.is_empty():
+		wave_call = "Yêu tinh vàng đã trốn mất!"
+		wave_call_t = 2.5
+		for p in enemies.escaped:
+			_add_fx("arcane-bolt-impact-iii", "impact", _sprite_scale * 1.5, 0.0, -1.0, p)
+		enemies.escaped.clear()
 	if enemies.kill_pos.is_empty():
 		return
 	Sfx.play("kill")
@@ -758,6 +771,10 @@ func _drops() -> void:
 			heal_max(heal_frac)
 		if rng.randf() < gold_chance:
 			pickups.drop(Pickups.COIN, enemies.kill_pos[i] + Vector2(10, 0), 1.0)
+		for g in int(enemies.kill_gold[i]):   # Yêu tinh vàng: a burst of coins
+			pickups.drop(Pickups.COIN, enemies.kill_pos[i] + Vector2.from_angle(g * 2.4) * (10.0 + 3.0 * g), 1.0)
+		if enemies.kill_chest[i] == 1 and enemies.kill_elite[i] == 0:
+			pickups.drop(Pickups.CHEST, enemies.kill_pos[i] + Vector2(0, -14), 1.0)
 	enemies.drain_kills()
 
 
@@ -2085,6 +2102,15 @@ func _draw() -> void:
 			var tint := Color(1.0, 0.55, 0.55) if enemies.flash[i] > 0.0 else _status_tint(i)
 			if enemies.state[i] == Enemies.WINDUP:
 				tint = Color(1.0, 0.8, 0.5)
+			if enemies.k_extra[k].has("tint") and enemies.flash[i] <= 0.0:   # Yêu tinh vàng glitters gold
+				tint = Color(String(enemies.k_extra[k]["tint"]))
+			if enemies.k_behaviour[k] == Enemies.FLEE and enemies.state[i] == Enemies.WINDUP:   # its escape portal
+				var pc := enemies.pos[i] - Vector2(0, enemies.k_radius[k])
+				var ch := float(enemies.k_extra[k].get("channel", 2.0))
+				var grow := clampf(1.0 - enemies.timer[i] / maxf(0.01, ch), 0.0, 1.0)
+				for q in 3:
+					draw_arc(pc, (10.0 + 14.0 * grow) * (1.0 - 0.25 * q), clock * (3.0 + q) , clock * (3.0 + q) + 4.5, 20,
+						Color(0.7, 0.35, 1.0, 0.9 - 0.25 * q), 3.0 - q)
 			if enemies.k_boss[k] == 1 and enemies.enraged(i) and enemies.flash[i] <= 0.0 and enemies.k_rage_sheet[k] == null:
 				tint = Color(1.0, 0.62, 0.55)   # enraged: flushed red (bosses without a red rage sheet)
 			if enemies.k_elite[k] == 1:   # elite: a gold halo under it
