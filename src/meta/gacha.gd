@@ -96,6 +96,7 @@ func pull(slot: Slot, bid: String, n: int, rng: RandomNumberGenerator, now := -1
 		if dup:
 			gold = int(data.get("dup_gold", {}).get(r, 20))
 			slot.gold += gold
+			slot.shards += int(data.get("dup_shards", 0))   # Mảnh thẻ (design/skill-tree-v2.md)
 		else:
 			slot.profile.add(id)
 		out.append({"id": id, "rarity": r, "dup": dup, "gold": gold})

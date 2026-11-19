@@ -95,3 +95,9 @@ func test_slot_saves_shards_and_trees() -> void:
 	var s2 := Slot.new({})
 	s2.from_dict(s.to_dict())
 	_check(s2.shards == 48 and int(s2.card_trees.get("cut", {}).get("sharp", 0)) == 1, "shards and card trees round-trip")
+
+
+func test_shards_for_a_run() -> void:
+	var cfg := {"win_base": 3, "win_per_5_stages": 1, "boss": 5, "chest": 1}
+	_check(CardTree.shards_for_run(cfg, true, 12, 1, 2) == 3 + 2 + 5 + 2, "win stage 12, 1 boss, 2 chests = 12")
+	_check(CardTree.shards_for_run(cfg, false, 12, 0, 2) == 2, "a loss keeps the chest shards only")

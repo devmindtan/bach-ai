@@ -25,6 +25,15 @@ static func load_default() -> CardTree:
 	return CardTree.new(GameData.load_json(PATH))
 
 
+## Mảnh thẻ a run earns (card_trees.json "shards"): a win gives win_base + win_per_5_stages per 5 stages,
+## plus boss per boss killed; every chest opened gives chest, won or lost.
+static func shards_for_run(cfg: Dictionary, won: bool, stage: int, bosses: int, chests: int) -> int:
+	var n := int(cfg.get("chest", 1)) * chests
+	if won:
+		n += int(cfg.get("win_base", 3)) + int(cfg.get("win_per_5_stages", 1)) * (stage / 5) + int(cfg.get("boss", 5)) * bosses
+	return n
+
+
 ## Cards that have a tree.
 func cards() -> Array:
 	return data.get("cards", {}).keys()

@@ -143,6 +143,8 @@ var offer: Array[String] = []   # forced cards for the first level-up (--offer)
 var forced_walk := Vector2.ZERO
 var pause_at := -1.0
 var level_view := "cards"   # level-up: "cards", "character" (Tab) or "hidden" (H), design/ux/level-up.md
+var bosses_killed := 0   # this run, for Mảnh thẻ
+var chests_opened := 0   # this run, for Mảnh thẻ
 var ring := ChallengeRing.new()   # Vòng thử thách (design/events.md)
 var _ring_cfg: Dictionary = {}
 var _ring_times: Array = []      # clock times this run's region opens a ring
@@ -557,6 +559,7 @@ func _tick(dt: float) -> void:
 			_win_item()
 		pending_levels += 1
 		_log_level("chest -> +1 pick")
+		chests_opened += 1
 		_chest_open = true
 		_open_level_up()
 	for p in enemies.bolt_pops:   # monster bolts that burst (hit or out of range)
@@ -776,6 +779,7 @@ func _drops() -> void:
 			pickups.drop(Pickups.ESSENCE, enemies.kill_pos[i] + Vector2(0, -12), float(ess))
 		if enemies.kill_boss[i] == 1:
 			_boss_dead = true
+			bosses_killed += 1
 		if heal_frac > 0.0 and (enemies.kill_elite[i] == 1 or enemies.kill_boss[i] == 1):
 			heal_max(heal_frac)
 		if rng.randf() < gold_chance:
@@ -1934,9 +1938,11 @@ func xp_needed() -> int:
 func _finish(won: bool) -> void:
 	var prefs := Prefs.current()
 	run_result = {"won": won, "stage": stage_number, "collected": gold, "stage_gold": 0, "gems": 0, "first": false,
-		"essence": pickups.essence if pickups != null else 0}
+		"essence": pickups.essence if pickups != null else 0,
+		"shards": CardTree.shards_for_run(CardTree.load_default().data.get("shards", {}), won, stage_number, bosses_killed, chests_opened)}
 	if playing_slot != null and stages != null and not prefs.is_fixed():
 		playing_slot.essence += int(run_result["essence"])   # Tinh hoa picked up is kept, won or lost
+		playing_slot.shards += int(run_result["shards"])     # Mảnh thẻ (design/skill-tree-v2.md)
 		if won and challenge_id != "":   # a challenge: Tẩy Tủy Đan, never stage progress
 			var c := Challenges.load_default().record_win(playing_slot, challenge_id)
 			playing_slot.gold += gold

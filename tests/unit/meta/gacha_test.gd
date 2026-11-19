@@ -112,3 +112,9 @@ func _slot_for_history() -> Slot:
 	var s := Slot.new(defs)
 	s.cls = "knight"
 	return s
+
+
+func test_a_duplicate_also_gives_shards() -> void:
+	# design/skill-tree-v2.md §4: a duplicate pull gives Mảnh thẻ as well as gold
+	var g := Gacha.load_default()
+	_check(int(g.data.get("dup_shards", 0)) > 0, "gacha.json sets dup_shards")
