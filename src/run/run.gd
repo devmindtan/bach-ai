@@ -149,6 +149,10 @@ var chests_opened := 0   # this run, for Mảnh thẻ
 var ring := ChallengeRing.new()   # Vòng thử thách (design/events.md)
 var _ring_cfg: Dictionary = {}
 var _ring_times: Array = []      # clock times this run's region opens a ring
+var meteors := MeteorShower.new()   # Mưa thiên thạch (design/events.md)
+var _meteor_cfg: Dictionary = {}
+var _meteor_times: Array = []    # clock times this run's region starts a shower
+var _meteor_fx: Array = []       # [{p, t}] meteors that just landed (blast drawn for 0.4 s)
 var _heal_fx: Array = []   # [{p, r, t}] Hồn Đầm heal rings being drawn
 var _spawn_only := ""   # --spawn-only=ID (shots)
 var _level_view_arg := ""   # --level-view=character|hidden (shots): open that view on the first level-up
@@ -215,6 +219,9 @@ func _ready() -> void:
 	for ev: Dictionary in stages.region(stage_number).get("events", []):
 		if String(ev.get("kind", "")) == "ring" and challenge_id == "":
 			_ring_times.append(float(ev.get("t", 60.0)))
+		elif String(ev.get("kind", "")) == "meteor" and challenge_id == "":
+			_meteor_times.append(float(ev.get("t", 150.0)))
+	_meteor_cfg = cfg.get("events", {}).get("meteor", {})
 	# each region and the challenges have their own song (design/regions.md)
 	run_music = String(Challenges.load_default().data.get("music", "run")) if challenge_id != "" \
 		else String(stages.region(stage_number).get("music", "run"))
@@ -370,6 +377,8 @@ func _parse_args() -> void:
 	for a in OS.get_cmdline_user_args():
 		if a == "--demo":
 			demo = true
+		elif a.begins_with("--meteor-at="):   # shots: start a meteor shower at this clock time
+			_meteor_times = [float(a.get_slice("=", 1))]
 		elif a.begins_with("--seed="):
 			rng.seed = int(a.get_slice("=", 1))
 			seeded = true
@@ -521,6 +530,7 @@ func _tick(dt: float) -> void:
 	_move_player(dt)
 	_spawn(clock - dt, clock)
 	_step_ring(dt)
+	_step_meteors(dt)
 	var contact := enemies.step(dt, player_pos, player_pos + _hit_center)
 	if contact > 0.0 and invuln <= 0.0 and bench == 0 and not god and not buffs.invulnerable() and _dash_left <= 0.0:
 		if not _spend_ward():
@@ -2119,6 +2129,7 @@ func _draw() -> void:
 	_draw_zones()
 	_draw_ground_fx()
 	_draw_ring()
+	_draw_meteors()
 	_draw_charge_lanes(view)
 	_draw_pools(view)
 	for h in _heal_fx:   # Hồn Đầm: a green ring sweeping out over the monsters it heals
@@ -2388,6 +2399,60 @@ func _step_ring(dt: float) -> void:
 		"fail":
 			wave_call = "Thử thách thất bại"
 			wave_call_t = 2.0
+
+
+## Mưa thiên thạch (design/events.md): at the region's event time meteors are marked near the player
+## and land warn s later, hurting the player (armor applies) and the monsters inside the mark.
+func _step_meteors(dt: float) -> void:
+	for t: float in _meteor_times:
+		if clock - dt < t and t <= clock and not meteors.busy():
+			meteors.start(_meteor_cfg)
+			wave_call = "Mưa thiên thạch! Tránh các vòng đỏ"
+			wave_call_t = 3.0
+			Sfx.play("boss_spawn")
+	for p: Vector2 in meteors.step(dt, player_pos, rng):
+		_meteor_fx.append({"p": p, "t": 0.4})
+		Sfx.play("quake")
+		enemies.hit_circle(p, meteors.radius, float(_meteor_cfg.get("monster_damage", 80.0)), 120.0, "meteor")
+		if meteors.hits(p, player_pos) and invuln <= 0.0 and not god and not buffs.invulnerable() and _dash_left <= 0.0:
+			if not _spend_ward():
+				_take_hit(float(_meteor_cfg.get("player_damage", 12.0)))
+	for i in range(_meteor_fx.size() - 1, -1, -1):
+		_meteor_fx[i]["t"] = float(_meteor_fx[i]["t"]) - dt
+		if float(_meteor_fx[i]["t"]) <= 0.0:
+			_meteor_fx.remove_at(i)
+
+
+## Marks: a red ring flat on the ground with a disc filling in as the meteor nears, the rock dropping
+## onto it from above; landed ones flash an orange blast.
+func _draw_meteors() -> void:
+	var r := meteors.radius
+	for mk: Dictionary in meteors.marks:
+		var p: Vector2 = mk["p"]
+		var k := 1.0 - clampf(float(mk["t"]) / maxf(0.01, meteors.warn), 0.0, 1.0)   # 0 marked .. 1 lands
+		draw_set_transform(p, 0.0, Vector2(1.0, 0.55))
+		draw_circle(Vector2.ZERO, r, Color(1.0, 0.2, 0.1, 0.12))
+		draw_circle(Vector2.ZERO, r * k, Color(1.0, 0.3, 0.1, 0.30))
+		draw_arc(Vector2.ZERO, r, 0.0, TAU, 48, Color(1.0, 0.25, 0.15, 0.9), 3.0)
+		draw_set_transform(Vector2.ZERO)
+		var fall := Vector2(-0.3, 1.0).normalized()   # comes in from the upper right
+		var rock := p - fall * 260.0 * (1.0 - k)
+		var a := clampf(k * 2.0, 0.0, 1.0)
+		for j in range(6, 0, -1):   # a fiery tail: shrinking puffs behind the rock
+			var q := rock - fall * 9.0 * j
+			draw_circle(q, 11.0 - 1.4 * j, Color(1.0, 0.45 + 0.07 * j, 0.15, a * (0.75 - 0.1 * j)))
+		draw_circle(rock, 17.0, Color(1.0, 0.5, 0.15, 0.35 * a))   # glow
+		draw_circle(rock, 11.0, Color(0.2, 0.08, 0.06, a))         # outline
+		draw_circle(rock, 9.0, Color(0.55, 0.22, 0.12, a))
+		draw_circle(rock + Vector2(2.0, 2.0), 4.0, Color(1.0, 0.6, 0.2, a))   # molten cracks
+		draw_circle(rock + Vector2(-3.0, -3.0), 3.0, Color(0.8, 0.4, 0.25, a))
+	for fx: Dictionary in _meteor_fx:
+		var q := 1.0 - float(fx["t"]) / 0.4
+		draw_set_transform(fx["p"], 0.0, Vector2(1.0, 0.55))
+		draw_circle(Vector2.ZERO, r * (0.7 + 0.5 * q), Color(1.0, 0.55, 0.15, 0.8 * (1.0 - q)))
+		draw_circle(Vector2.ZERO, r * 0.45 * (1.0 - q), Color(1.0, 0.95, 0.6, 1.0 - q))   # white-hot core
+		draw_arc(Vector2.ZERO, r * (0.9 + 0.8 * q), 0.0, TAU, 48, Color(1.0, 0.85, 0.4, 1.0 - q), 5.0)
+		draw_set_transform(Vector2.ZERO)
 
 
 func _draw_ring() -> void:

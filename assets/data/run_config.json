@@ -100,13 +100,23 @@
     "hp_bar_time": 2.0
   },
   "events": {
-    "_doc": "6B events (design/events.md). ring = Vòng thử thách: opens `distance` px from the player at the region's event times (stages.json regions[].events), radius px, need = seconds inside to complete, limit = seconds before it fails, gold = coins dropped with the chest.",
+    "_doc": "6B events (design/events.md). ring = Vòng thử thách: opens `distance` px from the player at the region's event times (stages.json regions[].events), radius px, need = seconds inside to complete, limit = seconds before it fails, gold = coins dropped with the chest. meteor = Mưa thiên thạch: for duration s a mark every interval s within spread px of the player, lands warn s later (radius px), at most max_marks at once; hits the player for player_damage (armor applies) and monsters for monster_damage.",
     "ring": {
       "distance": 220.0,
       "radius": 70.0,
       "need": 8.0,
       "limit": 30.0,
       "gold": 10
+    },
+    "meteor": {
+      "duration": 10.0,
+      "interval": 0.6,
+      "warn": 1.2,
+      "radius": 36.0,
+      "spread": 150.0,
+      "max_marks": 4,
+      "player_damage": 12.0,
+      "monster_damage": 80.0
     }
   }
 }

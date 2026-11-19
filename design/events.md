@@ -31,6 +31,21 @@ trong bản đồ), đứng trong tổng 8 s thì xong (ra ngoài giữ nguyên 
   mở, khi xong ("Hoàn thành thử thách!") và khi hỏng ("Thử thách thất bại").
 - Test: `tests/unit/run/challenge_ring_test.gd` (gồm lỗi vòng nằm ngoài biên bản đồ).
 
+## Mưa thiên thạch (`MeteorShower`)
+
+Tham khảo: Risk of Rain 2, Glowing Meteorite ([wiki.gg](https://riskofrain2.wiki.gg/wiki/Glowing_Meteorite),
+[fandom](https://riskofrain.fandom.com/wiki/Glowing_Meteorite_(Risk_of_Rain_2))): vòng báo trên đất khoảng 1 s trước khi
+rơi, nổ trúng **cả người lẫn quái**. Diễn đàn Last Epoch về vòng báo ([vòng khó thấy trên nền cùng màu](https://forum.lastepoch.com/t/poorly-telegraphed-high-damage-abilities/15075?page=8),
+[quá nhiều vòng](https://forum.lastepoch.com/t/you-have-gone-overboard-with-the-telegraphing/26464)): vòng phải tương phản
+với nền, không dày đặc. **Học:** báo trước rõ, nổ trúng cả quái (người chơi dụ quái vào vòng). **Tránh:** vòng cùng màu
+nền, vòng chồng nhau, quá nhiều vòng một lúc. **Quyết định:**
+- Mỗi vùng một lần (`stages.json` events kind `meteor`: Đồng cỏ 180 s, Rừng 170 s, Đầm 150 s); không có ở thử thách.
+- 10 s; cứ 0,6 s một vòng đỏ (bán kính 36) trong 150 px quanh người chơi, rơi sau 1,2 s; tối đa 4 vòng, **không chồng
+  nhau**. Trúng người chơi 12 (trừ giáp, khiên chặn được), trúng quái 80. Số liệu `run_config.json` events.meteor.
+- Vẽ: vòng đỏ dẹt, đĩa trong lớn dần khi sắp rơi; viên đá có đuôi lửa rơi chéo từ trên phải xuống đúng vòng; nổ cam
+  lõi trắng 0,4 s. Câu báo "Mưa thiên thạch! Tránh các vòng đỏ". Cờ chụp `--meteor-at=<giây>`.
+- Test: `tests/unit/run/meteor_shower_test.gd`.
+
 ## Còn lại
 
-Mưa thiên thạch có báo, rương vàng hiếm.
+Rương vàng hiếm.

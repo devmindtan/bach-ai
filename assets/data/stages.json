@@ -1,5 +1,5 @@
 {
-  "_doc": "Stages 1..count (design/progression.md). Monster hp x = 1 + hp_lin*(n-1) + hp_quad*(n-1)^2, damage x = 1 + dmg_lin*(n-1), spawn rate x = min(rate_max, 1 + rate_lin*(n-1)) (bursts too). Every boss_every-th stage is a boss stage and a milestone (milestones.json). A region's stages play its waves file (boss stages: boss_waves) unless waves/stage_NNN.json exists. ground = the floor colours. rewards: gold on a win = gold_base + gold_per_stage*n; gems first win gems_first (boss stage gems_boss_first), later wins gems_repeat. music = the region's run song (audio.json); ground.props = decorations RunGround scatters (design/regions.md). events: in-run events of the region (design/events.md): {kind: ring, t: seconds}.",
+  "_doc": "Stages 1..count (design/progression.md). Monster hp x = 1 + hp_lin*(n-1) + hp_quad*(n-1)^2, damage x = 1 + dmg_lin*(n-1), spawn rate x = min(rate_max, 1 + rate_lin*(n-1)) (bursts too). Every boss_every-th stage is a boss stage and a milestone (milestones.json). A region's stages play its waves file (boss stages: boss_waves) unless waves/stage_NNN.json exists. ground = the floor colours. rewards: gold on a win = gold_base + gold_per_stage*n; gems first win gems_first (boss stage gems_boss_first), later wins gems_repeat. music = the region's run song (audio.json); ground.props = decorations RunGround scatters (design/regions.md). events: in-run events of the region (design/events.md): {kind: ring | meteor, t: seconds}.",
   "count": 30,
   "boss_every": 10,
   "scale": {
@@ -44,6 +44,10 @@
         {
           "kind": "ring",
           "t": 70
+        },
+        {
+          "kind": "meteor",
+          "t": 180
         }
       ]
     },
@@ -75,6 +79,10 @@
         {
           "kind": "ring",
           "t": 90
+        },
+        {
+          "kind": "meteor",
+          "t": 170
         }
       ]
     },
@@ -105,6 +113,10 @@
         {
           "kind": "ring",
           "t": 110
+        },
+        {
+          "kind": "meteor",
+          "t": 150
         }
       ]
     }
