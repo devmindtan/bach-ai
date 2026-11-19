@@ -58,6 +58,7 @@ var _special_kills: Array[int] = []   # per special: kills counted toward its ne
 var _gear: Array[String] = []       # --gear=a,b (shots: wear these)   # self casts waiting for their pulse (count > 1)
 var _chest_open := false   # the next level-up panel comes from a chest
 var _shot_gold_chest := false   # --gold-chest
+var _level_now := false          # --level-now
 var _gold_left := 0         # picks left from an opened Rương vàng (their panels say so)
 var _chest_sprite := "chest"
 var _gold_chest_sprite := "chest-gold"
@@ -317,6 +318,9 @@ func _ready() -> void:
 	pickups = Pickups.new(cfg.get("pickups", {}), 400)
 	if _shot_gold_chest:
 		pickups.drop(Pickups.GOLD_CHEST, player_pos + Vector2(60, 0), 1.0)   # inside the magnet: it is picked up
+	if _level_now:
+		pending_levels += 1
+		_open_level_up.call_deferred()
 	buffs = Buffs.new(_buff_defs, cfg.get("buffs", {}), rng.seed + 7)
 	for id in _forced_buffs:
 		buffs.activate(id)
@@ -392,6 +396,8 @@ func _parse_args() -> void:
 			demo = true
 		elif a.begins_with("--meteor-at="):   # shots: start a meteor shower at this clock time
 			_meteor_times = [float(a.get_slice("=", 1))]
+		elif a == "--level-now":   # shots: a level-up panel as the run starts (card flip)
+			_level_now = true
 		elif a == "--gold-chest":   # shots: a Rương vàng on the ground beside the hero
 			_shot_gold_chest = true
 		elif a.begins_with("--seed="):

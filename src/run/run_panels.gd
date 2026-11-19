@@ -18,6 +18,11 @@ const MILESTONE := Color("ffd36b")
 const PIP_LOCKED := Color("1b1726")    # level not reached yet (dark, with a visible edge)
 const PIP_EDGE := Color("6b6380")
 
+const FLIP_HALF := 0.09     # s per half turn of a level-up card
+const FLIP_STAGGER := 0.08  # s between the cards
+var _flipped: Array[String] = []   # the hand that already flipped in
+var _flip_tweens: Array = []       # [tween, card, back] while cards flip
+var _flip_shot := "--flip-shot" in OS.get_cmdline_user_args()   # shots: flip even in the fixed preview
 var run: Node
 var _box: Control
 
@@ -113,6 +118,68 @@ func show_level_up(ids: Array[String], title := "Lên cấp! Chọn một") -> v
 	for i in ids.size():
 		row.add_child(_upgrade_card(i, ids[i]))
 	_fit_cards.call_deferred(row)
+	if ids != _flipped:   # a new hand flips in; the same hand shown again (Tab, Ẩn bảng) does not
+		_flipped = ids.duplicate()
+		if not Prefs.current().is_fixed() or _flip_shot:
+			_flip_in.call_deferred(row)
+
+
+## Level-up cards flip in from their backs one after another (6D.2, ~0.4 s): each card shows a back
+## (dark, gold star) while its width closes, then opens on its face. Any click or key finishes them.
+func _flip_in(row: HBoxContainer) -> void:
+	_flip_tweens.clear()
+	var k := 0
+	for b: Control in row.get_children():
+		b.pivot_offset = b.size * 0.5
+		var back := Panel.new()
+		back.add_theme_stylebox_override("panel", _style(Color("1d1828"), BORDER))
+		back.set_anchors_preset(Control.PRESET_FULL_RECT)
+		back.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var star := UiKit.icon("star", 48.0)
+		var hs := star.custom_minimum_size * 0.5   # centre anchors + explicit offsets: follows the card as _fit_cards grows it
+		star.anchor_left = 0.5
+		star.anchor_right = 0.5
+		star.anchor_top = 0.5
+		star.anchor_bottom = 0.5
+		star.offset_left = -hs.x
+		star.offset_right = hs.x
+		star.offset_top = -hs.y
+		star.offset_bottom = hs.y
+		back.add_child(star)
+		b.add_child(back)
+		b.scale.x = 0.0
+		var t := b.create_tween()
+		t.tween_interval(FLIP_STAGGER * k)
+		t.tween_property(b, "scale:x", 1.0, FLIP_HALF).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		t.tween_property(b, "scale:x", 0.0, FLIP_HALF).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+		t.tween_callback(back.queue_free)
+		t.tween_property(b, "scale:x", 1.0, FLIP_HALF).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		_flip_tweens.append([t, b, back])
+		k += 1
+
+
+## Ends every running card flip at once (the face up, full width).
+func finish_flip() -> bool:
+	var any := false
+	for f: Array in _flip_tweens:
+		var t: Tween = f[0]
+		if t.is_valid() and t.is_running():
+			any = true
+			t.kill()
+			if is_instance_valid(f[2]):
+				f[2].queue_free()
+			if is_instance_valid(f[1]):
+				f[1].scale.x = 1.0
+	_flip_tweens.clear()
+	return any
+
+
+func _input(event: InputEvent) -> void:
+	if _flip_tweens.is_empty():
+		return
+	if (event is InputEventKey or event is InputEventMouseButton or event is InputEventJoypadButton) and event.is_pressed():
+		if finish_flip():
+			get_viewport().set_input_as_handled()   # this press only skips the flip, it picks nothing
 
 
 ## A count card (Thêm đòn / Thêm phép): pick the one skill that gets +1 count.

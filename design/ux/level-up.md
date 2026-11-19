@@ -23,3 +23,11 @@ nhìn chiến trường; game vẫn dừng trong cả hai chế độ.
 - Phím 1/2/3 chỉ chọn thẻ khi bảng thẻ đang hiện (tránh chọn mù).
 - Code: `run.toggle_level_view()`, `RunPanels.show_peek()` / `reshow()`. Test: `milestone_test.gd`.
 - Phím Tab được bắt trong `run._input` (trước GUI): Godot dùng Tab để chuyển focus giữa các nút, nên ở `_unhandled_input` nó không bao giờ tới (lỗi 2026-11-18).
+
+## Lật thẻ (6D.2, 2026-11-19)
+
+Tham khảo: Vampire Survivors / Hades mở lựa chọn bằng hiệu ứng ngắn rồi mới cho chọn; quy tắc UI của dự án: mọi hiệu
+ứng phải **bỏ qua được**. **Quyết định:** khi một bộ thẻ mới mở, từng thẻ lật từ mặt sau (nền tối, ngôi sao vàng ở giữa)
+sang mặt trước, lệch nhau 0,08 s, mỗi nửa vòng 0,09 s (cả bộ ~0,45 s). Bấm chuột / phím / nút tay cầm trong lúc lật thì
+lật xong ngay (lần bấm đó không chọn thẻ). Mở lại cùng bộ (Tab, Ẩn bảng) không lật lại. Bản xem trước cố định (ảnh
+chụp giao diện) không lật; cờ chụp `--level-now --flip-shot` để chụp hiệu ứng.
