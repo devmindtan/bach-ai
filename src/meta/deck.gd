@@ -34,7 +34,13 @@ static func count(cards: Array, ups: Array, kind: String) -> int:
 static func default_cards(ups: Array, start: Array, cfg: Dictionary) -> Array:
 	var out: Array = start.duplicate()
 	var sorted := ups.filter(func(u: Dictionary) -> bool: return is_deck_card(u))
-	sorted.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return float(a.get("weight", 1)) > float(b.get("weight", 1)))
+	# cheapest first (the budget goes to a full deck, not a few rare cards), skills before stats, then weight
+	sorted.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if cost(a, cfg) != cost(b, cfg):
+			return cost(a, cfg) < cost(b, cfg)
+		if String(a.get("kind", "")) != String(b.get("kind", "")):
+			return String(a.get("kind", "")) == "skill"
+		return float(a.get("weight", 1)) > float(b.get("weight", 1)))
 	for u: Dictionary in sorted:
 		var id := String(u["id"])
 		if not out.has(id) and why_not_add(out, ups, id, cfg) == "":

@@ -81,3 +81,12 @@ func test_default_and_saved_decks_stay_within_the_budget() -> void:
 	var d := Deck.default_cards(ups, ["c0"], BCFG)
 	_check(Deck.points(d, ups, BCFG) <= 3, "the default deck keeps the budget, got %s" % [d])
 	_check(Deck.points(Deck.within_budget(["c0", "e0", "e1", "r0"], ups, ["c0"], BCFG), ups, BCFG) <= 3, "an old saved deck is trimmed")
+
+
+func test_the_default_deck_spends_its_budget_on_skills_first() -> void:
+	# regression: the default deck spent all 7 points on three special stat cards and held 2 skills
+	var ups: Array = GameData.load_json("res://assets/data/upgrades_knight.json")["upgrades"]
+	var cfg: Dictionary = GameData.load_json("res://assets/data/card_trees.json")["deck"]
+	var d := Deck.default_cards(ups, ["blade_arc"], cfg)
+	_check(Deck.count(d, ups, "skill") >= 5, "at least 5 skills, got %d: %s" % [Deck.count(d, ups, "skill"), d])
+	_check(Deck.points(d, ups, cfg) <= int(cfg["budget"]), "within the budget")
