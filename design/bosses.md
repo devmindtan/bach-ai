@@ -39,3 +39,56 @@ phun độc. **Học:** đòn độc chậm để né, nhảy đè có báo. **Q
 | Gọi 4 Cóc Độc ở 75/50/25% máu | | |
 
 Sprite `toad-king` (48×48). Test: `tests/unit/run/boss_toad_test.gd`.
+
+## Pha 2 mới của Mộc Yêu và Cóc Chúa (người dùng 2026-11-19)
+
+Ý tưởng của người dùng (bảng chỉ số, chiêu, ngoại hình). Người dùng chốt: Cóc pha 2 **thay** phun bào tử và tách cóc con
+bằng bộ chiêu mới; Hấp thụ đệ **hồi máu theo số đệ**; thanh máu **hiện tên pha**.
+
+Tham khảo thêm: [Salt & Steel: boss design](https://salt-and-steel.pages.dev/docs/15/boss-design), [Wanderfolk: bosses](https://wanderfolk-website.pages.dev/wiki/combat/bosses),
+[Roblox: boss phases](https://robloxbossfightscriptphases.pages.dev), [Medium: multi-phase boss in Unity](https://medium.com/@scott.sourile/designing-a-multi-phase-boss-encounter-in-unity-pt-1-b06ed37aa3f0):
+chuyển pha có dấu hiệu hình/tiếng riêng và **bất tử ngắn**; chuyển pha ngắn (≤ 3 s) có lực hơn; chiêu mới nào cũng có báo.
+
+### Chuyển pha (chung, `phase2` trong `monsters.json`)
+
+Khi máu xuống `rage_at` (50%): boss **bất tử 1,5 s**, đứng yên, rung + chớp trắng/đỏ, **đẩy người chơi ra** (160 px/s,
+giảm dần), câu báo "<tên> · <tên pha>!", tên pha hiện trên thanh máu. Sau đó dùng sprite pha 2 (`rage_sprite`) và chỉ số pha 2:
+
+| Chỉ số | Mộc Yêu → Cổ Thụ Trụi Lá | Cóc Chúa → Cóc Độc Bào Tử |
+|---|---|---|
+| Tốc chạy | ×1,7 (26 → 44; người chơi 158 không chạy nhanh hơn được bằng mặc định nên giữ dưới người chơi: xem ghi chú) | ×1,25 |
+| Nhận sát thương | ×1,3 (mất tán lá) | ×0,9 |
+| Hồi chiêu | ×0,75 (rễ, gọi đệ) | ×0,65 (nghỉ giữa chuỗi nhảy) |
+| Chạm thân | ×1,2 | ×1,3 |
+| Đẩy lùi | boss vốn không bị đẩy | như cũ |
+| Bán kính va chạm | ×0,85 | ×1,1 |
+
+Ghi chú tốc chạy: đề xuất "+60–80%, nhanh hơn tốc gốc người chơi một chút" dựa trên game không có lướt; Bách Ải
+có lướt và tốc người chơi 158 ≫ 26, nên ×1,7 vẫn chậm hơn người chơi; áp lực đến từ tường rễ chặn đường.
+
+### Cổ Thụ Trụi Lá (Mộc Yêu pha 2)
+
+- **Bão lá rụng** (lúc chuyển pha): 24 chiếc lá bay tỏa tròn 360°, chậm (90 px/s), 12 sát thương; lách qua khe.
+- **Rễ trồi** như pha 1 (6 rễ mỗi 2 s × 0,75).
+- **Tường rễ gai**: mỗi 7 s, một đường rễ dài 260 px **chắn ngang** phía trước người chơi (vuông góc hướng boss → người
+  chơi, cách người chơi 70 px): báo 0,6 s rồi mọc lên, đứng 4 s; **chặn cả người chơi lẫn quái**; mọc lên trúng người
+  chơi: 20 sát thương.
+- **Hấp thụ đệ**: quái boss gọi ra (pha 2) còn sống sau 6 s bị rễ kéo vào người boss: mỗi con hồi 2% máu, tối đa 10%
+  mỗi lần gọi; vẽ dây rễ nối quái → boss.
+
+### Cóc Độc Bào Tử (Cóc Chúa pha 2)
+
+- **Nhảy liên hoàn 3 nhịp**: 3 cú nhảy liền về phía người chơi (gồng ngắn 0,3 s giữa các cú); **cú thứ 3 cao nhất**,
+  đáp xuống tạo **sóng xung kích** đỏ/cam lan từ tâm (24 sát thương) và **hất văng** người chơi lẫn quái thường.
+- **Vũng độc bào tử**: mỗi cú đáp để lại vũng **tím** 7 s (thay vũng xanh pha 1).
+- **Phóng lưỡi kéo**: giữa các chuỗi nhảy, boss đứng yên **nháy đỏ 1 s** (vạch hướng lưỡi) rồi phóng lưỡi thẳng hướng đã
+  ngắm (dài 300 px); trúng thì **kéo người chơi sát boss** và boss dậm tại chỗ ngay (38 sát thương). Né: chạy vuông góc
+  hoặc lướt.
+- Không còn phun bào tử và tách cóc con ở pha 2 (`split_at` chỉ còn 75%).
+
+### Sprite pha 2 (nâng cấp từ sprite đã duyệt, không vẽ lại)
+
+- `tree-boss-bare`: cùng thân, tán rụng sạch để lộ ngọn khô và **lõi tinh thể xanh ngọc** phát sáng; bộ rễ cuộn thành
+  **hai chân thô** có chu kỳ chạy (move 8 khung).
+- `toad-king-spore`: cùng thân cóc, cụm nấm trên lưng **phình to, tím rực**, nhả khói bào tử; nốt sần hai bên **đỏ rực**
+  phập phồng.
