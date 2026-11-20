@@ -131,18 +131,72 @@ func _build() -> void:
 		root.add_child(head)
 		y += 30.0
 		var grid := GridContainer.new()
-		grid.columns = 7
+		var cols := 7
+		var x0 := 40.0
+		if kind == "skill" and not _start.is_empty():
+			# the starting skill: one big 2x2 tile of its own, always in the deck (user 2026-11-20)
+			var big := _start_tile(_card(String(_start[0])))
+			big.position = Vector2(40, y)
+			root.add_child(big)
+			cols = 5
+			x0 += 2 * (TILE.x + 8)
+		grid.columns = cols
 		grid.add_theme_constant_override("h_separation", 8)
 		grid.add_theme_constant_override("v_separation", 8)
-		grid.position = Vector2(40, y)
+		grid.position = Vector2(x0, y)
 		root.add_child(grid)
 		var n := 0
 		for u: Dictionary in _ups:
-			if String(u.get("kind", "")) == kind and Deck.is_deck_card(u):
+			if String(u.get("kind", "")) == kind and Deck.is_deck_card(u) and not (kind == "skill" and _start.has(String(u["id"]))):
 				grid.add_child(_tile(u))
 				n += 1
-		y += ceilf(n / 7.0) * (TILE.y + 8) + 12
+		var rows := ceilf(n / float(cols))
+		if cols == 5:
+			rows = maxf(rows, 2.0)
+		y += rows * (TILE.y + 8) + 12
 	_detail(root)
+
+
+## The starting skill's big tile: gold frame, a large icon, "Chiêu khởi đầu", a lock line; it is always in
+## the deck and cannot be taken out, so pressing it only shows its detail.
+func _start_tile(u: Dictionary) -> Button:
+	var id := String(u.get("id", ""))
+	var on := id == _view
+	var b := Button.new()
+	b.custom_minimum_size = TILE * 2 + Vector2(8, 8)
+	b.size = b.custom_minimum_size
+	b.focus_mode = Control.FOCUS_ALL
+	b.add_theme_stylebox_override("normal", UiKit.style(Color("4a3a1c"), 8, Color.WHITE if on else UiKit.GOLD, 4))
+	for st in ["hover", "focus", "pressed"]:
+		b.add_theme_stylebox_override(st, UiKit.style(Color("5a4824"), 8, Color.WHITE, 4))
+	var v := VBoxContainer.new()
+	v.set_anchors_preset(Control.PRESET_FULL_RECT)
+	v.alignment = BoxContainer.ALIGNMENT_BEGIN
+	v.offset_top = 10
+	v.add_theme_constant_override("separation", 4)
+	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.add_child(v)
+	var tag := UiKit.label("CHIÊU KHỞI ĐẦU", 13, UiKit.GOLD)
+	tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(tag)
+	var ic := UiKit.icon(id, 96.0)
+	ic.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	v.add_child(ic)
+	var nm := UiKit.label(String(u.get("name", id)), 20, UiKit.TEXT)
+	nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(nm)
+	var lock := UiKit.label("Luôn trong bộ · 0 điểm", 12, UiKit.MUTED)
+	lock.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(lock)
+	for c in v.get_children():
+		c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	Tip.attach(b, String(u.get("name", id)), String(u.get("desc", "")), UiKit.GOLD, id, "Chiêu khởi đầu · luôn trong bộ")
+	b.pressed.connect(func() -> void:
+		_view = id
+		_rebuild())
+	if on:
+		b.call_deferred("grab_focus")
+	return b
 
 
 func _tile(u: Dictionary) -> Button:
@@ -227,13 +281,18 @@ func _detail(root: Control) -> void:
 		d.custom_minimum_size.x = w - 40
 		v.add_child(d)
 		var in_deck := _cards().has(_view)
+		if _start.has(_view):   # the starting skill: a gold note, not a dead button with a red reason
+			var sl := UiKit.label("★ Chiêu khởi đầu: luôn trong bộ, không tốn điểm", 15, UiKit.GOLD)
+			sl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			v.add_child(sl)
 		var why := Deck.why_not_remove(_cards(), _view, _start) if in_deck else Deck.why_not_add(_cards(), _ups, _view, _cfg)
 		var act := UiKit.button("Bỏ khỏi bộ" if in_deck else "Thêm vào bộ", func() -> void:
 			_set_cards(Deck.remove(_cards(), _view, _start) if in_deck else _cards() + [_view])
 			_rebuild(), Vector2(w - 40, 44), 18, UiKit.PRIMARY)
 		act.disabled = why != ""
-		v.add_child(act)
-		if why != "":
+		if not _start.has(_view):
+			v.add_child(act)
+		if why != "" and not _start.has(_view):
 			var wl := UiKit.label(why, 14, Color("ff9a8a"))
 			wl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			v.add_child(wl)
