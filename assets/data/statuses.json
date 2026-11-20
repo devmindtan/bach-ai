@@ -7,7 +7,7 @@
       "at": "body",
       "tint": "#a8c8ff",
       "desc": "Quái đi chậm lại.",
-      "alpha": 0.7
+      "alpha": 0.8
     },
     "stun": {
       "name": "Choáng",
@@ -30,7 +30,7 @@
       "at": "body",
       "tint": "#ffc8c8",
       "desc": "Quái mất máu mỗi 0,5 giây.",
-      "alpha": 0.7,
+      "alpha": 0.8,
       "tile": true
     },
     "burn": {
@@ -47,7 +47,7 @@
       "sprite": "status-shock",
       "at": "body",
       "desc": "Quái mang dấu giật điện; mỗi đòn giật sau lan sang mọi quái còn mang dấu (dưới nửa sát thương).",
-      "alpha": 0.75,
+      "alpha": 0.8,
       "tile": true
     }
   }
