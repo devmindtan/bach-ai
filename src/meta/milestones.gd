@@ -6,7 +6,7 @@ extends RefCounted
 ##
 ## Example:
 ##   var m := Milestones.load_default()
-##   var ids := m.offers(10, "mage")              # ["void_orb", "bloodthirst", "twin_cast"]
+##   var ids := m.offers(10, "mage")              # ["sp_star_pants", "sp_star_shoes", "bloodthirst", "twin_cast"]
 ##   var heal := m.number(owned, "heal_frac")     # 0.2 when the run has Khát máu
 
 const PATH := "res://assets/data/milestones.json"
@@ -51,9 +51,11 @@ func info(id: String, upgrades: Array) -> Dictionary:
 	var r := reward(id)
 	var out := {"id": id, "kind": String(r.get("kind", "")), "icon": String(r.get("icon", id)),
 		"name": String(r.get("name", id)), "desc": String(r.get("desc", ""))}
-	if out["kind"] == "skill":
+	if out["kind"] in ["skill", "card"]:
+		var cid := String(r.get("skill", r.get("card", id)))
 		for u: Dictionary in upgrades:
-			if String(u.get("id", "")) == String(r.get("skill", id)):
+			if String(u.get("id", "")) == cid:
+				out["icon"] = String(r.get("icon", u.get("icon", cid)))
 				out["name"] = String(u.get("name", id))
 				out["desc"] = String(u.get("desc", ""))
 	return out
@@ -66,6 +68,8 @@ func skills(owned: Array) -> Array[String]:
 		var r := reward(id)
 		if String(r.get("kind", "")) == "skill":
 			out.append(String(r.get("skill", id)))
+		elif String(r.get("kind", "")) == "card":   # one-level special card (former item special, 2026-11-20)
+			out.append(String(r.get("card", id)))
 	return out
 
 

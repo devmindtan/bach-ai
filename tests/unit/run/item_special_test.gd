@@ -127,7 +127,7 @@ func test_item_revive_once_per_run() -> void:
 	r.set_specials([_special("star_robe")])
 	r.hp = -2.0
 	_check(r.try_item_revive(), "revives")
-	_check(is_equal_approx(r.hp, float(r.stats["max_hp"]) * 0.4), "with 40%% hp, got %s" % r.hp)
+	_check(is_equal_approx(r.hp, float(r.stats["max_hp"]) * 0.5), "with 50%% hp, got %s" % r.hp)
 	r.hp = 0.0
 	_check(not r.try_item_revive(), "only once")
 	r.free()
@@ -189,13 +189,12 @@ func test_burn_aura_and_freeze_nova_put_statuses() -> void:
 	r.free()
 
 
-func test_special_cards_grow_with_their_level() -> void:
+func test_special_card_is_one_level_at_its_full_strength() -> void:
+	# user 2026-11-20: special cards are milestone rewards with no levels, at the old level-3 numbers
 	var r := _run()
 	r.levels["sp_aegis_blade"] = 1
 	var one: Dictionary = r.card_specials()[0]
-	r.levels["sp_aegis_blade"] = 3
-	var three: Dictionary = r.card_specials()[0]
-	_check(float(three["damage_mul"]) > float(one["damage_mul"]) and float(three["every"]) < float(one["every"]),
-		"level 3 hits harder and more often: %s -> %s" % [one, three])
+	_check(is_equal_approx(float(one["damage_mul"]), 3.0) and float(one["every"]) < 5.0,
+		"Thánh kiếm hits at 300%% every 4.56 s, got %s" % [one])
 	_check(String(one["item"]) == "sp_aegis_blade", "the card is the damage source")
 	r.free()

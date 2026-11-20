@@ -38,28 +38,31 @@ func _buffs(r: Node) -> void:
 	r._recompute_stats()
 
 
-# --- unique skills -----------------------------------------------------------
+# --- special cards (the former item specials, user 2026-11-20) ---------------
 
-func test_unique_skill_starts_at_level_1_and_is_levelled_by_cards() -> void:
-	var r := _run("mage", {}, ["void_orb"])
-	_check(int(r.levels.get("void_orb", 0)) == 1, "Cầu hư không starts at level 1, got %s" % r.levels.get("void_orb"))
-	var one: float = r.skill_damage("void_orb")
-	_check(one > 0.0, "it deals damage from level 1, got %s" % one)
-	r.levels["void_orb"] = 3
-	r._recompute_stats()
-	_check(r.skill_damage("void_orb") > one, "a card levels it up: %.1f -> %.1f" % [one, r.skill_damage("void_orb")])
+func test_special_card_reward_works_at_once_with_one_level() -> void:
+	var r := _run("mage", {}, ["sp_star_pants"])
+	_check(int(r.levels.get("sp_star_pants", 0)) == 1, "Hoả y owned at its one level, got %s" % r.levels.get("sp_star_pants"))
+	var kinds: Array = r.specials.map(func(sp: Dictionary) -> String: return String(sp.get("kind", "")))
+	_check(kinds.has("burn_aura"), "its special runs from the start, got %s" % [kinds])
 	var none := _run("mage", {}, [])
-	_check(not none.levels.has("void_orb"), "without the reward the skill is not in the run")
+	_check(not none.levels.has("sp_star_pants"), "without the reward the card is not in the run")
 	r.free()
 	none.free()
 
 
-func test_other_class_unique_skill_is_not_given_by_its_reward() -> void:
-	# rewards are per class; a knight run reads only what milestones.json offers it
-	var k := _run("knight", {}, ["earthquake"])
-	_check(k.levels.has("earthquake"), "Địa chấn is the knight's")
-	_check(not k.levels.has("void_orb"), "the mage's skill does not leak into a knight run")
-	k.free()
+func test_other_class_special_card_is_not_offered() -> void:
+	var m := Milestones.load_default()
+	_check(m.offers(10, "knight").has("sp_aegis_boots") and not m.offers(10, "knight").has("sp_star_pants"),
+		"level 10 offers the knight its own cards only, got %s" % [m.offers(10, "knight")])
+
+
+func test_legendary_skills_are_deck_cards_now() -> void:
+	var r := _run("knight", {}, [])
+	for u: Dictionary in r.pool.get("upgrades", []):
+		if String(u["id"]) in ["earthquake", "solar_ray", "god_hammer"]:
+			_check(not bool(u.get("unique", false)), "%s is a normal (legendary) card, not a milestone" % u["id"])
+	r.free()
 
 
 # --- passives ----------------------------------------------------------------
@@ -156,24 +159,25 @@ func test_level_10_20_30_queue_their_pick_once() -> void:
 	r.free()
 
 
-func test_take_milestone_starts_a_unique_skill_for_this_run() -> void:
+func test_take_milestone_starts_a_special_card_for_this_run() -> void:
 	var r := _run("mage", {"arcane_bolt": 1}, [])
-	_check(int(r.levels.get("void_orb", 0)) == 0, "no unique skill before the pick")
-	r.take_milestone("void_orb")
-	_check(int(r.levels.get("void_orb", 0)) == 1 and r.rewards.has("void_orb"), "Cầu hư không at level 1 after the pick")
+	_check(int(r.levels.get("sp_star_staff", 0)) == 0, "no special card before the pick")
+	r.take_milestone("sp_star_staff")
+	_check(int(r.levels.get("sp_star_staff", 0)) == 1 and r.rewards.has("sp_star_staff"), "Vĩnh cửu at level 1 after the pick")
+	_check(r.specials.any(func(sp: Dictionary) -> bool: return sp.get("kind") == "reset_cd"), "its special runs right after the pick")
 	r.free()
 
 
 # --- the character sheet -----------------------------------------------------
 
 func test_milestone_rows_describe_each_owned_reward() -> void:
-	var r := _run("mage", {}, ["void_orb", "wide_choice"])
+	var r := _run("mage", {}, ["sp_star_hat", "wide_choice"])
 	var rows: Array = r.milestone_rows()
 	_check(rows.size() == 2, "two rows for two rewards, got %d" % rows.size())
 	if rows.size() == 2:
-		_check(rows[0]["name"] == "Cầu hư không" and rows[0]["kind"] == "Chiêu độc nhất",
+		_check(rows[0]["name"] == "Lôi ấn" and rows[0]["kind"] == "Thẻ đặc biệt",
 			"skill row: %s / %s" % [rows[0].get("name"), rows[0].get("kind")])
-		_check(String(rows[0]["desc"]) != "" and String(rows[0]["icon"]) == "void_orb", "skill row needs its card text and icon")
+		_check(String(rows[0]["desc"]) != "" and String(rows[0]["icon"]) == "item_chain_shock", "card row needs its card text and icon")
 		_check(rows[1]["name"] == "Thêm lựa chọn" and rows[1]["kind"] == "Luật", "rule row: %s" % rows[1].get("name"))
 	_check(_run("knight", {}, []).milestone_rows().is_empty(), "no rewards: no rows")
 	r.free()

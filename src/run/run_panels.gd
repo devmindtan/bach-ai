@@ -992,7 +992,7 @@ func _milestone_choice(info: Dictionary, pick: Callable) -> Button:
 	var nm := _label(String(info.get("name", "")), 18, MILESTONE)
 	nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vb.add_child(nm)
-	var kinds: Dictionary = {"skill": "Chiêu độc nhất", "passive": "Nội tại", "rule": "Luật"}
+	var kinds: Dictionary = {"skill": "Chiêu độc nhất", "card": "Thẻ đặc biệt", "passive": "Nội tại", "rule": "Luật"}
 	var kind := _label(String(kinds.get(String(info.get("kind", "")), "")), 13, MUTED)
 	kind.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vb.add_child(kind)

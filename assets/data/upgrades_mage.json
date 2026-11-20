@@ -1,5 +1,5 @@
 {
-  "_doc": "Mage level-up pool. kind skill = an attack the run uses; stat = a modifier. effects apply per level: add (flat) or mul (+fraction). weight = roll weight. skills.<id>.cast says how the run casts it: nearest (one burst on each of the count nearest monsters; at_target puts its damage area on the monster instead of the art anchor, anim_prefix picks the direction animation), self (burst on the hero), random (count[level-1] bursts on random monsters within cast_range), wave (anim_prefix + direction, flies at speed px/s through monsters, count[level-1] directions: nearest, opposite, then the two others), active (player-triggered: the dash; sprite = the hero, anim = its animation). tier_sprites pick the sprite by level. under_hero = the effect is drawn behind the hero (ground effects around it, e.g. the stomp). on_hit = statuses the skill puts on monsters it hits (assets/data/statuses.json), each from a skill level. projectile = flies at speed px/s for duration s toward the nearest monster (count fan out 12 deg); it hits when its fly hitbox (from the sprite) touches a monster: explode = the impact animation hitbox deals the damage, else the fly hitbox does and it pierces pierce more monsters; impact = its hit animation. icon = borrow another card icon. count = casts per level (more targets / waves / pulses); the \"amount\" stat (amount cards) adds one to every skill: blade slashes the next nearest monsters, whirlwind gets more ticks, self casts pulse again 0.25 s apart, nearest casts hit the next nearest monsters. unique = a level milestone skill (milestones.json): never offered as a card until it is picked at level 10/20/30 of a run; it starts at level 1 then. pick_skill = a count card: taking it opens a skill pick and that one skill gets +pick_skill count (only the Đa phép level-milestone reward adds to every skill). min_range = random casts skip monsters closer than this when farther ones exist (a ranged skill). telegraph: the skill warns first (a ring), its first hit may come up to telegraph_max s in (gameplay_rules snappy). zone: what it leaves on the field from its hit point, sized and timed from the sprite hitbox: burn (scorch sprite, burn status every tick s for time s) or pull (drags monsters to the centre at strength px/s while the hits play). rarity: common | rare | epic | legendary (design/card-rarity.md). Cards with \"special\" are the former item specials (user 2026-11-20): their run mechanic by kind, scaled per level by special_per_level (x_mul: relative per level; others added); from_item = the item that carried it.",
+  "_doc": "Mage level-up pool. kind skill = an attack the run uses; stat = a modifier. effects apply per level: add (flat) or mul (+fraction). weight = roll weight. skills.<id>.cast says how the run casts it: nearest (one burst on each of the count nearest monsters; at_target puts its damage area on the monster instead of the art anchor, anim_prefix picks the direction animation), self (burst on the hero), random (count[level-1] bursts on random monsters within cast_range), wave (anim_prefix + direction, flies at speed px/s through monsters, count[level-1] directions: nearest, opposite, then the two others), active (player-triggered: the dash; sprite = the hero, anim = its animation). tier_sprites pick the sprite by level. under_hero = the effect is drawn behind the hero (ground effects around it, e.g. the stomp). on_hit = statuses the skill puts on monsters it hits (assets/data/statuses.json), each from a skill level. projectile = flies at speed px/s for duration s toward the nearest monster (count fan out 12 deg); it hits when its fly hitbox (from the sprite) touches a monster: explode = the impact animation hitbox deals the damage, else the fly hitbox does and it pierces pierce more monsters; impact = its hit animation. icon = borrow another card icon. count = casts per level (more targets / waves / pulses); the \"amount\" stat (amount cards) adds one to every skill: blade slashes the next nearest monsters, whirlwind gets more ticks, self casts pulse again 0.25 s apart, nearest casts hit the next nearest monsters. unique = a level milestone skill (milestones.json): never offered as a card until it is picked at level 10/20/30 of a run; it starts at level 1 then. pick_skill = a count card: taking it opens a skill pick and that one skill gets +pick_skill count (only the Đa phép level-milestone reward adds to every skill). min_range = random casts skip monsters closer than this when farther ones exist (a ranged skill). telegraph: the skill warns first (a ring), its first hit may come up to telegraph_max s in (gameplay_rules snappy). zone: what it leaves on the field from its hit point, sized and timed from the sprite hitbox: burn (scorch sprite, burn status every tick s for time s) or pull (drags monsters to the centre at strength px/s while the hits play). rarity: common | rare | epic | legendary (design/card-rarity.md). Cards with \"special\" are the former item specials (user 2026-11-20): their run mechanic by kind, a level milestone reward (milestones.json kind card, unique, one level: user 2026-11-20); from_item = the item that carried it.",
   "upgrades": [
     {
       "id": "arcane_bolt",
@@ -114,9 +114,8 @@
     {
       "id": "void_orb",
       "kind": "skill",
-      "unique": true,
       "name": "Cầu hư không",
-      "desc": "Chiêu độc nhất (mốc cấp 10). Cầu hư không bay chậm, xuyên qua 8 quái và làm chậm chúng. Mỗi cấp: +25% sát thương, +10% kích thước. Cấp 3: 2 cầu; cấp 5: 3 cầu.",
+      "desc": "Cầu hư không bay chậm, xuyên qua 8 quái và làm chậm chúng. Mỗi cấp: +25% sát thương, +10% kích thước. Cấp 3: 2 cầu; cấp 5: 3 cầu.",
       "max_level": 5,
       "weight": 2,
       "effects": {
@@ -132,9 +131,8 @@
     {
       "id": "blizzard",
       "kind": "skill",
-      "unique": true,
       "name": "Bão tuyết",
-      "desc": "Chiêu độc nhất (mốc cấp 20). Lốc băng giáng xuống quái ở xa (cách 120–360 px), làm chậm quái; cấp 3: đóng băng 1 giây. Mỗi cấp: +25% sát thương, +8% vùng. Cấp 2: 2 cơn lốc; cấp 4: 3 cơn lốc.",
+      "desc": "Lốc băng giáng xuống quái ở xa (cách 120–360 px), làm chậm quái; cấp 3: đóng băng 1 giây. Mỗi cấp: +25% sát thương, +8% vùng. Cấp 2: 2 cơn lốc; cấp 4: 3 cơn lốc.",
       "max_level": 5,
       "weight": 2,
       "effects": {
@@ -150,9 +148,8 @@
     {
       "id": "storm",
       "kind": "skill",
-      "unique": true,
       "name": "Bão sét",
-      "desc": "Chiêu độc nhất (mốc cấp 30). Bão sét đánh xuống nhiều quái quanh bạn, gây giật điện, lan sang mọi quái đang mang dấu giật. Mỗi cấp: +25% sát thương. Cấp 1: 2 chỗ; cấp 2: 3; cấp 4: 4; cấp 5: 5.",
+      "desc": "Bão sét đánh xuống nhiều quái quanh bạn, gây giật điện, lan sang mọi quái đang mang dấu giật. Mỗi cấp: +25% sát thương. Cấp 1: 2 chỗ; cấp 2: 3; cấp 4: 4; cấp 5: 5.",
       "max_level": 5,
       "weight": 2,
       "effects": {
@@ -290,146 +287,132 @@
       "name": "Lôi ấn",
       "kind": "stat",
       "rarity": "legendary",
-      "max_level": 3,
+      "max_level": 1,
       "weight": 4,
       "icon": "item_chain_shock",
       "from_item": "star_hat",
-      "desc": "Mỗi 8 giây: sét đánh 6 quái gần nhất (120% sát thương), lan sang 2 quái bên cạnh. Mỗi cấp sau mạnh hơn.",
+      "desc": "Mỗi 6 giây: sét đánh 6 quái gần nhất (170% sát thương), lan sang 2 quái bên cạnh.",
       "special": {
         "kind": "chain_shock",
         "name": "Lôi ấn",
         "fx": "ward-shock",
-        "every": 8.0,
+        "every": 6.08,
         "count": 6,
-        "damage_mul": 1.2,
+        "damage_mul": 1.7,
         "chain": 2,
         "radius": 120.0,
-        "desc": "Mỗi 8 giây: sét đánh 6 quái gần nhất (120% sát thương), lan sang 2 quái bên cạnh."
+        "desc": "Mỗi 6 giây: sét đánh 6 quái gần nhất (170% sát thương), lan sang 2 quái bên cạnh."
       },
-      "special_per_level": {
-        "damage_mul": 0.25,
-        "every_mul": -0.12
-      },
-      "effects": {}
+      "effects": {},
+      "unique": true
     },
     {
       "id": "sp_star_robe",
       "name": "Tim bất diệt",
       "kind": "stat",
       "rarity": "legendary",
-      "max_level": 2,
+      "max_level": 1,
       "weight": 4,
       "icon": "item_revive",
       "from_item": "star_robe",
-      "desc": "Một lần mỗi trận: hết máu thì đứng dậy với 40% máu, miễn sát thương 2 giây. Mỗi cấp sau mạnh hơn.",
+      "desc": "Một lần mỗi trận: hết máu thì đứng dậy với 50% máu, miễn sát thương 2 giây.",
       "special": {
         "kind": "revive",
         "name": "Tim bất diệt",
         "fx": "ward-revive",
-        "hp": 0.4,
+        "hp": 0.5,
         "invuln": 2.0,
-        "desc": "Một lần mỗi trận: hết máu thì đứng dậy với 40% máu, miễn sát thương 2 giây."
+        "desc": "Một lần mỗi trận: hết máu thì đứng dậy với 50% máu, miễn sát thương 2 giây."
       },
-      "special_per_level": {
-        "hp": 0.1
-      },
-      "effects": {}
+      "effects": {},
+      "unique": true
     },
     {
       "id": "sp_star_pants",
       "name": "Hoả y",
       "kind": "stat",
       "rarity": "epic",
-      "max_level": 3,
+      "max_level": 1,
       "weight": 4,
       "icon": "item_burn_aura",
       "from_item": "star_pants",
-      "desc": "Mỗi giây: đốt cháy quái trong vòng quanh người (30% sát thương mỗi giây). Mỗi cấp sau mạnh hơn.",
+      "desc": "Liên tục đốt cháy quái quanh người (80% sát thương mỗi giây).",
       "special": {
         "kind": "burn_aura",
         "name": "Hoả y",
         "fx": "ward-burn",
-        "every": 1.0,
+        "every": 0.76,
         "radius": 100.0,
-        "damage_mul": 0.3,
+        "damage_mul": 0.8,
         "time": 2.0,
-        "desc": "Mỗi giây: đốt cháy quái trong vòng quanh người (30% sát thương mỗi giây)."
+        "desc": "Liên tục đốt cháy quái quanh người (80% sát thương mỗi giây)."
       },
-      "special_per_level": {
-        "damage_mul": 0.25,
-        "every_mul": -0.12
-      },
-      "effects": {}
+      "effects": {},
+      "unique": true
     },
     {
       "id": "sp_star_bracer",
       "name": "Băng ấn",
       "kind": "stat",
       "rarity": "legendary",
-      "max_level": 3,
+      "max_level": 1,
       "weight": 4,
       "icon": "item_freeze_nova",
       "from_item": "star_bracer",
-      "desc": "Mỗi 10 giây: đóng băng quái quanh người 1,5 giây. Mỗi cấp sau mạnh hơn.",
+      "desc": "Mỗi 7,6 giây: đóng băng quái quanh người 1,5 giây.",
       "special": {
         "kind": "freeze_nova",
         "name": "Băng ấn",
         "fx": "ward-freeze",
-        "every": 10.0,
+        "every": 7.6,
         "radius": 150.0,
         "time": 1.5,
-        "desc": "Mỗi 10 giây: đóng băng quái quanh người 1,5 giây."
+        "desc": "Mỗi 7,6 giây: đóng băng quái quanh người 1,5 giây."
       },
-      "special_per_level": {
-        "every_mul": -0.12
-      },
-      "effects": {}
+      "effects": {},
+      "unique": true
     },
     {
       "id": "sp_star_shoes",
       "name": "Lưu tinh",
       "kind": "stat",
       "rarity": "epic",
-      "max_level": 3,
+      "max_level": 1,
       "weight": 4,
       "icon": "item_kill_proc",
       "from_item": "star_shoes",
-      "desc": "Mỗi 40 quái hạ được: Rune tốc độ 4 giây. Mỗi cấp sau mạnh hơn.",
+      "desc": "Mỗi 28 quái hạ được: Rune tốc độ 4 giây.",
       "special": {
         "kind": "kill_proc",
         "name": "Lưu tinh",
         "fx": "ward-haste",
-        "every_kills": 40,
+        "every_kills": 28,
         "buff": "haste_rune",
         "time": 4.0,
-        "desc": "Mỗi 40 quái hạ được: Rune tốc độ 4 giây."
+        "desc": "Mỗi 28 quái hạ được: Rune tốc độ 4 giây."
       },
-      "special_per_level": {
-        "every_kills_mul": -0.15
-      },
-      "effects": {}
+      "effects": {},
+      "unique": true
     },
     {
       "id": "sp_star_staff",
       "name": "Vĩnh cửu",
       "kind": "stat",
       "rarity": "legendary",
-      "max_level": 3,
+      "max_level": 1,
       "weight": 4,
       "icon": "item_reset_cd",
       "from_item": "star_staff",
-      "desc": "Mỗi 12 giây: mọi chiêu hồi chiêu xong ngay. Mỗi cấp sau mạnh hơn.",
+      "desc": "Mỗi 9 giây: mọi chiêu hồi chiêu xong ngay.",
       "special": {
         "kind": "reset_cd",
         "name": "Vĩnh cửu",
         "fx": "ward-reset",
-        "every": 12.0,
-        "desc": "Mỗi 12 giây: mọi chiêu hồi chiêu xong ngay."
+        "every": 9.12,
+        "desc": "Mỗi 9 giây: mọi chiêu hồi chiêu xong ngay."
       },
-      "special_per_level": {
-        "every_mul": -0.12
-      },
-      "effects": {}
+      "effects": {},
+      "unique": true
     }
   ],
   "skills": {

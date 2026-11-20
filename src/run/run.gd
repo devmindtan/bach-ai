@@ -1523,6 +1523,7 @@ func apply_rewards() -> void:
 		milestones = Milestones.load_default()
 	for sk: String in milestones.skills(rewards):
 		levels[sk] = maxi(int(levels.get(sk, 0)), 1)
+	set_specials(card_specials())   # a special card reward works at once
 	var g := milestones.with_key(rewards, "every")
 	_guardian_every = float(g.get("every", 0.0))
 	_guardian_buff = String(g.get("buff", "magnetic_shield"))
@@ -1782,7 +1783,7 @@ func milestone_rows() -> Array:
 	var out := []
 	if milestones == null:
 		return out
-	var kinds := {"skill": "Chiêu độc nhất", "passive": "Nội tại", "rule": "Luật"}
+	var kinds := {"skill": "Chiêu độc nhất", "card": "Thẻ đặc biệt", "passive": "Nội tại", "rule": "Luật"}
 	for id: String in rewards:
 		var info := milestones.info(id, pool.get("upgrades", []))
 		info["kind"] = String(kinds.get(String(info["kind"]), info["kind"]))

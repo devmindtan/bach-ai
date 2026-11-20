@@ -83,3 +83,13 @@ dùng mốc cấp thay cho rương boss vì mỗi ải là một trận 5 phút.
   một lần. `tests/integration/meta/session_test.gd`: phần thưởng không ghi vào slot, trận sau bắt đầu không có.
 - `tests/integration/data/data_consistency_test.gd`: chiêu độc nhất có trong `upgrades_<class>.json` với `unique`,
   không xuất hiện trong bộ thẻ khi chưa có.
+
+## Mốc cấp: thẻ đặc biệt thay chiêu độc nhất (người dùng 2026-11-20)
+
+- Mỗi mốc 10 / 20 / 30 cho mỗi lớp chọn 1 trong 4: hai **thẻ đặc biệt** (kỹ năng cũ của món đồ: Phong hành,
+  Huyết quyền, Thần hộ, Thánh kiếm, Phản chấn, Bàn thạch / Hoả y, Lưu tinh, Băng ấn, Tim bất diệt, Lôi ấn,
+  Vĩnh cửu), một nội tại, một luật. Thẻ đặc biệt là duy nhất, chỉ một cấp, mang số liệu của cấp tối đa cũ.
+- Địa chấn, Thái dương xạ, Búa thần, Cầu hư không, Bão tuyết, Bão sét thành thẻ chiêu Huyền thoại bình thường
+  trong bộ thẻ (tốn 3 điểm bộ thẻ, xem design/card-rarity.md).
+- Lý do: thẻ đặc biệt không có bậc nâng cấp nên hợp làm phần thưởng một lần; các chiêu có 5 bậc thì nên
+  được lên cấp bằng thẻ trong trận.
