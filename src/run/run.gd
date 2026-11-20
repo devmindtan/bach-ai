@@ -79,6 +79,7 @@ var rewards: Array[String] = []   # level milestone rewards picked in this run (
 var _ms_queue: Array[int] = []    # milestone levels reached, their pick not shown yet
 var _ms_done: Array[int] = []     # milestone levels already offered in this run
 var ms_level := 0                 # the milestone level whose pick is open (0 = a normal level-up)
+var _xp_rng := RandomNumberGenerator.new()   # its own stream: XP drop rolls must not shift spawns
 var _owned_count_done := false     # Đa phép already gave its +1 to the skills owned when picked
 var skill_extra := {}             # skill id -> count added by Thêm đòn / Thêm phép on that skill only
 var skill_pick := 0               # > 0: the open panel picks the skill a count card adds to
@@ -345,6 +346,7 @@ func _ready() -> void:
 		if "--banish-mode" in OS.get_cmdline_user_args():   # shots: Loại armed
 			(func() -> void: _panels.toggle_banish()).call_deferred()
 	buffs = Buffs.new(_buff_defs, cfg.get("buffs", {}), rng.seed + 7)
+	seed_xp_drops(rng.seed)
 	for id in _forced_buffs:
 		buffs.activate(id)
 	for k in _ground_buffs.size():
@@ -905,7 +907,8 @@ func _drops() -> void:
 	var gold_chance := float(cfg.get("pickups", {}).get("gold_chance", 0.1))
 	var heal_frac := heal_on_kill()   # Khát máu: elites and bosses feed the hero
 	for i in enemies.kill_pos.size():
-		pickups.drop(Pickups.GEM, enemies.kill_pos[i], enemies.kill_xp[i])
+		if drops_xp(enemies.kill_elite[i] == 1 or enemies.kill_boss[i] == 1):
+			pickups.drop(Pickups.GEM, enemies.kill_pos[i], enemies.kill_xp[i])
 		if enemies.kill_elite[i] == 1 or enemies.kill_boss[i] == 1:
 			elite_kills += 1
 		if enemies.kill_elite[i] == 1:
@@ -2010,6 +2013,19 @@ func _after_pick() -> void:
 	state = State.PLAYING
 	if pending_levels > 0:
 		_open_level_up()
+
+
+## Seeds the XP drop rolls (from the run seed; tests set their own).
+func seed_xp_drops(seed_value: int) -> void:
+	_xp_rng.seed = seed_value * 53 + 11
+
+
+## Whether a kill drops its XP gem: always for an elite / boss ([param sure]), else with
+## run_config balance.xp_drop_chance (user 2026-11-20: 80%, slower level-ups).
+func drops_xp(sure: bool) -> bool:
+	if sure:
+		return true
+	return _xp_rng.randf() < float(cfg.get("balance", {}).get("xp_drop_chance", 1.0))
 
 
 ## Takes level milestone reward [param id] for the rest of this run, then goes on
