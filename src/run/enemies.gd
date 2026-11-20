@@ -42,6 +42,7 @@ var bleed_t := PackedFloat32Array()
 var bleed_dps := PackedFloat32Array()
 var burn_t := PackedFloat32Array()
 var shock_t := PackedFloat32Array()   # shock mark: a later shock hit arcs here
+var summon_t := PackedFloat32Array()  # when a boss called this monster (_time), -1 when not called (absorb)
 var phase_t := PackedFloat32Array()   # boss phase 2 transition seconds left (> 0: invulnerable, still)
 var phase_on := PackedByteArray()      # 1 = this boss entered phase 2 (its transition started)
 var flee_t := PackedFloat32Array()    # Yêu tinh vàng: seconds spent fleeing (the portal opens at flee_time)
@@ -130,6 +131,12 @@ var wave_r := PackedFloat32Array()
 var wave_max := PackedFloat32Array()
 var wave_hit := PackedInt32Array()       # 1 once it has hit the player (one hit per ring)
 var wave_def: Array[Dictionary] = []
+# Cổ Thụ Trụi Lá root walls (design/bosses.md): segment a-b, seconds left (warn first, then standing)
+var wall_a := PackedVector2Array()
+var wall_b := PackedVector2Array()
+var wall_t := PackedFloat32Array()
+var wall_def: Array = []
+var absorb_lines: Array = []   # [from, to] minions pulled into a boss this step (the run draws root tethers)
 var phase_push: Array = []   # [boss pos, push px/s] when a boss starts its phase 2 transition (the run pushes the hero)
 var raged: Array[int] = []              # boss indices that just turned enraged this step (the run announces it)                 # [kind, pos]: monsters to spawn after this step (Phân thân)
 # death bursts ("explode" on a monster, design 6A Bọ Lửa): a warning ring, then a blast
@@ -190,7 +197,7 @@ func _init(monsters: Dictionary, cfg: Dictionary, sheets: Dictionary, seed_value
 	hp_show.resize(capacity)
 	affix.resize(capacity)
 	phase_on.resize(capacity)
-	for a: Variant in [slow_t, slow_mul, stun_t, freeze_t, bleed_t, bleed_dps, burn_t, burn_dps, shock_t, flee_t, dot_wait, phase_t]:
+	for a: Variant in [slow_t, slow_mul, stun_t, freeze_t, bleed_t, bleed_dps, burn_t, burn_dps, shock_t, flee_t, dot_wait, phase_t, summon_t]:
 		a.resize(capacity)
 	bleed_src.resize(capacity)
 	burn_src.resize(capacity)
@@ -307,6 +314,7 @@ func spawn(id: String, p: Vector2) -> bool:
 	flee_t[i] = 0.0
 	phase_t[i] = 0.0
 	phase_on[i] = 0
+	summon_t[i] = -1.0
 	burn_dps[i] = 0.0
 	dot_wait[i] = DOT_TICK
 	return true
@@ -408,13 +416,16 @@ func step(delta: float, player_pos: Vector2, player_center: Vector2) -> float:
 		pos[n] = pos[n].clamp(Vector2(-arena_half, -arena_half), Vector2(arena_half, arena_half))
 		if obstacles != null:
 			pos[n] = obstacles.push_out(pos[n], r)
+		if not wall_a.is_empty() and k_boss[k] == 0:   # root walls block plain monsters too
+			pos[n] = push_out_walls(pos[n], r)
 		if not stopped and (center_of(n) - player_center).length() < r + player_hit_radius:
 			contact = maxf(contact, contact_damage(n))
 	contact = maxf(contact, _step_waves(delta, player_center))
 	for q: Array in _split_q:   # monsters from Phân thân, spawned after the loop over the living
-		if int(q[0]) >= 0:
-			spawn(kind_ids[int(q[0])], q[1])
+		if int(q[0]) >= 0 and spawn(kind_ids[int(q[0])], q[1]) and q.size() > 2 and bool(q[2]):
+			summon_t[count - 1] = _time   # called by a boss: absorbed if left alive
 	_split_q.clear()
+	contact = maxf(contact, _step_walls(delta, player_center))
 	return maxf(maxf(maxf(contact, _step_bolts(delta, player_center)), _step_blasts(delta, player_center)), _step_pools(delta, player_center))
 
 
@@ -483,15 +494,49 @@ func _boss_tree(i: int, k: int, dir: Vector2, dist: float, speed: float, delta: 
 		anim_t[i] = 0.0
 	timer[i] -= delta
 	if timer[i] <= 0.0:
-		timer[i] = float(e.get("summon_every", 12.0))
+		timer[i] = float(e.get("summon_every", 12.0)) * (float(_phase2(i).get("cd_mul", 1.0)) if phase_on[i] == 1 else 1.0)
 		var list: Array = e.get("summon", [])
 		for s in int(e.get("summon_count", 3)):
 			if list.is_empty():
 				break
 			var ki := kind_ids.find(String(list[s % list.size()]))
 			if ki >= 0:
-				_split_q.append([ki, pos[i] + Vector2.from_angle(s * TAU / 3.0 + phase[i]) * 40.0])
+				_split_q.append([ki, pos[i] + Vector2.from_angle(s * TAU / 3.0 + phase[i]) * 40.0, phase_on[i] == 1])
+	if phase_on[i] == 1 and phase_t[i] <= 0.0:
+		_tree_phase2(i, e, dir, dist, delta)
 	return dir * speed
+
+
+## Cổ Thụ Trụi Lá (design/bosses.md): every root_wall.every s a wall of thorny roots across the hero's path
+## (perpendicular to boss -> hero, ahead of the hero), warning warn s then standing time s; minions it
+## called that are still alive absorb.after s later are pulled in, each healing heal_each of max hp
+## (at most heal_max per call). charge_cd is used by the roots, flee_t (unused by bosses) by the wall.
+func _tree_phase2(i: int, e: Dictionary, dir: Vector2, dist: float, delta: float) -> void:
+	var w: Dictionary = e.get("root_wall", {})
+	if not w.is_empty():
+		flee_t[i] -= delta
+		if flee_t[i] <= 0.0:
+			flee_t[i] = float(w.get("every", 7.0))
+			var hero := pos[i] + dir * dist
+			var c := hero + dir * float(w.get("ahead", 70.0))
+			var half := dir.orthogonal() * float(w.get("length", 260.0)) * 0.5
+			wall_a.append(c - half)
+			wall_b.append(c + half)
+			wall_t.append(float(w.get("warn", 0.6)) + float(w.get("time", 4.0)))
+			wall_def.append(w)
+	var ab: Dictionary = e.get("absorb", {})
+	if ab.is_empty():
+		return
+	var healed := 0.0
+	for j in count:
+		if summon_t[j] >= 0.0 and state[j] != DYING and _time - summon_t[j] >= float(ab.get("after", 6.0)):
+			summon_t[j] = -1.0
+			state[j] = DYING   # pulled in: gone without a kill (no drop)
+			timer[j] = k_death_time[kind[j]]
+			absorb_lines.append([center_of(j), center_of(i)])
+			healed += float(ab.get("heal_each", 0.02))
+	if healed > 0.0:
+		hp[i] = minf(k_hp[kind[i]], hp[i] + k_hp[kind[i]] * minf(healed, float(ab.get("heal_max", 0.1))))
 
 
 ## A poison pool at [param p] for [param time] s: a player within [param r] takes
@@ -805,6 +850,45 @@ func _boss_slime(i: int, k: int, dir: Vector2, speed: float, delta: float) -> Ve
 	return dir * speed
 
 
+## [param p] moved out of every standing root wall (a body of radius [param r]); unchanged when clear.
+func push_out_walls(p: Vector2, r: float) -> Vector2:
+	for w in wall_a.size():
+		var d: Dictionary = wall_def[w]
+		if wall_t[w] > float(d.get("time", 4.0)):
+			continue   # still the warning
+		var a := wall_a[w]
+		var ab := wall_b[w] - a
+		var t := clampf((p - a).dot(ab) / maxf(1.0, ab.length_squared()), 0.0, 1.0)
+		var q := a + ab * t
+		var need := float(d.get("thick", 14.0)) * 0.5 + r
+		var off := p - q
+		if off.length() < need:
+			p = q + (off.normalized() if off.length() > 0.01 else ab.orthogonal().normalized()) * need
+	return p
+
+
+## Root walls: count down; the moment one rises it hurts a hero standing on it. Returns that damage.
+func _step_walls(delta: float, player_center: Vector2) -> float:
+	var hit := 0.0
+	var w := 0
+	while w < wall_a.size():
+		var d: Dictionary = wall_def[w]
+		var stand := float(d.get("time", 4.0))
+		var before := wall_t[w]
+		wall_t[w] -= delta
+		if before > stand and wall_t[w] <= stand:   # rises now
+			if push_out_walls(player_center, player_hit_radius) != player_center:
+				hit = maxf(hit, float(d.get("damage", 20.0)))
+		if wall_t[w] <= 0.0:
+			wall_a.remove_at(w)
+			wall_b.remove_at(w)
+			wall_t.remove_at(w)
+			wall_def.remove_at(w)
+			continue
+		w += 1
+	return hit
+
+
 ## The kind's "phase2" block (design/bosses.md "Chuyển pha"), {} when it has none.
 func _phase2(i: int) -> Dictionary:
 	return k_extra[kind[i]].get("phase2", {})
@@ -823,6 +907,9 @@ func _check_phase(i: int) -> void:
 	hp[i] = maxf(hp[i], 1.0)
 	phase_t[i] = float(p2.get("transition", 1.5))
 	phase_push.append([pos[i], float(p2.get("push", 160.0))])
+	var ls: Dictionary = k_extra[kind[i]].get("leaf_storm", {})
+	for n in int(ls.get("count", 0)):   # Bão lá rụng: the shed canopy flies out all round
+		fire_bolt(i, Vector2.from_angle(TAU * n / float(ls["count"]) + phase[i]))
 	k_radius[kind[i]] *= float(p2.get("radius_mul", 1.0))   # bosses are one of a kind
 	anim_t[i] = 0.0
 
@@ -1259,6 +1346,7 @@ func _remove(i: int) -> void:
 		shock_t[i] = shock_t[last]
 		flee_t[i] = flee_t[last]
 		phase_t[i] = phase_t[last]
+		summon_t[i] = summon_t[last]
 		phase_on[i] = phase_on[last]
 		burn_dps[i] = burn_dps[last]
 		dot_wait[i] = dot_wait[last]

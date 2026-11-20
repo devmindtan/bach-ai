@@ -127,6 +127,7 @@ var _whirl_ticks_done := 0
 var _fx: Array[Dictionary] = []
 var zones: Array[Dictionary] = []
 var _affix_tags: Array = []
+var _absorb_fx: Array = []   # [{a, b, t}] Hấp thụ đệ tethers fading out
 var _knock := Vector2.ZERO          # px/s the hero is being pushed (boss transition, shockwave), decays
 var _rage_t := 0.0                    # seconds the "nổi giận" call still shows
 var _rage_seen := false
@@ -582,6 +583,10 @@ func _tick(dt: float) -> void:
 	_spawn(clock - dt, clock)
 	_step_ring(dt)
 	_step_meteors(dt)
+	for i in range(_absorb_fx.size() - 1, -1, -1):
+		_absorb_fx[i]["t"] = float(_absorb_fx[i]["t"]) - dt
+		if float(_absorb_fx[i]["t"]) <= 0.0:
+			_absorb_fx.remove_at(i)
 	_step_pools_hazard(dt)
 	var contact := enemies.step(dt, player_pos, player_pos + _hit_center)
 	if contact > 0.0 and invuln <= 0.0 and bench == 0 and not god and not buffs.invulnerable() and _dash_left <= 0.0:
@@ -703,6 +708,7 @@ func _move_player(dt: float) -> void:
 		player_pos = player_pos.clamp(Vector2(-_arena_half, -_arena_half), Vector2(_arena_half, _arena_half))
 		if obstacles != null:
 			player_pos = obstacles.push_out(player_pos, PLAYER_BODY)
+		player_pos = enemies.push_out_walls(player_pos, PLAYER_BODY)
 	for pp: Array in enemies.phase_push:   # a boss starts phase 2: the hero is pushed away and the screen shakes
 		var away: Vector2 = player_pos - pp[0]
 		_knock += (away.normalized() if away.length() > 1.0 else Vector2.RIGHT) * float(pp[1])
@@ -729,6 +735,7 @@ func _move_player(dt: float) -> void:
 		player_pos = player_pos.clamp(Vector2(-_arena_half, -_arena_half), Vector2(_arena_half, _arena_half))
 		if obstacles != null:
 			player_pos = obstacles.push_out(player_pos, PLAYER_BODY)
+		player_pos = enemies.push_out_walls(player_pos, PLAYER_BODY)
 	_action_left = maxf(0.0, _action_left - dt)
 	if _action_left <= 0.0:
 		_set_anim("run" if _moving else "idle")
@@ -768,6 +775,7 @@ func _dash_step(dt: float) -> void:
 	player_pos = player_pos.clamp(Vector2(-_arena_half, -_arena_half), Vector2(_arena_half, _arena_half))
 	if obstacles != null:
 		player_pos = obstacles.push_out(player_pos, PLAYER_BODY)
+	player_pos = enemies.push_out_walls(player_pos, PLAYER_BODY)   # a root wall is solid: no dashing through
 	_dash_left -= step
 	# two cuts along the path: covering the half just travelled each time
 	var r := dist * 0.25 + float(sp.get("hit_radius", 26.0))
@@ -2313,6 +2321,7 @@ func _draw() -> void:
 	_draw_meteors()
 	_draw_charge_lanes(view)
 	_draw_pools(view)
+	_draw_root_walls()
 	for h in _heal_fx:   # Hồn Đầm: a green ring sweeping out over the monsters it heals
 		var k := float(h["t"]) / 0.5
 		var r := float(h["r"]) * (0.3 + 0.7 * k)
@@ -2553,6 +2562,45 @@ func _draw_statuses(view: Rect2) -> void:
 
 ## Poison pools left by Cóc Độc (design 6A): a toxic green puddle with bubbles,
 ## shrinking and fading as it dries up.
+## Cổ Thụ Trụi Lá root walls: a red dashed line while warning, then a thick thorny root wall; and the
+## root tethers pulling minions into the boss (Hấp thụ đệ), shown for 0.5 s.
+func _draw_root_walls() -> void:
+	for w in enemies.wall_a.size():
+		var a := enemies.wall_a[w]
+		var b := enemies.wall_b[w]
+		var d: Dictionary = enemies.wall_def[w]
+		var stand := float(d.get("time", 4.0))
+		var th := float(d.get("thick", 14.0))
+		if enemies.wall_t[w] > stand:   # warning: blinking red dashes across the path
+			var on := int(clock * 8.0) % 2 == 0
+			var n := 14
+			for k in n:
+				if k % 2 == 0:
+					draw_line(a.lerp(b, k / float(n)), a.lerp(b, (k + 1) / float(n)), Color(1.0, 0.25, 0.2, 0.9 if on else 0.5), 4.0)
+			continue
+		var fade := clampf(enemies.wall_t[w] / 0.3, 0.0, 1.0)   # sinks in the last 0.3 s
+		var dir := (b - a).normalized()
+		var side := dir.orthogonal()
+		draw_line(a, b, Color(0.12, 0.08, 0.05, fade), th + 4.0)
+		draw_line(a, b, Color(0.42, 0.27, 0.15, fade), th)
+		draw_line(a - side * th * 0.2, b - side * th * 0.2, Color(0.58, 0.4, 0.22, fade), 3.0)
+		var len := a.distance_to(b)
+		var k2 := 0.0
+		while k2 < len:   # thorns both sides
+			var q := a + dir * k2
+			var sgn := 1.0 if int(k2 / 18.0) % 2 == 0 else -1.0
+			draw_colored_polygon(PackedVector2Array([q - dir * 4.0 + side * sgn * th * 0.4, q + dir * 4.0 + side * sgn * th * 0.4,
+				q + side * sgn * (th * 0.5 + 9.0)]), Color(0.75, 0.62, 0.4, fade))
+			k2 += 18.0
+	for ln: Array in enemies.absorb_lines:
+		_absorb_fx.append({"a": ln[0], "b": ln[1], "t": 0.5})
+	enemies.absorb_lines.clear()
+	for fx: Dictionary in _absorb_fx:
+		var u := float(fx["t"]) / 0.5
+		draw_line(fx["a"], fx["b"], Color(0.35, 0.22, 0.1, u), 5.0)
+		draw_line(fx["a"], fx["b"], Color(0.55, 0.9, 0.5, u), 2.0)
+
+
 func _draw_pools(view: Rect2) -> void:
 	for b in enemies.pool_pos.size():
 		var p := enemies.pool_pos[b]
