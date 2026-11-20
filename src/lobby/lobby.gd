@@ -160,17 +160,39 @@ func _build_ui() -> void:
 	menu.add_child(sub)
 	var top := HBoxContainer.new()
 	top.add_theme_constant_override("separation", 10)
-	var top_buttons := [UiKit.with_icon(_button("Nhân vật", func() -> void: get_tree().change_scene_to_file(CHARACTERS_SCENE)), "nav_character"),
-		UiKit.with_icon(_button("Bộ thẻ", func() -> void: get_tree().change_scene_to_file(DECK_SCENE)), "nav_deck"),
-		UiKit.with_icon(_button("Gacha", func() -> void: get_tree().change_scene_to_file("res://src/front/gacha.tscn")), "nav_gacha"),
-		UiKit.with_icon(_button(_missions_label(), func() -> void: get_tree().change_scene_to_file("res://src/front/missions.tscn")), "nav_missions"),
-		UiKit.with_icon(_button("Cài đặt", func() -> void: _show_settings(root, menu)), "nav_settings"),
-		UiKit.with_icon(_button("Menu chính", func() -> void: get_tree().change_scene_to_file(TITLE_SCENE)), "nav_title")]
+	var top_buttons := [_button("Nhân vật", func() -> void: get_tree().change_scene_to_file(CHARACTERS_SCENE)),
+		_button("Bộ thẻ", func() -> void: get_tree().change_scene_to_file(DECK_SCENE)),
+		_button("Gacha", func() -> void: get_tree().change_scene_to_file("res://src/front/gacha.tscn")),
+		_button(_missions_label(), func() -> void: get_tree().change_scene_to_file("res://src/front/missions.tscn")),
+		_button("Cài đặt", func() -> void: _show_settings(root, menu)),
+		_button("Menu chính", func() -> void: get_tree().change_scene_to_file(TITLE_SCENE))]
 	top.position = Vector2(vp.x - 32 - top_buttons.size() * 140 - (top_buttons.size() - 1) * 10, 26)
 	menu.add_child(top)
-	for b in top_buttons:
-		b.custom_minimum_size = Vector2(140, 42)
-		b.add_theme_font_size_override("font_size", 18)
+	# icon-only (user 2026-11-20): the name and what it does are in the tooltip; Nhiệm vụ keeps a count badge
+	var tips := [["Nhân vật", "Chọn hoặc tạo nhân vật khác (Esc)."],
+		["Bộ thẻ", "Chọn thẻ mang vào trận: 8 chiêu, 6 chỉ số, giới hạn điểm theo độ hiếm."],
+		["Gacha", "Quay trang bị bằng kim cương."],
+		[_missions_label(), "Nhiệm vụ hằng ngày và phần thưởng chờ nhận."],
+		["Cài đặt", "Âm thanh, hiển thị, phím."],
+		["Menu chính", "Về màn hình tiêu đề."]]
+	for k in top_buttons.size():
+		var b: Button = top_buttons[k]
+		var label := b.text
+		b.text = ""
+		UiKit.with_icon(b, String(["nav_character", "nav_deck", "nav_gacha", "nav_missions", "nav_settings", "nav_title"][k]), 2)
+		b.custom_minimum_size = Vector2(64, 56)
+		b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		Tip.attach(b, String(tips[k][0]), String(tips[k][1]))
+		var count := label.get_slice("(", 1).trim_suffix(")") if label.contains("(") else ""
+		if count != "":   # rewards waiting: a red badge on the icon
+			var badge := UiKit.label(count, 13, Color.WHITE)
+			var bs := UiKit.style(Color("c0392b"), 0, Color("1b1726"), 2)
+			bs.set_corner_radius_all(9)
+			badge.add_theme_stylebox_override("normal", bs)
+			badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			badge.custom_minimum_size = Vector2(18, 18)
+			badge.position = Vector2(46, -4)
+			b.add_child(badge)
 		top.add_child(b)
 	# right-aligned by the row's real width: an icon or a longer label widens a button (Menu chính overflowed)
 	top.position.x = vp.x - 32 - top.get_combined_minimum_size().x
