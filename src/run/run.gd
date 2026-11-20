@@ -1576,23 +1576,27 @@ func trigger_special(sp: Dictionary) -> void:
 		"pulse":
 			var reach := float(sp.get("radius", 150.0)) * float(stats.get("area", 1.0))
 			enemies.hit_circle(center, reach, dmg, float(sp.get("knockback", 160.0)), src)
-			_ring_fx(reach)
+			var ring_sprite := String(sp.get("fx", "stomp-i"))
+			_ring_fx(reach, ring_sprite, "cast" if ring_sprite != "stomp-i" else "burst")
 			Sfx.play("quake")
 		"chain_shock":
 			for i in enemies.nearest_n(center, int(sp.get("count", 6))):
 				enemies.hit_circle(enemies.center_of(i), 8.0, dmg, 0.0, src)
 				enemies.apply_status(i, "shock", {"mul": 1.0, "chain": int(sp.get("chain", 2)),
 					"radius": float(sp.get("radius", 120.0))}, dmg, src)
+			_item_fx(sp)
 			Sfx.play("zap")
 		"burn_aura":
 			for i in enemies.living_within(center, float(sp.get("radius", 100.0))):
 				enemies.apply_status(i, "burn", {"time": float(sp.get("time", 2.0)), "dps_mul": float(sp.get("damage_mul", 0.3))},
 					float(stats.get("damage", 10.0)), src)
+			_item_fx(sp)
 		"freeze_nova":
 			var reach := float(sp.get("radius", 150.0)) * float(stats.get("area", 1.0))
 			for i in enemies.living_within(center, reach):
 				enemies.apply_status(i, "freeze", {"time": float(sp.get("time", 1.5))}, 0.0, src)
-			_ring_fx(reach)
+			var ring_sprite := String(sp.get("fx", "stomp-i"))
+			_ring_fx(reach, ring_sprite, "cast" if ring_sprite != "stomp-i" else "burst")
 			Sfx.play("frost")
 		"reset_cd":
 			_blade_cd = 0.0
@@ -1675,6 +1679,7 @@ func _retaliate() -> void:
 		if sp.get("kind") == "hit_buff" and _special_t[k] <= 0.0:
 			_special_t[k] = float(sp.get("cooldown", 8.0))
 			_special_buff(sp)
+			_item_fx(sp)
 			continue
 		if sp.get("kind") != "retaliate" or _special_t[k] > 0.0:
 			continue
