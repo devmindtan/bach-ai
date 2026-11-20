@@ -60,3 +60,28 @@ func test_phase_two_multipliers_apply_after_the_transition() -> void:
 	_check(absf(e.k_radius[0] - r1 * 0.5) < 0.01, "body radius x0.5: %.1f -> %.1f" % [r1, e.k_radius[0]])
 	_check(is_equal_approx(e.contact_damage(0), 12.0), "contact x1.2 = 12, got %.1f" % e.contact_damage(0))
 
+
+
+func test_the_transform_animation_plays_through_the_transition() -> void:
+	# user 2026-11-20: the bosses lacked an animation for changing state
+	var boss := {"sprite": "tree", "behaviour": "chase", "boss": true, "hp": 1000.0, "damage": 1.0, "speed": 1.0, "xp": 1.0,
+		"rage_at": 0.5, "rage_sprite": "tree2", "phase2": {"transition": 1.5, "push": 0.0}}
+	var body := {"anim": "default", "center": [24.0, 30.0], "radius": 14.0}
+	var sheet := SpriteSheet.from_meta("tree", {"frames": 1, "frame_size": [48, 48], "fps": 8.0, "anchor": [24.0, 47.0], "body": body})
+	var rage := SpriteSheet.from_meta("tree2", {"frame_size": [48, 48], "anchor": [24.0, 47.0], "body": body,
+		"animations": [{"name": "move", "start": 0, "frames": 1, "fps": 8.0, "loop": true},
+			{"name": "transform", "start": 1, "frames": 12, "fps": 8.0, "loop": false}]})
+	var e := Enemies.new({"boss": boss}, {"max_enemies": 4, "separation": {"push": 0.0}}, {"tree": sheet, "tree2": rage}, 1)
+	e.spawn("boss", Vector2.ZERO)
+	e.hp[0] = 499.0
+	e.step(0.01, Vector2(400, 0), Vector2(400, 0))
+	_check(e.sheet_of(0) == rage, "the phase 2 sheet from the start of the transition (it holds the transform)")
+	var a := e.anim_of(0)
+	_check(a[0] == "transform" and float(a[1]) < 0.1, "transform from its first frame, got %s" % [a])
+	for k in 20:   # 0.75 s
+		e.step(0.0375, Vector2(400, 0), Vector2(400, 0))
+	a = e.anim_of(0)
+	_check(a[0] == "transform" and absf(float(a[1]) - rage.duration("transform") * 0.5) < 0.1, "halfway through at 0.75 s, got %s" % [a])
+	for k in 30:
+		e.step(0.05, Vector2(400, 0), Vector2(400, 0))
+	_check(e.anim_of(0)[0] != "transform", "back to its own animations after the transition")

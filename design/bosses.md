@@ -85,7 +85,21 @@ có lướt và tốc người chơi 158 ≫ 26, nên ×1,7 vẫn chậm hơn ng
   hoặc lướt.
 - Không còn phun bào tử và tách cóc con ở pha 2 (`split_at` chỉ còn 75%).
 
+### Animation chuyển trạng thái (người dùng 2026-11-20: "các boss thiếu animation chuyển trạng thái")
+
+Tham khảo: mẫu khựng → animation chuyển tiếp (gầm, biến hình) → pha 2 ([ludonauta: Hollow Knight style boss in Godot](https://ludonauta.itch.io/platformer-essentials/devlog/1089921/hollow-knight-inspired-boss-fight-in-godot-4));
+gói asset boss tách riêng animation "vào pha 2" ([goblin boss phase 2](https://otsoga.itch.io/goblin-boss-phase-2)). **Quyết định:** sheet pha 2 của mỗi
+boss có `transform` 12 khung, game trải đều nó trong 1,5 s bất tử (`Enemies.anim_of`), chỉ rung nhẹ, không chớp màu nữa:
+Mộc Yêu rùng mình → tán rách, lá bung → lộ lõi ngọc → rễ co, cuộn thành chân → đứng dậy gầm; Cóc run → mụn đỏ dần → nấm
+phình, hóa tím → bào tử nổ → gầm; Vua Thạch Nhầy run → nháy xanh/đỏ, đỏ dày dần → chớp trắng lúc gồng → đỏ hẳn, dấu giận
+bật ra. Vua Thạch Nhầy có `phase2` không tên (chỉ chuyển pha 1,5 s + đẩy lùi), vẫn báo "nổi giận" như cũ.
+
 ### Sprite pha 2 (nâng cấp từ sprite đã duyệt, không vẽ lại)
+
+Người dùng 2026-11-20: thân dưới Cổ Thụ Trụi Lá "xấu, phải hùng hổ hơn" → hai chân rễ to dạng bó rễ xoắn, chân vòng
+kiềng đứng rộng, ống chân có gai, bàn chân 3 vuốt rễ + cựa, đất văng sau gót; hông bè; thân chúi tới và nhún mỗi bước;
+mặt luôn cau, nhe nanh (tham khảo: [OpenGameArt treant](https://opengameart.org/content/treant-monster), [pixie.haus menacing treant](https://pixie.haus/pixelart/332489/sentient-tree-creature-aggressive-pose-animation)).
+
 
 - `tree-boss-bare`: cùng thân, tán rụng sạch để lộ ngọn khô và **lõi tinh thể xanh ngọc** phát sáng; bộ rễ cuộn thành
   **hai chân thô** có chu kỳ chạy (move 8 khung).

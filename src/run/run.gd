@@ -2379,9 +2379,10 @@ func _draw() -> void:
 				draw_circle(Vector2.ZERO, sr * (1.0 - 0.3 * lift / maxf(1.0, lift + sr)), Color(0, 0, 0, 0.3))
 				draw_set_transform(Vector2.ZERO)
 			var at := enemies.pos[i] - Vector2(0.0, lift)
-			if enemies.in_transition(i):   # phase 2 transition: shakes and flashes white / red
-				at += Vector2(sin(clock * 90.0) * 3.0, cos(clock * 70.0) * 1.5).round()
-				tint = Color(2.0, 2.0, 2.0) if int(clock * 12.0) % 2 == 0 else Color(1.6, 0.5, 0.45)
+			if enemies.in_transition(i):   # phase 2 transition: shakes; flashes only without a transform animation
+				at += Vector2(sin(clock * 90.0) * 2.0, 0.0).round()
+				if not enemies.sheet_of(i).has_animation("transform"):
+					tint = Color(2.0, 2.0, 2.0) if int(clock * 12.0) % 2 == 0 else Color(1.6, 0.5, 0.45)
 			enemies.sheet_of(i).draw(self, a[0], a[1], at, enemies.k_scale[k], enemies.flip[i] == 1, tint)
 	_draw_bolts()
 	var hero: SpriteSheet = sheets.get(String(class_data.get("sprite", "swordsman")))

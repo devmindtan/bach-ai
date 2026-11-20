@@ -1381,14 +1381,17 @@ func sheet_of(i: int) -> SpriteSheet:
 	var k := kind[i]
 	if k_rage_sheet[k] != null and enraged(i):
 		var tr := float(_phase2(i).get("transition", 0.0))
-		if phase_t[i] > tr * 0.5:   # the old body for the first half of the transition: it changes mid-flash
-			return k_sheet[k]
+		if phase_t[i] > tr * 0.5 and not k_rage_sheet[k].has_animation("transform"):
+			return k_sheet[k]   # no transform animation: the old body for the first half, it changes mid-flash
 		return k_rage_sheet[k]
 	return k_sheet[k]
 
 
 func anim_of(i: int) -> Array:
 	var sheet := k_sheet[kind[i]]
+	if phase_t[i] > 0.0 and sheet_of(i).has_animation("transform"):   # the phase change, spread over the transition
+		var tr := maxf(0.05, float(_phase2(i).get("transition", 1.5)))
+		return ["transform", (1.0 - phase_t[i] / tr) * sheet_of(i).duration("transform") * 0.999]
 	match state[i]:
 		DYING:
 			return ["death", timer[i]]

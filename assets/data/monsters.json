@@ -65,7 +65,11 @@
       "damage": 22.0
     },
     "hop_height": 36.0,
-    "rage_sprite": "king-slime-rage"
+    "rage_sprite": "king-slime-rage",
+    "phase2": {
+      "transition": 1.5,
+      "push": 320.0
+    }
   },
   "spore": {
     "name": "Nấm Phun",
