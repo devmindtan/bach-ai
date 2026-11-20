@@ -85,16 +85,15 @@ func test_enhancing_costs_gold_and_raises_the_effects() -> void:
 	for k in 10:
 		gold["v"] = 100000
 		p.enhance("iron_helm", gold)
-	_check(p.plus_of("iron_helm") == Profile.MAX_PLUS, "stops at +%d" % Profile.MAX_PLUS)
+	_check(p.plus_of("iron_helm") == p.max_plus("iron_helm"), "stops at +%d" % p.max_plus("iron_helm"))
 	var q := Profile.new(ITEMS)
 	q.from_dict(p.to_dict())
-	_check(q.plus_of("iron_helm") == Profile.MAX_PLUS, "the level is saved")
+	_check(q.plus_of("iron_helm") == p.max_plus("iron_helm"), "the level is saved")
 
 
 const LEGEND := {
 	"crown": {"name": "Vương miện", "slot": "head", "rarity": "legendary", "effects": {"max_hp": {"add": 10.0}},
-		"sub": {"at": 2, "effects": {"max_hp": {"add": 5.0}, "regen": {"add": 1.0}}, "desc": "x"},
-		"special": {"at": 3, "kind": "pulse", "every": 6.0, "name": "Vòng", "desc": "y"}},
+		"sub": {"at": 2, "effects": {"max_hp": {"add": 5.0}, "regen": {"add": 1.0}}, "desc": "x"}},
 }
 
 
@@ -109,29 +108,30 @@ func test_sub_line_opens_at_its_enhancement_level() -> void:
 	_check(is_equal_approx(float(e["max_hp"]["add"]), 15.0 * 1.4), "a stat in both lines adds up, got %s" % e["max_hp"])
 
 
-func test_special_opens_at_its_level_and_only_when_worn() -> void:
-	var p := Profile.new(LEGEND)
-	p.add("crown")
-	p.plus["crown"] = 3
-	_check(p.specials("knight").is_empty(), "not worn: no special")
-	p.equip("knight", "crown")
-	var sp := p.specials("knight")
-	_check(sp.size() == 1 and sp[0]["kind"] == "pulse" and sp[0]["item"] == "crown", "worn at +3: pulse from crown, got %s" % [sp])
-	p.plus["crown"] = 2
-	_check(p.specials("knight").is_empty(), "+2: still locked")
-
-
-func test_every_legendary_has_a_known_special_and_every_epic_a_sub() -> void:
+func test_items_carry_no_skill_and_higher_tiers_go_further() -> void:
+	# user 2026-11-20: item skills became cards; a higher tier only has a higher level cap and more sub lines
 	var eq: Dictionary = GameData.load_json("res://assets/data/items.json")["equipment"]
-	var kinds := ["shield", "retaliate", "pulse", "chain_shock", "revive", "reset_cd", "low_hp_buff", "kill_proc", "hit_buff", "burn_aura", "freeze_nova"]
+	var p := Profile.new(eq)
+	var caps := {"common": 3, "rare": 5, "epic": 7, "legendary": 10}
+	var subs := {"common": 0, "rare": 1, "epic": 2, "legendary": 3}
 	for id: String in eq:
 		if not eq[id] is Dictionary:
 			continue
 		var r := String(eq[id].get("rarity", ""))
-		if r == "legendary":
-			_check(kinds.has(String(eq[id].get("special", {}).get("kind", ""))), "%s: special kind" % id)
-		if r == "epic" or r == "legendary":
-			_check(not eq[id].get("sub", {}).get("effects", {}).is_empty(), "%s: dòng phụ" % id)
+		_check(not eq[id].has("special"), "%s still carries a skill" % id)
+		_check(p.max_plus(id) == int(caps[r]), "%s (%s): cap +%d, got +%d" % [id, r, caps[r], p.max_plus(id)])
+		_check(p.subs_of(id).size() == int(subs[r]), "%s (%s): %d sub lines, got %d" % [id, r, subs[r], p.subs_of(id).size()])
+
+
+func test_sub_lines_open_one_by_one() -> void:
+	var eq: Dictionary = GameData.load_json("res://assets/data/items.json")["equipment"]
+	var p := Profile.new(eq)
+	p.add("aegis_helm")
+	_check(p.open_subs("aegis_helm") == 0, "+0: none open")
+	p.plus["aegis_helm"] = 4
+	_check(p.open_subs("aegis_helm") == 2, "+4: two open, got %d" % p.open_subs("aegis_helm"))
+	p.plus["aegis_helm"] = 10
+	_check(p.open_subs("aegis_helm") == 3 and p.enhance_cost("aegis_helm") == 0, "+10: all three, the top")
 
 
 func test_old_saves_move_to_the_new_items() -> void:

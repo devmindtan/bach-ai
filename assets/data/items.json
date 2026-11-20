@@ -119,7 +119,7 @@
     }
   },
   "equipment": {
-    "_doc": "48 items: 2 classes x 6 slots (head, chest, legs = Quần, arms = Tay, feet = Giày, weapon) x 4 rarities (design/equipment.md, user 2026-11-18). Every item fits one class. icon = frame of the gear-icons sprite (Sprite Lab). sub = Dòng phụ (epic, legendary; open at Cường hoá 'at'); special = Hiệu ứng đặc biệt (legendary; a run mechanic by 'kind', open at 'at'). starter = worn by a new slot of that class.",
+    "_doc": "48 items: 2 classes x 6 slots (head, chest, legs = Quần, arms = Tay, feet = Giày, weapon) x 4 rarities (design/equipment.md, user 2026-11-18). Every item fits one class. icon = frame of the gear-icons sprite (Sprite Lab). sub = Dòng phụ (epic, legendary; open at Cường hoá 'at'); starter = worn by a new slot of that class. subs = Dòng phụ (user 2026-11-20): rare 1, epic 2, legendary 3, opening at Cường hoá +2/+4/+6; the level cap is by tier (common +3, rare +5, epic +7, legendary +10, Profile.TIER_MAX_PLUS). Items carry no skills any more: those became cards (upgrades_<class>.json, from_item).",
     "iron_cap": {
       "name": "Mũ sắt",
       "slot": "head",
@@ -151,7 +151,17 @@
           "add": 13
         }
       },
-      "desc": "Giáp +2, Máu tối đa +13."
+      "desc": "Giáp +2, Máu tối đa +13.",
+      "subs": [
+        {
+          "effects": {
+            "magnet": {
+              "mul": 0.1
+            }
+          },
+          "desc": "Tầm hút +10%."
+        }
+      ]
     },
     "dragon_helm": {
       "name": "Mũ rồng",
@@ -168,15 +178,24 @@
         }
       },
       "desc": "Giáp +2, Máu tối đa +18.",
-      "sub": {
-        "at": 2,
-        "effects": {
-          "magnet": {
-            "mul": 0.15
-          }
+      "subs": [
+        {
+          "effects": {
+            "magnet": {
+              "mul": 0.15
+            }
+          },
+          "desc": "Tầm hút +15%."
         },
-        "desc": "Tầm hút +15%."
-      }
+        {
+          "effects": {
+            "regen": {
+              "add": 0.52
+            }
+          },
+          "desc": "Hồi máu +0,5/giây."
+        }
+      ]
     },
     "aegis_helm": {
       "name": "Mũ Thần Hộ",
@@ -193,24 +212,32 @@
         }
       },
       "desc": "Giáp +3, Máu tối đa +26.",
-      "sub": {
-        "at": 2,
-        "effects": {
-          "magnet": {
-            "mul": 0.225
-          }
+      "subs": [
+        {
+          "effects": {
+            "magnet": {
+              "mul": 0.225
+            }
+          },
+          "desc": "Tầm hút +22%."
         },
-        "desc": "Tầm hút +22%."
-      },
-      "special": {
-        "at": 3,
-        "kind": "shield",
-        "name": "Thần hộ",
-        "every": 15.0,
-        "buff": "phantom_ward",
-        "time": 3.0,
-        "desc": "Mỗi 15 giây: giáp ảo +12 trong 3 giây (mỗi đòn trừ 12 sát thương)."
-      }
+        {
+          "effects": {
+            "regen": {
+              "add": 0.64
+            }
+          },
+          "desc": "Hồi máu +0,6/giây."
+        },
+        {
+          "effects": {
+            "move_speed": {
+              "mul": 0.08
+            }
+          },
+          "desc": "Tốc độ chạy +8%."
+        }
+      ]
     },
     "iron_chest": {
       "name": "Giáp sắt",
@@ -242,7 +269,17 @@
           "add": 24
         }
       },
-      "desc": "Giáp +3, Máu tối đa +24."
+      "desc": "Giáp +3, Máu tối đa +24.",
+      "subs": [
+        {
+          "effects": {
+            "move_speed": {
+              "mul": 0.05
+            }
+          },
+          "desc": "Tốc độ chạy +5%."
+        }
+      ]
     },
     "dragon_chest": {
       "name": "Giáp rồng",
@@ -259,15 +296,24 @@
         }
       },
       "desc": "Giáp +5, Máu tối đa +34.",
-      "sub": {
-        "at": 2,
-        "effects": {
-          "regen": {
-            "add": 0.5
-          }
+      "subs": [
+        {
+          "effects": {
+            "regen": {
+              "add": 0.5
+            }
+          },
+          "desc": "Hồi máu +0,5/giây."
         },
-        "desc": "Hồi máu +0.5/giây."
-      }
+        {
+          "effects": {
+            "move_speed": {
+              "mul": 0.065
+            }
+          },
+          "desc": "Tốc độ chạy +6%."
+        }
+      ]
     },
     "aegis_chest": {
       "name": "Giáp Thần Hộ",
@@ -284,26 +330,32 @@
         }
       },
       "desc": "Giáp +6, Máu tối đa +48.",
-      "sub": {
-        "at": 2,
-        "effects": {
-          "regen": {
-            "add": 1.0
-          }
+      "subs": [
+        {
+          "effects": {
+            "regen": {
+              "add": 1.0
+            }
+          },
+          "desc": "Hồi máu +1/giây."
         },
-        "desc": "Hồi máu +1/giây."
-      },
-      "special": {
-        "at": 3,
-        "kind": "retaliate",
-        "name": "Phản chấn",
-        "fx": "retaliate-shock",
-        "cooldown": 2.0,
-        "radius": 130.0,
-        "damage_mul": 1.5,
-        "knockback": 260.0,
-        "desc": "Khi bị đánh: chấn sóng quanh người gây 150% sát thương và đẩy lùi (2 giây một lần)."
-      }
+        {
+          "effects": {
+            "move_speed": {
+              "mul": 0.08
+            }
+          },
+          "desc": "Tốc độ chạy +8%."
+        },
+        {
+          "effects": {
+            "cooldown": {
+              "mul": -0.064
+            }
+          },
+          "desc": "Hồi chiêu −6%."
+        }
+      ]
     },
     "iron_greaves": {
       "name": "Quần giáp sắt",
@@ -335,7 +387,17 @@
           "add": 0.5
         }
       },
-      "desc": "Máu tối đa +19, Hồi máu +0.5/giây."
+      "desc": "Máu tối đa +19, Hồi máu +0.5/giây.",
+      "subs": [
+        {
+          "effects": {
+            "area": {
+              "mul": 0.05
+            }
+          },
+          "desc": "Vùng đánh +5%."
+        }
+      ]
     },
     "dragon_greaves": {
       "name": "Quần giáp rồng",
@@ -352,15 +414,24 @@
         }
       },
       "desc": "Máu tối đa +28, Hồi máu +0.5/giây.",
-      "sub": {
-        "at": 2,
-        "effects": {
-          "armor": {
-            "add": 1
-          }
+      "subs": [
+        {
+          "effects": {
+            "armor": {
+              "add": 1
+            }
+          },
+          "desc": "Giáp +1."
         },
-        "desc": "Giáp +1."
-      }
+        {
+          "effects": {
+            "area": {
+              "mul": 0.065
+            }
+          },
+          "desc": "Vùng đánh +6%."
+        }
+      ]
     },
     "aegis_greaves": {
       "name": "Quần giáp Thần Hộ",
@@ -377,26 +448,32 @@
         }
       },
       "desc": "Máu tối đa +38, Hồi máu +1/giây.",
-      "sub": {
-        "at": 2,
-        "effects": {
-          "armor": {
-            "add": 2
-          }
+      "subs": [
+        {
+          "effects": {
+            "armor": {
+              "add": 2
+            }
+          },
+          "desc": "Giáp +2."
         },
-        "desc": "Giáp +2."
-      },
-      "special": {
-        "at": 3,
-        "kind": "low_hp_buff",
-        "name": "Bàn thạch",
-        "threshold": 0.3,
-        "buff": "stone_ward",
-        "ward": true,
-        "time": 8.0,
-        "cooldown": 30.0,
-        "desc": "Máu dưới 30%: vỏ đá chặn trọn một đòn trong 8 giây (30 giây một lần)."
-      }
+        {
+          "effects": {
+            "area": {
+              "mul": 0.08
+            }
+          },
+          "desc": "Vùng đánh +8%."
+        },
+        {
+          "effects": {
+            "damage": {
+              "mul": 0.08
+            }
+          },
+          "desc": "Sát thương +8%."
+        }
+      ]
     },
     "iron_gauntlets": {
       "name": "Găng sắt",
@@ -428,7 +505,17 @@
           "mul": 0.048
         }
       },
-      "desc": "Sát thương +8%, Vùng đánh +5%."
+      "desc": "Sát thương +8%, Vùng đánh +5%.",
+      "subs": [
+        {
+          "effects": {
+            "max_hp": {
+              "mul": 0.05
+            }
+          },
+          "desc": "Máu tối đa +5%."
+        }
+      ]
     },
     "dragon_gauntlets": {
       "name": "Găng rồng",
@@ -445,15 +532,24 @@
         }
       },
       "desc": "Sát thương +12%, Vùng đánh +7%.",
-      "sub": {
-        "at": 2,
-        "effects": {
-          "cooldown": {
-            "mul": -0.04
-          }
+      "subs": [
+        {
+          "effects": {
+            "cooldown": {
+              "mul": -0.04
+            }
+          },
+          "desc": "Hồi chiêu −4%."
         },
-        "desc": "Hồi chiêu −4%."
-      }
+        {
+          "effects": {
+            "max_hp": {
+              "mul": 0.065
+            }
+          },
+          "desc": "Máu tối đa +6%."
+        }
+      ]
     },
     "aegis_gauntlets": {
       "name": "Găng Thần Hộ",
@@ -470,24 +566,32 @@
         }
       },
       "desc": "Sát thương +16%, Vùng đánh +10%.",
-      "sub": {
-        "at": 2,
-        "effects": {
-          "cooldown": {
-            "mul": -0.06
-          }
+      "subs": [
+        {
+          "effects": {
+            "cooldown": {
+              "mul": -0.06
+            }
+          },
+          "desc": "Hồi chiêu −6%."
         },
-        "desc": "Hồi chiêu −6%."
-      },
-      "special": {
-        "at": 3,
-        "kind": "kill_proc",
-        "name": "Huyết quyền",
-        "fx": "ward-heal",
-        "every_kills": 30,
-        "heal_frac": 0.06,
-        "desc": "Mỗi 30 quái hạ được: hồi 6% máu tối đa."
-      }
+        {
+          "effects": {
+            "max_hp": {
+              "mul": 0.08
+            }
+          },
+          "desc": "Máu tối đa +8%."
+        },
+        {
+          "effects": {
+            "magnet": {
+              "mul": 0.16
+            }
+          },
+          "desc": "Tầm hút +16%."
+        }
+      ]
     },
     "iron_boots": {
       "name": "Ủng sắt",
@@ -520,7 +624,17 @@
           "mul": 0.16
         }
       },
-      "desc": "Tốc độ chạy +8%, Tầm hút +16%."
+      "desc": "Tốc độ chạy +8%, Tầm hút +16%.",
+      "subs": [
+        {
+          "effects": {
+            "regen": {
+              "add": 0.4
+            }
+          },
+          "desc": "Hồi máu +0,4/giây."
+        }
+      ]
     },
     "dragon_boots": {
       "name": "Ủng rồng",
@@ -537,15 +651,24 @@
         }
       },
       "desc": "Tốc độ chạy +12%, Tầm hút +23%.",
-      "sub": {
-        "at": 2,
-        "effects": {
-          "regen": {
-            "add": 0.5
-          }
+      "subs": [
+        {
+          "effects": {
+            "regen": {
+              "add": 0.5
+            }
+          },
+          "desc": "Hồi máu +0,5/giây."
         },
-        "desc": "Hồi máu +0.5/giây."
-      }
+        {
+          "effects": {
+            "cooldown": {
+              "mul": -0.052
+            }
+          },
+          "desc": "Hồi chiêu −5%."
+        }
+      ]
     },
     "aegis_boots": {
       "name": "Ủng Thần Hộ",
@@ -562,25 +685,32 @@
         }
       },
       "desc": "Tốc độ chạy +16%, Tầm hút +32%.",
-      "sub": {
-        "at": 2,
-        "effects": {
-          "regen": {
-            "add": 1.0
-          }
+      "subs": [
+        {
+          "effects": {
+            "regen": {
+              "add": 1.0
+            }
+          },
+          "desc": "Hồi máu +1/giây."
         },
-        "desc": "Hồi máu +1/giây."
-      },
-      "special": {
-        "at": 3,
-        "kind": "hit_buff",
-        "name": "Phong hành",
-        "fx": "ward-wind",
-        "buff": "haste_rune",
-        "time": 3.0,
-        "cooldown": 8.0,
-        "desc": "Khi bị đánh: Rune tốc độ 3 giây (8 giây một lần)."
-      }
+        {
+          "effects": {
+            "cooldown": {
+              "mul": -0.064
+            }
+          },
+          "desc": "Hồi chiêu −6%."
+        },
+        {
+          "effects": {
+            "area": {
+              "mul": 0.08
+            }
+          },
+          "desc": "Vùng đánh +8%."
+        }
+      ]
     },
     "iron_sword": {
       "name": "Kiếm sắt",
@@ -612,7 +742,17 @@
           "mul": 0.064
         }
       },
-      "desc": "Sát thương +13%, Vùng đánh +6%."
+      "desc": "Sát thương +13%, Vùng đánh +6%.",
+      "subs": [
+        {
+          "effects": {
+            "cooldown": {
+              "mul": -0.04
+            }
+          },
+          "desc": "Hồi chiêu −4%."
+        }
+      ]
     },
     "dragon_blade": {
       "name": "Kiếm rồng",
@@ -629,15 +769,24 @@
         }
       },
       "desc": "Sát thương +18%, Vùng đánh +9%.",
-      "sub": {
-        "at": 2,
-        "effects": {
-          "max_hp": {
-            "add": 10
-          }
+      "subs": [
+        {
+          "effects": {
+            "max_hp": {
+              "add": 10
+            }
+          },
+          "desc": "Máu tối đa +10."
         },
-        "desc": "Máu tối đa +10."
-      }
+        {
+          "effects": {
+            "cooldown": {
+              "mul": -0.052
+            }
+          },
+          "desc": "Hồi chiêu −5%."
+        }
+      ]
     },
     "aegis_blade": {
       "name": "Kiếm Thần Hộ",
@@ -654,26 +803,32 @@
         }
       },
       "desc": "Sát thương +26%, Vùng đánh +13%.",
-      "sub": {
-        "at": 2,
-        "effects": {
-          "max_hp": {
-            "add": 15
-          }
+      "subs": [
+        {
+          "effects": {
+            "max_hp": {
+              "add": 15
+            }
+          },
+          "desc": "Máu tối đa +15."
         },
-        "desc": "Máu tối đa +15."
-      },
-      "special": {
-        "at": 3,
-        "kind": "pulse",
-        "name": "Thánh kiếm",
-        "fx": "ward-pulse",
-        "every": 6.0,
-        "radius": 150.0,
-        "damage_mul": 2.5,
-        "knockback": 160.0,
-        "desc": "Mỗi 6 giây: một vòng kiếm quanh người gây 250% sát thương."
-      }
+        {
+          "effects": {
+            "cooldown": {
+              "mul": -0.064
+            }
+          },
+          "desc": "Hồi chiêu −6%."
+        },
+        {
+          "effects": {
+            "magnet": {
+              "mul": 0.16
+            }
+          },
+          "desc": "Tầm hút +16%."
+        }
+      ]
     },
     "cloth_hat": {
       "name": "Mũ vải",
@@ -706,7 +861,17 @@
           "add": 8
         }
       },
-      "desc": "Hồi chiêu −5%, Máu tối đa +8."
+      "desc": "Hồi chiêu −5%, Máu tối đa +8.",
+      "subs": [
+        {
+          "effects": {
+            "magnet": {
+              "mul": 0.1
+            }
+          },
+          "desc": "Tầm hút +10%."
+        }
+      ]
     },
     "void_hat": {
       "name": "Mũ hư không",
@@ -723,15 +888,24 @@
         }
       },
       "desc": "Hồi chiêu −7%, Máu tối đa +12.",
-      "sub": {
-        "at": 2,
-        "effects": {
-          "magnet": {
-            "mul": 0.15
-          }
+      "subs": [
+        {
+          "effects": {
+            "magnet": {
+              "mul": 0.15
+            }
+          },
+          "desc": "Tầm hút +15%."
         },
-        "desc": "Tầm hút +15%."
-      }
+        {
+          "effects": {
+            "regen": {
+              "add": 0.52
+            }
+          },
+          "desc": "Hồi máu +0,5/giây."
+        }
+      ]
     },
     "star_hat": {
       "name": "Mũ Tinh Tú",
@@ -748,27 +922,32 @@
         }
       },
       "desc": "Hồi chiêu −10%, Máu tối đa +16.",
-      "sub": {
-        "at": 2,
-        "effects": {
-          "magnet": {
-            "mul": 0.225
-          }
+      "subs": [
+        {
+          "effects": {
+            "magnet": {
+              "mul": 0.225
+            }
+          },
+          "desc": "Tầm hút +22%."
         },
-        "desc": "Tầm hút +22%."
-      },
-      "special": {
-        "at": 3,
-        "kind": "chain_shock",
-        "name": "Lôi ấn",
-        "fx": "ward-shock",
-        "every": 8.0,
-        "count": 6,
-        "damage_mul": 1.2,
-        "chain": 2,
-        "radius": 120.0,
-        "desc": "Mỗi 8 giây: sét đánh 6 quái gần nhất (120% sát thương), lan sang 2 quái bên cạnh."
-      }
+        {
+          "effects": {
+            "regen": {
+              "add": 0.64
+            }
+          },
+          "desc": "Hồi máu +0,6/giây."
+        },
+        {
+          "effects": {
+            "move_speed": {
+              "mul": 0.08
+            }
+          },
+          "desc": "Tốc độ chạy +8%."
+        }
+      ]
     },
     "cloth_robe": {
       "name": "Áo vải",
@@ -800,7 +979,17 @@
           "mul": 0.064
         }
       },
-      "desc": "Máu tối đa +16, Vùng đánh +6%."
+      "desc": "Máu tối đa +16, Vùng đánh +6%.",
+      "subs": [
+        {
+          "effects": {
+            "move_speed": {
+              "mul": 0.05
+            }
+          },
+          "desc": "Tốc độ chạy +5%."
+        }
+      ]
     },
     "void_robe": {
       "name": "Áo choàng hư không",
@@ -817,15 +1006,24 @@
         }
       },
       "desc": "Máu tối đa +23, Vùng đánh +9%.",
-      "sub": {
-        "at": 2,
-        "effects": {
-          "regen": {
-            "add": 0.5
-          }
+      "subs": [
+        {
+          "effects": {
+            "regen": {
+              "add": 0.5
+            }
+          },
+          "desc": "Hồi máu +0,5/giây."
         },
-        "desc": "Hồi máu +0.5/giây."
-      }
+        {
+          "effects": {
+            "move_speed": {
+              "mul": 0.065
+            }
+          },
+          "desc": "Tốc độ chạy +6%."
+        }
+      ]
     },
     "star_robe": {
       "name": "Áo choàng Tinh Tú",
@@ -842,24 +1040,32 @@
         }
       },
       "desc": "Máu tối đa +32, Vùng đánh +13%.",
-      "sub": {
-        "at": 2,
-        "effects": {
-          "regen": {
-            "add": 1.0
-          }
+      "subs": [
+        {
+          "effects": {
+            "regen": {
+              "add": 1.0
+            }
+          },
+          "desc": "Hồi máu +1/giây."
         },
-        "desc": "Hồi máu +1/giây."
-      },
-      "special": {
-        "at": 3,
-        "kind": "revive",
-        "name": "Tim bất diệt",
-        "fx": "ward-revive",
-        "hp": 0.4,
-        "invuln": 2.0,
-        "desc": "Một lần mỗi trận: hết máu thì đứng dậy với 40% máu, miễn sát thương 2 giây."
-      }
+        {
+          "effects": {
+            "move_speed": {
+              "mul": 0.08
+            }
+          },
+          "desc": "Tốc độ chạy +8%."
+        },
+        {
+          "effects": {
+            "cooldown": {
+              "mul": -0.064
+            }
+          },
+          "desc": "Hồi chiêu −6%."
+        }
+      ]
     },
     "cloth_pants": {
       "name": "Quần vải",
@@ -891,7 +1097,17 @@
           "add": 10
         }
       },
-      "desc": "Hồi máu +0.5/giây, Máu tối đa +10."
+      "desc": "Hồi máu +0.5/giây, Máu tối đa +10.",
+      "subs": [
+        {
+          "effects": {
+            "area": {
+              "mul": 0.05
+            }
+          },
+          "desc": "Vùng đánh +5%."
+        }
+      ]
     },
     "void_pants": {
       "name": "Quần hư không",
@@ -908,15 +1124,24 @@
         }
       },
       "desc": "Hồi máu +1/giây, Máu tối đa +14.",
-      "sub": {
-        "at": 2,
-        "effects": {
-          "move_speed": {
-            "mul": 0.05
-          }
+      "subs": [
+        {
+          "effects": {
+            "move_speed": {
+              "mul": 0.05
+            }
+          },
+          "desc": "Tốc độ chạy +5%."
         },
-        "desc": "Tốc độ chạy +5%."
-      }
+        {
+          "effects": {
+            "area": {
+              "mul": 0.065
+            }
+          },
+          "desc": "Vùng đánh +6%."
+        }
+      ]
     },
     "star_pants": {
       "name": "Quần Tinh Tú",
@@ -933,26 +1158,32 @@
         }
       },
       "desc": "Hồi máu +1.5/giây, Máu tối đa +19.",
-      "sub": {
-        "at": 2,
-        "effects": {
-          "move_speed": {
-            "mul": 0.075
-          }
+      "subs": [
+        {
+          "effects": {
+            "move_speed": {
+              "mul": 0.075
+            }
+          },
+          "desc": "Tốc độ chạy +8%."
         },
-        "desc": "Tốc độ chạy +8%."
-      },
-      "special": {
-        "at": 3,
-        "kind": "burn_aura",
-        "name": "Hoả y",
-        "fx": "ward-burn",
-        "every": 1.0,
-        "radius": 100.0,
-        "damage_mul": 0.3,
-        "time": 2.0,
-        "desc": "Mỗi giây: đốt cháy quái trong vòng quanh người (30% sát thương mỗi giây)."
-      }
+        {
+          "effects": {
+            "area": {
+              "mul": 0.08
+            }
+          },
+          "desc": "Vùng đánh +8%."
+        },
+        {
+          "effects": {
+            "damage": {
+              "mul": 0.08
+            }
+          },
+          "desc": "Sát thương +8%."
+        }
+      ]
     },
     "cloth_wraps": {
       "name": "Băng tay vải",
@@ -984,7 +1215,17 @@
           "mul": 0.048
         }
       },
-      "desc": "Hồi chiêu −5%, Sát thương +5%."
+      "desc": "Hồi chiêu −5%, Sát thương +5%.",
+      "subs": [
+        {
+          "effects": {
+            "max_hp": {
+              "mul": 0.05
+            }
+          },
+          "desc": "Máu tối đa +5%."
+        }
+      ]
     },
     "void_bracer": {
       "name": "Vòng tay hư không",
@@ -1001,15 +1242,24 @@
         }
       },
       "desc": "Hồi chiêu −7%, Sát thương +7%.",
-      "sub": {
-        "at": 2,
-        "effects": {
-          "area": {
-            "mul": 0.05
-          }
+      "subs": [
+        {
+          "effects": {
+            "area": {
+              "mul": 0.05
+            }
+          },
+          "desc": "Vùng đánh +5%."
         },
-        "desc": "Vùng đánh +5%."
-      }
+        {
+          "effects": {
+            "max_hp": {
+              "mul": 0.065
+            }
+          },
+          "desc": "Máu tối đa +6%."
+        }
+      ]
     },
     "star_bracer": {
       "name": "Vòng tay Tinh Tú",
@@ -1026,25 +1276,32 @@
         }
       },
       "desc": "Hồi chiêu −10%, Sát thương +10%.",
-      "sub": {
-        "at": 2,
-        "effects": {
-          "area": {
-            "mul": 0.075
-          }
+      "subs": [
+        {
+          "effects": {
+            "area": {
+              "mul": 0.075
+            }
+          },
+          "desc": "Vùng đánh +8%."
         },
-        "desc": "Vùng đánh +8%."
-      },
-      "special": {
-        "at": 3,
-        "kind": "freeze_nova",
-        "name": "Băng ấn",
-        "fx": "ward-freeze",
-        "every": 10.0,
-        "radius": 150.0,
-        "time": 1.5,
-        "desc": "Mỗi 10 giây: đóng băng quái quanh người 1,5 giây."
-      }
+        {
+          "effects": {
+            "max_hp": {
+              "mul": 0.08
+            }
+          },
+          "desc": "Máu tối đa +8%."
+        },
+        {
+          "effects": {
+            "magnet": {
+              "mul": 0.16
+            }
+          },
+          "desc": "Tầm hút +16%."
+        }
+      ]
     },
     "cloth_shoes": {
       "name": "Giày vải",
@@ -1077,7 +1334,17 @@
           "mul": 0.24
         }
       },
-      "desc": "Tốc độ chạy +8%, Tầm hút +24%."
+      "desc": "Tốc độ chạy +8%, Tầm hút +24%.",
+      "subs": [
+        {
+          "effects": {
+            "regen": {
+              "add": 0.4
+            }
+          },
+          "desc": "Hồi máu +0,4/giây."
+        }
+      ]
     },
     "void_shoes": {
       "name": "Giày hư không",
@@ -1094,15 +1361,24 @@
         }
       },
       "desc": "Tốc độ chạy +12%, Tầm hút +34%.",
-      "sub": {
-        "at": 2,
-        "effects": {
-          "cooldown": {
-            "mul": -0.03
-          }
+      "subs": [
+        {
+          "effects": {
+            "cooldown": {
+              "mul": -0.03
+            }
+          },
+          "desc": "Hồi chiêu −3%."
         },
-        "desc": "Hồi chiêu −3%."
-      }
+        {
+          "effects": {
+            "regen": {
+              "add": 0.52
+            }
+          },
+          "desc": "Hồi máu +0,5/giây."
+        }
+      ]
     },
     "star_shoes": {
       "name": "Giày Tinh Tú",
@@ -1119,25 +1395,32 @@
         }
       },
       "desc": "Tốc độ chạy +16%, Tầm hút +48%.",
-      "sub": {
-        "at": 2,
-        "effects": {
-          "cooldown": {
-            "mul": -0.045
-          }
+      "subs": [
+        {
+          "effects": {
+            "cooldown": {
+              "mul": -0.045
+            }
+          },
+          "desc": "Hồi chiêu −4%."
         },
-        "desc": "Hồi chiêu −4%."
-      },
-      "special": {
-        "at": 3,
-        "kind": "kill_proc",
-        "name": "Lưu tinh",
-        "fx": "ward-haste",
-        "every_kills": 40,
-        "buff": "haste_rune",
-        "time": 4.0,
-        "desc": "Mỗi 40 quái hạ được: Rune tốc độ 4 giây."
-      }
+        {
+          "effects": {
+            "regen": {
+              "add": 0.64
+            }
+          },
+          "desc": "Hồi máu +0,6/giây."
+        },
+        {
+          "effects": {
+            "area": {
+              "mul": 0.08
+            }
+          },
+          "desc": "Vùng đánh +8%."
+        }
+      ]
     },
     "wood_staff": {
       "name": "Gậy gỗ",
@@ -1169,7 +1452,17 @@
           "mul": -0.032
         }
       },
-      "desc": "Sát thương +13%, Hồi chiêu −3%."
+      "desc": "Sát thương +13%, Hồi chiêu −3%.",
+      "subs": [
+        {
+          "effects": {
+            "area": {
+              "mul": 0.05
+            }
+          },
+          "desc": "Vùng đánh +5%."
+        }
+      ]
     },
     "void_staff": {
       "name": "Gậy hư không",
@@ -1186,15 +1479,24 @@
         }
       },
       "desc": "Sát thương +18%, Hồi chiêu −5%.",
-      "sub": {
-        "at": 2,
-        "effects": {
-          "max_hp": {
-            "add": 10
-          }
+      "subs": [
+        {
+          "effects": {
+            "max_hp": {
+              "add": 10
+            }
+          },
+          "desc": "Máu tối đa +10."
         },
-        "desc": "Máu tối đa +10."
-      }
+        {
+          "effects": {
+            "area": {
+              "mul": 0.065
+            }
+          },
+          "desc": "Vùng đánh +6%."
+        }
+      ]
     },
     "star_staff": {
       "name": "Gậy Tinh Tú",
@@ -1211,23 +1513,32 @@
         }
       },
       "desc": "Sát thương +26%, Hồi chiêu −6%.",
-      "sub": {
-        "at": 2,
-        "effects": {
-          "max_hp": {
-            "add": 15
-          }
+      "subs": [
+        {
+          "effects": {
+            "max_hp": {
+              "add": 15
+            }
+          },
+          "desc": "Máu tối đa +15."
         },
-        "desc": "Máu tối đa +15."
-      },
-      "special": {
-        "at": 3,
-        "kind": "reset_cd",
-        "name": "Vĩnh cửu",
-        "fx": "ward-reset",
-        "every": 12.0,
-        "desc": "Mỗi 12 giây: mọi chiêu hồi chiêu xong ngay."
-      }
+        {
+          "effects": {
+            "area": {
+              "mul": 0.08
+            }
+          },
+          "desc": "Vùng đánh +8%."
+        },
+        {
+          "effects": {
+            "magnet": {
+              "mul": 0.16
+            }
+          },
+          "desc": "Tầm hút +16%."
+        }
+      ]
     }
   },
   "equipment_renamed": {

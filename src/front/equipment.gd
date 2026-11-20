@@ -625,7 +625,7 @@ func _detail(root: Control) -> void:
 		body.add_child(UiKit.label("Không đổi chỉ số nào.", 15, UiKit.MUTED))
 	var prefs := Prefs.current()
 	# Cường hoá: +1..+5 with gold, each level +20% of the item's effects
-	var el := UiKit.label("Cường hoá +%d/%d  ·  mỗi bậc +%d%% hiệu ứng" % [lv, Profile.MAX_PLUS, roundi(Profile.PLUS_STEP * 100)], 14, UiKit.MUTED)
+	var el := UiKit.label("Cường hoá +%d/%d  ·  mỗi bậc +%d%% hiệu ứng" % [lv, _prof.max_plus(_view), roundi(Profile.PLUS_STEP * 100)], 14, UiKit.MUTED)
 	el.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	v.add_child(el)   # a line of its own: beside the button it pushed the column off screen
 	var cost := _prof.enhance_cost(_view)
@@ -668,15 +668,15 @@ func _stats_with(worn: Dictionary) -> Dictionary:
 ## Dòng phụ and Hiệu ứng đặc biệt of item [param id] (design/equipment.md): the
 ## unlocked ones in colour, the locked ones muted with the Cường hoá level that opens them.
 func _unlock_lines(v: VBoxContainer, d: Dictionary, id: String) -> void:
-	var rows := [["sub", "Dòng phụ", UP], ["special", "★ ", UiKit.GOLD]]
-	for r: Array in rows:
-		var e: Dictionary = d.get(r[0], {})
-		if e.is_empty():
-			continue
-		var open := _prof.sub_open(id) if r[0] == "sub" else _prof.special_open(id)
-		var head := (String(r[1]) + ": ") if r[0] == "sub" else (String(r[1]) + String(e.get("name", "")) + ": ")
-		var text := head + String(e.get("desc", "")) + ("" if open else "  (mở ở +%d)" % int(e.get("at", 0)))
-		var l := UiKit.label(text, 14, r[2] if open else UiKit.MUTED)
+	# Dòng phụ, one line each, opening one by one at Profile.SUB_AT (user 2026-11-20: items carry no skills;
+	# a higher tier only reaches a higher level and opens more sub lines)
+	var subs := _prof.subs_of(id)
+	var open_n := _prof.open_subs(id)
+	for k in subs.size():
+		var on := k < open_n
+		var at := int(Profile.SUB_AT[mini(k, Profile.SUB_AT.size() - 1)])
+		var text := "Dòng phụ %d: %s" % [k + 1, String(subs[k].get("desc", ""))] + ("" if on else "  (mở ở +%d)" % at)
+		var l := UiKit.label(text, 14, UP if on else UiKit.MUTED)
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		v.add_child(l)

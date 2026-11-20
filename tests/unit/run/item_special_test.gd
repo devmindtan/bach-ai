@@ -1,5 +1,5 @@
 extends RefCounted
-## Hiệu ứng đặc biệt of legendary items in a run (design/equipment.md): timed
+## The former item specials, now cards (user 2026-11-20), in a run: timed
 ## pulse / chain shock / shield / cooldown reset, Phản chấn on a hit taken, and
 ## the one-time revive.
 
@@ -42,10 +42,15 @@ func _spawn(r: Node, points: Array) -> void:
 	r.enemies.step(0.0001, Vector2(0, 900), Vector2(0, 900))
 
 
+## The special that item [param id] used to carry, now a card (user 2026-11-20; from_item marks it).
 func _special(id: String) -> Dictionary:
-	var sp: Dictionary = GameData.load_json("res://assets/data/items.json")["equipment"][id]["special"].duplicate()
-	sp["item"] = id
-	return sp
+	for cls in ["knight", "mage"]:
+		for u: Dictionary in GameData.load_json("res://assets/data/upgrades_%s.json" % cls)["upgrades"]:
+			if String(u.get("from_item", "")) == id:
+				var sp: Dictionary = u["special"].duplicate()
+				sp["item"] = String(u["id"])
+				return sp
+	return {}
 
 
 func test_pulse_fires_every_n_seconds_around_the_hero() -> void:
@@ -181,4 +186,16 @@ func test_burn_aura_and_freeze_nova_put_statuses() -> void:
 	var near: Array = r.enemies.statuses_of(0)
 	_check(near.has("burn") and near.has("freeze"), "near monster burns and freezes, got %s" % [near])
 	_check(r.enemies.statuses_of(1).is_empty(), "far one untouched")
+	r.free()
+
+
+func test_special_cards_grow_with_their_level() -> void:
+	var r := _run()
+	r.levels["sp_aegis_blade"] = 1
+	var one: Dictionary = r.card_specials()[0]
+	r.levels["sp_aegis_blade"] = 3
+	var three: Dictionary = r.card_specials()[0]
+	_check(float(three["damage_mul"]) > float(one["damage_mul"]) and float(three["every"]) < float(one["every"]),
+		"level 3 hits harder and more often: %s -> %s" % [one, three])
+	_check(String(one["item"]) == "sp_aegis_blade", "the card is the damage source")
 	r.free()

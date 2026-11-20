@@ -1,5 +1,5 @@
 {
-  "_doc": "Knight level-up pool. kind skill = an attack the run uses; stat = a modifier. effects apply per level: add (flat) or mul (+fraction). weight = roll weight. skills.<id>.cast says how the run casts it: nearest (one burst on each of the count nearest monsters; at_target puts its damage area on the monster instead of the art anchor, anim_prefix picks the direction animation), self (burst on the hero), random (count[level-1] bursts on random monsters within cast_range), wave (anim_prefix + direction, flies at speed px/s through monsters, count[level-1] directions: nearest, opposite, then the two others), active (player-triggered: the dash; sprite = the hero, anim = its animation). tier_sprites pick the sprite by level. frost_nova moved out: it is a mage skill. under_hero = the effect is drawn behind the hero (ground effects around it, e.g. the stomp). on_hit = statuses the skill puts on monsters it hits (assets/data/statuses.json), each from a skill level. count = casts per level (more targets / waves / pulses); the \"amount\" stat (amount cards) adds one to every skill: blade slashes the next nearest monsters, whirlwind gets more ticks, self casts pulse again 0.25 s apart, nearest casts hit the next nearest monsters. unique = a level milestone skill (milestones.json): never offered as a card until it is picked at level 10/20/30 of a run; it starts at level 1 then. pick_skill = a count card: taking it opens a skill pick and that one skill gets +pick_skill count (only the Đa phép level-milestone reward adds to every skill). min_range = random casts skip monsters closer than this when farther ones exist (a ranged skill). rarity: common | rare | epic | legendary (design/card-rarity.md).",
+  "_doc": "Knight level-up pool. kind skill = an attack the run uses; stat = a modifier. effects apply per level: add (flat) or mul (+fraction). weight = roll weight. skills.<id>.cast says how the run casts it: nearest (one burst on each of the count nearest monsters; at_target puts its damage area on the monster instead of the art anchor, anim_prefix picks the direction animation), self (burst on the hero), random (count[level-1] bursts on random monsters within cast_range), wave (anim_prefix + direction, flies at speed px/s through monsters, count[level-1] directions: nearest, opposite, then the two others), active (player-triggered: the dash; sprite = the hero, anim = its animation). tier_sprites pick the sprite by level. frost_nova moved out: it is a mage skill. under_hero = the effect is drawn behind the hero (ground effects around it, e.g. the stomp). on_hit = statuses the skill puts on monsters it hits (assets/data/statuses.json), each from a skill level. count = casts per level (more targets / waves / pulses); the \"amount\" stat (amount cards) adds one to every skill: blade slashes the next nearest monsters, whirlwind gets more ticks, self casts pulse again 0.25 s apart, nearest casts hit the next nearest monsters. unique = a level milestone skill (milestones.json): never offered as a card until it is picked at level 10/20/30 of a run; it starts at level 1 then. pick_skill = a count card: taking it opens a skill pick and that one skill gets +pick_skill count (only the Đa phép level-milestone reward adds to every skill). min_range = random casts skip monsters closer than this when farther ones exist (a ranged skill). rarity: common | rare | epic | legendary (design/card-rarity.md). Cards with \"special\" are the former item specials (user 2026-11-20): their run mechanic by kind, scaled per level by special_per_level (x_mul: relative per level; others added); from_item = the item that carried it.",
   "upgrades": [
     {
       "id": "blade_arc",
@@ -298,6 +298,154 @@
       "effects": {},
       "pick_skill": 1,
       "rarity": "epic"
+    },
+    {
+      "id": "sp_aegis_helm",
+      "name": "Thần hộ",
+      "kind": "stat",
+      "rarity": "epic",
+      "max_level": 3,
+      "weight": 4,
+      "icon": "item_shield",
+      "from_item": "aegis_helm",
+      "desc": "Mỗi 15 giây: giáp ảo +12 trong 3 giây (mỗi đòn trừ 12 sát thương). Mỗi cấp sau mạnh hơn.",
+      "special": {
+        "kind": "shield",
+        "name": "Thần hộ",
+        "every": 15.0,
+        "buff": "phantom_ward",
+        "time": 3.0,
+        "desc": "Mỗi 15 giây: giáp ảo +12 trong 3 giây (mỗi đòn trừ 12 sát thương)."
+      },
+      "special_per_level": {
+        "every_mul": -0.12
+      },
+      "effects": {}
+    },
+    {
+      "id": "sp_aegis_chest",
+      "name": "Phản chấn",
+      "kind": "stat",
+      "rarity": "legendary",
+      "max_level": 3,
+      "weight": 4,
+      "icon": "item_retaliate",
+      "from_item": "aegis_chest",
+      "desc": "Khi bị đánh: chấn sóng quanh người gây 150% sát thương và đẩy lùi (2 giây một lần). Mỗi cấp sau mạnh hơn.",
+      "special": {
+        "kind": "retaliate",
+        "name": "Phản chấn",
+        "fx": "retaliate-shock",
+        "cooldown": 2.0,
+        "radius": 130.0,
+        "damage_mul": 1.5,
+        "knockback": 260.0,
+        "desc": "Khi bị đánh: chấn sóng quanh người gây 150% sát thương và đẩy lùi (2 giây một lần)."
+      },
+      "special_per_level": {
+        "damage_mul": 0.25,
+        "cooldown_mul": -0.12
+      },
+      "effects": {}
+    },
+    {
+      "id": "sp_aegis_greaves",
+      "name": "Bàn thạch",
+      "kind": "stat",
+      "rarity": "legendary",
+      "max_level": 3,
+      "weight": 4,
+      "icon": "item_low_hp",
+      "from_item": "aegis_greaves",
+      "desc": "Máu dưới 30%: vỏ đá chặn trọn một đòn trong 8 giây (30 giây một lần). Mỗi cấp sau mạnh hơn.",
+      "special": {
+        "kind": "low_hp_buff",
+        "name": "Bàn thạch",
+        "threshold": 0.3,
+        "buff": "stone_ward",
+        "ward": true,
+        "time": 8.0,
+        "cooldown": 30.0,
+        "desc": "Máu dưới 30%: vỏ đá chặn trọn một đòn trong 8 giây (30 giây một lần)."
+      },
+      "special_per_level": {
+        "cooldown_mul": -0.12
+      },
+      "effects": {}
+    },
+    {
+      "id": "sp_aegis_gauntlets",
+      "name": "Huyết quyền",
+      "kind": "stat",
+      "rarity": "epic",
+      "max_level": 3,
+      "weight": 4,
+      "icon": "item_kill_proc",
+      "from_item": "aegis_gauntlets",
+      "desc": "Mỗi 30 quái hạ được: hồi 6% máu tối đa. Mỗi cấp sau mạnh hơn.",
+      "special": {
+        "kind": "kill_proc",
+        "name": "Huyết quyền",
+        "fx": "ward-heal",
+        "every_kills": 30,
+        "heal_frac": 0.06,
+        "desc": "Mỗi 30 quái hạ được: hồi 6% máu tối đa."
+      },
+      "special_per_level": {
+        "every_kills_mul": -0.15,
+        "heal_frac": 0.02
+      },
+      "effects": {}
+    },
+    {
+      "id": "sp_aegis_boots",
+      "name": "Phong hành",
+      "kind": "stat",
+      "rarity": "epic",
+      "max_level": 3,
+      "weight": 4,
+      "icon": "item_hit_buff",
+      "from_item": "aegis_boots",
+      "desc": "Khi bị đánh: Rune tốc độ 3 giây (8 giây một lần). Mỗi cấp sau mạnh hơn.",
+      "special": {
+        "kind": "hit_buff",
+        "name": "Phong hành",
+        "fx": "ward-wind",
+        "buff": "haste_rune",
+        "time": 3.0,
+        "cooldown": 8.0,
+        "desc": "Khi bị đánh: Rune tốc độ 3 giây (8 giây một lần)."
+      },
+      "special_per_level": {
+        "cooldown_mul": -0.12
+      },
+      "effects": {}
+    },
+    {
+      "id": "sp_aegis_blade",
+      "name": "Thánh kiếm",
+      "kind": "stat",
+      "rarity": "legendary",
+      "max_level": 3,
+      "weight": 4,
+      "icon": "item_pulse",
+      "from_item": "aegis_blade",
+      "desc": "Mỗi 6 giây: một vòng kiếm quanh người gây 250% sát thương. Mỗi cấp sau mạnh hơn.",
+      "special": {
+        "kind": "pulse",
+        "name": "Thánh kiếm",
+        "fx": "ward-pulse",
+        "every": 6.0,
+        "radius": 150.0,
+        "damage_mul": 2.5,
+        "knockback": 160.0,
+        "desc": "Mỗi 6 giây: một vòng kiếm quanh người gây 250% sát thương."
+      },
+      "special_per_level": {
+        "damage_mul": 0.25,
+        "every_mul": -0.12
+      },
+      "effects": {}
     }
   ],
   "skills": {

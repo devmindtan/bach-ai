@@ -11,7 +11,10 @@ extends RefCounted
 
 const PATH := "user://profile.json"
 const SLOTS := ["head", "chest", "legs", "arms", "feet", "weapon"]   # Mũ, Áo, Quần, Tay, Giày, Vũ khí
-const MAX_PLUS := 5          # Cường hoá: +1..+5 (design/equipment.md)
+const MAX_PLUS := 10         # the highest Cường hoá of any tier (legendary); max_plus(id) is the item's own
+# user 2026-11-20: items carry no skills; a higher tier only reaches a higher level and opens more sub lines
+const TIER_MAX_PLUS := {"common": 3, "rare": 5, "epic": 7, "legendary": 10}
+const SUB_AT := [2, 4, 6]   # sub line k opens at Cường hoá SUB_AT[k]
 const PLUS_STEP := 0.2       # each level adds 20% of the item's own effects
 const PLUS_COST := {"common": 30, "rare": 60, "epic": 120, "legendary": 200}   # gold for +1; x (level + 1)
 
@@ -58,9 +61,31 @@ func plus_of(id: String) -> int:
 	return int(plus.get(id, 0))
 
 
+## The highest Cường hoá of [param id]: by its tier (Thường +3 … Huyền thoại +10).
+func max_plus(id: String) -> int:
+	return int(TIER_MAX_PLUS.get(String(defs.get(id, {}).get("rarity", "common")), 3))
+
+
+## The sub lines (Dòng phụ) of [param id], in opening order: "subs", or the older single "sub".
+func subs_of(id: String) -> Array:
+	var d: Dictionary = defs.get(id, {})
+	if d.has("subs"):
+		return d["subs"]
+	return [d["sub"]] if d.has("sub") else []
+
+
+## How many sub lines of [param id] are open at its Cường hoá level.
+func open_subs(id: String) -> int:
+	var n := 0
+	for k in subs_of(id).size():
+		if plus_of(id) >= int(SUB_AT[mini(k, SUB_AT.size() - 1)]):
+			n += 1
+	return n
+
+
 ## Gold the next enhancement of [param id] costs (0 at the top level).
 func enhance_cost(id: String) -> int:
-	if plus_of(id) >= MAX_PLUS or not defs.has(id):
+	if not defs.has(id) or plus_of(id) >= max_plus(id):
 		return 0
 	return int(PLUS_COST.get(String(defs[id].get("rarity", "common")), 30)) * (plus_of(id) + 1)
 
@@ -81,8 +106,9 @@ func effects_of(id: String) -> Dictionary:
 	var k := 1.0 + PLUS_STEP * plus_of(id)
 	var out := {}
 	var parts: Array = [defs.get(id, {}).get("effects", {})]
-	if sub_open(id):   # Dòng phụ: added once unlocked, enhanced like the main line
-		parts.append(defs[id]["sub"].get("effects", {}))
+	var subs := subs_of(id)
+	for n in open_subs(id):   # Dòng phụ: added once unlocked, enhanced like the main line
+		parts.append(subs[n].get("effects", {}))
 	for eff: Dictionary in parts:
 		for stat: String in eff:
 			var e: Dictionary = out.get(stat, {}).duplicate()
@@ -96,28 +122,7 @@ func effects_of(id: String) -> Dictionary:
 ## Dòng phụ of [param id] is active: the item has one and its Cường hoá level
 ## reached the line's "at" (design/equipment.md).
 func sub_open(id: String) -> bool:
-	var sub: Dictionary = defs.get(id, {}).get("sub", {})
-	return not sub.is_empty() and plus_of(id) >= int(sub.get("at", 0))
-
-
-## Hiệu ứng đặc biệt of [param id] (legendary) is active: Cường hoá reached its "at".
-func special_open(id: String) -> bool:
-	var sp: Dictionary = defs.get(id, {}).get("special", {})
-	return not sp.is_empty() and plus_of(id) >= int(sp.get("at", 0))
-
-
-## Active special effects of what class [param cls] wears: the "special" entries
-## of unlocked items, each with "item" = the item id (the damage source).
-func specials(cls: String) -> Array:
-	var out := []
-	var w := equipped(cls)
-	for slot: String in SLOTS:
-		var id := String(w.get(slot, ""))
-		if id != "" and special_open(id):
-			var sp: Dictionary = defs[id]["special"].duplicate()
-			sp["item"] = id
-			out.append(sp)
-	return out
+	return open_subs(id) > 0
 
 
 func add(id: String) -> void:

@@ -381,7 +381,7 @@ func _ready() -> void:
 		profile.equip(class_id, id)
 		if _gear_plus > 0:
 			profile.plus[id] = _gear_plus
-	set_specials(profile.specials(class_id) if profile != null else [])
+	set_specials(card_specials())   # specials come from cards now, not items (user 2026-11-20)
 	var hero_layers: SpriteSheet = sheets.get(String(class_data.get("sprite", "")))
 	if hero_layers != null and not hero_layers.layer_names().is_empty() and profile != null:
 		hero_layers.compose_layers(hero_layers.gear_overrides(profile.equipped(class_id).values()))   # worn items show
@@ -1562,7 +1562,31 @@ func _step_guardian(dt: float) -> void:
 
 # --- Hiệu ứng đặc biệt (legendary items, design/equipment.md) -----------------
 
-## Sets the active item specials and their timers (each "every" starts full).
+## The run's specials from its cards (the former item specials, user 2026-11-20): every card with a
+## "special" at level >= 1, scaled by special_per_level for each level past the first (a key the special
+## has is added; "x_mul" multiplies x by 1 + value per level). "item" = the card id (the damage source).
+func card_specials() -> Array:
+	var out := []
+	for u: Dictionary in pool.get("upgrades", []):
+		var lv := int(levels.get(String(u.get("id", "")), 0))
+		if lv <= 0 or not u.has("special"):
+			continue
+		var sp: Dictionary = u["special"].duplicate()
+		var per: Dictionary = u.get("special_per_level", {})
+		for key: String in per:
+			var step := float(per[key]) * (lv - 1)
+			if sp.has(key):
+				sp[key] = float(sp[key]) + step
+			elif key.ends_with("_mul") and sp.has(key.trim_suffix("_mul")):
+				var base := key.trim_suffix("_mul")
+				var v := float(sp[base]) * maxf(0.1, 1.0 + step)
+				sp[base] = roundi(v) if sp[base] is int else v
+		sp["item"] = String(u["id"])
+		out.append(sp)
+	return out
+
+
+## Sets the active specials and their timers (each "every" starts full).
 func set_specials(list: Array) -> void:
 	specials = list
 	_special_t.clear()
@@ -1948,6 +1972,8 @@ func choose(index: int) -> void:
 		_after_pick()
 		return
 	levels[id] = int(levels.get(id, 0)) + 1
+	if upgrade(id).has("special"):   # a special card: the run's specials change (their timers restart)
+		set_specials(card_specials())
 	var n_pick := int(upgrade(id).get("pick_skill", 0))
 	if n_pick > 0 and not skill_pick_ids().is_empty():
 		# Thêm đòn / Thêm phép: the player now picks the one skill it adds to

@@ -49,10 +49,17 @@ Rương báu: 20 / 50 / 25 / 5 (rương là phần thưởng, cho bậc cao hơn
 - Thẻ lên cấp: viền và nhãn màu bậc (dòng "CHIÊU · Hiếm"), nền ánh màu bậc nhạt.
 - Màn Bộ thẻ: mỗi ô có chấm màu bậc; thanh **"Điểm bộ thẻ n / 7"**; thêm thẻ vượt trần thì nút tắt và ghi lý do.
 
-## Thẻ từ món đồ
+## Thẻ từ món đồ (đã làm 2026-11-20)
 
-Làm ở bước sau: các kỹ năng đặc biệt của món đồ thành thẻ trong bộ thẻ (theo nhóm chiêu hoặc chỉ số), có bậc; món đồ bậc cao
-chỉ khác ở giới hạn cường hoá và số dòng phụ.
+12 kỹ năng của món đồ Huyền thoại thành **thẻ chỉ số** của lớp tương ứng (`sp_<món>`, `from_item`, `special`), 3 cấp (Tim
+bất diệt 2): mỗi cấp sau sát thương +25% (`damage_mul`), hồi / chu kỳ −12%, hạ quái cần ít hơn 15%, hồi máu +2%, hồi sinh
++10% máu (`special_per_level`). Bậc: Sử thi cho Thần hộ, Phong hành, Huyết quyền, Lưu tinh, Hoả y; Huyền thoại cho Phản
+chấn, Bàn thạch, Thánh kiếm, Lôi ấn, Tim bất diệt, Băng ấn, Vĩnh cửu. Icon theo loại kỹ năng (`item_<kind>`), hiệu ứng hình
+ảnh giữ nguyên (`fx`). Trận dựng kỹ năng từ cấp thẻ (`Run.card_specials`), nguồn sát thương là id thẻ.
+
+Món đồ không còn kỹ năng; bậc cao hơn chỉ khác ở **giới hạn cường hoá** (Thường +3, Hiếm +5, Sử thi +7, Huyền thoại +10,
+`Profile.TIER_MAX_PLUS`) và **số dòng phụ** (0 / 1 / 2 / 3, mở ở +2 / +4 / +6, `items.json` `subs`). Dòng phụ mới lấy chỉ số
+khác dòng chính, giá trị Hiếm ×1, Sử thi ×1,3, Huyền thoại ×1,6.
 
 ## Test
 

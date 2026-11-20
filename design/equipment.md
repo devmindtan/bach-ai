@@ -72,6 +72,11 @@ Trạng thái: **bản đầu + tái thiết kế 2026-11-17 (legendary/epic tie
 
 ### Luật
 
+> **Đổi 2026-11-20 (người dùng):** món đồ **không còn kỹ năng**: 12 hiệu ứng đặc biệt dưới đây đã thành thẻ
+> (`design/card-rarity.md`, mục "Thẻ từ món đồ"). Bậc cao hơn chỉ khác ở **giới hạn cường hoá** (Thường +3, Hiếm +5,
+> Sử thi +7, Huyền thoại +10) và **số dòng phụ** (0 / 1 / 2 / 3, mở ở +2 / +4 / +6, `subs`). Các dòng bên dưới về
+> `sub` / `special` / +5 là luật cũ, giữ lại làm lịch sử.
+
 - Đồ **sử thi** và **huyền thoại** có 1 **dòng phụ** (`items.json` → `sub`): chỉ số thêm, mở ở **+2**, cũng được
   Cường hoá nhân lên như dòng chính.
 - Đồ **huyền thoại** có 1 **hiệu ứng đặc biệt** (`special`), mở ở **+3**: một cơ chế trong trận.
