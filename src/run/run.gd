@@ -283,11 +283,7 @@ func _ready() -> void:
 	status_defs = GameData.load_json(DATA + "statuses.json").get("statuses", {})
 	for st: String in status_defs:
 		names.append(String(status_defs[st].get("sprite", "")))
-	for eid: String in items.get("equipment", {}):
-		if eid.begins_with("_"): continue
-		var esp: Dictionary = items["equipment"][eid].get("special", {})
-		if esp.has("fx"):
-			names.append(String(esp["fx"]))
+	names.append_array(special_fx_sprites())
 	for b: String in _buff_defs:
 		if not bool(_buff_defs[b].get("special_only", false)):
 			names.append(String(_buff_defs[b].get("sprite", b)))
@@ -2034,6 +2030,18 @@ func time_mul(t: float, what: String) -> float:
 	if every <= 0.0:
 		return 1.0
 	return 1.0 + float(ts.get(what, 0.0)) * floorf(t / every)
+
+
+## Sprites the special cards draw (their "special.fx"), loaded with the run. User 2026-11-20: the specials
+## moved from items to cards and their effects stopped showing, because these were still read from items.json.
+func special_fx_sprites() -> Array[String]:
+	var out: Array[String] = []
+	for u: Variant in pool.get("upgrades", []):
+		if u is Dictionary and (u as Dictionary).has("special"):
+			var fx := String(u["special"].get("fx", ""))
+			if fx != "" and not out.has(fx):
+				out.append(fx)
+	return out
 
 
 ## Seeds the XP drop rolls (from the run seed; tests set their own).
