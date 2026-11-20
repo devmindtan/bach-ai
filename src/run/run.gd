@@ -128,6 +128,7 @@ var _fx: Array[Dictionary] = []
 var zones: Array[Dictionary] = []
 var _affix_tags: Array = []
 var _absorb_fx: Array = []   # [{a, b, t}] Hấp thụ đệ tethers fading out
+var _hp_min := INF                  # lowest hp this run (the balance log)
 var _knock := Vector2.ZERO          # px/s the hero is being pushed (boss transition, shockwave), decays
 var _rage_t := 0.0                    # seconds the "nổi giận" call still shows
 var _rage_seen := false
@@ -324,7 +325,9 @@ func _ready() -> void:
 	if challenge_id == "" and bench == 0:   # the region's props, seeded by the stage (same map every time)
 		obstacles = Obstacles.new(stages.region(stage_number).get("obstacles", {}), _arena_half, stage_number * 7919 + 13)
 		enemies.obstacles = obstacles
-	enemies.scale_kinds(stages.hp_mul(stage_number) * float(stage.get("hp_mul", 1.0)), stages.damage_mul(stage_number))
+	var bal: Dictionary = cfg.get("balance", {})   # global tuning (run_config.json balance, 2026-11-20)
+	enemies.scale_kinds(stages.hp_mul(stage_number) * float(stage.get("hp_mul", 1.0)) * float(bal.get("monster_hp_mul", 1.0)),
+		stages.damage_mul(stage_number) * float(bal.get("monster_damage_mul", 1.0)))
 	for k in enemies.k_hp.size():
 		enemies.k_hp[k] *= monster_hp_mul
 	enemies.vs_status_mul = passive_vs_status()
@@ -352,6 +355,22 @@ func _ready() -> void:
 				w2["t_from"] = 1.0 if w.has("burst") else 0.0
 				only.append(w2)
 		wave_list = only
+	var spawn_mul := float(cfg.get("balance", {}).get("spawn_mul", 1.0))
+	if spawn_mul != 1.0:   # fewer, stronger monsters (balance 2026-11-20); bosses and event monsters untouched
+		var scaled: Array = []
+		for w: Dictionary in wave_list:
+			var m: Dictionary = monsters.get(String(w.get("monster", "")).get_slice("@", 0), {})
+			if bool(m.get("boss", false)) or m.has("spawn_dist"):
+				scaled.append(w)
+				continue
+			var w2 := w.duplicate()
+			for key in ["rate", "rate_end"]:
+				if w2.has(key):
+					w2[key] = float(w2[key]) * spawn_mul
+			if w2.has("burst"):
+				w2["burst"] = maxi(1, roundi(float(w2["burst"]) * spawn_mul))
+			scaled.append(w2)
+		wave_list = scaled
 	waves = WaveScheduler.new(wave_list)
 	base_stats = class_data.get("stats", {})
 	profile = playing_slot.profile if playing_slot != null else prefs.profile()
@@ -583,12 +602,16 @@ func _tick(dt: float) -> void:
 	_spawn(clock - dt, clock)
 	_step_ring(dt)
 	_step_meteors(dt)
+	_hp_min = minf(_hp_min, hp)
 	for i in range(_absorb_fx.size() - 1, -1, -1):
 		_absorb_fx[i]["t"] = float(_absorb_fx[i]["t"]) - dt
 		if float(_absorb_fx[i]["t"]) <= 0.0:
 			_absorb_fx.remove_at(i)
 	_step_pools_hazard(dt)
 	var contact := enemies.step(dt, player_pos, player_pos + _hit_center)
+	if god and contact > 0.0 and invuln <= 0.0:   # balance runs: count what would have been taken, keep the hp
+		damage_taken += maxf(1.0, (contact - float(stats.get("armor", 0.0))) * damage_taken_mul())
+		invuln = float(cfg.get("player", {}).get("hit_invuln", 0.6))
 	if contact > 0.0 and invuln <= 0.0 and bench == 0 and not god and not buffs.invulnerable() and _dash_left <= 0.0:
 		if not _spend_ward():
 			_take_hit(contact)
@@ -2055,6 +2078,9 @@ static func _fmt_stat(key: String, v: float) -> String:
 
 func _recompute_stats() -> void:
 	stats = PlayerStats.compute(base_stats, effect_pool(), effect_levels())
+	var bal: Dictionary = cfg.get("balance", {})   # weaker hero (balance 2026-11-20): damage and AoE size
+	stats["damage"] = float(stats.get("damage", 0.0)) * float(bal.get("player_damage_mul", 1.0))
+	stats["area"] = float(stats.get("area", 1.0)) * float(bal.get("player_area_mul", 1.0))
 	if enemies != null:   # Chí mạng: run_config.json crit + any crit_chance / crit_mul effects (6C.2)
 		enemies.crit_chance = float(cfg.get("crit", {}).get("chance", 0.0)) + float(stats.get("crit_chance", 0.0))
 		enemies.crit_mul = float(cfg.get("crit", {}).get("mul", 1.75)) + float(stats.get("crit_mul", 0.0))
@@ -2222,7 +2248,7 @@ func _die() -> void:
 	Sfx.music("")
 	Sfx.play("lose")
 	_finish(false)
-	print("Run over: lost at %.1fs, level %d, kills %d" % [clock, level, enemies.total_kills])
+	print("Run over: lost at %.1fs, level %d, kills %d, hp_min %.0f, taken %.0f" % [clock, level, enemies.total_kills, _hp_min, damage_taken])
 	_panels.show_end(false)
 
 
@@ -2234,7 +2260,7 @@ func _win() -> void:
 	if bool(cfg.get("rewards", {}).get("win_item", false)):
 		_win_item()
 	_finish(true)
-	print("Run over: won, level %d, kills %d, gold %d" % [level, enemies.total_kills, gold])
+	print("Run over: won, level %d, kills %d, gold %d, hp_min %.0f/%.0f, taken %.0f" % [level, enemies.total_kills, gold, _hp_min, float(stats["max_hp"]), damage_taken])
 	_panels.show_end(true)
 
 

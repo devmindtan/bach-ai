@@ -82,3 +82,22 @@ bản 3% × 2, thẻ cộng thêm tỉ lệ; Vlambeer, "The Art of Screenshake" 
   có chí mạng diễn ra khác hẳn; chặn bằng test `crit_test`).
 - Số chí mạng to ×1,4, màu cam, có "!". Chí mạng trúng **tinh anh / boss**: khựng hình 0,035 s + rung 2 px. Người chơi
   trúng đòn: rung `sát thương × 0,25` px (2–7). Tắt rung: Cài đặt → **Rung màn hình**.
+
+## Cân bằng lại 2026-11-20 (quái quá yếu, người chơi quá mạnh)
+
+Người dùng: quái mạnh lên (máu, sát thương), ít quái hơn (chất lượng thay số lượng), người chơi yếu đi (sát thương, cỡ
+AoE); **không tăng hồi chiêu**. Hệ số chung ở `run_config.json` `balance` (áp sau hệ số theo ải): máu quái ×1,3, sát thương
+quái ×1,35, tốc độ sinh / số con mỗi đợt quái thường ×0,85 (boss và quái sự kiện giữ nguyên), sát thương người chơi ×0,85,
+AoE người chơi ×0,9. Log cuối trận ("Run over …") có `hp_min` và `taken` (chế độ `--god` vẫn đếm sát thương lẽ ra nhận).
+
+Đo bằng trận demo tự lái, bất tử, 5 phút, seed 1 (`gamekit shot … --demo --god --sim-steps=8`):
+
+| Ải | Trước: cấp · quái hạ · sát thương lẽ ra nhận | Sau |
+|---|---|---|
+| 1 | 20 · 1627 · 1643 | 15 · 826 · 1402 |
+| 10 | 19 · 2178 · 1933 | 16 · 953 · 1911 |
+| 20 | 12 · 1215 · 4060 | 5 · 78 · 6012 |
+
+Giới hạn: AI demo chơi kém (không bất tử thì thua cả ải 1 ở 2:15), và mỗi lần đổi số thì chuỗi ngẫu nhiên đổi theo, nên
+bảng chỉ cho **xu hướng**: người chơi lên cấp chậm hơn, giết ít hơn, mỗi con quái nguy hiểm hơn. Ải 20 có thể quá khó: cần
+người chơi thật thử rồi chỉnh tiếp bằng các hệ số trên.

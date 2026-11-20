@@ -142,5 +142,13 @@
     "banish": 1,
     "skip": 2,
     "skip_gold": 10
+  },
+  "balance": {
+    "_doc": "Global tuning (user 2026-11-20: monsters too weak, hero too strong; no longer cooldowns): monster hp / damage multipliers, spawn_mul scales the plain waves' rates and bursts (fewer but stronger), player_damage_mul and player_area_mul scale the hero's damage and AoE size. Tuned with the demo runs (gamekit shot ... --demo; 'Run over' lines).",
+    "monster_hp_mul": 1.3,
+    "monster_damage_mul": 1.35,
+    "spawn_mul": 0.85,
+    "player_damage_mul": 0.85,
+    "player_area_mul": 0.9
   }
 }
