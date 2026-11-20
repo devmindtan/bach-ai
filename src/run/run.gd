@@ -2047,14 +2047,15 @@ func special_fx_sprites() -> Array[String]:
 ## Where to draw a status sprite on a body of [param radius] px: [[offset, scale], ...]. The sprites are
 ## made for a body of radius 8 art px. A tiled status (statuses.json "tile", the burn) never blows one sprite
 ## up (user 2026-11-20: blurry, blocky on big monsters): it draws several at a whole scale no larger than
-## the game's sprite scale, spread over the body (sunflower pattern); others keep one sprite scaled to fit.
+## the game's sprite scale, spread over the body (sunflower pattern); others keep one sprite at the whole
+## scale nearest to the body (never a fraction: fractional scales smear pixel art).
 func status_spots(radius: float, tile: bool) -> Array:
-	if not tile:
-		return [[Vector2.ZERO, radius / 8.0]]
+	if not tile:   # one sprite fitted to the body, at a WHOLE scale so its pixels stay crisp
+		return [[Vector2.ZERO, maxf(1.0, roundf(radius / 8.0))]]
 	var full := 8.0 * _sprite_scale
 	if radius <= full:
 		return [[Vector2.ZERO, clampf(roundf(radius / 8.0), 1.0, _sprite_scale)]]
-	var n := clampi(roundi(pow(radius / full, 2.0) * 1.6), 2, 9)
+	var n := clampi(roundi(pow(radius / full, 2.0)), 2, 7)   # few enough that the monster still shows
 	var out := []
 	for k in n:
 		var rr := radius * 0.6 * sqrt((k + 0.5) / n)
@@ -2724,7 +2725,8 @@ func _draw_statuses(view: Rect2) -> void:
 				p.y -= r
 			var k := 0
 			for spot: Array in status_spots(r, bool(d.get("tile", false))):
-				sh.draw(self, "loop", clock + i * 0.17 + k * 0.29, p + (spot[0] as Vector2), float(spot[1]))
+				sh.draw(self, "loop", clock + i * 0.17 + k * 0.29, p + (spot[0] as Vector2), float(spot[1]),
+					false, Color(1, 1, 1, float(d.get("alpha", 1.0))))   # see-through: the monster stays visible
 				k += 1
 	for s in _shock_fx:
 		var a: Vector2 = s["a"]
