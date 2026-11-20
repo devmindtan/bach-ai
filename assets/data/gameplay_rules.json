@@ -2,7 +2,7 @@
  "_doc": "Gameplay rules every skill and effect of Bach Ai must meet (design/gameplay-rules.md explains each). Read by tests/integration/data/gameplay_rules_test.gd (must = test fails) and by the studio dashboard (sprite-lab/games.html, tab Luat gameplay). Distances are world px at the game's sprite_scale; times in seconds.",
  "limits": {
   "cooldown_min": 0.3,
-  "cooldown_max": 6.0,
+  "cooldown_max": 12.0,
   "reach_min": 24.0,
   "reach_max": 360.0,
   "cast_range_max": 560.0,
@@ -27,7 +27,7 @@
    "id": "auto",
    "severity": "must",
    "title": "Tự động, không bấm",
-   "text": "Người chơi chỉ di chuyển. Mọi kỹ năng tự kích hoạt theo hồi chiêu trong khoảng cooldown_min..cooldown_max giây."
+   "text": "Người chơi chỉ di chuyển. Mọi kỹ năng tự kích hoạt theo hồi chiêu trong khoảng cooldown_min..cooldown_max giây (người dùng 2026-11-20: chiêu AoE hồi lâu gấp đôi, nên trần 12 giây)."
   },
   {
    "id": "hitbox",

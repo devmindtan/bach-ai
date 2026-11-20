@@ -25,7 +25,8 @@
     "gold_chance": 0.12
   },
   "player": {
-    "hit_invuln": 0.6
+    "hit_invuln": 0.6,
+    "cooldown_floor": 0.6
   },
   "rewards": {
     "_doc": "Equipment won: one random item (any slot, fitting the class or shared) when a stage is won; chest_item_chance = chance that opening a chest also gives one.",

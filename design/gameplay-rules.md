@@ -109,3 +109,14 @@ cuối; ải 10 và 20 chạm 600 từ phút 2. Đã chỉnh: `spawn_mul` 0,85 �
 ×2 → **×1,5** (`stages.json` scale); trần số quái 600 → **200** (`run_config.json` max_enemies); bù **kinh nghiệm ×2** mỗi
 con (`balance.xp_mul`) để ít quái không làm lên cấp chậm. Sau chỉnh: ải 1 đỉnh 200 con, phần lớn 130–190; ải 10, 20 chạm
 200 (AI demo giết chậm; người thật giết nhanh hơn nên thấp hơn). Trên màn hình tối đa bằng 1/3 trước đây.
+
+## Cân bằng 2026-11-20 (đợt 2, người dùng)
+
+- **Kinh nghiệm:** quái thường chỉ rơi ngọc kinh nghiệm với tỉ lệ 80% (`balance.xp_drop_chance`); tinh anh và boss luôn rơi.
+- **Quái mạnh dần theo phút** (`time_scale`): mỗi mốc 1:00, 2:00… quái sinh ra sau đó +15% máu (boss giữ nguyên),
+  mọi đòn của quái +10% sát thương; mỗi mốc báo giữa màn hình.
+- **Đa phép:** +1 số lượng chỉ cho các chiêu đang có lúc chọn.
+- **Hồi chiêu:** chiêu AoE ×2 (Lốc xoáy, Đất nứt, Dậm đất, Cột thánh quang, Địa chấn, Búa thần, Băng nổ, Sét đánh,
+  Mưa thiên thạch, Bão tuyết, Bão sét); chiêu đạn ×1,25 (Sóng kiếm, Thái dương xạ, Cầu lửa, Giáo sấm, Cầu hư
+  không); chiêu khởi đầu (Chém kiếm, Tia phép) và Lướt giữ nguyên. Tổng giảm hồi chiêu tối đa 40%
+  (`player.cooldown_floor` 0,6). Luật `cooldown_max` nâng 6 → 12 giây.

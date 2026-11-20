@@ -1268,7 +1268,9 @@ func skill_cooldown(id: String, st: Dictionary = {}) -> float:
 		st = stats
 	var sp: Dictionary = pool.get("skills", {}).get(id, {})
 	var own := PlayerStats.skill_mul(st, "skill_cd." + id)   # e.g. the dash card's -12% per level
-	return float(sp.get("cooldown", 1.0)) * float(st.get("cooldown", 1.0)) * own
+	# every reduction together stops at -40% (run_config player.cooldown_floor, user 2026-11-20)
+	var floor_mul := float(cfg.get("player", {}).get("cooldown_floor", 0.0))
+	return float(sp.get("cooldown", 1.0)) * maxf(floor_mul, float(st.get("cooldown", 1.0)) * own)
 
 
 ## Cooldown shown on the HUD: [seconds left, cooldown, active]. active = the skill

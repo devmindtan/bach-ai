@@ -48,7 +48,7 @@ func test_skill_info_uses_the_same_numbers_as_casting() -> void:
 	_check(is_equal_approx(float(blade["cooldown"]), r.skill_cooldown("blade_arc")), "cooldown from skill_cooldown")
 	_check(is_equal_approx(float(blade["cooldown"]), 0.9 * 0.8), "haste 2: 0.9 s -> 0.72 s, got %s" % blade["cooldown"])
 	var whirl: Dictionary = info[1]
-	_check(is_equal_approx(float(whirl["cooldown"]), 3.2 * 0.8), "whirlwind 3.2 s * 0.8, got %s" % whirl["cooldown"])
+	_check(is_equal_approx(float(whirl["cooldown"]), 6.4 * 0.8), "whirlwind 6.4 s * 0.8, got %s" % whirl["cooldown"])
 	var srcs: Array = whirl["sources"].map(func(p: Dictionary) -> String: return p["id"])
 	_check(srcs.has("haste") and srcs.has("sharpen"), "whirlwind lists the cards that change it, got %s" % [srcs])
 	r.free()
