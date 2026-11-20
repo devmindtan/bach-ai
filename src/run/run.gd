@@ -127,6 +127,7 @@ var _whirl_ticks_done := 0
 var _fx: Array[Dictionary] = []
 var zones: Array[Dictionary] = []
 var _affix_tags: Array = []
+var _knock := Vector2.ZERO          # px/s the hero is being pushed (boss transition, shockwave), decays
 var _rage_t := 0.0                    # seconds the "nổi giận" call still shows
 var _rage_seen := false
 var _boss_hp_share := -1.0
@@ -675,6 +676,10 @@ func _tick(dt: float) -> void:
 	if bi >= 0 and not _rage_seen and enemies.enraged(bi):   # phase 2: called out once
 		_rage_seen = true
 		_rage_t = 2.0
+		var pn := enemies.phase_name(bi)
+		if pn != "":   # also across the screen: the boss may be off screen (its own label would be cut)
+			wave_call = "%s · %s!" % [String(enemies.k_extra[enemies.kind[bi]].get("name", "Boss")), pn]
+			wave_call_t = 3.0
 		Sfx.play("boss_spawn")
 	_boss_check_t -= dt
 	if _boss_check_t <= 0.0:   # the boss song while a boss lives
@@ -692,6 +697,17 @@ func _tick(dt: float) -> void:
 
 
 func _move_player(dt: float) -> void:
+	if _knock.length_squared() > 1.0:   # pushed (a boss transforming, a shockwave): slides, decays
+		player_pos += _knock * dt
+		_knock *= exp(-5.0 * dt)
+		player_pos = player_pos.clamp(Vector2(-_arena_half, -_arena_half), Vector2(_arena_half, _arena_half))
+		if obstacles != null:
+			player_pos = obstacles.push_out(player_pos, PLAYER_BODY)
+	for pp: Array in enemies.phase_push:   # a boss starts phase 2: the hero is pushed away and the screen shakes
+		var away: Vector2 = player_pos - pp[0]
+		_knock += (away.normalized() if away.length() > 1.0 else Vector2.RIGHT) * float(pp[1])
+		shake.add(6.0)
+	enemies.phase_push.clear()
 	_dash_cd = maxf(0.0, _dash_cd - dt)
 	_dash_trail = maxf(0.0, _dash_trail - dt)
 	if dash_at >= 0.0 and clock >= dash_at:
@@ -1568,6 +1584,7 @@ func trigger_special(sp: Dictionary) -> void:
 			for sid: String in _tier_cd:
 				_tier_cd[sid] = 0.0
 			_dash_cd = 0.0
+			_item_fx(sp)
 			Sfx.play("holy")
 
 
@@ -1579,6 +1596,13 @@ func _ring_fx(reach: float, sprite := "stomp-i", anim := "burst") -> void:
 	var r1 := hb.radius if hb != null and hb.radius > 0.0 else 25.0
 	r1 *= float(sheet.meta.get("px_scale", 1.0)) if sheet != null else 1.0   # _add_fx applies px_scale again
 	_add_fx(sprite, anim, reach / r1, 0.0)
+
+
+## A legendary special's own one-shot visual, spawned at the hero (ward-* sprites).
+func _item_fx(sp: Dictionary) -> void:
+	var sprite := String(sp.get("fx", ""))
+	if sprite != "":
+		_add_fx(sprite, "cast", 1.0, 0.0, -1.0, player_pos + _hit_center)
 
 
 ## Bàn thạch spends its single charge: the stone shell cracks and flies apart.
@@ -1623,6 +1647,7 @@ func count_special_kills(n: int) -> void:
 				heal_max(float(sp["heal_frac"]))
 			if sp.has("buff"):
 				_special_buff(sp)
+			_item_fx(sp)
 
 
 ## On a hit taken: Phản chấn sends a damaging shockwave, Phong hành starts its
@@ -1656,6 +1681,7 @@ func try_item_revive() -> bool:
 			hp = float(stats.get("max_hp", 100.0)) * float(sp.get("hp", 0.4))
 			invuln = float(sp.get("invuln", 2.0))
 			_play_action("hurt")
+			_item_fx(sp)
 			Sfx.play("milestone")
 			return true
 	return false
@@ -2334,8 +2360,11 @@ func _draw() -> void:
 				draw_set_transform(enemies.pos[i], 0.0, Vector2(1.0, 0.4))
 				draw_circle(Vector2.ZERO, sr * (1.0 - 0.3 * lift / maxf(1.0, lift + sr)), Color(0, 0, 0, 0.3))
 				draw_set_transform(Vector2.ZERO)
-			enemies.sheet_of(i).draw(self, a[0], a[1], enemies.pos[i] - Vector2(0.0, lift), enemies.k_scale[k],
-				enemies.flip[i] == 1, tint)
+			var at := enemies.pos[i] - Vector2(0.0, lift)
+			if enemies.in_transition(i):   # phase 2 transition: shakes and flashes white / red
+				at += Vector2(sin(clock * 90.0) * 3.0, cos(clock * 70.0) * 1.5).round()
+				tint = Color(2.0, 2.0, 2.0) if int(clock * 12.0) % 2 == 0 else Color(1.6, 0.5, 0.45)
+			enemies.sheet_of(i).draw(self, a[0], a[1], at, enemies.k_scale[k], enemies.flip[i] == 1, tint)
 	_draw_bolts()
 	var hero: SpriteSheet = sheets.get(String(class_data.get("sprite", "swordsman")))
 	if hero != null:
@@ -2736,7 +2765,8 @@ func _draw_boss_waves() -> void:
 	var bi := enemies.boss_index()
 	if bi >= 0 and _rage_t > 0.0:
 		var font := ThemeDB.fallback_font
-		var name := String(enemies.k_extra[enemies.kind[bi]].get("name", "Boss")) + " nổi giận!"
+		var pn: String = enemies.phase_name(bi)
+		var name := String(enemies.k_extra[enemies.kind[bi]].get("name", "Boss")) + (" · %s!" % pn if pn != "" else " nổi giận!")
 		var tw := font.get_string_size(name, HORIZONTAL_ALIGNMENT_LEFT, -1, 22).x
 		var at := enemies.center_of(bi) - Vector2(tw * 0.5, enemies.k_radius[enemies.kind[bi]] * 2.0 + 20.0)
 		draw_string_outline(font, at, name, HORIZONTAL_ALIGNMENT_LEFT, -1, 22, 6, Color(0.1, 0.02, 0.02))

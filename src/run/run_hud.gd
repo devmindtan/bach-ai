@@ -235,6 +235,8 @@ func _draw_boss_bar(font: Font) -> void:
 	var w := 520.0
 	var bar := Rect2(roundf(size.x * 0.5 - w * 0.5), ROW + 40, w, 16)
 	var name := String(run.enemies.k_extra[k].get("name", run.enemies.kind_ids[k]))
+	if run.enemies.phase_name(i) != "":   # phase 2 shows its own name (design/bosses.md)
+		name += " · " + run.enemies.phase_name(i)
 	var enraged: bool = run.enemies.enraged(i)
 	var back := Rect2(bar.position.x - (110.0 if enraged else 12.0), bar.position.y - 28.0, 0.0, bar.size.y + 36.0)
 	back.end.x = bar.end.x + 64.0

@@ -1,5 +1,5 @@
 {
-  "_doc": "Monster stats at stage 1 (stage scaling comes in phase 3). behaviour: chase | swarm | charge | boss_slime (winds up, jumps to where the player was, slam on landing; split_at fractions of hp spawn split_count split_into). boss: true = HUD bar, the stage is won when it dies. body circle (contact, being hit) comes from the sprite json 'body', not from here. xp = gem value. See design/monsters.md. behaviour shoot (design 6A): keeps keep_range, every shoot_every s within shoot_range winds up (windup s) and fires a bolt (bolt_sprite, bolt_speed px/s, bolt_damage, bolt_range px, bolt_radius). zigzag (Ma Trơi, design 6A): closes in on legs of zig_time s, turned zig_angle degrees left then right. explode {delay s, radius px, damage}: on death a warning ring at the body, then a blast hurting a player inside (Bọ Lửa). Boss phases (design 6A): rage_at (hp share) switches to rage_jump_every / rage_windup and a shockwave ring on every slam {speed px/s, max px, width px, damage}; volley {every s, count, spread_deg} fires bolts (bolt_* keys) in phase 1 and 2. telegraph (charge): while winding up the dash lane shows on the ground (Sói Rừng). boss_tree (Mộc Yêu, design/bosses.md): every root_every s (enraged rage_root_every) root_count roots (rage_root_count) erupt root_delay s after a warning ring, one under the player and the rest within root_spread; each hurts root_damage within root_radius; every summon_every s it calls summon_count monsters from summon around itself. hop (Cóc Độc, design 6A): crawls; every hop_every s within hop_range crouches windup s, leaps to where the player stood in hop_time s and leaves a pool {time s, radius px, damage} that hurts a player inside. support (Hồn Đầm, design 6A): hovers at keep_range; every heal_every s heals other non-boss monsters within heal_radius by heal_pct of their max hp. pool (boss_slime): every landing leaves a poison pool {time, radius, damage} (Cóc Chúa). hop_height (hop / boss_slime): how high the sprite rises along the hop arc, px before scale; the jump animation spans the hop, crouch plays while winding up. flee (Yêu Tinh Vàng, design/events.md): never attacks, runs from the player dropping a coin every trail_every s; after flee_time channels a portal for channel s (a hit breaks it) and escapes; a kill drops gold_drop coins and a chest (chest_drop). spawn_dist: appears this far from the player instead of on the spawn ring. tint: colour laid over its sprite.",
+  "_doc": "Monster stats at stage 1 (stage scaling comes in phase 3). behaviour: chase | swarm | charge | boss_slime (winds up, jumps to where the player was, slam on landing; split_at fractions of hp spawn split_count split_into). boss: true = HUD bar, the stage is won when it dies. body circle (contact, being hit) comes from the sprite json 'body', not from here. xp = gem value. See design/monsters.md. behaviour shoot (design 6A): keeps keep_range, every shoot_every s within shoot_range winds up (windup s) and fires a bolt (bolt_sprite, bolt_speed px/s, bolt_damage, bolt_range px, bolt_radius). zigzag (Ma Trơi, design 6A): closes in on legs of zig_time s, turned zig_angle degrees left then right. explode {delay s, radius px, damage}: on death a warning ring at the body, then a blast hurting a player inside (Bọ Lửa). Boss phases (design 6A): rage_at (hp share) switches to rage_jump_every / rage_windup and a shockwave ring on every slam {speed px/s, max px, width px, damage}; volley {every s, count, spread_deg} fires bolts (bolt_* keys) in phase 1 and 2. telegraph (charge): while winding up the dash lane shows on the ground (Sói Rừng). boss_tree (Mộc Yêu, design/bosses.md): every root_every s (enraged rage_root_every) root_count roots (rage_root_count) erupt root_delay s after a warning ring, one under the player and the rest within root_spread; each hurts root_damage within root_radius; every summon_every s it calls summon_count monsters from summon around itself. hop (Cóc Độc, design 6A): crawls; every hop_every s within hop_range crouches windup s, leaps to where the player stood in hop_time s and leaves a pool {time s, radius px, damage} that hurts a player inside. support (Hồn Đầm, design 6A): hovers at keep_range; every heal_every s heals other non-boss monsters within heal_radius by heal_pct of their max hp. pool (boss_slime): every landing leaves a poison pool {time, radius, damage} (Cóc Chúa). hop_height (hop / boss_slime): how high the sprite rises along the hop arc, px before scale; the jump animation spans the hop, crouch plays while winding up. flee (Yêu Tinh Vàng, design/events.md): never attacks, runs from the player dropping a coin every trail_every s; after flee_time channels a portal for channel s (a hit breaks it) and escapes; a kill drops gold_drop coins and a chest (chest_drop). spawn_dist: appears this far from the player instead of on the spawn ring. tint: colour laid over its sprite. phase2 (bosses, design/bosses.md): at rage_at a transition of transition s (invulnerable, still, pushes the hero push px/s) then name (boss bar), speed_mul, damage_taken_mul, contact_mul, radius_mul.",
   "slime": {
     "sprite": "slime",
     "behaviour": "chase",
@@ -155,7 +155,16 @@
     "summon_count": 3,
     "rage_at": 0.5,
     "rage_root_every": 2.0,
-    "rage_root_count": 6
+    "rage_root_count": 6,
+    "phase2": {
+      "name": "Cổ Thụ Trụi Lá",
+      "transition": 1.5,
+      "push": 160.0,
+      "speed_mul": 1.7,
+      "damage_taken_mul": 1.3,
+      "contact_mul": 1.2,
+      "radius_mul": 0.85
+    }
   },
   "toad": {
     "name": "Cóc Độc",
@@ -237,7 +246,16 @@
     "bolt_damage": 13.0,
     "bolt_range": 480.0,
     "bolt_radius": 7.0,
-    "hop_height": 40.0
+    "hop_height": 40.0,
+    "phase2": {
+      "name": "Cóc Độc Bào Tử",
+      "transition": 1.5,
+      "push": 160.0,
+      "speed_mul": 1.25,
+      "damage_taken_mul": 0.9,
+      "contact_mul": 1.3,
+      "radius_mul": 1.1
+    }
   },
   "gold_goblin": {
     "name": "Yêu Tinh Vàng",

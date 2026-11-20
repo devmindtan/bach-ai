@@ -42,6 +42,8 @@ var bleed_t := PackedFloat32Array()
 var bleed_dps := PackedFloat32Array()
 var burn_t := PackedFloat32Array()
 var shock_t := PackedFloat32Array()   # shock mark: a later shock hit arcs here
+var phase_t := PackedFloat32Array()   # boss phase 2 transition seconds left (> 0: invulnerable, still)
+var phase_on := PackedByteArray()      # 1 = this boss entered phase 2 (its transition started)
 var flee_t := PackedFloat32Array()    # Yêu tinh vàng: seconds spent fleeing (the portal opens at flee_time)
 var burn_dps := PackedFloat32Array()
 var dot_wait := PackedFloat32Array()   # time to the next damage-over-time tick
@@ -128,6 +130,7 @@ var wave_r := PackedFloat32Array()
 var wave_max := PackedFloat32Array()
 var wave_hit := PackedInt32Array()       # 1 once it has hit the player (one hit per ring)
 var wave_def: Array[Dictionary] = []
+var phase_push: Array = []   # [boss pos, push px/s] when a boss starts its phase 2 transition (the run pushes the hero)
 var raged: Array[int] = []              # boss indices that just turned enraged this step (the run announces it)                 # [kind, pos]: monsters to spawn after this step (Phân thân)
 # death bursts ("explode" on a monster, design 6A Bọ Lửa): a warning ring, then a blast
 var blast_pos := PackedVector2Array()
@@ -186,7 +189,8 @@ func _init(monsters: Dictionary, cfg: Dictionary, sheets: Dictionary, seed_value
 	flip.resize(capacity)
 	hp_show.resize(capacity)
 	affix.resize(capacity)
-	for a: Variant in [slow_t, slow_mul, stun_t, freeze_t, bleed_t, bleed_dps, burn_t, burn_dps, shock_t, flee_t, dot_wait]:
+	phase_on.resize(capacity)
+	for a: Variant in [slow_t, slow_mul, stun_t, freeze_t, bleed_t, bleed_dps, burn_t, burn_dps, shock_t, flee_t, dot_wait, phase_t]:
 		a.resize(capacity)
 	bleed_src.resize(capacity)
 	burn_src.resize(capacity)
@@ -301,6 +305,8 @@ func spawn(id: String, p: Vector2) -> bool:
 	burn_t[i] = 0.0
 	shock_t[i] = 0.0
 	flee_t[i] = 0.0
+	phase_t[i] = 0.0
+	phase_on[i] = 0
 	burn_dps[i] = 0.0
 	dot_wait[i] = DOT_TICK
 	return true
@@ -366,7 +372,14 @@ func step(delta: float, player_pos: Vector2, player_center: Vector2) -> float:
 		flip[n] = 1 if to_player.x < 0.0 else 0
 		var stopped := stun_t[n] > 0.0 or freeze_t[n] > 0.0
 		_slam_i = -1
+		if k_boss[k] == 1 and phase_on[n] == 0:   # hp set without a hit (a shot's --boss-hp) also starts phase 2
+			_check_phase(n)
+		if phase_t[n] > 0.0:   # transforming: stands still, shakes (drawn by the run)
+			phase_t[n] = maxf(0.0, phase_t[n] - delta)
+			stopped = true
 		var vel := Vector2.ZERO if stopped else _velocity(n, k, dir, dist, delta) * (slow_mul[n] if slow_t[n] > 0.0 else 1.0)
+		if phase_on[n] == 1 and not stopped:
+			vel *= float(_phase2(n).get("speed_mul", 1.0))
 		if _slam_i == n:   # a boss landed: its slam hits a player within reach
 			var reach := k_radius[k] * float(k_extra[k].get("slam_reach", 2.5))
 			if (pos[n] + vel * delta).distance_to(player_center) < reach + player_hit_radius:
@@ -396,7 +409,7 @@ func step(delta: float, player_pos: Vector2, player_center: Vector2) -> float:
 		if obstacles != null:
 			pos[n] = obstacles.push_out(pos[n], r)
 		if not stopped and (center_of(n) - player_center).length() < r + player_hit_radius:
-			contact = maxf(contact, k_damage[k])
+			contact = maxf(contact, contact_damage(n))
 	contact = maxf(contact, _step_waves(delta, player_center))
 	for q: Array in _split_q:   # monsters from Phân thân, spawned after the loop over the living
 		if int(q[0]) >= 0:
@@ -792,6 +805,43 @@ func _boss_slime(i: int, k: int, dir: Vector2, speed: float, delta: float) -> Ve
 	return dir * speed
 
 
+## The kind's "phase2" block (design/bosses.md "Chuyển pha"), {} when it has none.
+func _phase2(i: int) -> Dictionary:
+	return k_extra[kind[i]].get("phase2", {})
+
+
+## Starts boss [param i]'s phase 2 once its hp reaches rage_at: transition s invulnerable and still,
+## a push on the hero (phase_push), the announcement (raged), the body radius x radius_mul.
+func _check_phase(i: int) -> void:
+	if phase_on[i] == 1 or not enraged(i) or hp[i] <= 0.0:
+		return
+	phase_on[i] = 1
+	raged.append(i)
+	var p2 := _phase2(i)
+	if p2.is_empty():
+		return
+	hp[i] = maxf(hp[i], 1.0)
+	phase_t[i] = float(p2.get("transition", 1.5))
+	phase_push.append([pos[i], float(p2.get("push", 160.0))])
+	k_radius[kind[i]] *= float(p2.get("radius_mul", 1.0))   # bosses are one of a kind
+	anim_t[i] = 0.0
+
+
+func in_transition(i: int) -> bool:
+	return i >= 0 and i < count and phase_t[i] > 0.0
+
+
+## The phase 2 name for the boss bar ("" before phase 2 or without one).
+func phase_name(i: int) -> String:
+	return String(_phase2(i).get("name", "")) if phase_on[i] == 1 else ""
+
+
+## Contact damage of monster [param i] (phase 2 multiplies it).
+func contact_damage(i: int) -> float:
+	var d := k_damage[kind[i]]
+	return d * float(_phase2(i).get("contact_mul", 1.0)) if phase_on[i] == 1 else d
+
+
 ## Boss [param i] is enraged: hp at or below its "rage_at" share (phase 2).
 func enraged(i: int) -> bool:
 	var e: Dictionary = k_extra[kind[i]]
@@ -903,6 +953,11 @@ func hit_circle(center: Vector2, radius: float, damage: float, knockback := 90.0
 
 
 func _damage(i: int, amount: float, kb: Vector2, source := "") -> void:
+	if phase_t[i] > 0.0:   # phase 2 transition: invulnerable, it only flashes
+		flash[i] = HURT_FLASH
+		return
+	if phase_on[i] == 1:
+		amount *= float(_phase2(i).get("damage_taken_mul", 1.0))
 	var hp_before := hp[i]
 	if vs_status_mul > 0.0 and (slow_t[i] > 0.0 or stun_t[i] > 0.0 or freeze_t[i] > 0.0 or bleed_t[i] > 0.0 or burn_t[i] > 0.0 or shock_t[i] > 0.0):
 		amount *= 1.0 + vs_status_mul
@@ -919,6 +974,7 @@ func _damage(i: int, amount: float, kb: Vector2, source := "") -> void:
 	if state[i] != DASH and k_boss[kind[i]] == 0:   # bosses are not knocked back
 		knock[i] += kb
 	_split(i, hp_before)
+	_check_phase(i)
 	if hp[i] <= 0.0:
 		state[i] = DYING
 		timer[i] = 0.0
@@ -1202,6 +1258,8 @@ func _remove(i: int) -> void:
 		burn_t[i] = burn_t[last]
 		shock_t[i] = shock_t[last]
 		flee_t[i] = flee_t[last]
+		phase_t[i] = phase_t[last]
+		phase_on[i] = phase_on[last]
 		burn_dps[i] = burn_dps[last]
 		dot_wait[i] = dot_wait[last]
 		bleed_src[i] = bleed_src[last]
