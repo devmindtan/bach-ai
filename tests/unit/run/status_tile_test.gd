@@ -42,3 +42,14 @@ func test_every_status_is_whole_scale_and_see_through() -> void:
 			for s: Array in r.status_spots(radius, bool(d.get("tile", false))):
 				_check(is_equal_approx(float(s[1]), roundf(float(s[1]))), "%s on radius %s: whole scale, got %s" % [id, radius, s[1]])
 	r.free()
+
+
+# User 2026-11-20: the flames stood too tall and covered the monster; tiled flames sit along the lower
+# half of the body (a row at the feet), never over its upper half.
+func test_tiled_flames_sit_low_on_the_body() -> void:
+	var r: Node = Run.new()
+	r._sprite_scale = 2.0
+	for radius in [26.0, 44.0]:
+		for s: Array in r.status_spots(radius, true):
+			_check((s[0] as Vector2).y >= radius * 0.2, "radius %s: flame at y %s is in the lower half" % [radius, (s[0] as Vector2).y])
+	r.free()

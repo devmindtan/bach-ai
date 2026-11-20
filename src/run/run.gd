@@ -2047,7 +2047,7 @@ func special_fx_sprites() -> Array[String]:
 ## Where to draw a status sprite on a body of [param radius] px: [[offset, scale], ...]. The sprites are
 ## made for a body of radius 8 art px. A tiled status (statuses.json "tile", the burn) never blows one sprite
 ## up (user 2026-11-20: blurry, blocky on big monsters): it draws several at a whole scale no larger than
-## the game's sprite scale, spread over the body (sunflower pattern); others keep one sprite at the whole
+## the game's sprite scale, in a row along the lower half of the body; others keep one sprite at the whole
 ## scale nearest to the body (never a fraction: fractional scales smear pixel art).
 func status_spots(radius: float, tile: bool) -> Array:
 	if not tile:   # one sprite fitted to the body, at a WHOLE scale so its pixels stay crisp
@@ -2055,11 +2055,14 @@ func status_spots(radius: float, tile: bool) -> Array:
 	var full := 8.0 * _sprite_scale
 	if radius <= full:
 		return [[Vector2.ZERO, clampf(roundf(radius / 8.0), 1.0, _sprite_scale)]]
-	var n := clampi(roundi(pow(radius / full, 2.0)), 2, 7)   # few enough that the monster still shows
+	# a row along the lower half (user 2026-11-20: tall flames all over the body hid the monster)
+	var n := clampi(roundi(radius / full * 1.5), 2, 5)
 	var out := []
 	for k in n:
-		var rr := radius * 0.6 * sqrt((k + 0.5) / n)
-		out.append([Vector2.from_angle(k * 2.39996) * rr, _sprite_scale])
+		var t := (k + 0.5) / n * 2.0 - 1.0          # -1 .. 1 across the body
+		var x := t * radius * 0.7
+		var y := radius * (0.35 + 0.25 * (1.0 - absf(t)))   # follows the body's lower curve
+		out.append([Vector2(x, y), _sprite_scale])
 	return out
 
 
