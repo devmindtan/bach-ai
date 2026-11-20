@@ -1,17 +1,46 @@
 {
-  "_doc": "Statuses a hit can put on a monster (Enemies.apply_status). A skill lists them in skills.<id>.on_hit (upgrades_<class>.json) with from = the skill level that adds it and the numbers: time (s), mul (slow: speed x; shock: x hit damage per jump), dps_mul (bleed / burn: x hit damage per second, ticks every 0.5 s, credited to the skill), time (shock: how long the mark lasts; a later shock hit arcs to every marked monster for mul x hit, capped under 0.5; chain / radius = item Lôi xích arcs to the nearest instead). sprite = Sprite Lab status sprite drawn on the monster, scaled to its body radius (made for radius 8 px): at body (body centre) or head (on top of the body). freeze also stops the monster animation. tint = colour laid over the monster while it lasts.",
+  "_doc": "Statuses a hit can put on a monster (Enemies.apply_status). A skill lists them in skills.<id>.on_hit (upgrades_<class>.json) with from = the skill level that adds it and the numbers: time (s), mul (slow: speed x; shock: x hit damage per jump), dps_mul (bleed / burn: x hit damage per second, ticks every 0.5 s, credited to the skill), time (shock: how long the mark lasts; a later shock hit arcs to every marked monster for mul x hit, capped under 0.5; chain / radius = item Lôi xích arcs to the nearest instead). sprite = Sprite Lab status sprite drawn on the monster, scaled to its body radius (made for radius 8 px): at body (body centre) or head (on top of the body). freeze also stops the monster animation. tint = colour laid over the monster while it lasts. tile: drawn as several sprites at the game's whole sprite scale spread over a big body instead of one sprite blown up (user 2026-11-20: burn blurry on big monsters).",
   "statuses": {
-    "slow": { "name": "Làm chậm", "sprite": "status-slow", "at": "body", "tint": "#a8c8ff",
-              "desc": "Quái đi chậm lại." },
-    "stun": { "name": "Choáng", "sprite": "status-stun", "at": "head",
-              "desc": "Quái đứng yên và không gây sát thương khi chạm." },
-    "freeze": { "name": "Đóng băng", "sprite": "status-freeze", "at": "body", "tint": "#9fd8ff",
-                "desc": "Quái bị nhốt trong khối băng: đứng hình, không gây sát thương khi chạm." },
-    "bleed": { "name": "Chảy máu", "sprite": "status-bleed", "at": "body", "tint": "#ffc8c8",
-               "desc": "Quái mất máu mỗi 0,5 giây." },
-    "burn": { "name": "Bỏng", "sprite": "status-burn", "at": "body", "tint": "#ffc0a0",
-              "desc": "Quái cháy, mất máu mỗi 0,5 giây." },
-    "shock": { "name": "Giật điện", "sprite": "status-shock", "at": "body",
-               "desc": "Quái mang dấu giật điện; mỗi đòn giật sau lan sang mọi quái còn mang dấu (dưới nửa sát thương)." }
+    "slow": {
+      "name": "Làm chậm",
+      "sprite": "status-slow",
+      "at": "body",
+      "tint": "#a8c8ff",
+      "desc": "Quái đi chậm lại."
+    },
+    "stun": {
+      "name": "Choáng",
+      "sprite": "status-stun",
+      "at": "head",
+      "desc": "Quái đứng yên và không gây sát thương khi chạm."
+    },
+    "freeze": {
+      "name": "Đóng băng",
+      "sprite": "status-freeze",
+      "at": "body",
+      "tint": "#9fd8ff",
+      "desc": "Quái bị nhốt trong khối băng: đứng hình, không gây sát thương khi chạm."
+    },
+    "bleed": {
+      "name": "Chảy máu",
+      "sprite": "status-bleed",
+      "at": "body",
+      "tint": "#ffc8c8",
+      "desc": "Quái mất máu mỗi 0,5 giây."
+    },
+    "burn": {
+      "name": "Bỏng",
+      "sprite": "status-burn",
+      "at": "body",
+      "tint": "#ffc0a0",
+      "desc": "Quái cháy, mất máu mỗi 0,5 giây.",
+      "tile": true
+    },
+    "shock": {
+      "name": "Giật điện",
+      "sprite": "status-shock",
+      "at": "body",
+      "desc": "Quái mang dấu giật điện; mỗi đòn giật sau lan sang mọi quái còn mang dấu (dưới nửa sát thương)."
+    }
   }
 }

@@ -2044,6 +2044,24 @@ func special_fx_sprites() -> Array[String]:
 	return out
 
 
+## Where to draw a status sprite on a body of [param radius] px: [[offset, scale], ...]. The sprites are
+## made for a body of radius 8 art px. A tiled status (statuses.json "tile", the burn) never blows one sprite
+## up (user 2026-11-20: blurry, blocky on big monsters): it draws several at a whole scale no larger than
+## the game's sprite scale, spread over the body (sunflower pattern); others keep one sprite scaled to fit.
+func status_spots(radius: float, tile: bool) -> Array:
+	if not tile:
+		return [[Vector2.ZERO, radius / 8.0]]
+	var full := 8.0 * _sprite_scale
+	if radius <= full:
+		return [[Vector2.ZERO, clampf(roundf(radius / 8.0), 1.0, _sprite_scale)]]
+	var n := clampi(roundi(pow(radius / full, 2.0) * 1.6), 2, 9)
+	var out := []
+	for k in n:
+		var rr := radius * 0.6 * sqrt((k + 0.5) / n)
+		out.append([Vector2.from_angle(k * 2.39996) * rr, _sprite_scale])
+	return out
+
+
 ## Seeds the XP drop rolls (from the run seed; tests set their own).
 func seed_xp_drops(seed_value: int) -> void:
 	_xp_rng.seed = seed_value * 53 + 11
@@ -2700,12 +2718,14 @@ func _draw_statuses(view: Rect2) -> void:
 			var sh: SpriteSheet = sheets.get(String(d.get("sprite", "")))
 			if sh == null:
 				continue
-			# status sprites are made for a body of radius 8 px: scale to this monster
 			var r := enemies.k_radius[enemies.kind[i]]
 			var p := enemies.center_of(i)
 			if String(d.get("at", "body")) == "head":
 				p.y -= r
-			sh.draw(self, "loop", clock + i * 0.17, p, r / 8.0)
+			var k := 0
+			for spot: Array in status_spots(r, bool(d.get("tile", false))):
+				sh.draw(self, "loop", clock + i * 0.17 + k * 0.29, p + (spot[0] as Vector2), float(spot[1]))
+				k += 1
 	for s in _shock_fx:
 		var a: Vector2 = s["a"]
 		var b: Vector2 = s["b"]
