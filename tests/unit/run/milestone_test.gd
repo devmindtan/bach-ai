@@ -114,16 +114,21 @@ func test_undying_revives_once_per_run() -> void:
 
 # --- rules -------------------------------------------------------------------
 
-func test_twin_cast_adds_one_to_every_skill() -> void:
-	var sk := "fireball"
-	var plain := _run("mage", {sk: 1}, [])
-	var r := _run("mage", {sk: 1}, ["twin_cast"])
-	var p: Dictionary = plain.pool["skills"][sk]
-	var before: int = plain._skill_count(sk, p)
-	_check(is_equal_approx(float(r.stats.get("amount", 0.0)), float(plain.stats.get("amount", 0.0)) + 1.0),
-		"Đa phép: amount %s vs %s" % [r.stats.get("amount"), plain.stats.get("amount")])
-	_check(r._skill_count(sk, p) == before + 1, "one more fireball: %d -> %d" % [before, r._skill_count(sk, p)])
-	plain.free()
+# User 2026-11-20: Đa phép adds one to the skills the hero has when it is picked, not to skills learnt later.
+func test_twin_cast_adds_one_only_to_skills_owned_when_picked() -> void:
+	var r := _run("mage", {"arcane_bolt": 1, "fireball": 1}, [])
+	var fb: Dictionary = r.pool["skills"]["fireball"]
+	var lt: Dictionary = r.pool["skills"]["lightning"]
+	var before: int = r._skill_count("fireball", fb)
+	r.levels["lightning"] = 1   # learnt later: measure its count without Đa phép first
+	var lt_plain: int = r._skill_count("lightning", lt)
+	r.levels.erase("lightning")
+	r.take_milestone("twin_cast")
+	_check(r._skill_count("fireball", fb) == before + 1, "owned fireball +1: %d -> %d" % [before, r._skill_count("fireball", fb)])
+	r.levels["lightning"] = 1
+	r.apply_rewards()   # runs again on later picks: must not add twice nor reach the new skill
+	_check(r._skill_count("lightning", lt) == lt_plain, "lightning learnt later is not boosted: %d vs %d" % [r._skill_count("lightning", lt), lt_plain])
+	_check(r._skill_count("fireball", fb) == before + 1, "fireball still +1 only, got %d" % r._skill_count("fireball", fb))
 	r.free()
 
 

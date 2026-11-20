@@ -79,6 +79,7 @@ var rewards: Array[String] = []   # level milestone rewards picked in this run (
 var _ms_queue: Array[int] = []    # milestone levels reached, their pick not shown yet
 var _ms_done: Array[int] = []     # milestone levels already offered in this run
 var ms_level := 0                 # the milestone level whose pick is open (0 = a normal level-up)
+var _owned_count_done := false     # Đa phép already gave its +1 to the skills owned when picked
 var skill_extra := {}             # skill id -> count added by Thêm đòn / Thêm phép on that skill only
 var skill_pick := 0               # > 0: the open panel picks the skill a count card adds to
 var _pick_card := ""              # --pick-card=ID (shots)
@@ -1524,6 +1525,13 @@ func apply_rewards() -> void:
 	for sk: String in milestones.skills(rewards):
 		levels[sk] = maxi(int(levels.get(sk, 0)), 1)
 	set_specials(card_specials())   # a special card reward works at once
+	# Đa phép: +N count to the skills owned right now, once (user 2026-11-20: not to skills learnt later)
+	var tc := milestones.with_key(rewards, "owned_skill_count")
+	if not tc.is_empty() and not _owned_count_done:
+		_owned_count_done = true
+		for sid: String in pool.get("skills", {}):
+			if int(levels.get(sid, 0)) > 0:
+				add_skill_extra(sid, int(tc["owned_skill_count"]))
 	var g := milestones.with_key(rewards, "every")
 	_guardian_every = float(g.get("every", 0.0))
 	_guardian_buff = String(g.get("buff", "magnetic_shield"))

@@ -65,8 +65,9 @@ func test_only_milestone_rewards_add_to_every_skill() -> void:
 		for u: Dictionary in pool.get("upgrades", []):
 			_check(not u.get("effects", {}).has("amount"), "%s card %s must not add to every skill" % [cls, u["id"]])
 	var ms := GameData.load_json("res://assets/data/milestones.json")
-	_check(ms["rewards"]["twin_cast"].get("effects", {}).has("amount") and ms["rewards"]["twin_cast"]["name"] == "Đa phép",
-		"Đa phép is the level-milestone reward adding to every skill")
+	_check(int(ms["rewards"]["twin_cast"].get("owned_skill_count", 0)) == 1 and ms["rewards"]["twin_cast"]["name"] == "Đa phép"
+		and not ms["rewards"]["twin_cast"].get("effects", {}).has("amount"),
+		"Đa phép adds +1 to the skills owned when picked (owned_skill_count), not a global amount (user 2026-11-20)")
 
 
 func test_nearest_n_sorted() -> void:
