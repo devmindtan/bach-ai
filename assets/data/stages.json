@@ -6,8 +6,8 @@
     "hp_lin": 0.15,
     "hp_quad": 0.004,
     "dmg_lin": 0.06,
-    "rate_lin": 0.03,
-    "rate_max": 2.0
+    "rate_lin": 0.02,
+    "rate_max": 1.5
   },
   "rewards": {
     "gold_base": 20,

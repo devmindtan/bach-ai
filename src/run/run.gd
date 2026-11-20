@@ -329,6 +329,8 @@ func _ready() -> void:
 	var bal: Dictionary = cfg.get("balance", {})   # global tuning (run_config.json balance, 2026-11-20)
 	enemies.scale_kinds(stages.hp_mul(stage_number) * float(stage.get("hp_mul", 1.0)) * float(bal.get("monster_hp_mul", 1.0)),
 		stages.damage_mul(stage_number) * float(bal.get("monster_damage_mul", 1.0)))
+	for k in enemies.k_xp.size():   # fewer monsters must not mean slower levels: each gives more xp
+		enemies.k_xp[k] *= float(bal.get("xp_mul", 1.0))
 	for k in enemies.k_hp.size():
 		enemies.k_hp[k] *= monster_hp_mul
 	enemies.vs_status_mul = passive_vs_status()
@@ -522,6 +524,8 @@ func _process(delta: float) -> void:
 	if bench > 0 and _bench_frames > 60:
 		_bench_tick_us.append(Time.get_ticks_usec() - t0)
 	_camera.position = player_pos.round()
+	if OS.get_cmdline_user_args().has("--count-log") and Engine.get_process_frames() % 300 == 0:
+		printerr("GK: t=%.0f alive=%d" % [clock, enemies.living()])
 	shake.enabled = Prefs.current().screen_shake   # the pause menu's Cài đặt can turn it off mid-run
 	_camera.offset = shake.step(delta, Engine.get_process_frames())
 	queue_redraw()

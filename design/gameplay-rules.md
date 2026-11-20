@@ -101,3 +101,11 @@ AoE người chơi ×0,9. Log cuối trận ("Run over …") có `hp_min` và `t
 Giới hạn: AI demo chơi kém (không bất tử thì thua cả ải 1 ở 2:15), và mỗi lần đổi số thì chuỗi ngẫu nhiên đổi theo, nên
 bảng chỉ cho **xu hướng**: người chơi lên cấp chậm hơn, giết ít hơn, mỗi con quái nguy hiểm hơn. Ải 20 có thể quá khó: cần
 người chơi thật thử rồi chỉnh tiếp bằng các hệ số trên.
+
+### Ít quái hơn nữa (người dùng 2026-11-20: "quái đang quá nhiều")
+
+Đo số quái còn sống (cờ `--count-log`, trận demo bất tử): trước khi chỉnh, ải 1 chạm **trần 600** từ phút 2,5 và giữ tới
+cuối; ải 10 và 20 chạm 600 từ phút 2. Đã chỉnh: `spawn_mul` 0,85 → **0,4**; mật độ tăng theo ải 3% → **2%** mỗi ải, tối đa
+×2 → **×1,5** (`stages.json` scale); trần số quái 600 → **200** (`run_config.json` max_enemies); bù **kinh nghiệm ×2** mỗi
+con (`balance.xp_mul`) để ít quái không làm lên cấp chậm. Sau chỉnh: ải 1 đỉnh 200 con, phần lớn 130–190; ải 10, 20 chạm
+200 (AI demo giết chậm; người thật giết nhanh hơn nên thấp hơn). Trên màn hình tối đa bằng 1/3 trước đây.
