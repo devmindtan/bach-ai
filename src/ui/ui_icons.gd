@@ -15,6 +15,8 @@ const GEAR_DIR := "res://assets/sprites/custom/gear-icons"   # 24 px equipment i
 static var _sheet: SpriteSheet
 static var _gear: SpriteSheet
 static var _glyphs: SpriteSheet
+static var _cards: SpriteSheet
+const CARD_DIR := "res://assets/sprites/custom/card-icons"   # 24 px card icons (user 2026-11-20), first choice
 const GLYPH_DIR := "res://assets/sprites/custom/card-glyphs"   # card tree change symbols + Mảnh thẻ
 static var _textures := {}
 
@@ -39,11 +41,15 @@ static func gear() -> SpriteSheet:
 	return _gear
 
 
-## The icon's frame as a texture (cached), for Controls: ui-icons first, then
+## The icon's frame as a texture (cached), for Controls: card-icons first, then ui-icons, then
 ## gear-icons (item ids), then card-glyphs (card tree symbols, "shard").
 static func texture(icon: String) -> Texture2D:
 	if not _textures.has(icon):
-		var s := sheet()
+		if _cards == null:
+			_cards = SpriteSheet.load_dir(CARD_DIR, "card-icons")
+		var s := _cards
+		if s == null or not s.has_animation(icon):
+			s = sheet()
 		if s == null or not s.has_animation(icon):
 			s = gear()
 		if s == null or not s.has_animation(icon):
