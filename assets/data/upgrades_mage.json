@@ -289,7 +289,6 @@
       "rarity": "legendary",
       "max_level": 1,
       "weight": 4,
-      "icon": "item_chain_shock",
       "from_item": "star_hat",
       "desc": "Mỗi 6 giây: sét đánh 6 quái gần nhất (170% sát thương), lan sang 2 quái bên cạnh.",
       "special": {
@@ -313,7 +312,6 @@
       "rarity": "legendary",
       "max_level": 1,
       "weight": 4,
-      "icon": "item_revive",
       "from_item": "star_robe",
       "desc": "Một lần mỗi trận: hết máu thì đứng dậy với 50% máu, miễn sát thương 2 giây.",
       "special": {
@@ -334,7 +332,6 @@
       "rarity": "epic",
       "max_level": 1,
       "weight": 4,
-      "icon": "item_burn_aura",
       "from_item": "star_pants",
       "desc": "Liên tục đốt cháy quái quanh người (80% sát thương mỗi giây).",
       "special": {
@@ -357,7 +354,6 @@
       "rarity": "legendary",
       "max_level": 1,
       "weight": 4,
-      "icon": "item_freeze_nova",
       "from_item": "star_bracer",
       "desc": "Mỗi 7,6 giây: đóng băng quái quanh người 1,5 giây.",
       "special": {
@@ -379,7 +375,6 @@
       "rarity": "epic",
       "max_level": 1,
       "weight": 4,
-      "icon": "item_kill_proc",
       "from_item": "star_shoes",
       "desc": "Mỗi 28 quái hạ được: Rune tốc độ 4 giây.",
       "special": {
@@ -401,7 +396,6 @@
       "rarity": "legendary",
       "max_level": 1,
       "weight": 4,
-      "icon": "item_reset_cd",
       "from_item": "star_staff",
       "desc": "Mỗi 9 giây: mọi chiêu hồi chiêu xong ngay.",
       "special": {

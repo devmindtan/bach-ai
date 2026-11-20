@@ -238,21 +238,26 @@ func test_milestones_offer_four_real_rewards_per_class() -> void:
 				_check(offered.has(String(up["id"])), "unique skill %s is no milestone reward (unreachable)" % up["id"])
 
 
-func test_every_upgrade_has_a_card_icon() -> void:
-	# the level-up card draws the ui-icons animation named like the upgrade id
-	var icons := SpriteSheet.load_dir(SPRITES + "ui-icons", "ui-icons")
-	_check(icons != null, "ui-icons sprite missing")
+func test_every_upgrade_has_its_own_card_icon() -> void:
+	# User 2026-11-20: card icons are the 24 px card-icons sheet, one per card: no card may show another
+	# card's icon (Huyết quyền and Lưu tinh shared one); UiIcons reads card-icons first, so a card never
+	# shows the old 16 px HUD art.
+	var icons := SpriteSheet.load_dir(SPRITES + "card-icons", "card-icons")
+	_check(icons != null, "card-icons sprite missing")
 	if icons == null:
 		return
 	var classes := GameData.load_json(DATA + "classes.json")
+	var owner := {}   # icon -> card id
 	for cid: String in classes:
 		if cid.begins_with("_"):
 			continue
 		var pool := GameData.load_json(DATA + String(classes[cid].get("upgrades", "")))
 		for u: Dictionary in pool.get("upgrades", []):
-			# a card may borrow another card's icon with "icon"
-			var icon_id := String(u.get("icon", u["id"]))
-			_check(icons.has_animation(icon_id), "upgrade %s has no icon '%s' in ui-icons (draw it in Sprite Lab)" % [u["id"], icon_id])
+			var id := String(u["id"])
+			var icon_id := String(u.get("icon", id))
+			_check(icons.has_animation(icon_id), "card %s has no icon '%s' in card-icons (draw it in Sprite Lab)" % [id, icon_id])
+			_check(not owner.has(icon_id) or owner[icon_id] == id, "cards %s and %s share icon %s" % [owner.get(icon_id), id, icon_id])
+			owner[icon_id] = id
 
 
 ## User 2026-11-17: as time passes the early monsters thin out and stronger ones

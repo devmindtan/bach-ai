@@ -303,7 +303,6 @@
       "rarity": "epic",
       "max_level": 1,
       "weight": 4,
-      "icon": "item_shield",
       "from_item": "aegis_helm",
       "desc": "Mỗi 11,4 giây: giáp ảo +12 trong 3 giây (mỗi đòn trừ 12 sát thương).",
       "special": {
@@ -324,7 +323,6 @@
       "rarity": "legendary",
       "max_level": 1,
       "weight": 4,
-      "icon": "item_retaliate",
       "from_item": "aegis_chest",
       "desc": "Khi bị đánh: chấn sóng quanh người gây 200% sát thương và đẩy lùi (1,5 giây một lần).",
       "special": {
@@ -347,7 +345,6 @@
       "rarity": "legendary",
       "max_level": 1,
       "weight": 4,
-      "icon": "item_low_hp",
       "from_item": "aegis_greaves",
       "desc": "Máu dưới 30%: vỏ đá chặn trọn một đòn trong 8 giây (23 giây một lần).",
       "special": {
@@ -370,7 +367,6 @@
       "rarity": "epic",
       "max_level": 1,
       "weight": 4,
-      "icon": "item_kill_proc",
       "from_item": "aegis_gauntlets",
       "desc": "Mỗi 21 quái hạ được: hồi 10% máu tối đa.",
       "special": {
@@ -391,7 +387,6 @@
       "rarity": "epic",
       "max_level": 1,
       "weight": 4,
-      "icon": "item_hit_buff",
       "from_item": "aegis_boots",
       "desc": "Khi bị đánh: Rune tốc độ 3 giây (6 giây một lần).",
       "special": {
@@ -413,7 +408,6 @@
       "rarity": "legendary",
       "max_level": 1,
       "weight": 4,
-      "icon": "item_pulse",
       "from_item": "aegis_blade",
       "desc": "Mỗi 4,6 giây: một vòng kiếm quanh người gây 300% sát thương.",
       "special": {

@@ -182,7 +182,7 @@ func test_milestone_rows_describe_each_owned_reward() -> void:
 	if rows.size() == 2:
 		_check(rows[0]["name"] == "Lôi ấn" and rows[0]["kind"] == "Thẻ đặc biệt",
 			"skill row: %s / %s" % [rows[0].get("name"), rows[0].get("kind")])
-		_check(String(rows[0]["desc"]) != "" and String(rows[0]["icon"]) == "item_chain_shock", "card row needs its card text and icon")
+		_check(String(rows[0]["desc"]) != "" and String(rows[0]["icon"]) == "sp_star_hat", "card row needs its card text and icon")
 		_check(rows[1]["name"] == "Thêm lựa chọn" and rows[1]["kind"] == "Luật", "rule row: %s" % rows[1].get("name"))
 	_check(_run("knight", {}, []).milestone_rows().is_empty(), "no rewards: no rows")
 	r.free()
