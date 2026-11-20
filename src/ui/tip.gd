@@ -132,17 +132,23 @@ static func _show(target: Variant) -> void:
 		b.custom_minimum_size.x = minf(w + 4.0, MAX_W - (52.0 if String(d["icon"]) != "" else 0.0))
 		v.add_child(b)
 	var card := _card
+	# deferred: capture ids, not the nodes (a screen rebuilt in between freed c, and calling a lambda that
+	# holds a freed node prints "Lambda capture ... was freed" before any check inside it can run)
+	var card_id := card.get_instance_id()
+	var c_id := c.get_instance_id()
 	(func() -> void:
-		if not is_instance_valid(card) or not is_instance_valid(c):
+		var tc := instance_from_id(card_id) as Control
+		var tt := instance_from_id(c_id) as Control
+		if tc == null or tt == null or not tt.is_inside_tree():
 			return
-		var sz := card.get_combined_minimum_size()
-		card.size = sz
-		var vp := c.get_viewport().get_visible_rect().size
-		var r := c.get_global_rect()
+		var sz := tc.get_combined_minimum_size()
+		tc.size = sz
+		var vp := tt.get_viewport().get_visible_rect().size
+		var r := tt.get_global_rect()
 		var pos := Vector2(r.position.x, r.end.y + GAP)
 		if pos.y + sz.y > vp.y - GAP:   # no room below: above
 			pos.y = r.position.y - sz.y - GAP
 		pos.x = clampf(pos.x, GAP, maxf(GAP, vp.x - sz.x - GAP))
 		pos.y = clampf(pos.y, GAP, maxf(GAP, vp.y - sz.y - GAP))
-		card.position = pos
-		card.create_tween().tween_property(card, "modulate:a", 1.0, FADE)).call_deferred()
+		tc.position = pos
+		tc.create_tween().tween_property(tc, "modulate:a", 1.0, FADE)).call_deferred()

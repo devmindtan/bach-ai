@@ -1,6 +1,6 @@
 {
   "_doc": "Boss stage of Rừng Âm U (stage 20): Mộc Yêu (tree_boss, design/bosses.md) at 120 s with forest elites around it. The boss's hp is scaled by the stage like every monster (stages.json scale). Won when the boss dies (or at duration).",
-  "name": "Hang Vua Thạch Nhầy",
+  "name": "Lõi Rừng Mộc Yêu",
   "duration": 300.0,
   "waves": [
     {

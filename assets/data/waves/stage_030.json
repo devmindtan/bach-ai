@@ -1,6 +1,6 @@
 {
   "_doc": "Boss stage of Đầm Lầy Độc (stage 30): Cóc Chúa (toad_king, design/bosses.md) at 120 s with many marsh elites. The boss's hp is scaled by the stage like every monster (stages.json scale). Won when the boss dies (or at duration).",
-  "name": "Hang Vua Thạch Nhầy",
+  "name": "Vũng Cóc Chúa",
   "duration": 300.0,
   "waves": [
     {

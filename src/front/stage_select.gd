@@ -164,7 +164,11 @@ func _build() -> void:
 	prog.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	bar_row.add_child(prog)
 	# its bottom lines up with the detail column's (104 + 500) once laid out
-	(func() -> void: info.position.y = 604.0 - info.size.y).call_deferred()
+	var info_id := info.get_instance_id()   # by id: a rebuild may free info first (a freed capture prints an error)
+	(func() -> void:
+		var inf := instance_from_id(info_id) as Control
+		if inf != null:
+			inf.position.y = 604.0 - inf.size.y).call_deferred()
 
 	# right: the chosen stage, then the main action under it
 	var panel := UiKit.panel(Color(0.09, 0.08, 0.13, 0.96), 18)
@@ -291,8 +295,9 @@ func _detail(panel: PanelContainer, unlocked: int) -> void:
 		diff.add_child(val)
 	# monsters in this stage
 	v.add_child(UiKit.label("Quái xuất hiện", 15, UiKit.MUTED))
-	var mons := HBoxContainer.new()
-	mons.add_theme_constant_override("separation", 6)
+	var mons := HFlowContainer.new()   # wraps: a stage with many monsters pushed the panel off screen (2026-11-20)
+	mons.add_theme_constant_override("h_separation", 6)
+	mons.add_theme_constant_override("v_separation", 6)
 	v.add_child(mons)
 	var seen := []
 	for w: Dictionary in st.get("waves", []):
@@ -323,7 +328,7 @@ func _monster_box(id: String) -> Control:
 		_sheets[sprite] = SpriteSheet.load_dir("res://assets/sprites/custom/" + sprite, sprite)
 	var sheet: SpriteSheet = _sheets[sprite]
 	var c := Control.new()
-	c.custom_minimum_size = Vector2(56, 56)
+	c.custom_minimum_size = Vector2(44, 44)   # six to a row: more wrapped under the Bắt đầu button
 	c.clip_contents = true
 	Tip.attach(c, String(m.get("name", id)), "", UiKit.GOLD, "", "Quái vật")
 	c.draw.connect(func() -> void:
@@ -491,8 +496,9 @@ func _challenge_detail(panel: PanelContainer) -> void:
 		val.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		diff.add_child(val)
 	v.add_child(UiKit.label("Quái xuất hiện", 15, UiKit.MUTED))
-	var mons := HBoxContainer.new()
-	mons.add_theme_constant_override("separation", 6)
+	var mons := HFlowContainer.new()   # wraps: a stage with many monsters pushed the panel off screen (2026-11-20)
+	mons.add_theme_constant_override("h_separation", 6)
+	mons.add_theme_constant_override("v_separation", 6)
 	v.add_child(mons)
 	var seen := []
 	for w: Dictionary in st.get("waves", []):
