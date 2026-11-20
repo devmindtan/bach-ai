@@ -256,8 +256,24 @@ func scale_kinds(hp_m: float, dmg_m: float) -> void:
 ## Adds one monster at [param p]; returns false when the run is at max_enemies.
 func spawn(id: String, p: Vector2) -> bool:
 	var k := kind_of(id)
-	if k < 0 or count >= capacity:
+	if k < 0:
 		return false
+	if count >= capacity:
+		# a boss or an event monster (spawn_dist) must come even at the cap: the farthest plain
+		# monster from where it appears makes room (a dropped boss left a boss stage unwinnable)
+		if k_boss[k] == 0 and not k_extra[k].has("spawn_dist"):
+			return false
+		var far := -1
+		var best := -1.0
+		for j in count:
+			if k_boss[kind[j]] == 0 and k_elite[kind[j]] == 0:
+				var d := pos[j].distance_squared_to(p)
+				if d > best:
+					best = d
+					far = j
+		if far < 0:
+			return false
+		_remove(far)
 	var i := count
 	count += 1
 	pos[i] = p
