@@ -217,11 +217,7 @@ func _slot_cell(slot: String, item: String) -> Control:
 	if item != "":
 		var rr := String(d.get("rarity", "common"))
 		b.add_theme_stylebox_override("normal", UiKit.rarity_style(rr, true, slot == _sel, 6))
-		UiKit.rarity_corners(b, rr)
-		var sg := UiKit.rarity_gem(rr, 16.0)
-		sg.position = Vector2(4, 4)
-		sg.size = sg.custom_minimum_size
-		b.add_child(sg)
+		UiKit.rarity_corners(b, rr)   # no gem on the small cell (user 2026-11-20): the detail shows it
 	else:
 		b.add_theme_stylebox_override("normal", UiKit.style(UiKit.PANEL_DARK, 6, frame, 3 if slot == _sel else 2))
 	for st in ["hover", "focus", "pressed"]:

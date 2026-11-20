@@ -79,5 +79,5 @@ mỗi bậc một **hình viên đá** (tròn, tam giác, vuông, ngũ giác) v�
 | Sử thi | `rarity_epic` ngũ giác tím | viền tím 3 px, nền tím, ánh sáng 4 px, góc trang trí tím |
 | Huyền thoại | `rarity_legendary` sao vàng có tia | viền vàng 3 px, nền vàng đậm, ánh sáng 8 px, góc trang trí vàng |
 
-Dùng ở: ô Bộ thẻ, thẻ lên cấp, ô trang bị quanh nhân vật, ô túi đồ. Ô túi đồ quá nhỏ nên **không** có viên đá,
+Dùng ở: ô Bộ thẻ, thẻ lên cấp, ô trang bị quanh nhân vật, ô túi đồ. Ô nhỏ (bộ thẻ, trang bị, túi đồ) **không** có viên đá (người dùng 2026-11-20: rối mắt),
 viên đá + tên bậc hiện ở khung chi tiết bên cạnh. Viên đá luôn ở góc trên trái nên góc trang trí bỏ góc đó.

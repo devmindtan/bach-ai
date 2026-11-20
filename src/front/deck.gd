@@ -227,14 +227,10 @@ func _tile(u: Dictionary) -> Button:
 	nm.custom_minimum_size.x = TILE.x - 8
 	nm.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	v.add_child(nm)
-	var gem := UiKit.rarity_gem(tier, 16.0)   # the tier's gem shape top left, its deck cost beside it
-	gem.position = Vector2(5, 5)
-	gem.size = gem.custom_minimum_size
-	b.add_child(gem)
-	var pts := Deck.cost(u, _cfg)
-	if pts > 0:
+	var pts := Deck.cost(u, _cfg)   # no gem on the small tile (user 2026-11-20): the frame is the tier, the
+	if pts > 0:                     # detail shows the gem; only the deck cost stays, top left
 		var pl := UiKit.label("%d" % pts, 13, UiKit.RARITY.get(tier, UiKit.TEXT))
-		pl.position = Vector2(23, 2)
+		pl.position = Vector2(8, 2)
 		pl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		b.add_child(pl)
 	Tip.attach(b, String(u.get("name", id)), String(u.get("desc", "")), UiKit.RARITY.get(tier, UiKit.TEXT), id,
@@ -280,8 +276,12 @@ func _detail(root: Control) -> void:
 		head.add_child(hv)
 		hv.add_child(UiKit.label(String(u.get("name", _view)), 24, UiKit.GOLD))
 		var tr := String(u.get("rarity", "common"))
-		hv.add_child(UiKit.label("%s  ·  %s  ·  %d điểm bộ thẻ" % ["Chiêu" if String(u["kind"]) == "skill" else "Thẻ chỉ số",
-			UiKit.RARITY_NAME.get(tr, tr), Deck.cost(u, _cfg)], 14, UiKit.RARITY.get(tr, UiKit.MUTED) if tr != "common" else UiKit.MUTED))
+		var sub := HBoxContainer.new()   # the tier's gem + name, then type and deck cost
+		sub.add_theme_constant_override("separation", 8)
+		sub.add_child(UiKit.rarity_badge(tr, 14))
+		sub.add_child(UiKit.label("·  %s  ·  %d điểm bộ thẻ" % ["Chiêu" if String(u["kind"]) == "skill" else "Thẻ chỉ số",
+			Deck.cost(u, _cfg)], 14, UiKit.MUTED))
+		hv.add_child(sub)
 		var d := UiKit.label(String(u.get("desc", "")), 15, UiKit.TEXT)
 		d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		d.custom_minimum_size.x = w - 40
