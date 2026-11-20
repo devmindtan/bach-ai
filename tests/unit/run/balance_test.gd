@@ -30,3 +30,18 @@ func test_hero_damage_and_area_scaled_cooldown_not() -> void:
 	_check(float(b["monster_hp_mul"]) > 1.0 and float(b["monster_damage_mul"]) > 1.0 and float(b["spawn_mul"]) < 1.0, "the shipped tuning makes fewer, stronger monsters")
 	_check(not b.has("player_cooldown_mul"), "no cooldown knob: the user kept cooldowns")
 	r.free()
+
+
+func test_the_level_up_preview_uses_the_balanced_numbers() -> void:
+	# regression: the card showed damage 17 -> 23 (the "after" skipped the balance multiplier)
+	var r: Node = Run.new()
+	var classes := GameData.load_json("res://assets/data/classes.json")
+	r.class_data = classes["knight"]
+	r.pool = GameData.load_json("res://assets/data/upgrades_knight.json")
+	r.base_stats = classes["knight"]["stats"]
+	r.cfg = {"balance": {"player_damage_mul": 0.5}}
+	r._recompute_stats()
+	var pv: Dictionary = r.upgrade_preview("sharpen")
+	var line: Array = pv["lines"][0]
+	_check(float(line[2]) < float(r.base_stats["damage"]), "the next damage is balanced too, got %s" % [line])
+	r.free()

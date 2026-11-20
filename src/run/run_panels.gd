@@ -175,6 +175,46 @@ func _input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()   # this press only skips the flip, it picks nothing
 
 
+## A filler card (Túi vàng / Linh đan): plain, muted, its gift in one line.
+func _filler_card(i: int, id: String, u: Dictionary) -> Button:
+	var b := Button.new()
+	b.custom_minimum_size = Vector2(300, 180)
+	b.focus_mode = Control.FOCUS_ALL
+	var muted := Color("7a7488")
+	b.add_theme_stylebox_override("normal", _style(CARD, muted))
+	b.add_theme_stylebox_override("hover", _style(CARD_HOVER, muted))
+	b.add_theme_stylebox_override("focus", _style(CARD_HOVER, Color.WHITE))
+	b.add_theme_stylebox_override("pressed", _style(CARD_HOVER, Color.WHITE))
+	var v := VBoxContainer.new()
+	v.set_anchors_preset(Control.PRESET_FULL_RECT)
+	v.offset_left = 14
+	v.offset_right = -14
+	v.offset_top = 12
+	v.offset_bottom = -12
+	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	v.add_theme_constant_override("separation", 8)
+	b.add_child(v)
+	var head := HBoxContainer.new()
+	head.add_theme_constant_override("separation", 10)
+	head.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	head.add_child(UiKit.icon(String(u.get("icon", "coin")), 48.0))
+	var names := VBoxContainer.new()
+	names.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	names.add_child(_label("%d. %s" % [i + 1, u.get("name", id)], 20, TEXT))
+	names.add_child(_label("LẤP CHỖ  ·  bộ thẻ hết thẻ hợp", 13, muted))
+	head.add_child(names)
+	v.add_child(head)
+	var d := _label(String(u.get("desc", "")), 14, MUTED)
+	d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	d.custom_minimum_size = Vector2(270, 0)
+	v.add_child(d)
+	var idx := i
+	b.pressed.connect(func() -> void: run.choose(idx))
+	if i == 0:
+		b.call_deferred("grab_focus")
+	return b
+
+
 ## A count card (Thêm đòn / Thêm phép): pick the one skill that gets +1 count.
 ## Each card: the skill's icon, name, its count now -> after.
 func show_skill_pick(card_name: String, ids: Array[String]) -> void:
@@ -276,9 +316,13 @@ func _fit_cards(row: HBoxContainer) -> void:
 
 func _upgrade_card(i: int, id: String) -> Button:
 	var u: Dictionary = run.upgrade(id)
+	if String(u.get("kind", "")) == "filler":   # design/card-rarity.md: the deck had nothing for this slot
+		return _filler_card(i, id, u)
 	var pv: Dictionary = run.upgrade_preview(id)
 	var skill: bool = u.get("kind") == "skill"
-	var accent := BORDER if skill else STAT_ACCENT
+	var tier := String(u.get("rarity", "common"))
+	# the rarity frames the card (design/card-rarity.md); commons keep the skill / stat colour
+	var accent: Color = Color("6a6478") if tier == "common" else UiKit.RARITY.get(tier, BORDER)   # commons plain, rarer cards in their colour
 	var b := Button.new()
 	b.custom_minimum_size = Vector2(300, 180)   # grown to the tallest card by _fit_cards
 	b.focus_mode = Control.FOCUS_ALL
@@ -318,8 +362,8 @@ func _upgrade_card(i: int, id: String) -> Button:
 	names.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	names.add_child(_label("%d. %s" % [i + 1, u.get("name", id)], 20, TEXT))
 	var lv: int = pv["level"]
-	var kind := ("CHIÊU" if skill else "CHỈ SỐ") + "  ·  " + ("Mới" if lv == 0 else "Cấp %d → %d" % [lv, lv + 1])
-	names.add_child(_label(kind, 13, accent))
+	var kind := ("CHIÊU" if skill else "CHỈ SỐ") + "  ·  " + String(UiKit.RARITY_NAME.get(tier, "")) + "  ·  " + ("Mới" if lv == 0 else "Cấp %d → %d" % [lv, lv + 1])
+	names.add_child(_label(kind, 13, (BORDER if skill else STAT_ACCENT) if tier == "common" else accent))   # commons: the type colour
 	head.add_child(names)
 	v.add_child(head)
 	# level pips + the milestone this pick reaches

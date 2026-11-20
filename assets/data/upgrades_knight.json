@@ -1,5 +1,5 @@
 {
-  "_doc": "Knight level-up pool. kind skill = an attack the run uses; stat = a modifier. effects apply per level: add (flat) or mul (+fraction). weight = roll weight. skills.<id>.cast says how the run casts it: nearest (one burst on each of the count nearest monsters; at_target puts its damage area on the monster instead of the art anchor, anim_prefix picks the direction animation), self (burst on the hero), random (count[level-1] bursts on random monsters within cast_range), wave (anim_prefix + direction, flies at speed px/s through monsters, count[level-1] directions: nearest, opposite, then the two others), active (player-triggered: the dash; sprite = the hero, anim = its animation). tier_sprites pick the sprite by level. frost_nova moved out: it is a mage skill. under_hero = the effect is drawn behind the hero (ground effects around it, e.g. the stomp). on_hit = statuses the skill puts on monsters it hits (assets/data/statuses.json), each from a skill level. count = casts per level (more targets / waves / pulses); the \"amount\" stat (amount cards) adds one to every skill: blade slashes the next nearest monsters, whirlwind gets more ticks, self casts pulse again 0.25 s apart, nearest casts hit the next nearest monsters. unique = a level milestone skill (milestones.json): never offered as a card until it is picked at level 10/20/30 of a run; it starts at level 1 then. pick_skill = a count card: taking it opens a skill pick and that one skill gets +pick_skill count (only the Đa phép level-milestone reward adds to every skill). min_range = random casts skip monsters closer than this when farther ones exist (a ranged skill).",
+  "_doc": "Knight level-up pool. kind skill = an attack the run uses; stat = a modifier. effects apply per level: add (flat) or mul (+fraction). weight = roll weight. skills.<id>.cast says how the run casts it: nearest (one burst on each of the count nearest monsters; at_target puts its damage area on the monster instead of the art anchor, anim_prefix picks the direction animation), self (burst on the hero), random (count[level-1] bursts on random monsters within cast_range), wave (anim_prefix + direction, flies at speed px/s through monsters, count[level-1] directions: nearest, opposite, then the two others), active (player-triggered: the dash; sprite = the hero, anim = its animation). tier_sprites pick the sprite by level. frost_nova moved out: it is a mage skill. under_hero = the effect is drawn behind the hero (ground effects around it, e.g. the stomp). on_hit = statuses the skill puts on monsters it hits (assets/data/statuses.json), each from a skill level. count = casts per level (more targets / waves / pulses); the \"amount\" stat (amount cards) adds one to every skill: blade slashes the next nearest monsters, whirlwind gets more ticks, self casts pulse again 0.25 s apart, nearest casts hit the next nearest monsters. unique = a level milestone skill (milestones.json): never offered as a card until it is picked at level 10/20/30 of a run; it starts at level 1 then. pick_skill = a count card: taking it opens a skill pick and that one skill gets +pick_skill count (only the Đa phép level-milestone reward adds to every skill). min_range = random casts skip monsters closer than this when farther ones exist (a ranged skill). rarity: common | rare | epic | legendary (design/card-rarity.md).",
   "upgrades": [
     {
       "id": "blade_arc",
@@ -12,7 +12,8 @@
         "skill_damage.blade_arc": {
           "mul": 0.2
         }
-      }
+      },
+      "rarity": "common"
     },
     {
       "id": "back_slash",
@@ -25,7 +26,8 @@
         "back_slash": {
           "add": 1.0
         }
-      }
+      },
+      "rarity": "rare"
     },
     {
       "id": "whirlwind",
@@ -41,7 +43,8 @@
         "skill_area.whirlwind": {
           "mul": 0.1
         }
-      }
+      },
+      "rarity": "epic"
     },
     {
       "id": "sharpen",
@@ -54,7 +57,8 @@
         "damage": {
           "mul": 0.15
         }
-      }
+      },
+      "rarity": "common"
     },
     {
       "id": "haste",
@@ -67,7 +71,8 @@
         "cooldown": {
           "mul": -0.1
         }
-      }
+      },
+      "rarity": "rare"
     },
     {
       "id": "reach",
@@ -80,7 +85,8 @@
         "area": {
           "mul": 0.15
         }
-      }
+      },
+      "rarity": "rare"
     },
     {
       "id": "vitality",
@@ -93,7 +99,8 @@
         "max_hp": {
           "add": 20.0
         }
-      }
+      },
+      "rarity": "common"
     },
     {
       "id": "swift",
@@ -106,7 +113,8 @@
         "move_speed": {
           "mul": 0.1
         }
-      }
+      },
+      "rarity": "common"
     },
     {
       "id": "magnet",
@@ -119,7 +127,8 @@
         "magnet": {
           "mul": 0.4
         }
-      }
+      },
+      "rarity": "common"
     },
     {
       "id": "regen",
@@ -132,7 +141,8 @@
         "regen": {
           "add": 0.5
         }
-      }
+      },
+      "rarity": "common"
     },
     {
       "id": "earth_strike",
@@ -148,7 +158,8 @@
         "skill_area.earth_strike": {
           "mul": 0.08
         }
-      }
+      },
+      "rarity": "rare"
     },
     {
       "id": "ground_slam",
@@ -164,7 +175,8 @@
         "skill_area.ground_slam": {
           "mul": 0.08
         }
-      }
+      },
+      "rarity": "epic"
     },
     {
       "id": "cleave_wave",
@@ -177,7 +189,8 @@
         "skill_damage.cleave_wave": {
           "mul": 0.2
         }
-      }
+      },
+      "rarity": "rare"
     },
     {
       "id": "holy_column",
@@ -190,7 +203,8 @@
         "skill_damage.holy_column": {
           "mul": 0.2
         }
-      }
+      },
+      "rarity": "epic"
     },
     {
       "id": "dash",
@@ -206,7 +220,8 @@
         "skill_cd.dash": {
           "mul": -0.12
         }
-      }
+      },
+      "rarity": "common"
     },
     {
       "id": "earthquake",
@@ -223,7 +238,8 @@
         "skill_area.earthquake": {
           "mul": 0.08
         }
-      }
+      },
+      "rarity": "legendary"
     },
     {
       "id": "solar_ray",
@@ -237,7 +253,8 @@
         "skill_damage.solar_ray": {
           "mul": 0.25
         }
-      }
+      },
+      "rarity": "legendary"
     },
     {
       "id": "god_hammer",
@@ -254,7 +271,8 @@
         "skill_area.god_hammer": {
           "mul": 0.1
         }
-      }
+      },
+      "rarity": "legendary"
     },
     {
       "id": "toughness",
@@ -267,7 +285,8 @@
         "armor": {
           "add": 2.0
         }
-      }
+      },
+      "rarity": "common"
     },
     {
       "id": "extra_strike",
@@ -277,7 +296,8 @@
       "max_level": 3,
       "weight": 2,
       "effects": {},
-      "pick_skill": 1
+      "pick_skill": 1,
+      "rarity": "epic"
     }
   ],
   "skills": {

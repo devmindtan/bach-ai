@@ -1,0 +1,61 @@
+{
+  "_doc": "Card rarity (design/card-rarity.md): tiers in order; weights per hand slot by source (level, chest, gold_chest); pity_step moves points from common to epic per common / rare slot (level only), reset on epic+; deck budget points per tier (deck_cost) and the cap (deck_budget); fillers fill a slot the deck cannot (no level).",
+  "tiers": [
+    "common",
+    "rare",
+    "epic",
+    "legendary"
+  ],
+  "names": {
+    "common": "Thường",
+    "rare": "Hiếm",
+    "epic": "Sử thi",
+    "legendary": "Huyền thoại"
+  },
+  "weights": {
+    "level": [
+      60,
+      30,
+      9,
+      1
+    ],
+    "chest": [
+      20,
+      50,
+      25,
+      5
+    ],
+    "gold_chest": [
+      0,
+      50,
+      40,
+      10
+    ]
+  },
+  "pity_step": 1.0,
+  "deck_cost": {
+    "common": 0,
+    "rare": 1,
+    "epic": 2,
+    "legendary": 3
+  },
+  "deck_budget": 7,
+  "fillers": [
+    {
+      "id": "filler_gold",
+      "name": "Túi vàng",
+      "icon": "coin",
+      "kind": "filler",
+      "desc": "Không còn thẻ hợp: nhận 15 vàng.",
+      "gold": 15
+    },
+    {
+      "id": "filler_heal",
+      "name": "Linh đan",
+      "icon": "heart",
+      "kind": "filler",
+      "desc": "Không còn thẻ hợp: hồi 20% máu tối đa.",
+      "heal": 0.2
+    }
+  ]
+}

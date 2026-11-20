@@ -107,6 +107,7 @@ var _ward_buff := ""       # buff id whose aura shows the ward is still up
 var level := 1
 var xp := 0.0
 var gold := 0
+var rarity: CardRarity = null   # card rarity rolls and their pity (design/card-rarity.md)
 var rerolls := 0   # Đổi charges left this run (6C.3)
 var banishes := 0  # Loại charges left
 var skips := 0     # Bỏ qua charges left
@@ -1861,7 +1862,11 @@ func deck_pool() -> Array:
 
 ## A new level-up hand from the deck (banished cards left out); the panel shows it.
 func deal_hand() -> void:
-	choices = UpgradeRoller.roll(deck_pool(), levels, level_up_card_count(), rng)
+	if rarity == null:
+		rarity = CardRarity.load_default()
+	# design/card-rarity.md: a tier per slot, richer in chests, no commons in the gold chest
+	var source := "gold_chest" if _gold_left > 0 else ("chest" if _chest_open else "level")
+	choices = rarity.roll(deck_pool(), levels, level_up_card_count(), rng, source)
 	if not choices.is_empty():   # an empty deck must not leave the run stuck in LEVEL_UP
 		state = State.LEVEL_UP
 
@@ -1928,6 +1933,12 @@ func choose(index: int) -> void:
 	if state != State.LEVEL_UP or index >= choices.size():
 		return
 	var id := choices[index]
+	if id.begins_with("filler_"):   # Túi vàng / Linh đan: no level, a small gift
+		var f := upgrade(id)
+		gold += int(f.get("gold", 0))
+		hp = minf(float(stats["max_hp"]), hp + float(stats["max_hp"]) * float(f.get("heal", 0.0)))
+		_after_pick()
+		return
 	if ms_level > 0:
 		take_milestone(id)
 		return
@@ -1986,6 +1997,12 @@ func upgrade(id: String) -> Dictionary:
 	for u: Dictionary in pool.get("upgrades", []):
 		if u.get("id") == id:
 			return u
+	if id.begins_with("filler_"):   # a slot the deck could not fill (design/card-rarity.md)
+		if rarity == null:
+			rarity = CardRarity.load_default()
+		for f: Dictionary in rarity.cfg.get("fillers", []):
+			if String(f.get("id", "")) == id:
+				return f
 	return {}
 
 
@@ -2003,7 +2020,7 @@ func upgrade_preview(id: String) -> Dictionary:
 	# alone it lost every lasting bonus and showed a drop (user 2026-11-18)
 	var after_levels := effect_levels()
 	after_levels[id] = nxt
-	var after := PlayerStats.compute(base_stats, effect_pool(), after_levels)
+	var after := compute_stats(after_levels)   # the same balance as the run (a raw compute showed 17 -> 23)
 	var lines := []
 	var skills: Dictionary = pool.get("skills", {})
 	if u.get("kind") == "skill" and skills.has(id):
@@ -2077,10 +2094,17 @@ static func _fmt_stat(key: String, v: float) -> String:
 
 
 func _recompute_stats() -> void:
-	stats = PlayerStats.compute(base_stats, effect_pool(), effect_levels())
-	var bal: Dictionary = cfg.get("balance", {})   # weaker hero (balance 2026-11-20): damage and AoE size
-	stats["damage"] = float(stats.get("damage", 0.0)) * float(bal.get("player_damage_mul", 1.0))
-	stats["area"] = float(stats.get("area", 1.0)) * float(bal.get("player_area_mul", 1.0))
+	stats = compute_stats(effect_levels())
+
+
+## The hero's stats with [param lv] card levels, the balance multipliers applied (run_config balance:
+## damage and AoE size, 2026-11-20). The level-up preview uses it too, so its numbers match the run's.
+func compute_stats(lv: Dictionary) -> Dictionary:
+	var st := PlayerStats.compute(base_stats, effect_pool(), lv)
+	var bal: Dictionary = cfg.get("balance", {})
+	st["damage"] = float(st.get("damage", 0.0)) * float(bal.get("player_damage_mul", 1.0))
+	st["area"] = float(st.get("area", 1.0)) * float(bal.get("player_area_mul", 1.0))
+	return st
 	if enemies != null:   # Chí mạng: run_config.json crit + any crit_chance / crit_mul effects (6C.2)
 		enemies.crit_chance = float(cfg.get("crit", {}).get("chance", 0.0)) + float(stats.get("crit_chance", 0.0))
 		enemies.crit_mul = float(cfg.get("crit", {}).get("mul", 1.75)) + float(stats.get("crit_mul", 0.0))
