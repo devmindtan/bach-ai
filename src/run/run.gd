@@ -622,7 +622,7 @@ func _tick(dt: float) -> void:
 			_take_hit(contact)
 	invuln = maxf(0.0, invuln - dt)
 	var had := buffs.active.size()
-	buffs.step(dt, player_pos + _hit_center)
+	buffs.step(dt, player_pos + _hit_center, enemies.player_hit_radius if enemies != null else 0.0)
 	if buffs.active.size() != had or not buffs.picked_ids().is_empty():
 		_recompute_stats()
 	_step_guardian(dt)
@@ -3063,6 +3063,8 @@ func _draw_hitboxes(view: Rect2) -> void:
 	var center := player_pos + _hit_center
 	draw_arc(center, enemies.player_hit_radius, 0.0, TAU, 16, Color(0.3, 0.7, 1.0), 1.5)
 	draw_arc(center, pickups.radius * float(stats.get("magnet", 1.0)), 0.0, TAU, 48, Color(0.3, 0.7, 1.0, 0.35), 1.0)
+	for g: Dictionary in buffs.ground:   # each ground buff's pick-up circle (taken when it touches the body)
+		draw_arc(g["pos"], buffs.collect_radius(), 0.0, TAU, 24, Color(1.0, 0.9, 0.3, 0.9), 1.5)
 	for fx in _fx:
 		var hb := SpriteHitbox.of(fx["sheet"], fx["anim"], _fx_pos(fx), float(fx["scale"]))
 		if hb != null:

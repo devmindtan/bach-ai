@@ -72,7 +72,7 @@
     }
   },
   "buffs": {
-    "_doc": "Random buff spawns (items.json buffs): first after first_after s, then every spawn_every [min,max] s one random buff on a ring spawn_ring [min,max] px around the player; it stays lifetime s (blinks the last blink s); at most max_on_field at once; picked up within collect_radius px.",
+    "_doc": "Random buff spawns (items.json buffs): first after first_after s, then every spawn_every [min,max] s one random buff on a ring spawn_ring [min,max] px around the player; it stays lifetime s (blinks the last blink s); at most max_on_field at once; picked up when the badge circle (collect_radius px, about half the drawn badge) touches the hero body circle (user 2026-11-20).",
     "first_after": 15.0,
     "spawn_every": [
       25.0,
@@ -85,7 +85,7 @@
     "lifetime": 20.0,
     "blink": 4.0,
     "max_on_field": 2,
-    "collect_radius": 22.0
+    "collect_radius": 16.0
   },
   "separation": {
     "cell": 48.0,

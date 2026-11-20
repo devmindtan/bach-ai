@@ -41,8 +41,9 @@ func _init(p_defs: Dictionary, cfg: Dictionary, seed_value: int) -> void:
 	_next = _first_after
 
 
-## Advances timers, spawns, ground lifetime and pick-up. Returns the ids picked up.
-func step(dt: float, player_center: Vector2) -> Array:
+## Advances timers, spawns, ground lifetime and pick-up. Returns the ids picked up. A buff is taken when
+## its badge circle (collect_radius) touches the hero's body circle ([param player_radius], user 2026-11-20).
+func step(dt: float, player_center: Vector2, player_radius := 0.0) -> Array:
 	for id: String in active.keys():
 		active[id] = float(active[id]) - dt
 		if float(active[id]) <= 0.0:
@@ -63,7 +64,7 @@ func step(dt: float, player_center: Vector2) -> Array:
 	while i < ground.size():
 		var g: Dictionary = ground[i]
 		g["age"] = float(g["age"]) + dt
-		if (g["pos"] as Vector2).distance_to(player_center) <= _collect:
+		if (g["pos"] as Vector2).distance_to(player_center) <= _collect + player_radius:
 			got.append(g["id"])
 			activate(String(g["id"]))
 			ground.remove_at(i)
@@ -73,6 +74,11 @@ func step(dt: float, player_center: Vector2) -> Array:
 			continue
 		i += 1
 	return got
+
+
+## A ground buff's pick-up circle radius (px).
+func collect_radius() -> float:
+	return _collect
 
 
 ## Ids picked up by the last step().

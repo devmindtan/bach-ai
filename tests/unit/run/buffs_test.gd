@@ -66,3 +66,15 @@ func test_active_buffs_become_level_one_upgrades() -> void:
 	_check(b.levels() == {"shield": 1}, "level 1 while active")
 	var s := PlayerStats.compute({"magnet": 1.0}, up, b.levels())
 	_check(is_equal_approx(float(s["magnet"]), 4.0), "magnet x4 with the shield, got %s" % s["magnet"])
+
+
+# Regression (user 2026-11-20 "hitbox ăn các buff có vấn đề"): pick-up compared centre to centre with a
+# fixed 22 px, ignoring the hero's body radius, so a buff whose 36 px badge visibly overlapped the hero
+# was not taken. The circles touching (hero body radius + collect_radius) must pick it up.
+func test_buff_touching_the_hero_body_is_picked_up() -> void:
+	var b := Buffs.new(DEFS, CFG, 7)
+	b.ground.append({"id": "power", "pos": Vector2(30, 0), "age": 0.0})   # body 14 + badge 20 > 30
+	var got := b.step(0.1, Vector2.ZERO, 14.0)
+	_check(got.has("power"), "badge overlapping the hero body is taken, got %s" % [got])
+	b.ground.append({"id": "shield", "pos": Vector2(40, 0), "age": 0.0})   # 14 + 20 < 40: not touching
+	_check(b.step(0.1, Vector2.ZERO, 14.0).is_empty(), "a buff beyond touch stays on the ground")
