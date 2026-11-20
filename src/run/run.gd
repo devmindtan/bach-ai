@@ -714,6 +714,15 @@ func _move_player(dt: float) -> void:
 		_knock += (away.normalized() if away.length() > 1.0 else Vector2.RIGHT) * float(pp[1])
 		shake.add(6.0)
 	enemies.phase_push.clear()
+	for tp: Array in enemies.tongue_pull:   # Cóc Độc Bào Tử's tongue caught the hero: dragged to the boss
+		var to: Vector2 = tp[0] - player_pos
+		_knock = to.normalized() * maxf(0.0, to.length() - 30.0) * 5.0   # decays at 5/s: covers that distance
+		shake.add(5.0)
+	enemies.tongue_pull.clear()
+	for wk: Array in enemies.wave_knock:   # a knockback shockwave: thrown away from its centre
+		var off: Vector2 = player_pos - wk[0]
+		_knock += (off.normalized() if off.length() > 1.0 else Vector2.RIGHT) * float(wk[1])
+	enemies.wave_knock.clear()
 	_dash_cd = maxf(0.0, _dash_cd - dt)
 	_dash_trail = maxf(0.0, _dash_trail - dt)
 	if dash_at >= 0.0 and clock >= dash_at:
@@ -2609,15 +2618,41 @@ func _draw_pools(view: Rect2) -> void:
 		var left := clampf(enemies.pool_t[b] / maxf(0.01, enemies.pool_total[b]), 0.0, 1.0)
 		var r := enemies.pool_r[b] * (0.75 + 0.25 * left)
 		var a := 0.35 + 0.35 * minf(1.0, left * 3.0)
+		var purple := b < enemies.pool_purple.size() and enemies.pool_purple[b] == 1   # Cóc Độc Bào Tử spores
+		var c0 := Color(0.45, 0.18, 0.6, a) if purple else Color(0.35, 0.6, 0.12, a)
+		var c1 := Color(0.7, 0.35, 0.9, a * 0.8) if purple else Color(0.55, 0.85, 0.2, a * 0.8)
+		var c2 := Color(0.25, 0.08, 0.35, a + 0.2) if purple else Color(0.2, 0.35, 0.08, a + 0.2)
+		var cb := Color(0.9, 0.6, 1.0) if purple else Color(0.75, 1.0, 0.4)
 		draw_set_transform(p, 0.0, Vector2(1.0, 0.6))   # flat on the ground
-		draw_circle(Vector2.ZERO, r, Color(0.35, 0.6, 0.12, a))
-		draw_circle(Vector2(-r * 0.2, -r * 0.15), r * 0.6, Color(0.55, 0.85, 0.2, a * 0.8))
-		draw_arc(Vector2.ZERO, r, 0.0, TAU, 32, Color(0.2, 0.35, 0.08, a + 0.2), 2.0)
+		draw_circle(Vector2.ZERO, r, c0)
+		draw_circle(Vector2(-r * 0.2, -r * 0.15), r * 0.6, c1)
+		draw_arc(Vector2.ZERO, r, 0.0, TAU, 32, c2, 2.0)
 		draw_set_transform(Vector2.ZERO)
 		for k in 3:   # bubbles pop in turn
 			var ph := fmod(clock * 1.7 + k * 0.33 + float(b) * 0.21, 1.0)
 			var q := p + Vector2(cos(k * 2.1 + b) * r * 0.5, sin(k * 2.1 + b) * r * 0.3)
-			draw_circle(q, 1.5 + 2.0 * ph, Color(0.75, 1.0, 0.4, a * (1.0 - ph)))
+			draw_circle(q, 1.5 + 2.0 * ph, Color(cb, a * (1.0 - ph)))
+	_draw_tongues()
+
+
+## Cóc Độc Bào Tử's tongue: while it aims, a blinking red line along the aim; while it shoots, a pink
+## tongue from the mouth with a round tip.
+func _draw_tongues() -> void:
+	for i in enemies.count:
+		var t := enemies.tongue_t[i]
+		if t == 0.0 or t == -999.0:
+			continue
+		var tg: Dictionary = enemies.k_extra[enemies.kind[i]].get("tongue", {})
+		var a := enemies.center_of(i)
+		var d := enemies.tongue_dir[i]
+		if t > 0.0:
+			var on := int(clock * 10.0) % 2 == 0
+			draw_line(a, a + d * float(tg.get("length", 300.0)), Color(1.0, 0.2, 0.15, 0.85 if on else 0.4), 3.0)
+			continue
+		var b := a + d * enemies.tongue_len[i]
+		draw_line(a, b, Color(0.35, 0.05, 0.12), float(tg.get("width", 10.0)) + 4.0)
+		draw_line(a, b, Color(0.95, 0.45, 0.55), float(tg.get("width", 10.0)))
+		draw_circle(b, float(tg.get("width", 10.0)) * 0.9, Color(0.95, 0.45, 0.55))
 
 
 ## Vòng thử thách (design/events.md): opens at the region's event times near the player; stand
@@ -2808,8 +2843,9 @@ func _draw_boss_waves() -> void:
 		var r := enemies.wave_r[w]
 		var p := enemies.wave_pos[w]
 		var wd := float(enemies.wave_def[w].get("width", 12.0))
-		draw_arc(p, r, 0.0, TAU, 72, Color(0.55, 0.95, 0.6, 0.35), wd)
-		draw_arc(p, r, 0.0, TAU, 72, Color(0.85, 1.0, 0.75, 0.95), 3.0)
+		var hot := enemies.wave_def[w].has("knock")   # Cóc Độc Bào Tử's knockback wave: red / orange
+		draw_arc(p, r, 0.0, TAU, 72, Color(1.0, 0.35, 0.15, 0.4) if hot else Color(0.55, 0.95, 0.6, 0.35), wd)
+		draw_arc(p, r, 0.0, TAU, 72, Color(1.0, 0.75, 0.35, 0.95) if hot else Color(0.85, 1.0, 0.75, 0.95), 3.0)
 	var bi := enemies.boss_index()
 	if bi >= 0 and _rage_t > 0.0:
 		var font := ThemeDB.fallback_font

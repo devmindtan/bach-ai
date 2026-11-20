@@ -30,6 +30,7 @@ func _run() -> Node:
 	r.enemies = Enemies.new(monsters, {"max_enemies": 20, "separation": {"push": 0.0}}, {"blob": blob}, 1)
 	r.sheets["stone-ward-break"] = SpriteSheet.load_dir("res://assets/sprites/custom/stone-ward-break", "stone-ward-break")
 	r.sheets["retaliate-shock"] = SpriteSheet.load_dir("res://assets/sprites/custom/retaliate-shock", "retaliate-shock")
+	r.sheets["ward-heal"] = SpriteSheet.load_dir("res://assets/sprites/custom/ward-heal", "ward-heal")
 	r._recompute_stats()
 	r.hp = float(r.stats["max_hp"])
 	return r
@@ -160,6 +161,7 @@ func test_kill_proc_heals_every_n_kills() -> void:
 	_check(is_equal_approx(r.hp, 10.0), "not yet")
 	r.count_special_kills(1)
 	_check(r.hp > 10.0, "healed at the Nth kill, hp %s" % r.hp)
+	_check(not r._fx.is_empty() and String(r._fx[0]["anim"]) == "cast", "the proc has its own heal burst")
 	r.free()
 
 

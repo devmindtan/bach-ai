@@ -483,6 +483,7 @@
         "at": 3,
         "kind": "kill_proc",
         "name": "Huyết quyền",
+        "fx": "ward-heal",
         "every_kills": 30,
         "heal_frac": 0.06,
         "desc": "Mỗi 30 quái hạ được: hồi 6% máu tối đa."
@@ -851,6 +852,7 @@
         "at": 3,
         "kind": "revive",
         "name": "Tim bất diệt",
+        "fx": "ward-revive",
         "hp": 0.4,
         "invuln": 2.0,
         "desc": "Một lần mỗi trận: hết máu thì đứng dậy với 40% máu, miễn sát thương 2 giây."
@@ -1125,6 +1127,7 @@
         "at": 3,
         "kind": "kill_proc",
         "name": "Lưu tinh",
+        "fx": "ward-haste",
         "every_kills": 40,
         "buff": "haste_rune",
         "time": 4.0,
@@ -1216,6 +1219,7 @@
         "at": 3,
         "kind": "reset_cd",
         "name": "Vĩnh cửu",
+        "fx": "ward-reset",
         "every": 12.0,
         "desc": "Mỗi 12 giây: mọi chiêu hồi chiêu xong ngay."
       }
