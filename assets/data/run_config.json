@@ -152,5 +152,12 @@
     "player_area_mul": 0.9,
     "xp_mul": 2.0,
     "xp_drop_chance": 0.8
+  },
+  "time_scale": {
+    "_doc": "Monsters grow stronger at each minute mark of a run (user 2026-11-20): after k full every s, monsters spawned (not bosses) have hp x (1 + hp*k) and every monster hit deals damage x (1 + damage*k); the mark is called on screen (call).",
+    "every": 60.0,
+    "hp": 0.15,
+    "damage": 0.1,
+    "call": "Quái mạnh hơn! (+%d%% máu, +%d%% sát thương)"
   }
 }

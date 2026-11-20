@@ -167,6 +167,7 @@ var _hash: SpatialHash
 var _hashed_count := 0
 var _push := 60.0
 var _query := PackedInt32Array()
+var spawn_hp_mul := 1.0   # set by the run each frame: monsters spawned later have more hp (time_scale)
 var _rng := RandomNumberGenerator.new()
 var _crit_rng := RandomNumberGenerator.new()   # its own stream: crit rolls must not shift spawns (a run stays reproducible)
 var _time := 0.0
@@ -299,7 +300,7 @@ func spawn(id: String, p: Vector2) -> bool:
 	dash_dir[i] = Vector2.ZERO
 	kind[i] = k
 	state[i] = MOVE
-	hp[i] = k_hp[k]
+	hp[i] = k_hp[k] * (1.0 if k_boss[k] == 1 else spawn_hp_mul)   # bosses keep their designed hp
 	timer[i] = 0.0
 	charge_cd[i] = float(k_extra[k].get("charge_cooldown", 2.0)) * _rng.randf()
 	flash[i] = 0.0
