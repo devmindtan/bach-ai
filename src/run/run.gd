@@ -620,7 +620,7 @@ func _tick(dt: float) -> void:
 	enemies.spawn_hp_mul = time_mul(clock, "hp")   # monsters grow stronger each minute (time_scale)
 	var mark := int(time_mul(clock, "hp") * 1000.0)
 	if mark != _time_mark:
-		if _time_mark >= 0 and String(cfg.get("time_scale", {}).get("call", "")) != "":
+		if _time_mark >= 0 and clock < duration - 0.5 and String(cfg.get("time_scale", {}).get("call", "")) != "":   # not at the final bell
 			var ts: Dictionary = cfg["time_scale"]
 			wave_call = String(ts["call"]) % [roundi((time_mul(clock, "hp") - 1.0) * 100.0), roundi((time_mul(clock, "damage") - 1.0) * 100.0)]
 			wave_call_t = 2.5
@@ -1302,8 +1302,8 @@ func damage_report() -> Array:
 			u = {"name": String(profile.defs[k].get("special", {}).get("name", profile.defs[k].get("name", k)))}
 		var ev_names: Dictionary = cfg.get("events", {}).get("source_names", {})
 		if u.is_empty() and ev_names.has(k):   # an in-run event (Mưa thiên thạch)
-			u = {"name": String(ev_names[k])}
-		rows.append({"id": k, "name": u.get("name", "Khác"), "damage": d,   # never a raw id
+			u = {"name": String(ev_names[k]), "icon": String(cfg["events"].get("source_icons", {}).get(k, "star"))}
+		rows.append({"id": k, "name": u.get("name", "Khác"), "icon": String(u.get("icon", k)), "damage": d,   # never a raw id
 			"share": d / total if total > 0.0 else 0.0, "hits": int(enemies.hits_by.get(k, 0)),
 			"kills": int(enemies.kills_by.get(k, 0)), "dps": d / maxf(1.0, clock)})
 	rows.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a["damage"] > b["damage"])

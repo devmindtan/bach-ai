@@ -1026,6 +1026,7 @@ const RARITY := {"common": Color("e8e2d0"), "rare": Color("6fb7ff"), "epic": Col
 func _damage_table(report: Array) -> GridContainer:
 	var g := GridContainer.new()
 	g.columns = 6
+	g.size_flags_horizontal = Control.SIZE_SHRINK_CENTER   # centred in the panel, not hugging its left edge
 	g.add_theme_constant_override("h_separation", 18)
 	g.add_theme_constant_override("v_separation", 6)
 	for h in ["Chiêu", "Sát thương", "%", "Trúng", "Hạ", "DPS"]:
@@ -1038,7 +1039,7 @@ func _damage_table(report: Array) -> GridContainer:
 		var name := HBoxContainer.new()
 		name.add_theme_constant_override("separation", 8)
 		var icon := TextureRect.new()
-		icon.texture = run.icon_texture(String(r["id"]))
+		icon.texture = run.icon_texture(String(r.get("icon", r["id"])))
 		icon.custom_minimum_size = Vector2(24, 24)
 		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED

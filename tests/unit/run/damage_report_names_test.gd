@@ -27,7 +27,7 @@ func test_event_and_unknown_sources_get_vietnamese_names() -> void:
 	var names := {}
 	for row: Dictionary in r.damage_report():
 		names[row["id"]] = row["name"]
-	_check(names.get(MeteorShower.SOURCE, "") == "Mưa thiên thạch", "the meteor shower row: %s" % names.get(MeteorShower.SOURCE))
+	_check(names.get(MeteorShower.SOURCE, "") == "Sự kiện: Mưa thiên thạch", "the meteor shower row: %s" % names.get(MeteorShower.SOURCE))
 	_check(names.get("zzz_unknown", "") == "Khác", "an unknown source reads Khác, got %s" % names.get("zzz_unknown"))
 	for id: String in names:
 		_check(names[id] != id, "row %s shows its raw id" % id)
