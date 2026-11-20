@@ -96,3 +96,15 @@ func test_skill_card_shows_cooldown() -> void:
 	var names: Array = pv["lines"].map(func(l: Array) -> String: return l[0])
 	_check(names.has("Hồi chiêu"), "a skill card lists its cooldown, got %s" % [names])
 	r.free()
+
+
+# Regression (2026-11-20 screenshot): the level-up card said Sát thương 17 -> 20 (balance x0.85)
+# while the Tab character sheet said 20: the sheet read PlayerStats.breakdown without the balance.
+func test_character_sheet_uses_the_balanced_stats() -> void:
+	var r := _run({"blade_arc": 1})
+	r.cfg = {"balance": {"player_damage_mul": 0.85, "player_area_mul": 0.9}}
+	r._recompute_stats()
+	var bd: Dictionary = r.stat_breakdown()
+	_check(is_equal_approx(float(bd["damage"]["final"]), float(r.stats["damage"])), "sheet damage %s = run damage %s" % [bd["damage"]["final"], r.stats["damage"]])
+	_check(is_equal_approx(float(bd["area"]["final"]), float(r.stats["area"])), "sheet area %s = run area %s" % [bd["area"]["final"], r.stats["area"]])
+	r.free()

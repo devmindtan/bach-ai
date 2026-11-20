@@ -626,7 +626,7 @@ func show_character() -> void:
 		pd.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		pvv.add_child(pd)
 		stats_col.add_child(ph)
-	var bd: Dictionary = PlayerStats.breakdown(run.base_stats, run.effect_pool(), run.effect_levels())
+	var bd: Dictionary = run.stat_breakdown()
 	for key: String in CHARACTER_STATS:
 		# a stat at 0 that no card touches (armour before equipment) is noise
 		if bd.has(key) and (not bd[key]["parts"].is_empty() or not is_zero_approx(float(bd[key]["final"]))):
@@ -768,7 +768,7 @@ func _stat_row(key: String, b: Dictionary) -> VBoxContainer:
 	chips.add_child(_indent(base_l))
 	for part: Dictionary in b["parts"]:
 		var amount: String = ("%+d%%" % roundi(float(part["mul"]) * 100.0)) if part.has("mul") else run.signed(float(part["add"]))
-		var who := String(part["name"]) if not run.buff_def(String(part["id"])).is_empty() else "%s cấp %d" % [part["name"], part["level"]]
+		var who := String(part["name"]) if int(part["level"]) <= 0 or not run.buff_def(String(part["id"])).is_empty() else "%s cấp %d" % [part["name"], part["level"]]
 		chips.add_child(_chip([String(part["id"])], amount, "%s: %s %s" % [who, run.STAT_LABEL.get(key, key), amount]))
 	v.add_child(chips)
 	return v

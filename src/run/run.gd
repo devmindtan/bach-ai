@@ -2135,6 +2135,19 @@ func compute_stats(lv: Dictionary) -> Dictionary:
 	st["damage"] = float(st.get("damage", 0.0)) * float(bal.get("player_damage_mul", 1.0))
 	st["area"] = float(st.get("area", 1.0)) * float(bal.get("player_area_mul", 1.0))
 	return st
+
+
+## PlayerStats.breakdown with the same balance multipliers as compute_stats(), each shown as a
+## "Độ khó" part, so the character sheet agrees with the level-up cards.
+func stat_breakdown() -> Dictionary:
+	var bd := PlayerStats.breakdown(base_stats, effect_pool(), effect_levels())
+	var bal: Dictionary = cfg.get("balance", {})
+	for pair: Array in [["damage", "player_damage_mul"], ["area", "player_area_mul"]]:
+		var m := float(bal.get(pair[1], 1.0))
+		if bd.has(pair[0]) and not is_equal_approx(m, 1.0):
+			bd[pair[0]]["final"] = float(bd[pair[0]]["final"]) * m
+			bd[pair[0]]["parts"].append({"id": "skull", "name": "Độ khó", "level": 0, "mul": m - 1.0})
+	return bd
 	if enemies != null:   # Chí mạng: run_config.json crit + any crit_chance / crit_mul effects (6C.2)
 		enemies.crit_chance = float(cfg.get("crit", {}).get("chance", 0.0)) + float(stats.get("crit_chance", 0.0))
 		enemies.crit_mul = float(cfg.get("crit", {}).get("mul", 1.75)) + float(stats.get("crit_mul", 0.0))
