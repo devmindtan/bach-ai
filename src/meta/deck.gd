@@ -53,7 +53,44 @@ static func why_not_add(cards: Array, ups: Array, id: String, cfg: Dictionary) -
 	var cap := int(cfg.get("skills" if kind == "skill" else "stats", 8))
 	if count(cards, ups, kind) >= cap:
 		return "Bộ đã đủ %d thẻ %s" % [cap, "chiêu" if kind == "skill" else "chỉ số"]
+	var budget := int(cfg.get("budget", -1))
+	if budget >= 0 and points(cards, ups, cfg) + cost(u, cfg) > budget:   # design/card-rarity.md
+		return "Vượt điểm bộ thẻ (%d / %d)" % [points(cards, ups, cfg) + cost(u, cfg), budget]
 	return ""
+
+
+## Deck points of card [param u] (cfg.cost by rarity; commons and untagged cards are free).
+static func cost(u: Dictionary, cfg: Dictionary) -> int:
+	return int(cfg.get("cost", {}).get(String(u.get("rarity", "common")), 0))
+
+
+## Deck points [param cards] use (design/card-rarity.md: the budget that keeps a deck from being all rares).
+static func points(cards: Array, ups: Array, cfg: Dictionary) -> int:
+	var n := 0
+	for id: String in cards:
+		n += cost(_card(ups, id), cfg)
+	return n
+
+
+## [param cards] trimmed to the budget: the costliest non-starting cards leave first (decks saved
+## before the budget existed).
+static func within_budget(cards: Array, ups: Array, start: Array, cfg: Dictionary) -> Array:
+	var budget := int(cfg.get("budget", -1))
+	var out := cards.duplicate()
+	if budget < 0:
+		return out
+	while points(out, ups, cfg) > budget:
+		var worst := ""
+		var hi := 0
+		for id: String in out:
+			var c := cost(_card(ups, id), cfg)
+			if not start.has(id) and c > hi:
+				hi = c
+				worst = id
+		if worst == "":
+			break
+		out.erase(worst)
+	return out
 
 
 static func why_not_remove(cards: Array, id: String, start: Array) -> String:
@@ -76,7 +113,7 @@ static func active(slot: Slot, ups: Array, start: Array, cfg: Dictionary) -> Arr
 	if slot != null and slot.deck_active >= 0 and slot.deck_active < slot.decks.size():
 		var cards: Array = slot.decks[slot.deck_active].get("cards", [])
 		if not cards.is_empty():
-			return cards
+			return within_budget(cards, ups, start, cfg)
 	return default_cards(ups, start, cfg)
 
 

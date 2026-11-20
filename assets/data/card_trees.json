@@ -2137,6 +2137,13 @@
   "deck": {
     "skills": 8,
     "stats": 6,
-    "slots": 3
+    "slots": 3,
+    "budget": 7,
+    "cost": {
+      "common": 0,
+      "rare": 1,
+      "epic": 2,
+      "legendary": 3
+    }
   }
 }

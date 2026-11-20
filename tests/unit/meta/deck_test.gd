@@ -55,3 +55,29 @@ func test_active_deck_of_a_slot() -> void:
 	s.decks = [{"name": "Bộ 1", "cards": ["s5", "t1"]}]
 	s.deck_active = 0
 	_check(Deck.active(s, _ups(), ["s5"], CFG) == ["s5", "t1"], "the saved active deck")
+
+
+const BCFG := {"skills": 8, "stats": 6, "slots": 3, "budget": 3, "cost": {"common": 0, "rare": 1, "epic": 2, "legendary": 3}}
+
+
+func _rare_ups() -> Array:
+	return [{"id": "c0", "kind": "skill", "rarity": "common"}, {"id": "c1", "kind": "skill", "rarity": "common"},
+		{"id": "r0", "kind": "skill", "rarity": "rare"}, {"id": "e0", "kind": "skill", "rarity": "epic", "weight": 9},
+		{"id": "e1", "kind": "stat", "rarity": "epic", "weight": 9}]
+
+
+func test_the_deck_budget_caps_rare_cards() -> void:
+	# design/card-rarity.md: a deck of only rare cards is held back by a point budget
+	var ups := _rare_ups()
+	var d := ["c0", "e0"]
+	_check(Deck.points(d, ups, BCFG) == 2, "an epic costs 2")
+	_check(Deck.why_not_add(d, ups, "r0", BCFG) == "", "a rare fits (3 / 3)")
+	_check(Deck.why_not_add(d, ups, "e1", BCFG).contains("điểm"), "a second epic busts the budget")
+	_check(Deck.why_not_add(d, ups, "c1", BCFG) == "", "commons are free")
+
+
+func test_default_and_saved_decks_stay_within_the_budget() -> void:
+	var ups := _rare_ups()
+	var d := Deck.default_cards(ups, ["c0"], BCFG)
+	_check(Deck.points(d, ups, BCFG) <= 3, "the default deck keeps the budget, got %s" % [d])
+	_check(Deck.points(Deck.within_budget(["c0", "e0", "e1", "r0"], ups, ["c0"], BCFG), ups, BCFG) <= 3, "an old saved deck is trimmed")

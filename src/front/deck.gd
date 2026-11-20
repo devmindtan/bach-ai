@@ -172,6 +172,21 @@ func _tile(u: Dictionary) -> Button:
 	nm.custom_minimum_size.x = TILE.x - 8
 	nm.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	v.add_child(nm)
+	var tier := String(u.get("rarity", "common"))   # design/card-rarity.md: a rarity gem top left, its deck cost
+	var gem := ColorRect.new()
+	gem.color = UiKit.RARITY.get(tier, UiKit.TEXT)
+	gem.position = Vector2(6, 6)
+	gem.size = Vector2(8, 8)
+	gem.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.add_child(gem)
+	var pts := Deck.cost(u, _cfg)
+	if pts > 0:
+		var pl := UiKit.label("%d" % pts, 12, UiKit.RARITY.get(tier, UiKit.TEXT))
+		pl.position = Vector2(17, 0)
+		pl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		b.add_child(pl)
+	Tip.attach(b, String(u.get("name", id)), String(u.get("desc", "")), UiKit.RARITY.get(tier, UiKit.TEXT), id,
+		"%s · %d điểm bộ thẻ" % [UiKit.RARITY_NAME.get(tier, tier), pts])
 	if in_deck:   # the tick, or a lock on the starting skill
 		var mark := UiKit.label("★" if _start.has(id) else "✓", 16, UiKit.GOLD)   # ★ = the locked starting skill
 		mark.position = Vector2(TILE.x - 22, 2)
@@ -204,7 +219,9 @@ func _detail(root: Control) -> void:
 		var hv := VBoxContainer.new()
 		head.add_child(hv)
 		hv.add_child(UiKit.label(String(u.get("name", _view)), 24, UiKit.GOLD))
-		hv.add_child(UiKit.label("Chiêu" if String(u["kind"]) == "skill" else "Thẻ chỉ số", 14, UiKit.MUTED))
+		var tr := String(u.get("rarity", "common"))
+		hv.add_child(UiKit.label("%s  ·  %s  ·  %d điểm bộ thẻ" % ["Chiêu" if String(u["kind"]) == "skill" else "Thẻ chỉ số",
+			UiKit.RARITY_NAME.get(tr, tr), Deck.cost(u, _cfg)], 14, UiKit.RARITY.get(tr, UiKit.MUTED) if tr != "common" else UiKit.MUTED))
 		var d := UiKit.label(String(u.get("desc", "")), 15, UiKit.TEXT)
 		d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		d.custom_minimum_size.x = w - 40
@@ -232,6 +249,10 @@ func _detail(root: Control) -> void:
 	v.add_child(sep)
 	v.add_child(UiKit.label("Chiêu %d/%d  ·  Chỉ số %d/%d" % [Deck.count(_cards(), _ups, "skill"), int(_cfg.get("skills", 8)),
 		Deck.count(_cards(), _ups, "stat"), int(_cfg.get("stats", 6))], 18, UiKit.TEXT))
+	var used := Deck.points(_cards(), _ups, _cfg)
+	var budget := int(_cfg.get("budget", 0))
+	v.add_child(UiKit.label("Điểm bộ thẻ %d / %d  (Hiếm 1 · Sử thi 2 · Huyền thoại 3)" % [used, budget], 15,
+		Color("ff8a8a") if used >= budget else UiKit.GOLD))
 	v.add_child(UiKit.button("Bộ mặc định", func() -> void:
 		_set_cards(Deck.default_cards(_ups, _start, _cfg))
 		_rebuild(), Vector2(w - 40, 40), 16))
