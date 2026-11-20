@@ -42,6 +42,9 @@ var bleed_t := PackedFloat32Array()
 var bleed_dps := PackedFloat32Array()
 var burn_t := PackedFloat32Array()
 var shock_t := PackedFloat32Array()   # shock mark: a later shock hit arcs here
+var tongue_t := PackedFloat32Array()   # Cóc Độc Bào Tử tongue: > 0 aiming s left, < 0 shooting (s since), 0 none
+var tongue_len := PackedFloat32Array()  # how far the tongue reaches now
+var tongue_dir := PackedVector2Array()  # where it aims (set as the aim starts)
 var summon_t := PackedFloat32Array()  # when a boss called this monster (_time), -1 when not called (absorb)
 var phase_t := PackedFloat32Array()   # boss phase 2 transition seconds left (> 0: invulnerable, still)
 var phase_on := PackedByteArray()      # 1 = this boss entered phase 2 (its transition started)
@@ -137,6 +140,8 @@ var wall_b := PackedVector2Array()
 var wall_t := PackedFloat32Array()
 var wall_def: Array = []
 var absorb_lines: Array = []   # [from, to] minions pulled into a boss this step (the run draws root tethers)
+var tongue_pull: Array = []   # [boss centre] when a tongue caught the hero this step (the run pulls the hero in)
+var wave_knock: Array = []    # [wave centre, px/s] when a knockback shockwave hit the hero this step
 var phase_push: Array = []   # [boss pos, push px/s] when a boss starts its phase 2 transition (the run pushes the hero)
 var raged: Array[int] = []              # boss indices that just turned enraged this step (the run announces it)                 # [kind, pos]: monsters to spawn after this step (Phân thân)
 # death bursts ("explode" on a monster, design 6A Bọ Lửa): a warning ring, then a blast
@@ -154,6 +159,7 @@ var pool_pos := PackedVector2Array()
 var pool_t := PackedFloat32Array()
 var pool_total := PackedFloat32Array()
 var pool_r := PackedFloat32Array()
+var pool_purple := PackedByteArray()   # 1 = a Cóc Độc Bào Tử spore pool (drawn purple)
 var pool_dmg := PackedFloat32Array()   # roots that erupted this step (the run draws them)
 var vs_status_mul := 0.0        # class passive: extra damage taken by monsters with a status   # set by the run from the class sprite's body
 
@@ -197,7 +203,8 @@ func _init(monsters: Dictionary, cfg: Dictionary, sheets: Dictionary, seed_value
 	hp_show.resize(capacity)
 	affix.resize(capacity)
 	phase_on.resize(capacity)
-	for a: Variant in [slow_t, slow_mul, stun_t, freeze_t, bleed_t, bleed_dps, burn_t, burn_dps, shock_t, flee_t, dot_wait, phase_t, summon_t]:
+	tongue_dir.resize(capacity)
+	for a: Variant in [slow_t, slow_mul, stun_t, freeze_t, bleed_t, bleed_dps, burn_t, burn_dps, shock_t, flee_t, dot_wait, phase_t, summon_t, tongue_t, tongue_len]:
 		a.resize(capacity)
 	bleed_src.resize(capacity)
 	burn_src.resize(capacity)
@@ -315,6 +322,8 @@ func spawn(id: String, p: Vector2) -> bool:
 	phase_t[i] = 0.0
 	phase_on[i] = 0
 	summon_t[i] = -1.0
+	tongue_t[i] = 0.0
+	tongue_len[i] = 0.0
 	burn_dps[i] = 0.0
 	dot_wait[i] = DOT_TICK
 	return true
@@ -426,6 +435,7 @@ func step(delta: float, player_pos: Vector2, player_center: Vector2) -> float:
 			summon_t[count - 1] = _time   # called by a boss: absorbed if left alive
 	_split_q.clear()
 	contact = maxf(contact, _step_walls(delta, player_center))
+	contact = maxf(contact, _step_tongues(delta, player_center))
 	return maxf(maxf(maxf(contact, _step_bolts(delta, player_center)), _step_blasts(delta, player_center)), _step_pools(delta, player_center))
 
 
@@ -440,6 +450,14 @@ func _step_waves(delta: float, player_center: Vector2) -> float:
 		if wave_hit[w] == 0 and edge < float(d.get("width", 12.0)) * 0.5 + player_hit_radius * 0.5:
 			wave_hit[w] = 1
 			hit = maxf(hit, float(d.get("damage", 20.0)))
+			if d.has("knock"):
+				wave_knock.append([wave_pos[w], float(d["knock"])])
+		if d.has("knock"):   # the ring throws plain monsters back too
+			for j in count:
+				if k_boss[kind[j]] == 0 and state[j] != DYING:
+					var off := pos[j] - wave_pos[w]
+					if absf(off.length() - wave_r[w]) < float(d.get("width", 12.0)):
+						knock[j] = off.normalized() * float(d["knock"])
 		if wave_r[w] >= wave_max[w]:
 			wave_pos.remove_at(w)
 			wave_r.remove_at(w)
@@ -541,7 +559,8 @@ func _tree_phase2(i: int, e: Dictionary, dir: Vector2, dist: float, delta: float
 
 ## A poison pool at [param p] for [param time] s: a player within [param r] takes
 ## [param dmg] (the run's hurt cooldown spaces the hits).
-func add_pool(p: Vector2, time: float, r: float, dmg: float) -> void:
+func add_pool(p: Vector2, time: float, r: float, dmg: float, purple := false) -> void:
+	pool_purple.append(1 if purple else 0)
 	pool_pos.append(p)
 	pool_t.append(time)
 	pool_total.append(time)
@@ -560,6 +579,7 @@ func _step_pools(delta: float, player_center: Vector2) -> float:
 			pool_total.remove_at(b)
 			pool_r.remove_at(b)
 			pool_dmg.remove_at(b)
+			pool_purple.remove_at(b)
 			continue
 		if pool_pos[b].distance_to(player_center) < pool_r[b] + player_hit_radius * 0.5:
 			hit = maxf(hit, pool_dmg[b])
@@ -816,11 +836,26 @@ func _boss_slime(i: int, k: int, dir: Vector2, speed: float, delta: float) -> Ve
 				state[i] = MOVE
 				charge_cd[i] = float(e.get("rage_jump_every", 3.0)) if enraged(i) else float(e.get("jump_every", 5.0))
 				timer[i] = float(e.get("volley", {}).get("every", 4.0)) * 0.5
-				slams.append(pos[i] + dash_dir[i] * delta)
-				var pl: Dictionary = e.get("pool", {})   # Cóc Chúa: a poison pool where it lands
+				var land := pos[i] + dash_dir[i] * delta
+				slams.append(land)
+				var chain := phase_on[i] == 1 and e.has("chain_hops")   # Cóc Độc Bào Tử: leaps in a row
+				var pl: Dictionary = e.get("rage_pool", e.get("pool", {})) if chain else e.get("pool", {})   # a poison pool where it lands
 				if not pl.is_empty():
-					add_pool(pos[i] + dash_dir[i] * delta, float(pl.get("time", 4.0)), float(pl.get("radius", 50.0)), float(pl.get("damage", 12.0)))
-				if enraged(i) and e.has("shockwave"):   # phase 2: a ring runs out from the slam
+					add_pool(land, float(pl.get("time", 4.0)), float(pl.get("radius", 50.0)), float(pl.get("damage", 12.0)), chain)
+				var third := true
+				if chain:
+					flee_t[i] += 1.0   # hops landed in this chain
+					third = flee_t[i] >= float(e.get("chain_hops", 3))
+					if not third:   # the next leap of the chain, a short crouch
+						state[i] = WINDUP
+						timer[i] = float(e.get("chain_windup", 0.3))
+						dash_dir[i] = _target
+						anim_t[i] = 0.0
+					else:
+						flee_t[i] = 0.0
+						charge_cd[i] *= float(_phase2(i).get("cd_mul", 1.0))
+						tongue_t[i] = -999.0   # the tongue comes between chains (MOVE starts it)
+				if enraged(i) and e.has("shockwave") and third:   # phase 2: a ring runs out from the slam (the third leap)
 					wave_pos.append(pos[i] + dash_dir[i] * delta)
 					wave_r.append(k_radius[k])
 					wave_max.append(float(e["shockwave"].get("max", 300.0)))
@@ -830,6 +865,11 @@ func _boss_slime(i: int, k: int, dir: Vector2, speed: float, delta: float) -> Ve
 				slam_done.emit(pos[i] + dash_dir[i] * delta)
 			return dash_dir[i]
 		_:
+			if phase_on[i] == 1 and e.has("tongue"):   # the tongue between chains: no leap while it aims and shoots
+				if tongue_t[i] == -999.0:
+					start_tongue(i)
+				if tongue_t[i] != 0.0:
+					return Vector2.ZERO
 			charge_cd[i] -= delta
 			if charge_cd[i] <= 0.0:
 				state[i] = WINDUP
@@ -837,6 +877,8 @@ func _boss_slime(i: int, k: int, dir: Vector2, speed: float, delta: float) -> Ve
 				dash_dir[i] = _target
 				anim_t[i] = 0.0
 				return Vector2.ZERO
+			if phase_on[i] == 1 and e.has("tongue"):   # Cóc Độc Bào Tử: no spores in phase 2
+				return dir * speed
 			var vo: Dictionary = e.get("volley", {})
 			if not vo.is_empty():   # spits a fan of slow bolts at the player
 				timer[i] -= delta
@@ -886,6 +928,49 @@ func _step_walls(delta: float, player_center: Vector2) -> float:
 			wall_def.remove_at(w)
 			continue
 		w += 1
+	return hit
+
+
+## Starts boss [param i]'s tongue: windup s aiming at the hero (red flash), then it shoots.
+func start_tongue(i: int) -> void:
+	var tg: Dictionary = k_extra[kind[i]].get("tongue", {})
+	tongue_t[i] = float(tg.get("windup", 1.0))
+	tongue_len[i] = 0.0
+	tongue_dir[i] = (_player_center - center_of(i)).normalized() if _player_center != center_of(i) else Vector2.RIGHT
+	if tongue_dir[i] == Vector2.ZERO:
+		tongue_dir[i] = Vector2.RIGHT
+
+
+## Tongues: aim (the aim follows nothing: it was set as the aim began), then shoot length px at speed;
+## the tip touching the hero pulls the hero to the boss (tongue_pull) and stomps (returns its damage).
+func _step_tongues(delta: float, player_center: Vector2) -> float:
+	var hit := 0.0
+	for i in count:
+		if tongue_t[i] == 0.0 or tongue_t[i] == -999.0 or state[i] == DYING:
+			continue
+		var tg: Dictionary = k_extra[kind[i]].get("tongue", {})
+		if tongue_t[i] > 0.0:
+			tongue_t[i] = maxf(0.0, tongue_t[i] - delta)
+			if tongue_t[i] <= 0.0:
+				tongue_t[i] = -0.0001   # shooting
+			continue
+		tongue_t[i] -= delta
+		var length := float(tg.get("length", 300.0))
+		tongue_len[i] = minf(length, tongue_len[i] + float(tg.get("speed", 900.0)) * delta)
+		var a := center_of(i)
+		var b := a + tongue_dir[i] * tongue_len[i]
+		var ab := b - a
+		var t := clampf((player_center - a).dot(ab) / maxf(1.0, ab.length_squared()), 0.0, 1.0)
+		if (a + ab * t).distance_to(player_center) <= float(tg.get("width", 10.0)) + player_hit_radius * 0.5:
+			tongue_pull.append([a])
+			hit = maxf(hit, float(tg.get("damage", 38.0)))
+			slams.append(pos[i])
+			tongue_t[i] = 0.0
+			tongue_len[i] = 0.0
+			continue
+		if tongue_len[i] >= length:   # missed: it snaps back
+			tongue_t[i] = 0.0
+			tongue_len[i] = 0.0
 	return hit
 
 
@@ -1347,6 +1432,9 @@ func _remove(i: int) -> void:
 		flee_t[i] = flee_t[last]
 		phase_t[i] = phase_t[last]
 		summon_t[i] = summon_t[last]
+		tongue_t[i] = tongue_t[last]
+		tongue_len[i] = tongue_len[last]
+		tongue_dir[i] = tongue_dir[last]
 		phase_on[i] = phase_on[last]
 		burn_dps[i] = burn_dps[last]
 		dot_wait[i] = dot_wait[last]
