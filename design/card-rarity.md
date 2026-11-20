@@ -64,3 +64,20 @@ khác dòng chính, giá trị Hiếm ×1, Sử thi ×1,3, Huyền thoại ×1,6
 ## Test
 
 `tests/unit/run/card_rarity_test.gd` (tỉ lệ, bù may, lùi bậc, thẻ lấp chỗ, rương), `tests/unit/meta/deck_test.gd` (trần điểm).
+
+## Khung theo bậc (người dùng 2026-11-20)
+
+Tham khảo: Riftbound ([độ hiếm](https://riftbound.leagueoflegends.com/en-us/news/announcements/collectability-in-riftbound-origins)):
+mỗi bậc một **hình viên đá** (tròn, tam giác, vuông, ngũ giác) và khung càng lên càng cầu kỳ; MTG
+([khung](https://mtg.wiki/page/Frame)) phân bậc bằng màu ký hiệu. Học: đọc bậc được mà không cần màu. Tránh: chỉ
+đổi màu một ô vuông nhỏ. Quyết định: bộ dùng chung `UiKit.rarity_style / rarity_gem / rarity_badge / rarity_corners`.
+
+| Bậc | Viên đá (ui-icons) | Khung |
+|---|---|---|
+| Thường | `rarity_common` đá tròn xám | viền xám 2 px, bo 3 |
+| Hiếm | `rarity_rare` thoi xanh | viền xanh 2 px, nền xanh đậm, bo 4 |
+| Sử thi | `rarity_epic` ngũ giác tím | viền tím 3 px, nền tím, ánh sáng 4 px, góc trang trí tím |
+| Huyền thoại | `rarity_legendary` sao vàng có tia | viền vàng 3 px, nền vàng đậm, ánh sáng 8 px, góc trang trí vàng |
+
+Dùng ở: ô Bộ thẻ, thẻ lên cấp, ô trang bị quanh nhân vật, ô túi đồ. Ô túi đồ quá nhỏ nên **không** có viên đá,
+viên đá + tên bậc hiện ở khung chi tiết bên cạnh. Viên đá luôn ở góc trên trái nên góc trang trí bỏ góc đó.

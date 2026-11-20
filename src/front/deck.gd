@@ -206,10 +206,11 @@ func _tile(u: Dictionary) -> Button:
 	var b := Button.new()
 	b.custom_minimum_size = TILE
 	b.focus_mode = Control.FOCUS_ALL
-	var border := Color.WHITE if on else (UiKit.GOLD if in_deck else Color("4a4458"))
-	b.add_theme_stylebox_override("normal", UiKit.style(Color("3a3020") if in_deck else UiKit.PANEL_DARK, 6, border, 3 if on or in_deck else 2))
+	var tier := String(u.get("rarity", "common"))   # design/card-rarity.md "Khung theo bậc": the frame is the tier
+	b.add_theme_stylebox_override("normal", UiKit.rarity_style(tier, in_deck, on))
 	for st in ["hover", "focus", "pressed"]:
-		b.add_theme_stylebox_override(st, UiKit.style(UiKit.PANEL_HOVER, 6, Color.WHITE, 3))
+		b.add_theme_stylebox_override(st, UiKit.rarity_style(tier, true, true))
+	UiKit.rarity_corners(b, tier)
 	var v := VBoxContainer.new()
 	v.set_anchors_preset(Control.PRESET_FULL_RECT)
 	v.alignment = BoxContainer.ALIGNMENT_BEGIN
@@ -218,7 +219,7 @@ func _tile(u: Dictionary) -> Button:
 	b.add_child(v)
 	var ic := UiKit.icon(id, 48.0)
 	ic.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	ic.modulate = Color.WHITE if in_deck else Color(0.6, 0.6, 0.65)
+	ic.modulate = Color.WHITE if in_deck else Color(0.5, 0.5, 0.55)
 	v.add_child(ic)
 	var nm := UiKit.label(String(u.get("name", id)), 13, UiKit.TEXT if in_deck else UiKit.MUTED)
 	nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -226,26 +227,31 @@ func _tile(u: Dictionary) -> Button:
 	nm.custom_minimum_size.x = TILE.x - 8
 	nm.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	v.add_child(nm)
-	var tier := String(u.get("rarity", "common"))   # design/card-rarity.md: a rarity gem top left, its deck cost
-	var gem := ColorRect.new()
-	gem.color = UiKit.RARITY.get(tier, UiKit.TEXT)
-	gem.position = Vector2(6, 6)
-	gem.size = Vector2(8, 8)
-	gem.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var gem := UiKit.rarity_gem(tier, 16.0)   # the tier's gem shape top left, its deck cost beside it
+	gem.position = Vector2(5, 5)
+	gem.size = gem.custom_minimum_size
 	b.add_child(gem)
 	var pts := Deck.cost(u, _cfg)
 	if pts > 0:
-		var pl := UiKit.label("%d" % pts, 12, UiKit.RARITY.get(tier, UiKit.TEXT))
-		pl.position = Vector2(17, 0)
+		var pl := UiKit.label("%d" % pts, 13, UiKit.RARITY.get(tier, UiKit.TEXT))
+		pl.position = Vector2(23, 2)
 		pl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		b.add_child(pl)
 	Tip.attach(b, String(u.get("name", id)), String(u.get("desc", "")), UiKit.RARITY.get(tier, UiKit.TEXT), id,
 		"%s · %d điểm bộ thẻ" % [UiKit.RARITY_NAME.get(tier, tier), pts])
 	if in_deck:   # the tick, or a lock on the starting skill
-		var mark := UiKit.label("★" if _start.has(id) else "✓", 16, UiKit.GOLD)   # ★ = the locked starting skill
-		mark.position = Vector2(TILE.x - 22, 2)
-		mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		b.add_child(mark)
+		var badge := PanelContainer.new()   # a gold round badge: "in this deck" at a glance
+		var bs := UiKit.style(UiKit.GOLD, 0, Color("1b1726"), 2)
+		bs.set_corner_radius_all(11)
+		badge.add_theme_stylebox_override("panel", bs)
+		badge.custom_minimum_size = Vector2(22, 22)
+		badge.position = Vector2(TILE.x - 26, 4)
+		badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var mark := UiKit.label("✓", 14, Color("1b1726"))
+		mark.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		mark.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		badge.add_child(mark)
+		b.add_child(badge)
 	b.pressed.connect(func() -> void:
 		_view = id
 		_rebuild())

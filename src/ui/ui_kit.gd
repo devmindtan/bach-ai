@@ -19,6 +19,7 @@ const PRIMARY_HOVER := Color("a8483a")
 const DANGER := Color("4a2424")
 const SHADOW := Color(0, 0, 0, 0.7)
 const RARITY := {"common": Color("e8e2d0"), "rare": Color("6fb7ff"), "epic": Color("c38df5"), "legendary": Color("f2b64a")}
+const RARITY_ORDER := ["common", "rare", "epic", "legendary"]
 const RARITY_NAME := {"common": "Thường", "rare": "Hiếm", "epic": "Sử thi", "legendary": "Huyền thoại"}
 
 
@@ -30,6 +31,78 @@ static func style(bg: Color, pad: int, border := GOLD, width := 2) -> StyleBoxFl
 	s.set_corner_radius_all(4)
 	s.set_content_margin_all(pad)
 	return s
+
+
+## Card / item frame of rarity [param tier] (design/card-rarity.md "Khung theo bậc", user 2026-11-20): every tier
+## differs in more than colour: Thường thin grey, Hiếm blue 2 px, Sử thi purple 3 px with a soft glow,
+## Huyền thoại gold 3 px with a strong warm glow and a gold-tinted face. [param lit] = in use / owned (dim
+## otherwise); [param on] = selected (white border, glow kept).
+##
+## Example:
+##   b.add_theme_stylebox_override("normal", UiKit.rarity_style("epic", true, false))
+static func rarity_style(tier: String, lit := true, on := false, pad := 6) -> StyleBoxFlat:
+	var t := RARITY_ORDER.find(tier)
+	var col: Color = RARITY.get(tier, TEXT) if t > 0 else Color("8a8478")
+	var s := StyleBoxFlat.new()
+	s.bg_color = [Color("26222f"), Color("1c2638"), Color("2a1f3a"), Color("3a2c18")][maxi(0, t)]
+	if not lit:
+		s.bg_color = s.bg_color.darkened(0.35)
+		col = col.darkened(0.45)
+	s.border_color = Color.WHITE if on else col
+	s.set_border_width_all([2, 2, 3, 3][maxi(0, t)] + (1 if on else 0))
+	s.set_corner_radius_all([3, 4, 6, 8][maxi(0, t)])
+	s.set_content_margin_all(pad)
+	if t >= 2 and lit:
+		s.shadow_color = Color(col, 0.45 if t == 2 else 0.6)
+		s.shadow_size = 4 if t == 2 else 8
+	return s
+
+
+## The rarity gem icon (ui-icons rarity_<tier>: round / rhombus / pentagon / star), [param px] on screen.
+static func rarity_gem(tier: String, px := 16.0) -> TextureRect:
+	return icon("rarity_" + (tier if RARITY.has(tier) else "common"), px)
+
+
+## Gem + tier name in its colour, for subtitles and tooltips ("◆ Hiếm").
+static func rarity_badge(tier: String, size := 13) -> HBoxContainer:
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 4)
+	h.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	h.add_child(rarity_gem(tier, 16.0))
+	var l := label(String(RARITY_NAME.get(tier, tier)), size, RARITY.get(tier, TEXT))
+	l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	h.add_child(l)
+	return h
+
+
+## Gold corner brackets for Huyền thoại (and purple ones for Sử thi) inside [param c], a frame ornament
+## that commons and rares do not get. Anchored, so they follow c's size.
+static func rarity_corners(c: Control, tier: String) -> void:
+	var t := RARITY_ORDER.find(tier)
+	if t < 2:
+		return
+	var col: Color = RARITY[tier].lightened(0.25)
+	var arm := 10.0 if t == 3 else 7.0
+	for corner in range(1, 4):   # no top-left bracket: the rarity gem sits there everywhere
+		var right := corner % 2 == 1
+		var bottom := corner >= 2
+		for horiz in [true, false]:
+			var r := ColorRect.new()
+			r.color = col
+			r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			var w := arm if horiz else 2.0
+			var h := 2.0 if horiz else arm
+			r.anchor_left = 1.0 if right else 0.0
+			r.anchor_right = r.anchor_left
+			r.anchor_top = 1.0 if bottom else 0.0
+			r.anchor_bottom = r.anchor_top
+			var x0 := -4.0 - w if right else 4.0
+			var y0 := -4.0 - h if bottom else 4.0
+			r.offset_left = x0
+			r.offset_right = x0 + w
+			r.offset_top = y0
+			r.offset_bottom = y0 + h
+			c.add_child(r)
 
 
 static func label(text: String, size: int, color: Color) -> Label:

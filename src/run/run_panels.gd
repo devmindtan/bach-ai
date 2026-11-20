@@ -308,8 +308,10 @@ func show_milestone_pick(level: int, ids: Array[String]) -> void:
 func _fit_cards(row: HBoxContainer) -> void:
 	var h := 0.0
 	for b in row.get_children():
-		var v: Control = b.get_child(0)
-		h = maxf(h, v.get_combined_minimum_size().y + 24.0)
+		for v in b.get_children():   # the content box, wherever it sits (frame ornaments are children too)
+			if v is VBoxContainer:
+				var c := v as Control   # measured fresh (the combined size is cached until the next layout pass)
+				h = maxf(h, maxf(c.get_minimum_size().y, c.custom_minimum_size.y) + 24.0)
 	for b: Control in row.get_children():
 		b.custom_minimum_size.y = maxf(180.0, h)
 
@@ -326,10 +328,13 @@ func _upgrade_card(i: int, id: String) -> Button:
 	var b := Button.new()
 	b.custom_minimum_size = Vector2(300, 180)   # grown to the tallest card by _fit_cards
 	b.focus_mode = Control.FOCUS_ALL
-	b.add_theme_stylebox_override("normal", _style(CARD, accent))
-	b.add_theme_stylebox_override("hover", _style(CARD_HOVER, accent))
-	b.add_theme_stylebox_override("focus", _style(CARD_HOVER, Color.WHITE))
-	b.add_theme_stylebox_override("pressed", _style(CARD_HOVER, Color.WHITE))
+	b.add_theme_stylebox_override("normal", UiKit.rarity_style(tier, true, false, 0))   # the frame is the tier
+	var hv := UiKit.rarity_style(tier, true, false, 0)
+	hv.bg_color = hv.bg_color.lightened(0.08)
+	b.add_theme_stylebox_override("hover", hv)
+	b.add_theme_stylebox_override("focus", UiKit.rarity_style(tier, true, true, 0))
+	b.add_theme_stylebox_override("pressed", UiKit.rarity_style(tier, true, true, 0))
+	UiKit.rarity_corners(b, tier)
 	var v := VBoxContainer.new()
 	v.set_anchors_preset(Control.PRESET_FULL_RECT)
 	v.offset_left = 14
@@ -363,7 +368,14 @@ func _upgrade_card(i: int, id: String) -> Button:
 	names.add_child(_label("%d. %s" % [i + 1, u.get("name", id)], 20, TEXT))
 	var lv: int = pv["level"]
 	var kind := ("CHIÊU" if skill else "CHỈ SỐ") + "  ·  " + String(UiKit.RARITY_NAME.get(tier, "")) + "  ·  " + ("Mới" if lv == 0 else "Cấp %d → %d" % [lv, lv + 1])
-	names.add_child(_label(kind, 13, (BORDER if skill else STAT_ACCENT) if tier == "common" else accent))   # commons: the type colour
+	var kl := HBoxContainer.new()   # the tier's gem, then type · tier · level
+	kl.add_theme_constant_override("separation", 5)
+	kl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	kl.add_child(UiKit.rarity_gem(tier, 16.0))
+	var kt := _label(kind, 13, (BORDER if skill else STAT_ACCENT) if tier == "common" else accent)   # commons: the type colour
+	kt.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	kl.add_child(kt)
+	names.add_child(kl)
 	head.add_child(names)
 	v.add_child(head)
 	# level pips + the milestone this pick reaches

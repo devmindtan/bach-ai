@@ -214,7 +214,16 @@ func _slot_cell(slot: String, item: String) -> Control:
 	var frame: Color = RARITY.get(String(d.get("rarity", "common")), UiKit.GOLD) if item != "" else Color("4a4458")
 	if slot == _sel:
 		frame = Color.WHITE
-	b.add_theme_stylebox_override("normal", UiKit.style(UiKit.PANEL_DARK, 6, frame, 3 if slot == _sel else 2))
+	if item != "":
+		var rr := String(d.get("rarity", "common"))
+		b.add_theme_stylebox_override("normal", UiKit.rarity_style(rr, true, slot == _sel, 6))
+		UiKit.rarity_corners(b, rr)
+		var sg := UiKit.rarity_gem(rr, 16.0)
+		sg.position = Vector2(4, 4)
+		sg.size = sg.custom_minimum_size
+		b.add_child(sg)
+	else:
+		b.add_theme_stylebox_override("normal", UiKit.style(UiKit.PANEL_DARK, 6, frame, 3 if slot == _sel else 2))
 	for st in ["hover", "focus", "pressed"]:
 		b.add_theme_stylebox_override(st, UiKit.style(UiKit.PANEL_HOVER, 6, Color.WHITE, 3))
 	if item != "":
@@ -395,10 +404,10 @@ func _bag_cell(id: String) -> Button:
 	b.custom_minimum_size = BAG_CELL
 	b.focus_mode = Control.FOCUS_ALL
 	var on := id == _view
-	var bg := Color(col, 0.18 if on else 0.10).blend(UiKit.PANEL_DARK)
-	b.add_theme_stylebox_override("normal", UiKit.style(bg, 4, Color.WHITE if on else Color(col, 0.8), 3 if on else 2))
+	b.add_theme_stylebox_override("normal", UiKit.rarity_style(rarity, true, on, 4))   # shared tier frame (design/card-rarity.md)
 	for st in ["hover", "focus", "pressed"]:
-		b.add_theme_stylebox_override(st, UiKit.style(UiKit.PANEL_HOVER, 4, Color.WHITE, 3))
+		b.add_theme_stylebox_override(st, UiKit.rarity_style(rarity, true, true, 4))
+	UiKit.rarity_corners(b, rarity)   # no gem here: the cell is too small (user 2026-11-20); the detail shows it
 	Tip.attach(b, String(d.get("name", id)), String(d.get("desc", "")), col, String(d.get("icon", id)),
 		"%s · %s" % [RARITY_NAME.get(rarity, rarity), SLOT_NAME.get(String(d.get("slot", "")), "")])
 	var ic := UiKit.icon(String(d.get("icon", id)), 48.0)
@@ -561,11 +570,14 @@ func _detail(root: Control) -> void:
 	name.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	bv.add_child(name)
 	# rarity stripe: label in rarity colour, slot class restricted
-	var meta := String(RARITY_NAME.get(rarity, rarity))
+	var badge := UiKit.rarity_badge(rarity, 14)   # the tier's gem + name, the bag cells only show the frame
+	badge.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	bv.add_child(badge)
+	var meta := ""
 	var who := ""
 	if d.has("class"):
 		who = "  ·  chỉ " + String(GameData.load_json("res://assets/data/classes.json").get(String(d["class"]), {}).get("name", d["class"]))
-	meta += "  ·  " + String(SLOT_NAME.get(String(d.get("slot", "")), "")) + who
+	meta = String(SLOT_NAME.get(String(d.get("slot", "")), "")) + who
 	var ml := UiKit.label(meta, 12, UiKit.MUTED)
 	ml.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	ml.custom_minimum_size = Vector2(320, 0)
