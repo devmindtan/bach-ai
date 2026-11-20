@@ -14,6 +14,12 @@ thiết kế theo các game cùng loại, không đoán.
 | [Phân tích màn chọn nhân vật (Hades)](https://docs.google.com/presentation/d/1jsvllj2sBSOSasFaSqI4e9R211R_tVyEhe_RB9Kx0zU/htmlpresent) | Thấy **mọi** nhân vật cùng lúc, mỗi nhân vật có nét nhận diện riêng (hình, màu). |
 | [Roblox devforum: save slot UI](https://devforum.roblox.com/t/having-trouble-with-a-save-slot-ui-feedback-needed/413770) | Ô save phải cho biết lần chơi trước (hình nhân vật, tiến độ) để nhận ra ngay. |
 
+
+**Icon cho nút sảnh (2026-11-20).** Tham khảo: [hướng dẫn thanh điều hướng có icon](https://blog.appmysite.com/bottom-navigation-bar-in-mobile-apps-heres-all-you-need-to-know/)
+(mỗi mục chính một icon dễ nhận, 3–5 mục quan trọng nhất dễ với tới), [Zach Gage's three reads](https://rymdkraftverk.itch.io/tails/devlog/86052/applying-zach-gages-three-reads-to-our-ui)
+(đọc được bằng hình trước, chữ sau). Học: icon riêng cho từng nút. Tránh: icon trùng icon chỉ số, chữ nhỏ. Quyết định:
+bộ `card-icons` `nav_*` (24 px), nút trên ×1, ba nút dưới ×2; hàng nút trên căn phải theo độ rộng thật.
+
 ## Luồng
 
 ```text

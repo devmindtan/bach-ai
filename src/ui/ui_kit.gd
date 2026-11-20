@@ -137,6 +137,24 @@ static func button(text: String, cb: Callable, min_size := Vector2(0, 44), font 
 	return b
 
 
+## Puts icon [param id] (whole-pixel [param scale], nearest) left of [param b]'s text (user 2026-11-20:
+## the lobby buttons get their own icon set, card-icons nav_*).
+##
+## Example:
+##   UiKit.with_icon(UiKit.button("Bộ thẻ", open_deck), "nav_deck")
+static func with_icon(b: Button, id: String, scale := 1) -> Button:
+	var t := UiIcons.texture(id)
+	if t == null:
+		return b
+	var img := t.get_image()
+	if scale > 1:
+		img.resize(img.get_width() * scale, img.get_height() * scale, Image.INTERPOLATE_NEAREST)
+	b.icon = ImageTexture.create_from_image(img)
+	b.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	b.add_theme_constant_override("h_separation", 8)
+	return b
+
+
 static func panel(bg := PANEL, pad := 16, border := GOLD) -> PanelContainer:
 	var p := PanelContainer.new()
 	p.add_theme_stylebox_override("panel", style(bg, pad, border))
