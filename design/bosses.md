@@ -51,8 +51,7 @@ chuyển pha có dấu hiệu hình/tiếng riêng và **bất tử ngắn**; ch
 
 ### Chuyển pha (chung, `phase2` trong `monsters.json`)
 
-Khi máu xuống `rage_at` (50%): boss **bất tử 1,5 s**, đứng yên, rung + chớp trắng/đỏ, **đẩy người chơi ra** (160 px/s,
-giảm dần), câu báo "<tên> · <tên pha>!", tên pha hiện trên thanh máu. Sau đó dùng sprite pha 2 (`rage_sprite`) và chỉ số pha 2:
+Khi máu xuống `rage_at` (50%): boss **bất tử 1,5 s**, đứng yên, rung + chớp trắng/đỏ, **đẩy người chơi ra** (320 px/s, giảm dần: khoảng 64 px), câu báo "<tên> · <tên pha>!", tên pha hiện trên thanh máu. Sau đó dùng sprite pha 2 (`rage_sprite`) và chỉ số pha 2:
 
 | Chỉ số | Mộc Yêu → Cổ Thụ Trụi Lá | Cóc Chúa → Cóc Độc Bào Tử |
 |---|---|---|

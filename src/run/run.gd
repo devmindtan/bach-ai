@@ -2847,7 +2847,7 @@ func _draw_boss_waves() -> void:
 		draw_arc(p, r, 0.0, TAU, 72, Color(1.0, 0.35, 0.15, 0.4) if hot else Color(0.55, 0.95, 0.6, 0.35), wd)
 		draw_arc(p, r, 0.0, TAU, 72, Color(1.0, 0.75, 0.35, 0.95) if hot else Color(0.85, 1.0, 0.75, 0.95), 3.0)
 	var bi := enemies.boss_index()
-	if bi >= 0 and _rage_t > 0.0:
+	if bi >= 0 and _rage_t > 0.0 and enemies.phase_name(bi) == "":   # a named phase is called across the screen instead
 		var font := ThemeDB.fallback_font
 		var pn: String = enemies.phase_name(bi)
 		var name := String(enemies.k_extra[enemies.kind[bi]].get("name", "Boss")) + (" · %s!" % pn if pn != "" else " nổi giận!")

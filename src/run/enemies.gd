@@ -936,6 +936,7 @@ func start_tongue(i: int) -> void:
 	var tg: Dictionary = k_extra[kind[i]].get("tongue", {})
 	tongue_t[i] = float(tg.get("windup", 1.0))
 	tongue_len[i] = 0.0
+	anim_t[i] = 0.0   # the mouth opens from the start
 	tongue_dir[i] = (_player_center - center_of(i)).normalized() if _player_center != center_of(i) else Vector2.RIGHT
 	if tongue_dir[i] == Vector2.ZERO:
 		tongue_dir[i] = Vector2.RIGHT
@@ -1379,6 +1380,9 @@ func hop_lift(i: int) -> float:
 func sheet_of(i: int) -> SpriteSheet:
 	var k := kind[i]
 	if k_rage_sheet[k] != null and enraged(i):
+		var tr := float(_phase2(i).get("transition", 0.0))
+		if phase_t[i] > tr * 0.5:   # the old body for the first half of the transition: it changes mid-flash
+			return k_sheet[k]
 		return k_rage_sheet[k]
 	return k_sheet[k]
 
@@ -1399,6 +1403,8 @@ func anim_of(i: int) -> Array:
 				return ["jump", (1.0 - clampf(timer[i] / ht, 0.0, 1.0)) * sheet.duration("jump") * 0.999]
 			if sheet.has_animation("attack"):
 				return ["attack", anim_t[i]]
+	if tongue_t[i] != 0.0 and tongue_t[i] != -999.0 and sheet.has_animation("attack"):   # mouth open for the tongue
+		return ["attack", minf(anim_t[i], sheet.duration("attack") * 0.6)]
 	if flash[i] > 0.0 and sheet.has_animation("hurt"):
 		return ["hurt", HURT_FLASH - flash[i]]
 	return ["move", anim_t[i]]
