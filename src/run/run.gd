@@ -189,6 +189,7 @@ var _meteor_times: Array = []    # clock times this run's region starts a shower
 var _meteor_fx: Array = []       # [{p, t}] meteors that just landed (blast drawn for 0.4 s)
 var _own_events: Array = []      # [time, kind] the region's own event (design/region-events-plan.md)
 var tornado := Tornado.new()     # Lốc cỏ (Đồng cỏ)
+var trees := FallingTrees.new()  # Cây đổ (Rừng Âm U)
 var _heal_fx: Array = []   # [{p, r, t}] Hồn Đầm heal rings being drawn
 var _spawn_only := ""   # --spawn-only=ID (shots)
 var _level_view_arg := ""   # --level-view=character|hidden (shots): open that view on the first level-up
@@ -810,6 +811,7 @@ func _move_player(dt: float) -> void:
 		if obstacles != null:
 			player_pos = obstacles.push_out(player_pos, PLAYER_BODY)
 		player_pos = enemies.push_out_walls(player_pos, PLAYER_BODY)
+		player_pos = trees.push_out(player_pos, PLAYER_BODY)   # Cây đổ: fallen trunks
 	for pp: Array in enemies.phase_push:   # a boss starts phase 2: the hero is pushed away and the screen shakes
 		var away: Vector2 = player_pos - pp[0]
 		_knock += (away.normalized() if away.length() > 1.0 else Vector2.RIGHT) * float(pp[1])
@@ -846,6 +848,7 @@ func _move_player(dt: float) -> void:
 		if obstacles != null:
 			player_pos = obstacles.push_out(player_pos, PLAYER_BODY)
 		player_pos = enemies.push_out_walls(player_pos, PLAYER_BODY)
+		player_pos = trees.push_out(player_pos, PLAYER_BODY)   # Cây đổ: fallen trunks
 	_action_left = maxf(0.0, _action_left - dt)
 	if _action_left <= 0.0:
 		_set_anim("run" if _moving else "idle")
@@ -886,6 +889,7 @@ func _dash_step(dt: float) -> void:
 	if obstacles != null:
 		player_pos = obstacles.push_out(player_pos, PLAYER_BODY)
 	player_pos = enemies.push_out_walls(player_pos, PLAYER_BODY)   # a root wall is solid: no dashing through
+	player_pos = trees.push_out(player_pos, PLAYER_BODY)   # Cây đổ: fallen trunks
 	_dash_left -= step
 	# two cuts along the path: covering the half just travelled each time
 	var r := dist * 0.25 + float(sp.get("hit_radius", 26.0))
@@ -3068,6 +3072,27 @@ func _step_own_event(dt: float) -> void:
 			wave_call = "Sự kiện vùng: Lốc cỏ! Né khỏi đường lốc, dụ quái vào"
 			wave_call_t = 3.0
 			Sfx.play("boss_spawn")
+		if clock - dt < float(oe[0]) and float(oe[0]) <= clock and String(oe[1]) == "falling_trees" and not trees.busy():
+			trees.start(ev.get("falling_trees", {}))
+			wave_call = "Sự kiện vùng: Cây đổ! Tránh dải sáng dưới gốc cây"
+			wave_call_t = 3.0
+			Sfx.play("boss_spawn")
+	if trees.busy():
+		var fc: Dictionary = ev.get("falling_trees", {})
+		var feet := []
+		if obstacles != null:
+			for so: Dictionary in obstacles.solids:
+				if String(so.get("sprite", "")).contains("tree"):
+					feet.append(so["p"])
+		for f: Dictionary in trees.step(dt, player_pos, feet, rng):
+			Sfx.play("quake")
+			shake.add(5.0)
+			for k in 3:   # three touching circles along the strip (one hit per monster in practice)
+				var q: Vector2 = f["a"] + (f["d"] as Vector2) * trees.length * (k * 2 + 1) / 6.0
+				enemies.hit_circle(q, maxf(trees.width * 0.5, trees.length / 6.0), float(fc.get("monster_damage", 60.0)) / 3.0, 60.0, FallingTrees.SOURCE)
+			if trees.hits(f, player_pos, PLAYER_BODY) and not god and not buffs.invulnerable() and _dash_left <= 0.0:
+				if not _spend_ward():
+					_take_hit(float(fc.get("player_damage", 14.0)))
 	if not tornado.busy():
 		return
 	var tc: Dictionary = ev.get("tornado", {})
@@ -3107,6 +3132,7 @@ func _step_meteors(dt: float) -> void:
 ## onto it from above; landed ones flash an orange blast.
 func _draw_meteors() -> void:
 	tornado.draw(self, clock)
+	trees.draw(self)
 	var r := meteors.radius
 	for mk: Dictionary in meteors.marks:
 		var p: Vector2 = mk["p"]
