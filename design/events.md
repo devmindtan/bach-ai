@@ -1,5 +1,9 @@
 # Sự kiện trong trận (6B.2)
 
+> Mưa thiên thạch đang **tắt** (`run_config.json` → `events.meteor.enabled: false`) và sẽ được thay bằng một sự
+> kiện riêng cho mỗi vùng. Kế hoạch thực hiện: [`region-events-plan.md`](region-events-plan.md) (2026-11-21).
+> Mục Mưa thiên thạch bên dưới giữ lại làm mẫu cho tới khi bước 6 của kế hoạch xoá nó.
+
 ## Tham khảo
 
 | Nguồn | Điều lấy |
