@@ -181,7 +181,7 @@ func _start_tile(u: Dictionary) -> Button:
 	var tag := UiKit.label("CHIÊU KHỞI ĐẦU", 13, UiKit.GOLD)
 	tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(tag)
-	var ic := UiKit.icon(id, 96.0)
+	var ic := UiKit.card_icon(id, 96.0)
 	ic.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	v.add_child(ic)
 	var nm := UiKit.label(String(u.get("name", id)), 20, UiKit.TEXT)
@@ -219,7 +219,7 @@ func _tile(u: Dictionary) -> Button:
 	v.offset_top = 8
 	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	b.add_child(v)
-	var ic := UiKit.icon(id, 48.0)
+	var ic := UiKit.card_icon(id, 48.0)
 	ic.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	ic.modulate = Color.WHITE if in_deck else Color(0.5, 0.5, 0.55)
 	v.add_child(ic)
@@ -273,7 +273,7 @@ func _detail(root: Control) -> void:
 		var head := HBoxContainer.new()
 		head.add_theme_constant_override("separation", 12)
 		v.add_child(head)
-		head.add_child(UiKit.icon(_view, 48.0))
+		head.add_child(UiKit.card_icon(_view, 48.0))
 		var hv := VBoxContainer.new()
 		head.add_child(hv)
 		hv.add_child(UiKit.label(String(u.get("name", _view)), 24, UiKit.GOLD))

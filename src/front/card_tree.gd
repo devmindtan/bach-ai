@@ -143,7 +143,7 @@ func _node_button(n: Dictionary) -> Control:
 	for s in ["hover", "focus", "pressed"]:
 		b.add_theme_stylebox_override(s, hov)
 	holder.add_child(b)
-	var ic := UiKit.icon(_card, side * 0.55)
+	var ic := UiKit.card_icon(_card, side * 0.55)
 	ic.position = (Vector2(side, side) - ic.custom_minimum_size) / 2.0
 	ic.modulate = Color.WHITE if r > 0 else Color(0.45, 0.45, 0.5)
 	b.add_child(ic)
@@ -182,7 +182,7 @@ func _detail(root: Control) -> void:
 	var head := HBoxContainer.new()
 	head.add_theme_constant_override("separation", 12)
 	v.add_child(head)
-	head.add_child(UiKit.icon(_card, 48.0))
+	head.add_child(UiKit.card_icon(_card, 48.0))
 	head.add_child(UiKit.icon(String(n.get("glyph", "damage")), 24.0))
 	var hv := VBoxContainer.new()
 	head.add_child(hv)

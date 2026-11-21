@@ -2482,7 +2482,7 @@ func _win_item() -> String:
 ## buff badge / status sprite.
 func icon_texture(id: String) -> Texture2D:
 	# a card may borrow another icon ("icon" in upgrades_<class>.json)
-	var t := UiIcons.texture(String(upgrade(id).get("icon", id)))
+	var t := UiIcons.card_texture(String(upgrade(id).get("icon", id)))
 	if t != null:
 		return t
 	var sprite := String(buff_def(id).get("sprite", status_defs.get(id, {}).get("sprite", "")))

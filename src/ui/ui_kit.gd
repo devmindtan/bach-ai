@@ -267,6 +267,17 @@ static func snap_icon(px: float, frame: float) -> float:
 	return maxf(1.0, floorf(px / frame)) * frame
 
 
+## A card's icon (vector for stat cards, UiIcons.card_texture), smooth-filtered when vector.
+static func card_icon(id: String, px := 20.0) -> TextureRect:
+	var t := icon(id, px)
+	var tex := UiIcons.card_texture(id)
+	if tex != t.texture:
+		t.texture = tex
+		t.custom_minimum_size = Vector2(px, px)
+		t.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	return t
+
+
 static func icon(id: String, px := 20.0) -> TextureRect:
 	var t := TextureRect.new()
 	t.texture = UiIcons.texture(id)

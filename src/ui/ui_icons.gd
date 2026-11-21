@@ -45,10 +45,6 @@ static func gear() -> SpriteSheet:
 ## gear-icons (item ids), then card-glyphs (card tree symbols, "shard").
 static func texture(icon: String) -> Texture2D:
 	if not _textures.has(icon):
-		var vec := _vector(icon)
-		if vec != null:
-			_textures[icon] = vec
-			return vec
 		if _cards == null:
 			_cards = SpriteSheet.load_dir(CARD_DIR, "card-icons")
 		var s := _cards
@@ -70,6 +66,13 @@ static func texture(icon: String) -> Texture2D:
 
 
 static var _vector_map: Dictionary = {}
+
+
+## A card's icon: its vector icon when card_icons.json has one (stat cards, user 2026-11-21), else
+## texture(). Only card views call this: card ids share names with stat icons ("magnet").
+static func card_texture(id: String) -> Texture2D:
+	var vec := _vector(id)
+	return vec if vec != null else texture(id)
 
 
 ## Stat cards draw a vector icon (assets/data/card_icons.json, user 2026-11-21); null when [param id]
