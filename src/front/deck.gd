@@ -4,7 +4,7 @@ extends Node2D
 ## skill locked; the viewed card on the right with add / remove and, for a skill card with a tree, its
 ## points and the "Cây thẻ" button; the deck counts and "Bộ mặc định" below. Changes save at once.
 ##
-## Command line (after `--`), for shots: --deck-view=<card id>.
+## Command line (after `--`), for shots: --deck-view=<card id>, --deck-odds (the odds table open).
 
 const LOBBY_SCENE := "res://src/lobby/lobby.tscn"
 const TREE_SCENE := "res://src/front/card_tree.tscn"
@@ -43,6 +43,8 @@ func _ready() -> void:
 	if _view == "":
 		_view = String(_start[0]) if not _start.is_empty() else ""
 	_build()
+	if "--deck-odds" in OS.get_cmdline_user_args():   # shots: the card odds table open
+		_show_odds.call_deferred()
 
 
 ## The slot always has cfg.slots decks; an empty one starts as the default deck.
@@ -318,9 +320,36 @@ func _detail(root: Control) -> void:
 	var budget := int(_cfg.get("budget", 0))
 	v.add_child(UiKit.label("Điểm bộ thẻ %d / %d  (Hiếm 1 · Sử thi 2 · Huyền thoại 3)" % [used, budget], 15,
 		Color("ff8a8a") if used >= budget else UiKit.GOLD))
-	v.add_child(UiKit.button("Bộ mặc định", func() -> void:
+	var btns := HBoxContainer.new()
+	btns.add_theme_constant_override("separation", 10)
+	v.add_child(btns)
+	btns.add_child(UiKit.button("Bộ mặc định", func() -> void:
 		_set_cards(Deck.default_cards(_ups, _start, _cfg))
-		_rebuild(), Vector2(w - 40, 40), 16))
+		_rebuild(), Vector2((w - 50) / 2.0, 40), 16))
+	btns.add_child(UiKit.button("Tỉ lệ thẻ", func() -> void: _show_odds(), Vector2((w - 50) / 2.0, 40), 16))
+
+
+## The level-up card odds table (user 2026-11-21): how the chance of rare-or-better cards grows with the run level.
+func _show_odds() -> void:
+	var dim := ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.6)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_layer.add_child(dim)
+	var p := UiKit.panel(UiKit.PANEL, 22)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 12)
+	p.add_child(v)
+	v.add_child(UiKit.label("Tỉ lệ thẻ khi lên cấp", 24, UiKit.GOLD))
+	v.add_child(UiKit.label("Cấp trong trận càng cao càng dễ ra thẻ hiếm trở lên. Rương báu và rương vàng có tỉ lệ riêng.", 14, UiKit.MUTED))
+	v.add_child(UiKit.rarity_odds_table(CardRarity.load_default(), [1, 5, 10, 15, 20, 25, 30]))
+	v.add_child(UiKit.label("Thẻ chỉ số không giới hạn cấp: hết thẻ chiêu để nâng thì vẫn luôn có thẻ chỉ số.", 14, UiKit.TEXT))
+	var close := UiKit.button("Đóng", func() -> void:
+		dim.queue_free()
+		p.queue_free(), Vector2(0, 40), 16)
+	v.add_child(close)
+	_layer.add_child(p)
+	p.position = (get_viewport_rect().size - p.get_combined_minimum_size()) / 2.0
+	close.call_deferred("grab_focus")
 
 
 ## Mảnh thẻ in the wallet: the 12 px glyph drawn x2 (UiKit.stat would draw it at x1, too small).

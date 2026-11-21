@@ -200,6 +200,51 @@ static func node_icon(vector: String, pixel: String, px: float, folder := "tree"
 	return t
 
 
+## One row of card odds: each tier's gem and its share ([param weights] in tier order, they add to 100).
+static func rarity_odds_row(weights: Array, size := 14) -> HBoxContainer:
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 14)
+	h.alignment = BoxContainer.ALIGNMENT_CENTER
+	h.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for t in RARITY_ORDER.size():
+		var cell := HBoxContainer.new()
+		cell.add_theme_constant_override("separation", 4)
+		cell.add_child(rarity_gem(RARITY_ORDER[t], 16.0))
+		var l := label("%s %s%%" % [RARITY_NAME[RARITY_ORDER[t]], _pct(float(weights[t]))], size, RARITY[RARITY_ORDER[t]])
+		l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		cell.add_child(l)
+		h.add_child(cell)
+	return h
+
+
+static func _pct(v: float) -> String:
+	var r := snappedf(v, 0.1)   # one decimal at most; whole numbers without ",0"
+	return str(roundi(r)) if absf(r - roundf(r)) < 0.05 else ("%.1f" % r).replace(".", ",")
+
+
+## The level-up card odds table (user 2026-11-21): one row per run level in [param levels], a column per tier.
+static func rarity_odds_table(rr: CardRarity, levels: Array) -> GridContainer:
+	var g := GridContainer.new()
+	g.columns = 1 + RARITY_ORDER.size()
+	g.add_theme_constant_override("h_separation", 22)
+	g.add_theme_constant_override("v_separation", 6)
+	g.add_child(label("Cấp", 14, MUTED))
+	for t: String in RARITY_ORDER:
+		var hd := HBoxContainer.new()
+		hd.add_theme_constant_override("separation", 4)
+		hd.add_child(rarity_gem(t, 16.0))
+		hd.add_child(label(String(RARITY_NAME[t]), 14, RARITY[t]))
+		g.add_child(hd)
+	for lv: int in levels:
+		g.add_child(label(str(lv), 15, TEXT))
+		var w := rr.level_weights(lv)
+		for t in RARITY_ORDER.size():
+			var c := label("%s%%" % _pct(float(w[t])), 15, RARITY[RARITY_ORDER[t]])
+			c.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+			g.add_child(c)
+	return g
+
+
 static func panel(bg := PANEL, pad := 16, border := GOLD) -> PanelContainer:
 	var p := PanelContainer.new()
 	p.add_theme_stylebox_override("panel", style(bg, pad, border))

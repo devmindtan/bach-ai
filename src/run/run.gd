@@ -1403,7 +1403,7 @@ func skill_info() -> Array:
 					var ba: Dictionary = pool.get("skills", {}).get("blade_arc", {})
 					var pct := float(ba.get("back_damage_mul", 0.5)) + float(ba.get("back_damage_per_level", 0.25)) * (vl - 1)
 					sources.append({"id": v["id"], "name": v.get("name", v["id"]), "level": vl, "what": "Nhát sau", "text": "%d%%" % roundi(pct * 100.0)})
-		out.append({"id": id, "name": u.get("name", id), "level": lv, "max": int(u.get("max_level", 1)),
+		out.append({"id": id, "name": u.get("name", id), "level": lv, "max": UpgradeRoller.cap(u),
 			"damage": skill_damage(id), "cooldown": skill_cooldown(id), "size": skill_size(id),
 			"base_damage": skill_damage(id, plain), "base_cooldown": skill_cooldown(id, plain), "sources": sources,
 			"statuses": on_hit(id), "count": skill_count_now(id), "count_parts": count_parts(id)})
@@ -2009,7 +2009,7 @@ func deal_hand() -> void:
 		rarity = CardRarity.load_default()
 	# design/card-rarity.md: a tier per slot, richer in chests, no commons in the gold chest
 	var source := "gold_chest" if _gold_left > 0 else ("chest" if _chest_open else "level")
-	choices = rarity.roll(deck_pool(), levels, level_up_card_count(), rng, source)
+	choices = rarity.roll(deck_pool(), levels, level_up_card_count(), rng, source, level)
 	if not choices.is_empty():   # an empty deck must not leave the run stuck in LEVEL_UP
 		state = State.LEVEL_UP
 
@@ -2252,7 +2252,7 @@ func upgrade_preview(id: String) -> Dictionary:
 	var u := upgrade(id)
 	var lv := int(levels.get(id, 0))
 	var nxt := lv + 1
-	var max_lv := int(u.get("max_level", 1))
+	var max_lv := UpgradeRoller.cap(u)
 	# "after" is built from the same sources as the current stats (cards, milestones,
 	# buffs, equipment, skill tree) plus this card one level up; built from the cards
 	# alone it lost every lasting bonus and showed a drop (user 2026-11-18)
@@ -2553,7 +2553,7 @@ func owned_upgrades() -> Array:
 	for u: Dictionary in pool.get("upgrades", []):
 		var lv := int(levels.get(u["id"], 0))
 		if lv > 0:
-			out.append({"id": u["id"], "name": u.get("name", u["id"]), "level": lv, "max": int(u.get("max_level", 1)),
+			out.append({"id": u["id"], "name": u.get("name", u["id"]), "level": lv, "max": UpgradeRoller.cap(u),
 				"skill": u.get("kind") == "skill", "desc": String(u.get("desc", ""))})
 	return out
 

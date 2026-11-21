@@ -112,6 +112,8 @@ func show_level_up(ids: Array[String], title := "Lên cấp! Chọn một") -> v
 		banish_mode = false   # a new hand: Loại is not armed
 	var root := _open(title, false)
 	_view_buttons(root)
+	if title.begins_with("Lên cấp") and run.rarity != null:   # this level's card odds (user 2026-11-21)
+		root.add_child(UiKit.rarity_odds_row(run.rarity.level_weights(run.level), 13))
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 20)
@@ -428,9 +430,18 @@ func _upgrade_card(i: int, id: String) -> Button:
 	return b
 
 
+## "Cấp n/m", or "Cấp n · không giới hạn" for a card without a level cap.
+static func _lv_text(lv: int, mx: int) -> String:
+	return "Cấp %d · không giới hạn" % lv if mx > 20 else "Cấp %d/%d" % [lv, mx]
+
+
 ## One pip per level: owned = filled, the level this pick gives = bright with a
 ## ring, locked = dark; milestone levels (new tier look, last level) are diamonds.
 func _draw_pips(c: Control, owned: int, max_level: int, milestones: Array, accent: Color, show_next := true) -> void:
+	if max_level > 20:   # a card without a level cap (stat cards, user 2026-11-21): text, not 2^30 pips
+		var t := ("Cấp %d → %d · không giới hạn" % [owned, owned + 1]) if show_next else ("Cấp %d · không giới hạn" % owned)
+		c.draw_string(ThemeDB.fallback_font, Vector2(0, 14), t, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, accent)
+		return
 	var x := 0.0
 	for l in range(1, max_level + 1):
 		var nxt := show_next and l == owned + 1
@@ -567,8 +578,8 @@ func _show_owned_info(info: RichTextLabel, o: Dictionary) -> void:
 				body = "Sát thương %d · Hồi chiêu %.2f s · Vùng ×%.2f" % [roundi(si["damage"]), si["cooldown"], si["size"]]
 	else:
 		body = run.card_effect_text(o["id"])
-	info.text = "[b][color=#%s]%s[/color][/b]  [color=#%s]Cấp %d/%d[/color]\n[color=#%s]%s[/color]" % [
-		TEXT.to_html(false), o["name"], accent.to_html(false), o["level"], o["max"],
+	info.text = "[b][color=#%s]%s[/color][/b]  [color=#%s]%s[/color]\n[color=#%s]%s[/color]" % [
+		TEXT.to_html(false), o["name"], accent.to_html(false), _lv_text(o["level"], o["max"]),
 		MUTED.to_html(false), body]
 
 
@@ -741,7 +752,7 @@ func _stat_card_row(o: Dictionary) -> HBoxContainer:
 	v.add_theme_constant_override("separation", 0)
 	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	h.add_child(v)
-	v.add_child(_label("%s  ·  %d/%d" % [o["name"], o["level"], o["max"]], 15, STAT_ACCENT))
+	v.add_child(_label("%s  ·  %s" % [o["name"], _lv_text(o["level"], o["max"])], 15, STAT_ACCENT))
 	var t := _label(run.card_effect_text(String(o["id"])), 12, MUTED)
 	t.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	v.add_child(t)

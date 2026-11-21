@@ -8,6 +8,12 @@ extends RefCounted
 ##   var ids := UpgradeRoller.roll(pool, {"sharpen": 2}, 3, rng)
 
 
+## The level cap of card [param u]: "max_level", where 0 means no cap (pure stat cards, user 2026-11-21).
+static func cap(u: Dictionary) -> int:
+	var m := int(u.get("max_level", 1))
+	return 1 << 30 if m == 0 else m
+
+
 ## [param pool] is the "upgrades" array of upgrades_<class>.json; [param levels]
 ## maps id -> current level. Returns ids in pick order (fewer when the pool runs out).
 static func roll(pool: Array, levels: Dictionary, count: int, rng: RandomNumberGenerator) -> Array[String]:
@@ -17,7 +23,7 @@ static func roll(pool: Array, levels: Dictionary, count: int, rng: RandomNumberG
 			continue
 		var lv := int(levels.get(u.get("id", ""), 0))
 		# a unique (milestone) skill is only offered once picked in this run (level >= 1)
-		if lv < int(u.get("max_level", 1)) and not (bool(u.get("unique", false)) and lv <= 0):
+		if lv < cap(u) and not (bool(u.get("unique", false)) and lv <= 0):
 			candidates.append(u)
 	var out: Array[String] = []
 	while out.size() < count and not candidates.is_empty():

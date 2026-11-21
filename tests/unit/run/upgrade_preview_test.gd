@@ -40,10 +40,10 @@ func test_skill_card_damage_and_tier_milestone() -> void:
 
 
 func test_last_level_is_a_milestone() -> void:
-	var r := _run({"blade_arc": 1, "haste": 4})
-	var pv: Dictionary = r.upgrade_preview("haste")
-	_check(String(pv["milestone"]).ends_with("Cấp tối đa"), "haste 4 -> 5 is the last level, got '%s'" % pv["milestone"])
-	_check(pv["milestones"].has(5), "level 5 marked as milestone")
+	var r := _run({"blade_arc": 1, "back_slash": 2})   # stat cards have no cap now: a capped card (3 levels)
+	var pv: Dictionary = r.upgrade_preview("back_slash")
+	_check(String(pv["milestone"]).ends_with("Cấp tối đa"), "back_slash 2 -> 3 is the last level, got '%s'" % pv["milestone"])
+	_check(pv["milestones"].has(3), "level 3 marked as milestone")
 	r.free()
 
 

@@ -81,3 +81,23 @@ mỗi bậc một **hình viên đá** (tròn, tam giác, vuông, ngũ giác) v�
 
 Dùng ở: ô Bộ thẻ, thẻ lên cấp, ô trang bị quanh nhân vật, ô túi đồ. Ô nhỏ (bộ thẻ, trang bị, túi đồ) **không** có viên đá (người dùng 2026-11-20: rối mắt),
 viên đá + tên bậc hiện ở khung chi tiết bên cạnh. Viên đá luôn ở góc trên trái nên góc trang trí bỏ góc đó.
+
+## Tỉ lệ theo cấp trong trận (người dùng 2026-11-21)
+
+Cấp càng cao càng dễ ra thẻ hiếm trở lên (`card_rarity.json` → `level_curve`): bắt đầu ở cấp 1, mỗi cấp cộng `per_level`,
+kẹp trong [min, max], rồi chia lại cho đủ 100%. Bảo hiểm (pity) vẫn cộng thêm như trước. Rương báu / rương vàng giữ tỉ lệ riêng.
+
+| Cấp | Thường | Hiếm | Sử thi | Huyền thoại |
+|---|---|---|---|---|
+| 1 | 70% | 20% | 7% | 3% |
+| 5 | 64% | 22,8% | 9% | 4,2% |
+| 10 | 56,5% | 26,3% | 11,5% | 5,7% |
+| 15 | 49% | 29,8% | 14% | 7,2% |
+| 20 | 41,5% | 33,3% | 16,5% | 8,7% |
+| 25 | 34,1% | 36,9% | 19% | 10% |
+| 30+ | 30% | 40% | 20% | 10% |
+
+Bảng hiện ở trang Bộ thẻ (nút "Tỉ lệ thẻ"), một dòng tỉ lệ của cấp hiện tại ở màn lên cấp, và trên dashboard.
+**Thẻ chỉ số không giới hạn cấp** (`max_level: 0`: Mài kiếm, Nhanh tay, Tầm với, Sinh lực, Nhẹ chân, Nam châm, Hồi phục,
+Da thép và các thẻ tương ứng của pháp sư); thẻ thêm số đòn và thẻ chiêu giữ giới hạn. Vì luôn còn thẻ chỉ số để nâng,
+lượt chia không bao giờ trống; thẻ lấp chỗ (vàng / hồi máu) chỉ còn khi bộ thẻ thật sự không có gì.

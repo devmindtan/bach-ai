@@ -50,5 +50,32 @@
       "desc": "Không còn thẻ hợp: hồi 20% máu tối đa.",
       "heal": 0.2
     }
-  ]
+  ],
+  "level_curve": {
+    "_doc": "Level-up odds by run level (user 2026-11-21): start at level 1, add per_level for each level after, each tier clamped to [min, max], then scaled to 100. The table is shown on the Bộ thẻ screen and the dashboard.",
+    "start": [
+      70,
+      20,
+      7,
+      3
+    ],
+    "per_level": [
+      -1.5,
+      0.7,
+      0.5,
+      0.3
+    ],
+    "min": [
+      30,
+      20,
+      7,
+      3
+    ],
+    "max": [
+      70,
+      40,
+      20,
+      10
+    ]
+  }
 }
