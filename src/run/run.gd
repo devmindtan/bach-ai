@@ -190,6 +190,7 @@ var _meteor_fx: Array = []       # [{p, t}] meteors that just landed (blast draw
 var _own_events: Array = []      # [time, kind] the region's own event (design/region-events-plan.md)
 var tornado := Tornado.new()     # Lốc cỏ (Đồng cỏ)
 var trees := FallingTrees.new()  # Cây đổ (Rừng Âm U)
+var tide := PoisonTide.new()     # Nước độc dâng (Đầm Lầy Độc)
 var _heal_fx: Array = []   # [{p, r, t}] Hồn Đầm heal rings being drawn
 var _spawn_only := ""   # --spawn-only=ID (shots)
 var _level_view_arg := ""   # --level-view=character|hidden (shots): open that view on the first level-up
@@ -3077,6 +3078,21 @@ func _step_own_event(dt: float) -> void:
 			wave_call = "Sự kiện vùng: Cây đổ! Tránh dải sáng dưới gốc cây"
 			wave_call_t = 3.0
 			Sfx.play("boss_spawn")
+		if clock - dt < float(oe[0]) and float(oe[0]) <= clock and String(oe[1]) == "poison_tide" and not tide.busy():
+			tide.start(ev.get("poison_tide", {}), player_pos, obstacles.pools if obstacles != null else [], rng)
+			wave_call = "Sự kiện vùng: Nước độc dâng! Ra khỏi vũng đang sôi"
+			wave_call_t = 3.0
+			Sfx.play("boss_spawn")
+	if tide.busy():
+		tide.step(dt)
+		if tide.inside(player_pos):
+			poison_t = POISON_LOOK
+			if not god and not buffs.invulnerable():   # no armor, like the marsh pools
+				hp -= tide.dps * dt
+				damage_taken += tide.dps * dt
+		if not tide.busy():   # sunk: the gems where the pools were
+			for q: Vector2 in tide.dropped:
+				pickups.drop(Pickups.COIN, q, 1.0)
 	if trees.busy():
 		var fc: Dictionary = ev.get("falling_trees", {})
 		var feet := []
@@ -3133,6 +3149,7 @@ func _step_meteors(dt: float) -> void:
 func _draw_meteors() -> void:
 	tornado.draw(self, clock)
 	trees.draw(self)
+	tide.draw(self, clock)
 	var r := meteors.radius
 	for mk: Dictionary in meteors.marks:
 		var p: Vector2 = mk["p"]
