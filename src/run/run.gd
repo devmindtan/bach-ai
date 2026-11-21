@@ -1402,10 +1402,27 @@ func _slash_anim(d: Vector2) -> String:
 ## hits once, on the animation's active frames, through the sprite hitbox.
 ## Adds an effect; returns it (empty when the sprite or animation is missing).
 ## A moving effect (fx["vel"]) with fx["rehit"] keeps hitting every rehit s.
+## Effects that failed to show (sprite not loaded / animation missing), each "sprite:anim" once. Review
+## 2026-11-21: _add_fx returned {} silently, so a mistyped effect name was just "nothing on screen".
+var missing_fx: PackedStringArray = []
+
+
+func _warn_missing_fx(sprite: String, anim: String, loaded: bool) -> void:
+	var key := "%s:%s" % [sprite, anim]
+	if missing_fx.has(key):
+		return
+	missing_fx.append(key)
+	if loaded:
+		push_warning("FX: sprite '%s' has no animation '%s' (effect not drawn)" % [sprite, anim])
+	else:
+		push_warning("FX: sprite '%s' is not loaded for this run (effect '%s' not drawn); add it to the run's sprite list or check the name" % [sprite, anim])
+
+
 func _add_fx(sprite: String, anim: String, sc: float, damage: float, life := -1.0, world_pos: Variant = null,
 		source := "", knockback := 140.0) -> Dictionary:
 	var sheet: SpriteSheet = sheets.get(sprite)
 	if sheet == null or not sheet.has_animation(anim):
+		_warn_missing_fx(sprite, anim, sheet != null)
 		return {}
 	sc *= float(sheet.meta.get("px_scale", 1.0))   # drawn at double density (icefx): same size on screen
 	var fx := {"sheet": sheet, "anim": anim, "t": 0.0, "scale": sc, "damage": damage, "done": damage <= 0.0,
@@ -1685,9 +1702,12 @@ func trigger_special(sp: Dictionary) -> void:
 ## sprite's own hitbox radius, so what the player sees is what gets hit.
 func _ring_fx(reach: float, sprite := "stomp-i", anim := "burst") -> void:
 	var sheet: SpriteSheet = sheets.get(sprite)
-	var hb := SpriteHitbox.of(sheet, anim, Vector2.ZERO, 1.0) if sheet != null else null
+	if sheet == null:
+		_warn_missing_fx(sprite, anim, false)
+		return
+	var hb := SpriteHitbox.of(sheet, anim, Vector2.ZERO, 1.0)
 	var r1 := hb.radius if hb != null and hb.radius > 0.0 else 25.0
-	r1 *= float(sheet.meta.get("px_scale", 1.0)) if sheet != null else 1.0   # _add_fx applies px_scale again
+	r1 *= float(sheet.meta.get("px_scale", 1.0))   # _add_fx applies px_scale again
 	_add_fx(sprite, anim, reach / r1, 0.0)
 
 
