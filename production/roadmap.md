@@ -216,6 +216,10 @@ waves), level-up / ví, rồi hành vi quái theo kiểu Strategy trong `enemies
    trữ bản cũ ở `design/archive/`. · S
 6. Đã có trong kế hoạch: tách `enemies.gd` / `run.gd` (mục 6–7, đang làm theo lát); Cung thủ / Sát thủ (Đợt 6).
 
+**Đã xong (2026-11-21):** 1 màn kết hạ boss (`a7e6ee1`), 2 hiệu ứng độc (`7a63e2b`), 3 tỉ lệ thẻ theo cấp + thẻ chỉ số
+không giới hạn + bảng tỉ lệ (`c05a9f8`), 4 thử thách dễ hơn + Thu thập sao + Săn tinh anh + câu báo thiên thạch
+(`5fff077`), 5 tinh gọn (`ec120e4`, gộp skill-tree v1 vào v2).
+
 ## Sau đó
 - Chế độ endgame (ải vô tận, thử thách tuần, boss rush), thêm class, mùa sự kiện.
 
