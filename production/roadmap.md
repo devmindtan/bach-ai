@@ -176,7 +176,9 @@ không đè hình hai vua, chỉ một vương miện; sửa quầng nội tại
 `production/qa/evidence/boss-split/06-…`, `07-…`); mục 3 (chỉ nạp sprite chiêu dùng được trong trận: kiếm sĩ
 98 → 73 sprite, 103 → 36 ms; pháp sư 117 → 81, 129 → 64 ms). Mục 8 (test đường cong độ khó: mỗi ải khó hơn ải trước, tăng tối đa 40%;
 hiện +7…+25%, ải boss +18…+27%, ải 11 +37%; `tests/integration/data/difficulty_curve_test.gd`). Mục 9 (`gamekit tidy` bỏ 10 agent Unity / Unreal của
-game Godot; chạy lại sau mỗi lần nâng framework).
+game Godot; chạy lại sau mỗi lần nâng framework). Mục 4 phần lớn (Chém kiếm, Lốc xoáy và các bậc ở mật độ
+gấp đôi `px_scale` 0,5; `tierfx` mang `px_scale` sang bậc). **Còn:** Sóng kiếm (`sword-wave` cắt từ `cleave-wave` rồi
+xoay 16 hướng: phải vẽ lại từng hướng như `boltfx`, cỡ M).
 
 **Đánh giá ngoài lần 3 (2026-11-21), đã kiểm từng ý:**
 - Đã làm: save ghi qua file tạm + giữ `.bak`, tự khôi phục khi file hỏng (`e68f57a`); tối đa 2 hiệu ứng trạng thái vẽ
