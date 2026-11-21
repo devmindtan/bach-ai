@@ -439,6 +439,13 @@
           "dps_mul": 0.15,
           "time": 2.0
         }
+      ],
+      "tier_sprites": [
+        "sword-slash",
+        "sword-slash-ii",
+        "sword-slash-iii",
+        "sword-slash-iv",
+        "sword-slash-v"
       ]
     },
     "whirlwind": {
@@ -456,6 +463,13 @@
           "mul": 0.6,
           "time": 1.0
         }
+      ],
+      "tier_sprites": [
+        "whirlwind",
+        "whirlwind-ii",
+        "whirlwind-iii",
+        "whirlwind-iv",
+        "whirlwind-v"
       ]
     },
     "earth_strike": {
