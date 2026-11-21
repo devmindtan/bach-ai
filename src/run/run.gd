@@ -209,6 +209,7 @@ var _coin_sprite := "gold-coin"
 var _arena_half := 1400.0
 var _hit_center := Vector2(0, -26)
 var _camera: Camera2D
+var _ground: GroundLayer   # cached arena floor (src/run/ground_layer.gd)
 var _hud: RunHud
 var _panels: RunPanels
 
@@ -2479,7 +2480,11 @@ func _set_anim(anim: String) -> void:
 
 func _draw() -> void:
 	var view := Rect2(_camera.position - get_viewport_rect().size * 0.5, get_viewport_rect().size).grow(64.0)
-	RunGround.draw(self, view, _arena_half, stage_ground)
+	if _ground == null:   # the floor is its own cached layer (GroundLayer), redrawn per tile crossed
+		_ground = GroundLayer.new()
+		_ground.setup(_arena_half, stage_ground)
+		add_child(_ground)
+	_ground.follow(_camera.position, get_viewport_rect().size)
 	_draw_hazard_pools()
 	_draw_obstacles(view, false)
 	var gem: SpriteSheet = sheets.get(_gem_sprite)
