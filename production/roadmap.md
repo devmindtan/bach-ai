@@ -223,6 +223,27 @@ không giới hạn + bảng tỉ lệ (`c05a9f8`), 4 thử thách dễ hơn + T
 **Tạm đóng (người dùng 2026-11-21):** Mưa thiên thạch không khớp nội dung của vùng → `run_config.json`
 `events.meteor.enabled = false`. Làm lại sau: mỗi vùng có sự kiện đúng chủ đề của vùng đó.
 
+## Yêu cầu người dùng 2026-11-21 (đợt 2)
+
+**Đã xong:** Chém kiếm xa hơn + hệ số 1.3 (`83d023e`); icon Bất khuất cân (`4ff7ee5`); sự kiện vùng: Lốc cỏ
+(`842b4e1`), Cây đổ (`c78eb26`), Nước độc dâng (`ffb2c1e`), cổng màn 5 (`fd1f455`). Còn bước 6–7 của
+`design/region-events-plan.md` (xoá code thiên thạch, tài liệu); cây gốc vẫn đứng khi thân cây đổ (làm ẩn cây gốc).
+
+**Việc lớn (tham khảo ≥ 2 game cùng thể loại → tài liệu thiết kế → code theo lát):**
+
+1. **Cơ chế giáp.** Hiện giáp chỉ là trừ phẳng (`armor`: mỗi đòn trừ N, tối thiểu 1; thẻ Da thép / Áo phép +2,
+   đồ). Cần thiết kế: giáp theo tỉ lệ (vd. giảm % = giáp/(giáp+K)) hay phẳng, xuyên giáp của quái/boss, giáp từ
+   trang bị và cây kỹ năng, hiện trên bảng Nhân vật. Hỏi người dùng nếu tham khảo không chốt được.
+2. **Hệ thống scale theo chỉ số.** Mỗi chiêu khai báo nó scale theo chỉ số nào (sát thương, giáp, máu tối đa,
+   tốc độ chạy, tầm hút…) với hệ số riêng, ví dụ `"scale": {"damage": 1.3, "armor": 0.5}`; vẫn giữ chỉ số riêng
+   của chiêu (`skill_damage.<id>`). Kéo theo: thẻ/đồ có ý nghĩa cho nhiều lối xây dựng (kiếm sĩ trâu scale giáp,
+   pháp sư scale tốc độ…), bảng Nhân vật ghi "scale theo", dashboard hiện cột này. Tham khảo: Brotato (chỉ số
+   scale ghi trên vũ khí), Halls of Torment, Vampire Survivors.
+3. **Album (bách khoa).** Màn mới ở sảnh: mọi kỹ năng, quái, boss, vật phẩm; quái/boss **mở khoá sau khi hạ
+   lần đầu** (lưu trong slot), chưa mở thì hiện bóng đen "???"; trang chi tiết có chỉ số, chiêu, vùng xuất hiện.
+   Kỹ năng có **mô phỏng** như trong trận (dùng lại sân demo của dashboard / `SpriteSheet` + hitbox). Tham khảo:
+   Vampire Survivors Collection/Bestiary, Hades Codex, Brotato encyclopedia.
+
 ## Sau đó
 - Chế độ endgame (ải vô tận, thử thách tuần, boss rush), thêm class, mùa sự kiện.
 
