@@ -486,6 +486,7 @@
       ]
     },
     "frost_nova": {
+      "scale": {"damage": 1.0, "armor": 1.0},
       "sprite": "frost-nova-i",
       "tier_sprites": [
         "frost-nova-i",
@@ -714,6 +715,7 @@
       ]
     },
     "blizzard": {
+      "scale": {"damage": 1.0, "max_hp": 0.04},
       "sprite": "blizzard-vortex",
       "tier_sprites": [
         "blizzard-vortex",

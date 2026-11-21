@@ -231,10 +231,10 @@ không giới hạn + bảng tỉ lệ (`c05a9f8`), 4 thử thách dễ hơn + T
 
 **Việc lớn (tham khảo ≥ 2 game cùng thể loại → tài liệu thiết kế → code theo lát):**
 
-1. **Cơ chế giáp.** Hiện giáp chỉ là trừ phẳng (`armor`: mỗi đòn trừ N, tối thiểu 1; thẻ Da thép / Áo phép +2,
+1. **Cơ chế giáp.** ✅ 2026-11-21 (`21bc90f`, `design/armor.md`): giáp % kiểu Brotato. Còn: xuyên giáp của quái/boss. Trước đó giáp chỉ là trừ phẳng (`armor`: mỗi đòn trừ N, tối thiểu 1; thẻ Da thép / Áo phép +2,
    đồ). Cần thiết kế: giáp theo tỉ lệ (vd. giảm % = giáp/(giáp+K)) hay phẳng, xuyên giáp của quái/boss, giáp từ
    trang bị và cây kỹ năng, hiện trên bảng Nhân vật. Hỏi người dùng nếu tham khảo không chốt được.
-2. **Hệ thống scale theo chỉ số.** Mỗi chiêu khai báo nó scale theo chỉ số nào (sát thương, giáp, máu tối đa,
+2. **Hệ thống scale theo chỉ số.** Lát 1 ✅ 2026-11-21: `"scale"` trong skills, 5 chiêu scale theo máu/giáp/tốc độ, bảng Nhân vật + dashboard ghi "Scale theo". Còn: mở rộng cho mọi chiêu, thẻ/đồ theo lối xây dựng. Mỗi chiêu khai báo nó scale theo chỉ số nào (sát thương, giáp, máu tối đa,
    tốc độ chạy, tầm hút…) với hệ số riêng, ví dụ `"scale": {"damage": 1.3, "armor": 0.5}`; vẫn giữ chỉ số riêng
    của chiêu (`skill_damage.<id>`). Kéo theo: thẻ/đồ có ý nghĩa cho nhiều lối xây dựng (kiếm sĩ trâu scale giáp,
    pháp sư scale tốc độ…), bảng Nhân vật ghi "scale theo", dashboard hiện cột này. Tham khảo: Brotato (chỉ số

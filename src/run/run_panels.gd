@@ -866,6 +866,8 @@ func _skill_row(si: Dictionary) -> PanelContainer:
 			tips[w] = String(tips.get(w, "")) + "%s %s: %s\n" % [p["name"], "" if not run.buff_def(String(p["id"])).is_empty() else "cấp %d" % p["level"], p["text"]]
 		else:
 			other.append("%s %s" % [w, p["text"]])
+	if String(si.get("scale_text", "")) != "":   # skills that scale on armor / hp / speed say so
+		v.add_child(_label(String(si["scale_text"]), 13, MILESTONE))
 	if tot.has("Hồi chiêu") and float(si.get("base_cooldown", 0.0)) > 0.0:   # the real change, after the -40% cap
 		tot["Hồi chiêu"] = (float(si["cooldown"]) / float(si["base_cooldown"]) - 1.0) * 100.0
 	if not tot.is_empty() or not other.is_empty():

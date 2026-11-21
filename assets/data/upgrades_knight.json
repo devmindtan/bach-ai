@@ -509,6 +509,7 @@
       ]
     },
     "ground_slam": {
+      "scale": {"damage": 1.0, "max_hp": 0.05},
       "sprite": "stomp-i",
       "tier_sprites": [
         "stomp-i",
@@ -573,6 +574,7 @@
       ]
     },
     "holy_column": {
+      "scale": {"damage": 1.4, "armor": 1.0},
       "sprite": "holy-column",
       "tier_sprites": [
         "holy-column",
@@ -604,6 +606,7 @@
       ]
     },
     "dash": {
+      "scale": {"damage": 0.8, "move_speed": 0.03},
       "sprite": "swordsman",
       "anim": "dash",
       "cast": "active",

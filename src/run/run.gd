@@ -1276,11 +1276,33 @@ static func _dir_name(d: Vector2) -> String:
 
 ## Skill numbers, shared by casting, the HUD and the character sheet so they never
 ## disagree. [param st] defaults to the current stats (pass others for previews).
+## A skill's base damage before its own cards: "scale" {stat: coefficient} sums stat x coefficient
+## (e.g. {"damage": 1.0, "armor": 1.0}: hits harder with more armor; roadmap 2026-11-21, after
+## Brotato's per-weapon scaling); without "scale", damage x damage_mul.
+## "Scale theo: sát thương ×1.0 + giáp ×1.0" for a skill with "scale", "" otherwise.
+func scale_text(id: String) -> String:
+	var sc: Dictionary = pool.get("skills", {}).get(id, {}).get("scale", {})
+	var parts := []
+	for k: String in sc:
+		parts.append("%s ×%s" % [String(STAT_LABEL.get(k, k)).to_lower(), str(sc[k])])
+	return "" if parts.is_empty() else "Scale theo: " + " + ".join(parts)
+
+
+static func skill_base(sp: Dictionary, st: Dictionary) -> float:
+	var sc: Dictionary = sp.get("scale", {})
+	if sc.is_empty():
+		return float(st.get("damage", 0.0)) * float(sp.get("damage_mul", 1.0))
+	var total := 0.0
+	for k: String in sc:
+		total += float(st.get(k, 0.0)) * float(sc[k])
+	return total
+
+
 func skill_damage(id: String, st: Dictionary = {}) -> float:
 	if st.is_empty():
 		st = stats
 	var sp: Dictionary = pool.get("skills", {}).get(id, {})
-	var dmg := float(st.get("damage", 0.0)) * float(sp.get("damage_mul", 1.0)) * PlayerStats.skill_mul(st, "skill_damage." + id)
+	var dmg := skill_base(sp, st) * PlayerStats.skill_mul(st, "skill_damage." + id)
 	if passive_active():
 		dmg *= 1.0 + float(class_data.get("passive", {}).get("damage_mul", 0.0))
 	return dmg
@@ -1425,6 +1447,7 @@ func skill_info() -> Array:
 		out.append({"id": id, "name": u.get("name", id), "level": lv, "max": UpgradeRoller.cap(u),
 			"damage": skill_damage(id), "cooldown": skill_cooldown(id), "size": skill_size(id),
 			"base_damage": skill_damage(id, plain), "base_cooldown": skill_cooldown(id, plain), "sources": sources,
+			"scale_text": scale_text(id),
 			"statuses": on_hit(id), "count": skill_count_now(id), "count_parts": count_parts(id)})
 	return out
 
