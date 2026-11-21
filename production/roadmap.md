@@ -154,6 +154,23 @@ trên Web). Còn: nhạc theo vùng, đổi phím, tay cầm, tiếng Anh, Steam
 - Ghi chú 2026-11-21 (đánh giá ngoài): khi mở đợt này, `gamekit ui-shots` chụp mỗi màn ở 1280×720 và một độ phân giải
   dọc của điện thoại; mở rộng `ui_layout_rules_test.gd` kiểm khung chữ / nút không tràn ở cả hai.
 
+## Nợ kỹ thuật & chất lượng (làm dần, người dùng 2026-11-21)
+Từ hai bản đánh giá ngoài 2026-11-21; các việc nhanh đã làm (nền đấu cache, cảnh báo FX thiếu, F1 overlay, cache JSON,
+gom bậc chiêu, bỏ GIF khỏi git, boss FX cỡ nguyên, tuỳ chọn Hiệu ứng). Còn lại, theo thứ tự lợi ích / công sức:
+1. **Bụi đòn dậm của boss** (`boss-slam` khung bụi) là đám chấm phủ lên boss, cùng lỗi với hiệu ứng cháy cũ: vẽ lại bằng
+   khối đặc có viền, mờ bằng alpha của game. · cỡ S
+2. **Kiểm boss tách** (Vua Thạch Nhầy 75/50/25%): chụp đúng khoảnh khắc tách, xác nhận không đè hình hai vua và không
+   khựng khi sinh slime con (ảnh 2026-11-21 chưa bắt được lúc tách: `production/qa/evidence/boss-split/`). · cỡ S
+3. **Nạp sprite khi cần**: `_ready` nạp mọi sprite của class / quái / aura; nạp theo chiêu, quái thật sự có trong ải
+   (đo thời gian vào trận trước / sau). · cỡ M
+4. **Đồng bộ mật độ hiệu ứng cũ** lên chuẩn `px_scale` 0,5 (hiệu ứng chiêu vật lý đang phóng theo cỡ chiêu, hệ số lẻ):
+   vẽ lại ở mật độ gấp đôi theo `boltfx` / `icefx`. · cỡ L
+5. **Gom giá trị mặc định**: 305 chỗ `.get("khoá", mặc_định)` lặp lại số đã có trong JSON; đọc qua một lớp dữ liệu có
+   schema để sửa JSON không lệch âm thầm. · cỡ L
+6. **Tách `run.gd`** (≈3.200 dòng: mô phỏng, vẽ, FX, lên cấp, ví, camera, boss) thành các node / lớp riêng; **bọc mảng
+   của `Enemies`** (36 chỗ `run.gd` truy cập trực tiếp). Làm sau mục 5, từng phần một, test giữ nguyên. · cỡ XL
+Đo trước / sau bằng `xvfb-run -a godot --path . res://src/run/run.tscn -- --bench=200`.
+
 ## Sau đó
 - Chế độ endgame (ải vô tận, thử thách tuần, boss rush), thêm class, mùa sự kiện.
 
