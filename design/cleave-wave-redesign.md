@@ -63,10 +63,10 @@ hướng bay.
 
 ## 4. Các bước (mỗi bước một commit)
 
-1. **Hitbox xoay theo hướng.**
-   - Kiểm `_step_shot` / sóng hiện dùng hitbox của từng anim hướng hay một hitbox chung.
-   - Thêm xoay hitbox theo hướng bay (một hướng gốc + góc), mỗi quái trúng một lần mỗi sóng.
-   - Test: sóng chéo 45° trúng quái nằm trên đường chéo, không trúng quái lệch 60 px.
+1. ✅ **Đã kiểm (2026-11-21), không cần sửa riêng:** mỗi anim `fly_<góc>` đã có hitbox chữ nhật đo từ chính hình vẽ của
+   hướng đó (`SpriteHitbox.of(sheet, anim)` trong `_step_fx`). Hướng chéo dùng hộp bao lớn hơn một chút, không lệch.
+   Sprite mới (bước 2) vẽ từng hướng nên hitbox đo lại tự khớp. "Mỗi quái trúng một lần mỗi sóng" (bỏ `rehit` 0,25 s)
+   làm sóng yếu đi, nên **chuyển sang bước 5**, đi cùng việc tăng `damage_mul`.
 2. **Sprite mới** trong Lab (`families/sword-wave.py`):
    - vẽ hình học cho 16 hướng, 5 bậc, vệt kéo, frame động, màu xanh ngọc;
    - `art run` → xem preview → `art shot sheet` + `move` → `art test`;
