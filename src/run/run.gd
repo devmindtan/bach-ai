@@ -3058,13 +3058,30 @@ func _draw_boss_warnings() -> void:
 
 ## Afterimages of the hero along the dash path (the camera follows the hero, so
 ## without them a dash only shows as the ground sliding).
+## The dash trail at the dash's level (skills.dash.trail_tiers): {count, color, streaks}.
+func dash_trail_style() -> Dictionary:
+	var tiers: Array = pool.get("skills", {}).get("dash", {}).get("trail_tiers", [])
+	if tiers.is_empty():
+		return {"count": 3, "color": "#a6d9ff"}
+	return tiers[clampi(int(levels.get("dash", 1)) - 1, 0, tiers.size() - 1)]
+
+
 func _draw_dash_trail(hero: SpriteSheet) -> void:
 	if _dash_trail <= 0.0:
 		return
 	var fade := clampf(_dash_trail / 0.3, 0.0, 1.0)
-	for k in range(1, 4):
-		var p := _dash_from.lerp(player_pos, float(k) / 4.0)
-		hero.draw(self, _anim, _anim_t, p, _sprite_scale, face_left, Color(0.65, 0.85, 1.0, 0.18 * k * fade))
+	var st := dash_trail_style()
+	var n := int(st.get("count", 3))
+	var col := Color(String(st.get("color", "#a6d9ff")))
+	if bool(st.get("streaks", false)):   # speed lines along the path, behind the ghosts
+		var side := _dash_dir.orthogonal() * 7.0
+		for k: int in [-1, 0, 1]:
+			var a: Vector2 = _dash_from + _hit_center + side * k   # at the body's height, not the feet
+			var b: Vector2 = a.lerp(player_pos + _hit_center + side * k, 0.85)
+			draw_line(a.round(), b.round(), Color(col, 0.55 * fade), 2.0)
+	for k in range(1, n + 1):
+		var p := _dash_from.lerp(player_pos, float(k) / float(n + 1))
+		hero.draw(self, _anim, _anim_t, p, _sprite_scale, face_left, Color(col, 0.6 * float(k) / float(n) * fade))
 
 
 ## Buffs lying on the ground: the badge bobbing; blinking in the last seconds.
