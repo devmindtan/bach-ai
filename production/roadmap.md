@@ -203,6 +203,19 @@ waves), level-up / ví, rồi hành vi quái theo kiểu Strategy trong `enemies
      xoá tay. · cỡ M
   10. Cung thủ / Sát thủ: đã nằm ở Đợt 6.
 
+## Yêu cầu người dùng 2026-11-21 (làm theo thứ tự này)
+1. **Boss chết có màn kết:** hoạt ảnh boss chết + chậm thời gian + dòng chúc mừng, rồi mới hiện bảng thắng. · S
+2. **Vũng độc ải 2x:** chỉ gây sát thương theo thời gian khi đứng trong vũng (không thành trạng thái trúng độc mang
+   theo), thêm hiệu ứng độc trên người khi đứng trong vũng. · S
+3. **Tỉ lệ thẻ theo cấp:** cấp càng cao càng dễ ra thẻ hiếm trở lên (ví dụ cấp 1: Thường 70 / Hiếm 20 / Sử thi 7 / Huyền
+   thoại 3, mỗi cấp dịch dần, có trần); bảng tỉ lệ hiển thị trong game và dashboard; thẻ chỉ số không giới hạn cấp;
+   hết thẻ nâng được thì luôn ra thẻ chỉ số, không để trống. · M
+4. **Thử thách trong trận:** dễ hoàn thành hơn và đa dạng hơn; giải thích + báo rõ sự kiện Mưa thiên thạch. · M
+5. **Tinh gọn tiếp:** `gamekit tidy` bỏ `docs/engine-reference/{unity,unreal,web}` và template chứng nhận console của
+   game Godot (giữ Steam / itch vì Đợt 7); gộp phần còn dùng của `design/skill-tree.md` vào `skill-tree-v2.md` rồi lưu
+   trữ bản cũ ở `design/archive/`. · S
+6. Đã có trong kế hoạch: tách `enemies.gd` / `run.gd` (mục 6–7, đang làm theo lát); Cung thủ / Sát thủ (Đợt 6).
+
 ## Sau đó
 - Chế độ endgame (ải vô tận, thử thách tuần, boss rush), thêm class, mùa sự kiện.
 
