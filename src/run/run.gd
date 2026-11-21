@@ -251,6 +251,8 @@ func _ready() -> void:
 	_ring_cfg = cfg.get("events", {}).get("ring", {})
 	_ring_times = []
 	for ev: Dictionary in stages.region(stage_number).get("events", []):
+		if not event_enabled(cfg, String(ev.get("kind", ""))):
+			continue
 		if String(ev.get("kind", "")) == "ring" and challenge_id == "":
 			_ring_times.append(float(ev.get("t", 60.0)))
 		elif String(ev.get("kind", "")) == "meteor" and challenge_id == "":
@@ -1997,6 +1999,12 @@ func toggle_level_view(v: String) -> void:
 
 ## Skill ids a run can use: every skill card the level-ups may offer (deck_pool), the starting skills and
 ## any level already set (--skills, milestone skills). Only their sprites are loaded at the start.
+## False when run_config events.<kind>.enabled is false: the region's times for it are skipped
+## (--event still forces it for shots). Mưa thiên thạch is off since 2026-11-21 (user).
+static func event_enabled(config: Dictionary, kind: String) -> bool:
+	return bool(config.get("events", {}).get(kind, {}).get("enabled", true))
+
+
 func skills_in_run() -> Dictionary:
 	var out := {}
 	for u: Variant in deck_pool():

@@ -220,6 +220,9 @@ waves), level-up / ví, rồi hành vi quái theo kiểu Strategy trong `enemies
 không giới hạn + bảng tỉ lệ (`c05a9f8`), 4 thử thách dễ hơn + Thu thập sao + Săn tinh anh + câu báo thiên thạch
 (`5fff077`), 5 tinh gọn (`ec120e4`, gộp skill-tree v1 vào v2).
 
+**Tạm đóng (người dùng 2026-11-21):** Mưa thiên thạch không khớp nội dung của vùng → `run_config.json`
+`events.meteor.enabled = false`. Làm lại sau: mỗi vùng có sự kiện đúng chủ đề của vùng đó.
+
 ## Sau đó
 - Chế độ endgame (ải vô tận, thử thách tuần, boss rush), thêm class, mùa sự kiện.
 
