@@ -212,6 +212,7 @@ var _coin_sprite := "gold-coin"
 var _arena_half := 1400.0
 var _hit_center := Vector2(0, -26)
 var _camera: Camera2D
+var _status_max_shown := 2   # statuses.json max_shown
 var _vfx_alpha := 1.0      # Cài đặt "Hiệu ứng": fades skill / status effects, never bolts or bodies
 var _ground: GroundLayer   # cached arena floor (src/run/ground_layer.gd)
 var _hud: RunHud
@@ -285,7 +286,9 @@ func _ready() -> void:
 	_essence_sprite = String(items.get("pickups", {}).get("essence", {}).get("sprite", "essence-pickup"))
 	var names: Array[String] = [String(class_data.get("sprite", "swordsman")), _gem_sprite, _coin_sprite, _chest_sprite, _gold_chest_sprite, _essence_sprite, "stomp-i"]
 	_buff_defs = items.get("buffs", {})
-	status_defs = GameData.load_json(DATA + "statuses.json").get("statuses", {})
+	var status_file := GameData.load_json(DATA + "statuses.json")
+	status_defs = status_file.get("statuses", {})
+	_status_max_shown = int(status_file.get("max_shown", 2))
 	for st: String in status_defs:
 		names.append(String(status_defs[st].get("sprite", "")))
 	names.append_array(special_fx_sprites())
@@ -2125,6 +2128,17 @@ func special_fx_sprites() -> Array[String]:
 	return out
 
 
+## The statuses to draw on one monster: at most statuses.json max_shown (2), highest "priority" first
+## (review 2026-11-21: burn + shock + slow + bleed stacked into clutter). Statuses not drawn still act.
+func visible_statuses(list: Array) -> Array:
+	if list.size() <= 1:
+		return list
+	var sorted := list.duplicate()
+	sorted.sort_custom(func(a: Variant, b: Variant) -> bool:
+		return int(status_defs.get(a, {}).get("priority", 0)) > int(status_defs.get(b, {}).get("priority", 0)))
+	return sorted.slice(0, int(_status_max_shown))
+
+
 ## Where to draw a status sprite on a body of [param radius] px: [[offset, scale], ...]. The sprites are
 ## made for a body of radius 8 art px. A tiled status (statuses.json "tile", the burn) never blows one sprite
 ## up (user 2026-11-20: blurry, blocky on big monsters): it draws several at a whole scale no larger than
@@ -2810,7 +2824,7 @@ func _draw_statuses(view: Rect2) -> void:
 	for i in enemies.count:
 		if enemies.state[i] == Enemies.DYING or not view.has_point(enemies.pos[i]):
 			continue
-		for st in enemies.statuses_of(i):
+		for st in visible_statuses(enemies.statuses_of(i)):
 			var d: Dictionary = status_defs.get(st, {})
 			var sh: SpriteSheet = sheets.get(String(d.get("sprite", "")))
 			if sh == null:

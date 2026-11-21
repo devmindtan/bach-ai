@@ -53,3 +53,15 @@ func test_tiled_flames_sit_low_on_the_body() -> void:
 		for s: Array in r.status_spots(radius, true):
 			_check((s[0] as Vector2).y >= radius * 0.2, "radius %s: flame at y %s is in the lower half" % [radius, (s[0] as Vector2).y])
 	r.free()
+
+
+# Review 2026-11-21: a monster with burn + shock + slow + bleed drew every layer; at most "max_shown" (2) are
+# drawn, the highest "priority" first (freeze > stun > burn > shock > bleed > slow). The others still act.
+func test_at_most_two_statuses_drawn_highest_priority_first() -> void:
+	var r: Node = Run.new()
+	r.status_defs = GameData.load_json("res://assets/data/statuses.json")["statuses"]
+	var shown: Array = r.visible_statuses(["slow", "bleed", "shock", "burn"])
+	_check(shown == ["burn", "shock"], "burn and shock drawn, got %s" % [shown])
+	_check(r.visible_statuses(["slow", "freeze", "stun"]) == ["freeze", "stun"], "freeze and stun before slow")
+	_check(r.visible_statuses(["slow"]) == ["slow"], "a single status is drawn")
+	r.free()
