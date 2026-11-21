@@ -101,7 +101,7 @@
     "hp_bar_time": 2.0
   },
   "events": {
-    "_doc": "6B events (design/events.md). ring = Vòng thử thách: opens `distance` px from the player at the region's event times (stages.json regions[].events), radius px, need = seconds inside to complete, limit = seconds before it fails, gold = coins dropped with the chest. meteor = Mưa thiên thạch: for duration s a mark every interval s within spread px of the player, lands warn s later (radius px), at most max_marks at once; hits the player for player_damage (armor applies) and monsters for monster_damage. gold_chest = Rương vàng: chance a dropped chest is gold; opening gives picks card picks in a row, gold coins, a sure item, and counts_as chests for Mảnh thẻ. source_names / source_icons: name (starting \"Sự kiện:\", so it is not mistaken for a skill) and icon of each event damage source in the end-of-run table. collect = Thu thập sao: count stars within spread px, pick each within pick px, all before limit s. hunt = Săn tinh anh: the region's elite (marked) appears distance px away, kill it before limit s. enabled: false switches an event off (its region times are skipped; --event still forces it). meteor is off since 2026-11-21: it does not match the regions' content, to be redesigned. Rewards: a chest + gold coins (user 2026-11-21: challenges easier and more varied; ring radius 110 / need 5 / limit 40).",
+    "_doc": "6B events (design/events.md). ring = Vòng thử thách: opens `distance` px from the player at the region's event times (stages.json regions[].events), radius px, need = seconds inside to complete, limit = seconds before it fails, gold = coins dropped with the chest. meteor = Mưa thiên thạch: for duration s a mark every interval s within spread px of the player, lands warn s later (radius px), at most max_marks at once; hits the player for player_damage (armor applies) and monsters for monster_damage. gold_chest = Rương vàng: chance a dropped chest is gold; opening gives picks card picks in a row, gold coins, a sure item, and counts_as chests for Mảnh thẻ. source_names / source_icons: name (starting \"Sự kiện:\", so it is not mistaken for a skill) and icon of each event damage source in the end-of-run table. collect = Thu thập sao: count stars within spread px, pick each within pick px, all before limit s. hunt = Săn tinh anh: the region's elite (marked) appears distance px away, kill it before limit s. min_stage: region events (every kind) start at this stage, earlier stages are quiet (user 2026-11-21; --event still forces one). tornado / falling_trees / poison_tide: each region's own event, numbers in design/region-events-plan.md §4. enabled: false switches an event off (its region times are skipped; --event still forces it). meteor is off since 2026-11-21: it does not match the regions' content, to be redesigned. Rewards: a chest + gold coins (user 2026-11-21: challenges easier and more varied; ring radius 110 / need 5 / limit 40).",
     "ring": {
       "distance": 220.0,
       "radius": 110.0,
@@ -120,6 +120,38 @@
       "player_damage": 12.0,
       "monster_damage": 80.0
     },
+    "min_stage": 5,
+    "tornado": {
+      "telegraph": 1.5,
+      "distance": 220.0,
+      "speed": 170.0,
+      "radius": 70.0,
+      "duration": 9.0,
+      "player_damage": 8.0,
+      "monster_damage": 30.0,
+      "tick": 0.5,
+      "seeds": 3
+    },
+    "falling_trees": {
+      "waves": 3,
+      "interval": 2.5,
+      "warn": 1.2,
+      "range": 300.0,
+      "length": 150.0,
+      "width": 46.0,
+      "player_damage": 14.0,
+      "monster_damage": 60.0,
+      "linger": 4.0
+    },
+    "poison_tide": {
+      "pools": 3,
+      "range": 280.0,
+      "grow": 1.5,
+      "radius": 110.0,
+      "hold": 7.0,
+      "dps": 6.0,
+      "gems": 2
+    },
     "gold_chest": {
       "chance": 0.08,
       "picks": 3,
@@ -127,10 +159,16 @@
       "counts_as": 3
     },
     "source_names": {
-      "event.meteor": "Sự kiện: Mưa thiên thạch"
+      "event.meteor": "Sự kiện: Mưa thiên thạch",
+      "event.tornado": "Sự kiện: Lốc cỏ",
+      "event.falling_trees": "Sự kiện: Cây đổ",
+      "event.poison_tide": "Sự kiện: Nước độc dâng"
     },
     "source_icons": {
-      "event.meteor": "meteor"
+      "event.meteor": "meteor",
+      "event.tornado": "ev_tornado",
+      "event.falling_trees": "ev_falling_tree",
+      "event.poison_tide": "ev_poison_tide"
     },
     "collect": {
       "count": 5,

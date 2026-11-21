@@ -251,8 +251,8 @@ func _ready() -> void:
 	_ring_cfg = cfg.get("events", {}).get("ring", {})
 	_ring_times = []
 	for ev: Dictionary in stages.region(stage_number).get("events", []):
-		if not event_enabled(cfg, String(ev.get("kind", ""))):
-			continue
+		if not events_open(cfg, stage_number) or not event_enabled(cfg, String(ev.get("kind", ""))):
+			continue   # stages before events.min_stage are quiet; --event below still forces one
 		if String(ev.get("kind", "")) == "ring" and challenge_id == "":
 			_ring_times.append(float(ev.get("t", 60.0)))
 		elif String(ev.get("kind", "")) == "meteor" and challenge_id == "":
@@ -2001,6 +2001,12 @@ func toggle_level_view(v: String) -> void:
 ## any level already set (--skills, milestone skills). Only their sprites are loaded at the start.
 ## False when run_config events.<kind>.enabled is false: the region's times for it are skipped
 ## (--event still forces it for shots). Mưa thiên thạch is off since 2026-11-21 (user).
+## Region events (every kind) run from run_config events.min_stage on; a missing key = always
+## (design/region-events-plan.md §5, user 2026-11-21: stages 1-4 stay quiet).
+static func events_open(config: Dictionary, stage: int) -> bool:
+	return stage >= int(config.get("events", {}).get("min_stage", 1))
+
+
 static func event_enabled(config: Dictionary, kind: String) -> bool:
 	return bool(config.get("events", {}).get(kind, {}).get("enabled", true))
 
