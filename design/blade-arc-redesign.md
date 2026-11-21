@@ -1,6 +1,7 @@
 # Kế hoạch: thiết kế lại Chém kiếm (`blade_arc`)
 
-Trạng thái: **đang làm**: bước 1 xong (2026-11-21). Người dùng: "chiêu chém kiếm không đẹp và khá phế".
+Trạng thái: **tạm dừng sau bước 1** (2026-11-21). Người dùng nói nhầm tên: chiêu cần làm lại là **Sóng kiếm**
+(`cleave-wave-redesign.md`); phần đã sửa ở Chém kiếm được giữ. Các bước 2–6 dưới đây là tuỳ chọn cho sau này. Người dùng: "chiêu chém kiếm không đẹp và khá phế".
 Thực hiện theo `.agents/skills/free-agent-workloop` (mỗi bước một commit có test + ảnh).
 
 ## 1. Hiện trạng (đã xem `sprite-lab/sprites/sword-slash/preview.png` và ảnh trong trận)
