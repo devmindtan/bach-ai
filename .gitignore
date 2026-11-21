@@ -176,3 +176,6 @@ $RECYCLE.BIN/
 .godot/
 !export_presets.cfg
 !assets/source/lpc/*.zip
+
+# Generated GDScript code graph (tools/gdgraph), never committed
+/graphify-out/
