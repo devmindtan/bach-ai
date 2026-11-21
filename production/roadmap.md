@@ -171,6 +171,25 @@ gom bậc chiêu, bỏ GIF khỏi git, boss FX cỡ nguyên, tuỳ chọn Hiệu
    của `Enemies`** (36 chỗ `run.gd` truy cập trực tiếp). Làm sau mục 5, từng phần một, test giữ nguyên. · cỡ XL
 Đo trước / sau bằng `xvfb-run -a godot --path . res://src/run/run.tscn -- --bench=200`.
 
+**Đã xong sau đó (2026-11-21):** mục 1 (bụi dậm: cụm bụi quanh mép, mờ bằng alpha, `9d3bbe2`).
+
+**Đánh giá ngoài lần 3 (2026-11-21), đã kiểm từng ý:**
+- Đã làm: save ghi qua file tạm + giữ `.bak`, tự khôi phục khi file hỏng (`e68f57a`); tối đa 2 hiệu ứng trạng thái vẽ
+  trên một quái, theo `priority` (`statuses.json`).
+- Đã có sẵn, không cần làm: chống vỡ tiếng (`sound.gd` có `gap`, `voices`, `jitter` theo từng âm); save có `version`
+  và hàm migrate (`slot.gd`); pickup / quái / số sát thương là mảng dữ liệu, không tạo-huỷ node, nên không cần object pool.
+- Không làm (lý do): `design/skill-tree.md` đã ghi "thay bằng v2" nhưng vẫn giữ phần tiền tệ và đặt lại đang dùng, và
+  `01i-skill-tree.png` là màn hiện tại, không phải bản cũ.
+- Đưa vào kế hoạch:
+  7. **Tách hành vi quái / kỹ năng** theo kiểu Strategy (`src/run/enemies/behaviors/`, `src/run/skills/`): gộp với mục 6,
+     làm cùng lúc tách `run.gd`. · cỡ XL
+  8. **Test đường cong độ khó** các ải trung gian (2–9, 12–19, 22–29, dùng công thức) và bước nhảy ở ải boss: đo bằng
+     mô phỏng, chặn bằng test. · cỡ M
+  9. **Tinh gọn `.claude/` của game** (agent / rule Unity, Unreal, console): `.claude/` là bản sao của framework và được
+     nâng bằng `UPGRADING.md`, nên chỉ làm qua cấu hình `project.yaml` (tắt engine khác) hoặc khi framework hỗ trợ, không
+     xoá tay. · cỡ M
+  10. Cung thủ / Sát thủ: đã nằm ở Đợt 6.
+
 ## Sau đó
 - Chế độ endgame (ải vô tận, thử thách tuần, boss rush), thêm class, mùa sự kiện.
 
