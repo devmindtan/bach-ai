@@ -171,7 +171,9 @@ gom bậc chiêu, bỏ GIF khỏi git, boss FX cỡ nguyên, tuỳ chọn Hiệu
    của `Enemies`** (36 chỗ `run.gd` truy cập trực tiếp). Làm sau mục 5, từng phần một, test giữ nguyên. · cỡ XL
 Đo trước / sau bằng `xvfb-run -a godot --path . res://src/run/run.tscn -- --bench=200`.
 
-**Đã xong sau đó (2026-11-21):** mục 1 (bụi dậm: cụm bụi quanh mép, mờ bằng alpha, `9d3bbe2`).
+**Đã xong sau đó (2026-11-21):** mục 1 (bụi dậm: cụm bụi quanh mép, mờ bằng alpha, `9d3bbe2`); mục 2 (boss tách:
+không đè hình hai vua, chỉ một vương miện; sửa quầng nội tại của slime con che boss: quầng vẽ trước mọi quái,
+`production/qa/evidence/boss-split/06-…`, `07-…`).
 
 **Đánh giá ngoài lần 3 (2026-11-21), đã kiểm từng ý:**
 - Đã làm: save ghi qua file tạm + giữ `.bak`, tự khôi phục khi file hỏng (`e68f57a`); tối đa 2 hiệu ứng trạng thái vẽ

@@ -2633,6 +2633,16 @@ func _draw() -> void:
 			var c: Vector2 = h["p"] + Vector2.from_angle(q * TAU / 6.0) * r * 0.7
 			draw_rect(Rect2(c - Vector2(1, 4), Vector2(2, 8)), Color(0.7, 1.0, 0.7, 1.0 - k))   # "+" marks
 			draw_rect(Rect2(c - Vector2(4, 1), Vector2(8, 2)), Color(0.7, 1.0, 0.7, 1.0 - k))
+	# the boss's aura: a glow under every buffed monster, all drawn BEFORE any monster so no glow covers the
+	# boss or another monster (2026-11-21: the split slimes' glows hid the king)
+	if not enemies.boss_aura.is_empty():
+		var gc := Color(String(enemies.boss_aura.get("color", "#ffffff")))
+		for i in enemies.count:
+			if enemies.buffed[i] == 1 and enemies.state[i] != Enemies.DYING and view.has_point(enemies.pos[i]):
+				var gr := enemies.k_radius[enemies.kind[i]] * 1.3
+				var feet := enemies.pos[i] + Vector2(0, -2)
+				draw_circle(feet, gr, Color(gc, 0.25 + 0.1 * sin(clock * 4.0 + i)))
+				draw_arc(feet, gr, 0.0, TAU, 20, Color(gc, 0.7), 1.5)
 	# dying monsters under the living ones
 	for pass_dying in [true, false]:
 		for i in enemies.count:
@@ -2640,12 +2650,6 @@ func _draw() -> void:
 				continue
 			var k := enemies.kind[i]
 			var a := enemies.anim_of(i)
-			if enemies.buffed[i] == 1 and not enemies.boss_aura.is_empty() and not pass_dying:   # the boss's aura: a glow under it
-				var gc := Color(String(enemies.boss_aura.get("color", "#ffffff")))
-				var gr := enemies.k_radius[k] * 1.3
-				var pulse := 0.25 + 0.1 * sin(clock * 4.0 + i)
-				draw_circle(enemies.pos[i] + Vector2(0, -2), gr, Color(gc, pulse))
-				draw_arc(enemies.pos[i] + Vector2(0, -2), gr, 0.0, TAU, 20, Color(gc, 0.7), 1.5)
 			var tint := Color(1.0, 0.55, 0.55) if enemies.flash[i] > 0.0 else _status_tint(i)
 			if enemies.state[i] == Enemies.WINDUP:
 				tint = Color(1.0, 0.8, 0.5)
