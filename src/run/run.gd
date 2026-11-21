@@ -230,6 +230,7 @@ func _ready() -> void:
 	_parse_args()
 	RunInput.register()
 	cfg = GameData.load_json(DATA + "run_config.json")
+	_armor_k = float(cfg.get("player", {}).get("armor_k", 15.0))
 	stages = Stages.load_default()
 	milestones = Milestones.load_default()
 	var prefs := Prefs.current()
@@ -675,7 +676,7 @@ func _tick(dt: float) -> void:
 		_time_mark = mark
 	var contact := enemies.step(dt, player_pos, player_pos + _hit_center) * time_mul(clock, "damage")
 	if god and contact > 0.0 and invuln <= 0.0:   # balance runs: count what would have been taken, keep the hp
-		damage_taken += maxf(1.0, (contact - float(stats.get("armor", 0.0))) * damage_taken_mul())
+		damage_taken += maxf(1.0, contact * armor_mul(float(stats.get("armor", 0.0)), _armor_k) * damage_taken_mul())
 		invuln = float(cfg.get("player", {}).get("hit_invuln", 0.6))
 	if contact > 0.0 and invuln <= 0.0 and bench == 0 and not god and not buffs.invulnerable() and _dash_left <= 0.0:
 		if not _spend_ward():
@@ -934,7 +935,7 @@ func _spawn(t0: float, t1: float) -> void:
 
 
 func _take_hit(amount: float) -> void:
-	var taken := maxf(1.0, (amount - float(stats.get("armor", 0.0))) * damage_taken_mul())
+	var taken := maxf(1.0, amount * armor_mul(float(stats.get("armor", 0.0)), _armor_k) * damage_taken_mul())
 	shake.add(clampf(taken * float(_crit_cfg.get("shake_per_hurt", 0.25)), 2.0, 7.0))   # a boss slam shakes harder
 	hp -= taken
 	damage_taken += taken
@@ -2348,8 +2349,23 @@ static func signed(v: float) -> String:
 	return t.trim_suffix(".0")
 
 
+## Share of a hit that gets through [param armor] (design/armor.md, after Brotato): 1 / (1 + armor / k),
+## so k armor halves a hit and more armor helps less and less, never to immunity; negative armor
+## raises it: (k - 2a) / (k - a).
+static func armor_mul(armor: float, k: float) -> float:
+	k = maxf(1.0, k)
+	if armor >= 0.0:
+		return 1.0 / (1.0 + armor / k)
+	return (k - 2.0 * armor) / (k - armor)
+
+
+static var _armor_k := 15.0   # run_config player.armor_k (set in _ready; static so _fmt_stat can show the %)
+
+
 static func _fmt_stat(key: String, v: float) -> String:
 	match key:
+		"armor":   # the points and what they take off a hit
+			return "%d (−%d%%)" % [roundi(v), roundi((1.0 - armor_mul(v, _armor_k)) * 100.0)] if v > 0.0 else str(roundi(v))
 		"cooldown":   # a multiplier on every skill's cooldown: shown as a change in percent
 			var pct := roundi((v - 1.0) * 100.0)
 			return "0%" if pct == 0 else "%+d%%" % pct

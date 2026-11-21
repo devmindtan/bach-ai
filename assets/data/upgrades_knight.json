@@ -275,12 +275,12 @@
       "id": "toughness",
       "kind": "stat",
       "name": "Da thép",
-      "desc": "+2 giáp: mỗi đòn của quái trừ đi 2 sát thương.",
+      "desc": "+3 giáp. Giáp giảm sát thương theo %: 15 giáp = -50%, càng nhiều càng tăng chậm.",
       "max_level": 0,
       "weight": 3,
       "effects": {
         "armor": {
-          "add": 2.0
+          "add": 3.0
         }
       },
       "rarity": "common"
@@ -304,14 +304,14 @@
       "max_level": 1,
       "weight": 4,
       "from_item": "aegis_helm",
-      "desc": "Mỗi 11,4 giây: giáp ảo +12 trong 3 giây (mỗi đòn trừ 12 sát thương).",
+      "desc": "Mỗi 11,4 giây: giáp ảo +12 trong 3 giây (giảm 44% sát thương mỗi đòn).",
       "special": {
         "kind": "shield",
         "name": "Thần hộ",
         "every": 11.4,
         "buff": "phantom_ward",
         "time": 3.0,
-        "desc": "Mỗi 11,4 giây: giáp ảo +12 trong 3 giây (mỗi đòn trừ 12 sát thương)."
+        "desc": "Mỗi 11,4 giây: giáp ảo +12 trong 3 giây (giảm 44% sát thương mỗi đòn)."
       },
       "effects": {},
       "unique": true

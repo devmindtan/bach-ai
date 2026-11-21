@@ -261,12 +261,12 @@
       "id": "mana_shield",
       "kind": "stat",
       "name": "Áo phép",
-      "desc": "+2 giáp: mỗi đòn của quái trừ đi 2 sát thương.",
+      "desc": "+3 giáp. Giáp giảm sát thương theo %: 15 giáp = -50%, càng nhiều càng tăng chậm.",
       "max_level": 0,
       "weight": 3,
       "effects": {
         "armor": {
-          "add": 2.0
+          "add": 3.0
         }
       },
       "rarity": "rare"
