@@ -31,3 +31,16 @@ func test_aoe_cooldowns_doubled_and_projectiles_raised() -> void:
 	_check(is_equal_approx(float(m["fireball"]["cooldown"]), 3.25), "Cầu lửa 2.6 -> 3.25 s (x1.25)")
 	_check(is_equal_approx(float(k["blade_arc"]["cooldown"]), 0.9) and is_equal_approx(float(m["arcane_bolt"]["cooldown"]), 1.0),
 		"starting skills keep their cooldown")
+
+
+func test_character_sheet_shows_the_capped_cooldown() -> void:
+	# bug 2026-11-21: the sheet showed "Hồi chiêu -65%" while every cast was capped at -40%
+	var r: Node = Run.new()
+	r.cfg = GameData.load_json("res://assets/data/run_config.json")
+	r.pool = GameData.load_json("res://assets/data/upgrades_knight.json")
+	r.base_stats = {"cooldown": 1.0}
+	r.levels = {"haste": 10}
+	var bd: Dictionary = r.stat_breakdown()
+	_check(float(bd["cooldown"]["final"]) >= float(r.cfg["player"]["cooldown_floor"]) - 0.001,
+		"sheet cooldown capped, got %s" % bd["cooldown"]["final"])
+	r.free()

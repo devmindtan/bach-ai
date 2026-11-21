@@ -796,7 +796,7 @@ func _stat_row(key: String, b: Dictionary) -> VBoxContainer:
 	var chips := HFlowContainer.new()
 	chips.add_theme_constant_override("h_separation", 10)
 	chips.add_theme_constant_override("v_separation", 2)
-	var base_l := _label("gốc %s" % run._fmt_stat(key, float(b["base"])), 12, MUTED)
+	var base_l := _label(("gốc %s" % run._fmt_stat(key, float(b["base"]))) + ("  · tối đa" if b.get("capped", false) else ""), 12, MUTED)
 	base_l.custom_minimum_size = Vector2(34, 0)
 	chips.add_child(_indent(base_l))
 	for part: Dictionary in b["parts"]:
@@ -866,6 +866,8 @@ func _skill_row(si: Dictionary) -> PanelContainer:
 			tips[w] = String(tips.get(w, "")) + "%s %s: %s\n" % [p["name"], "" if not run.buff_def(String(p["id"])).is_empty() else "cấp %d" % p["level"], p["text"]]
 		else:
 			other.append("%s %s" % [w, p["text"]])
+	if tot.has("Hồi chiêu") and float(si.get("base_cooldown", 0.0)) > 0.0:   # the real change, after the -40% cap
+		tot["Hồi chiêu"] = (float(si["cooldown"]) / float(si["base_cooldown"]) - 1.0) * 100.0
 	if not tot.is_empty() or not other.is_empty():
 		var mods := HFlowContainer.new()
 		mods.add_theme_constant_override("h_separation", 16)

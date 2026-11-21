@@ -2401,6 +2401,11 @@ func stat_breakdown() -> Dictionary:
 		if bd.has(pair[0]) and not is_equal_approx(m, 1.0):
 			bd[pair[0]]["final"] = float(bd[pair[0]]["final"]) * m
 			bd[pair[0]]["parts"].append({"id": "skull", "name": "Độ khó", "level": 0, "mul": m - 1.0})
+	# every cast is capped at player.cooldown_floor (skill_cooldown): the sheet shows the same number
+	var cd_floor := float(cfg.get("player", {}).get("cooldown_floor", 0.0))
+	if bd.has("cooldown") and float(bd["cooldown"]["final"]) < cd_floor:
+		bd["cooldown"]["final"] = cd_floor
+		bd["cooldown"]["capped"] = true
 	return bd
 	if enemies != null:   # Chí mạng: run_config.json crit + any crit_chance / crit_mul effects (6C.2)
 		enemies.crit_chance = float(cfg.get("crit", {}).get("chance", 0.0)) + float(stats.get("crit_chance", 0.0))
