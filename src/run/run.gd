@@ -312,7 +312,13 @@ func _ready() -> void:
 				names.append(String(monsters[m]["rage_sprite"]))
 			if monsters[m].has("root_sprite"):   # Mộc Yêu's roots
 				names.append(String(monsters[m]["root_sprite"]))
+	var deck_cfg: Dictionary = CardTree.load_default().data.get("deck", {"skills": 8, "stats": 6, "slots": 3})
+	deck_cards = Deck.active(playing_slot if not Prefs.current().is_fixed() else null, pool.get("upgrades", []),
+		class_data.get("start_skills", {}).keys(), deck_cfg)
+	var in_run := skills_in_run()   # only the skills this run can use (roadmap item 3, review 2026-11-21)
 	for sk: String in pool.get("skills", {}):
+		if not in_run.has(sk):
+			continue
 		var sd: Dictionary = pool["skills"][sk]
 		names.append(String(sd.get("sprite", sk)))
 		for tn in sd.get("impact_tiers", []):
@@ -399,9 +405,6 @@ func _ready() -> void:
 	var hero_layers: SpriteSheet = sheets.get(String(class_data.get("sprite", "")))
 	if hero_layers != null and not hero_layers.layer_names().is_empty() and profile != null:
 		hero_layers.compose_layers(hero_layers.gear_overrides(profile.equipped(class_id).values()))   # worn items show
-	var deck_cfg: Dictionary = CardTree.load_default().data.get("deck", {"skills": 8, "stats": 6, "slots": 3})
-	deck_cards = Deck.active(playing_slot if not Prefs.current().is_fixed() else null, pool.get("upgrades", []),
-		class_data.get("start_skills", {}).keys(), deck_cfg)
 	for sk: String in class_data.get("start_skills", {}):
 		# keep a higher level forced by --skills
 		levels[sk] = maxi(int(levels.get(sk, 0)), int(class_data["start_skills"][sk]))
@@ -1982,6 +1985,21 @@ func toggle_level_view(v: String) -> void:
 		"character": _panels.show_character()
 		"hidden": _panels.show_peek()
 		_: _panels.reshow()
+
+
+## Skill ids a run can use: every skill card the level-ups may offer (deck_pool), the starting skills and
+## any level already set (--skills, milestone skills). Only their sprites are loaded at the start.
+func skills_in_run() -> Dictionary:
+	var out := {}
+	for u: Variant in deck_pool():
+		if u is Dictionary and String(u.get("kind", "")) == "skill":
+			out[String(u["id"])] = true
+	for sk: String in class_data.get("start_skills", {}):
+		out[sk] = true
+	for sk: String in levels:
+		if int(levels[sk]) > 0:
+			out[sk] = true
+	return out
 
 
 ## The cards a level-up may offer: the active deck's cards and the non-deck cards (Deck.filter).
