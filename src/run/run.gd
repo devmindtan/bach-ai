@@ -21,6 +21,7 @@ extends Node2D
 ##   --pick-card=ID  take count card ID at the start and open its skill pick (shots)
 ##   --no-auto-pick  the demo stops at the first level-up panel (for shots)
 ##   --spawn-only=ID[,ID] only the waves of these monsters spawn, from the start (shots)
+##   --debug-overlay show the F1 debug overlay from the start (shots)
 ##   --hitboxes      draw hit areas: effects (red while dealing damage), monster
 ##                   bodies, the player's body and pickup radius
 ##   --bench=N       keep N monsters alive around a god-mode autopilot, print
@@ -507,6 +508,8 @@ func _parse_args() -> void:
 			auto_pick = false
 		elif a == "--hitboxes":
 			show_hitboxes = true
+		elif a == "--debug-overlay":
+			toggle_debug_overlay.call_deferred()
 		elif a.begins_with("--sim-steps="):
 			sim_steps = maxi(1, int(a.get_slice("=", 1)))
 		elif a.begins_with("--bench="):
@@ -522,8 +525,11 @@ func _process(delta: float) -> void:
 	var t0 := Time.get_ticks_usec()
 	for _i in sim_steps:
 		_tick(STEP if sim_steps > 1 or bench > 0 else minf(delta, 0.05))
+	var sim_us := Time.get_ticks_usec() - t0
 	if bench > 0 and _bench_frames > 60:
-		_bench_tick_us.append(Time.get_ticks_usec() - t0)
+		_bench_tick_us.append(sim_us)
+	if _debug_label != null:
+		_update_debug_overlay(sim_us)
 	_camera.position = player_pos.round()
 	if OS.get_cmdline_user_args().has("--count-log") and Engine.get_process_frames() % 300 == 0:
 		printerr("GK: t=%.0f alive=%d" % [clock, enemies.living()])
@@ -557,6 +563,10 @@ func _input(event: InputEvent) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F1:
+		toggle_debug_overlay()   # review 2026-11-21: fps / sim / monsters / FX at a glance
+		get_viewport().set_input_as_handled()
+		return
 	if event.is_action_pressed("pause"):
 		if state == State.PLAYING:
 			open_pause()
@@ -1402,6 +1412,46 @@ func _slash_anim(d: Vector2) -> String:
 ## hits once, on the animation's active frames, through the sprite hitbox.
 ## Adds an effect; returns it (empty when the sprite or animation is missing).
 ## A moving effect (fx["vel"]) with fx["rehit"] keeps hitting every rehit s.
+# --- debug overlay (F1, or --debug-overlay for shots) -------------------------------
+var _debug_label: Label
+var _debug_sim_ms := 0.0
+var _debug_frame_ms := 0.0      # wall clock between frames (the engine fps is fixed when recording shots)
+var _debug_last_us := 0
+
+
+## Shows / hides the debug overlay: fps, sim ms (smoothed), living monsters, effects, floor redraws.
+func toggle_debug_overlay() -> void:
+	if _debug_label != null:
+		_debug_label.get_parent().queue_free()
+		_debug_label = null
+		return
+	var layer := CanvasLayer.new()
+	layer.layer = 50
+	add_child(layer)
+	_debug_label = UiKit.label("", 14, Color("b8ffb0"))
+	_debug_label.position = Vector2(12, 84)
+	var bg := UiKit.style(Color(0, 0, 0, 0.6), 6, Color(0, 0, 0, 0), 0)
+	_debug_label.add_theme_stylebox_override("normal", bg)
+	layer.add_child(_debug_label)
+
+
+func debug_overlay_text(sim_ms: float) -> String:
+	return "FPS %d · khung %.1f ms\nMô phỏng %.2f ms\nQuái %d / %d\nHiệu ứng %d · nền vẽ lại %d\nThiếu FX: %s" % [
+		roundi(1000.0 / maxf(0.1, _debug_frame_ms)) if _debug_frame_ms > 0.0 else 0, _debug_frame_ms, sim_ms,
+		enemies.living() if enemies != null else 0, int(cfg.get("max_enemies", 0)), _fx.size(),
+		_ground.redraws if _ground != null else 0, "không" if missing_fx.is_empty() else ", ".join(missing_fx)]
+
+
+func _update_debug_overlay(sim_us: int) -> void:
+	_debug_sim_ms = lerpf(_debug_sim_ms, sim_us / 1000.0, 0.1)
+	var now := Time.get_ticks_usec()
+	if _debug_last_us > 0:
+		_debug_frame_ms = lerpf(_debug_frame_ms, (now - _debug_last_us) / 1000.0, 0.1)
+	_debug_last_us = now
+	if Engine.get_process_frames() % 10 == 0:
+		_debug_label.text = debug_overlay_text(_debug_sim_ms)
+
+
 ## Effects that failed to show (sprite not loaded / animation missing), each "sprite:anim" once. Review
 ## 2026-11-21: _add_fx returned {} silently, so a mistyped effect name was just "nothing on screen".
 var missing_fx: PackedStringArray = []
