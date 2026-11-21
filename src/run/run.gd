@@ -1426,6 +1426,7 @@ func _slash_anim(d: Vector2) -> String:
 ## A moving effect (fx["vel"]) with fx["rehit"] keeps hitting every rehit s.
 ## The run's bench and F1 overlay live in RunDebug (src/run/run_debug.gd).
 var _debug: RunDebug
+var _boss_view := BossView.new(self)   # boss / monster mechanics drawing (src/run/boss_view.gd)
 
 
 func _dbg() -> RunDebug:
@@ -2572,7 +2573,7 @@ func _draw() -> void:
 		_ground.setup(_arena_half, stage_ground)
 		add_child(_ground)
 	_ground.follow(_camera.position, get_viewport_rect().size)
-	_draw_hazard_pools()
+	_boss_view.draw_hazard_pools()
 	_draw_obstacles(view, false)
 	var gem: SpriteSheet = sheets.get(_gem_sprite)
 	var coin: SpriteSheet = sheets.get(_coin_sprite)
@@ -2587,16 +2588,16 @@ func _draw() -> void:
 				sh = sheets.get(_essence_sprite)
 			if sh != null:
 				sh.draw(self, "idle", clock + i * 0.13, pickups.pos[i], _sprite_scale)
-	_draw_boss_warnings()
-	_draw_boss_waves()
+	_boss_view.draw_boss_warnings()
+	_boss_view.draw_boss_waves()
 	_draw_ground_buffs(view)
 	_draw_zones()
 	_draw_ground_fx()
 	_draw_ring()
 	_draw_meteors()
 	_draw_charge_lanes(view)
-	_draw_pools(view)
-	_draw_root_walls()
+	_boss_view.draw_pools(view)
+	_boss_view.draw_root_walls()
 	for h in _heal_fx:   # Hồn Đầm: a green ring sweeping out over the monsters it heals
 		var k := float(h["t"]) / 0.5
 		var r := float(h["r"]) * (0.3 + 0.7 * k)
@@ -2660,7 +2661,7 @@ func _draw() -> void:
 				if not enemies.sheet_of(i).has_animation("transform"):
 					tint = Color(2.0, 2.0, 2.0) if int(clock * 12.0) % 2 == 0 else Color(1.6, 0.5, 0.45)
 			enemies.sheet_of(i).draw(self, a[0], a[1], at, enemies.k_scale[k], enemies.flip[i] == 1, tint)
-	_draw_bolts()
+	_boss_view.draw_bolts()
 	var hero: SpriteSheet = sheets.get(String(class_data.get("sprite", "swordsman")))
 	if hero != null:
 		var blink := invuln > 0.0 and state == State.PLAYING and int(invuln * 20.0) % 2 == 0
@@ -2783,12 +2784,6 @@ func _draw_fx(under: bool) -> void:
 		sh.draw(self, fx["anim"], t, _fx_pos(fx), float(fx["scale"]), false, Color(1, 1, 1, _vfx_alpha))
 
 
-## Monster bolts (shooters, design 6A): each kind's bolt_sprite, "fly" looping.
-func _draw_bolts() -> void:
-	for b in enemies.bolt_pos.size():
-		var sh: SpriteSheet = sheets.get(String(enemies.k_extra[enemies.bolt_kind[b]].get("bolt_sprite", "")))
-		if sh != null:
-			sh.draw(self, "fly", fmod(clock + b * 0.1, sh.duration("fly")), enemies.bolt_pos[b], _sprite_scale)
 
 
 ## The bolt sprite of the shooter kinds (pops are drawn with the first one found).
@@ -2833,90 +2828,10 @@ func _draw_statuses(view: Rect2) -> void:
 			sk.draw(self, "loop", float(s["t"]), b, _sprite_scale)
 
 
-## Poison pools left by Cóc Độc (design 6A): a toxic green puddle with bubbles,
-## shrinking and fading as it dries up.
-## Cổ Thụ Trụi Lá root walls: a red dashed line while warning, then a thick thorny root wall; and the
-## root tethers pulling minions into the boss (Hấp thụ đệ), shown for 0.5 s.
-func _draw_root_walls() -> void:
-	for w in enemies.wall_a.size():
-		var a := enemies.wall_a[w]
-		var b := enemies.wall_b[w]
-		var d: Dictionary = enemies.wall_def[w]
-		var stand := float(d.get("time", 4.0))
-		var th := float(d.get("thick", 14.0))
-		if enemies.wall_t[w] > stand:   # warning: blinking red dashes across the path
-			var on := int(clock * 8.0) % 2 == 0
-			var n := 14
-			for k in n:
-				if k % 2 == 0:
-					draw_line(a.lerp(b, k / float(n)), a.lerp(b, (k + 1) / float(n)), Color(1.0, 0.25, 0.2, 0.9 if on else 0.5), 4.0)
-			continue
-		var fade := clampf(enemies.wall_t[w] / 0.3, 0.0, 1.0)   # sinks in the last 0.3 s
-		var dir := (b - a).normalized()
-		var side := dir.orthogonal()
-		draw_line(a, b, Color(0.12, 0.08, 0.05, fade), th + 4.0)
-		draw_line(a, b, Color(0.42, 0.27, 0.15, fade), th)
-		draw_line(a - side * th * 0.2, b - side * th * 0.2, Color(0.58, 0.4, 0.22, fade), 3.0)
-		var len := a.distance_to(b)
-		var k2 := 0.0
-		while k2 < len:   # thorns both sides
-			var q := a + dir * k2
-			var sgn := 1.0 if int(k2 / 18.0) % 2 == 0 else -1.0
-			draw_colored_polygon(PackedVector2Array([q - dir * 4.0 + side * sgn * th * 0.4, q + dir * 4.0 + side * sgn * th * 0.4,
-				q + side * sgn * (th * 0.5 + 9.0)]), Color(0.75, 0.62, 0.4, fade))
-			k2 += 18.0
-	for ln: Array in enemies.absorb_lines:
-		_absorb_fx.append({"a": ln[0], "b": ln[1], "t": 0.5})
-	enemies.absorb_lines.clear()
-	for fx: Dictionary in _absorb_fx:
-		var u := float(fx["t"]) / 0.5
-		draw_line(fx["a"], fx["b"], Color(0.35, 0.22, 0.1, u), 5.0)
-		draw_line(fx["a"], fx["b"], Color(0.55, 0.9, 0.5, u), 2.0)
 
 
-func _draw_pools(view: Rect2) -> void:
-	for b in enemies.pool_pos.size():
-		var p := enemies.pool_pos[b]
-		if not view.grow(60.0).has_point(p):
-			continue
-		var left := clampf(enemies.pool_t[b] / maxf(0.01, enemies.pool_total[b]), 0.0, 1.0)
-		var r := enemies.pool_r[b] * (0.75 + 0.25 * left)
-		var a := 0.35 + 0.35 * minf(1.0, left * 3.0)
-		var purple := b < enemies.pool_purple.size() and enemies.pool_purple[b] == 1   # Cóc Độc Bào Tử spores
-		var c0 := Color(0.45, 0.18, 0.6, a) if purple else Color(0.35, 0.6, 0.12, a)
-		var c1 := Color(0.7, 0.35, 0.9, a * 0.8) if purple else Color(0.55, 0.85, 0.2, a * 0.8)
-		var c2 := Color(0.25, 0.08, 0.35, a + 0.2) if purple else Color(0.2, 0.35, 0.08, a + 0.2)
-		var cb := Color(0.9, 0.6, 1.0) if purple else Color(0.75, 1.0, 0.4)
-		draw_set_transform(p, 0.0, Vector2(1.0, 0.6))   # flat on the ground
-		draw_circle(Vector2.ZERO, r, c0)
-		draw_circle(Vector2(-r * 0.2, -r * 0.15), r * 0.6, c1)
-		draw_arc(Vector2.ZERO, r, 0.0, TAU, 32, c2, 2.0)
-		draw_set_transform(Vector2.ZERO)
-		for k in 3:   # bubbles pop in turn
-			var ph := fmod(clock * 1.7 + k * 0.33 + float(b) * 0.21, 1.0)
-			var q := p + Vector2(cos(k * 2.1 + b) * r * 0.5, sin(k * 2.1 + b) * r * 0.3)
-			draw_circle(q, 1.5 + 2.0 * ph, Color(cb, a * (1.0 - ph)))
-	_draw_tongues()
 
 
-## Cóc Độc Bào Tử's tongue: while it aims, a blinking red line along the aim; while it shoots, a pink
-## tongue from the mouth with a round tip.
-func _draw_tongues() -> void:
-	for i in enemies.count:
-		var t := enemies.tongue_t[i]
-		if t == 0.0 or t == -999.0:
-			continue
-		var tg: Dictionary = enemies.k_extra[enemies.kind[i]].get("tongue", {})
-		var a := enemies.center_of(i)
-		var d := enemies.tongue_dir[i]
-		if t > 0.0:
-			var on := int(clock * 10.0) % 2 == 0
-			draw_line(a, a + d * float(tg.get("length", 300.0)), Color(1.0, 0.2, 0.15, 0.85 if on else 0.4), 3.0)
-			continue
-		var b := a + d * enemies.tongue_len[i]
-		draw_line(a, b, Color(0.35, 0.05, 0.12), float(tg.get("width", 10.0)) + 4.0)
-		draw_line(a, b, Color(0.95, 0.45, 0.55), float(tg.get("width", 10.0)))
-		draw_circle(b, float(tg.get("width", 10.0)) * 0.9, Color(0.95, 0.45, 0.55))
 
 
 ## Vòng thử thách (design/events.md): opens at the region's event times near the player; stand
@@ -2975,21 +2890,6 @@ func _draw_obstacles(view: Rect2, front: bool) -> void:
 			sh.draw(self, "idle", 0.0, p, _sprite_scale)
 
 
-func _draw_hazard_pools() -> void:
-	if obstacles == null:
-		return
-	for pl: Dictionary in obstacles.pools:
-		var p: Vector2 = pl["p"]
-		var r := float(pl["r"])
-		draw_set_transform(p, 0.0, Vector2(1.0, 0.55))
-		draw_circle(Vector2.ZERO, r, Color(0.35, 0.55, 0.1, 0.55))
-		draw_circle(Vector2(-r * 0.2, -r * 0.15), r * 0.65, Color(0.55, 0.8, 0.15, 0.45))
-		draw_arc(Vector2.ZERO, r, 0.0, TAU, 40, Color(0.2, 0.3, 0.05, 0.9), 2.0)
-		draw_set_transform(Vector2.ZERO)
-		for k in 3:   # bubbles rising and popping
-			var ph := fmod(clock * 1.3 + k * 0.37 + p.x * 0.01, 1.0)
-			var q := p + Vector2(cos(k * 2.3 + p.y) * r * 0.5, sin(k * 2.3 + p.x) * r * 0.25)
-			draw_circle(q, 1.5 + 2.5 * ph, Color(0.75, 1.0, 0.35, 0.8 * (1.0 - ph)))
 
 
 ## Mưa thiên thạch (design/events.md): at the region's event time meteors are marked near the player
@@ -3100,46 +3000,8 @@ func _status_tint(i: int) -> Color:
 	return Color.WHITE
 
 
-## Red circles where a boss is about to land (its slam reach), filling up as the
-## landing nears.
-func _draw_boss_waves() -> void:
-	for w in enemies.wave_pos.size():
-		var r := enemies.wave_r[w]
-		var p := enemies.wave_pos[w]
-		var wd := float(enemies.wave_def[w].get("width", 12.0))
-		var hot := enemies.wave_def[w].has("knock")   # Cóc Độc Bào Tử's knockback wave: red / orange
-		draw_arc(p, r, 0.0, TAU, 72, Color(1.0, 0.35, 0.15, 0.4) if hot else Color(0.55, 0.95, 0.6, 0.35), wd)
-		draw_arc(p, r, 0.0, TAU, 72, Color(1.0, 0.75, 0.35, 0.95) if hot else Color(0.85, 1.0, 0.75, 0.95), 3.0)
-	var bi := enemies.boss_index()
-	if bi >= 0 and _rage_t > 0.0 and enemies.phase_name(bi) == "":   # a named phase is called across the screen instead
-		var font := ThemeDB.fallback_font
-		var pn: String = enemies.phase_name(bi)
-		var name := String(enemies.k_extra[enemies.kind[bi]].get("name", "Boss")) + (" · %s!" % pn if pn != "" else " nổi giận!")
-		var tw := font.get_string_size(name, HORIZONTAL_ALIGNMENT_LEFT, -1, 22).x
-		var at := enemies.center_of(bi) - Vector2(tw * 0.5, enemies.k_radius[enemies.kind[bi]] * 2.0 + 20.0)
-		draw_string_outline(font, at, name, HORIZONTAL_ALIGNMENT_LEFT, -1, 22, 6, Color(0.1, 0.02, 0.02))
-		draw_string(font, at, name, HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color(1.0, 0.4, 0.3))
 
 
-func _draw_boss_warnings() -> void:
-	for w in enemies.boss_telegraphs():
-		var p: Vector2 = w[0]
-		var r: float = w[1]
-		draw_circle(p, r, Color(0.9, 0.1, 0.1, 0.16))
-		draw_arc(p, r, 0.0, TAU, 48, Color(1.0, 0.3, 0.3, 0.8), 2.0)
-	for b in enemies.blast_pos.size():   # Bọ Lửa: the ring fills up until it goes off
-		var p := enemies.blast_pos[b]
-		var r := enemies.blast_r[b]
-		var k := 1.0 - enemies.blast_t[b] / maxf(0.01, enemies.blast_total[b])
-		if enemies.blast_root[b] == 1:   # Mộc Yêu: cracked earth and root tips poking out
-			draw_circle(p, r, Color(0.25, 0.16, 0.08, 0.25 + 0.2 * k))
-			draw_arc(p, r, 0.0, TAU, 40, Color(0.55, 0.8, 0.3, 0.5 + 0.45 * k), 2.0)
-			for t in 5:
-				var q := p + Vector2.from_angle(t * TAU / 5.0 + float(b)) * r * 0.55
-				draw_rect(Rect2(q - Vector2(1.5, 1.5 + 3.0 * k), Vector2(3.0, 3.0 + 3.0 * k)), Color(0.42, 0.27, 0.15))
-			continue
-		draw_circle(p, r * k, Color(1.0, 0.45, 0.1, 0.22))
-		draw_arc(p, r, 0.0, TAU, 40, Color(1.0, 0.55, 0.2, 0.55 + 0.4 * k), 2.0)
 
 
 ## Afterimages of the hero along the dash path (the camera follows the hero, so
