@@ -169,7 +169,8 @@ gom bậc chiêu, bỏ GIF khỏi git, boss FX cỡ nguyên, tuỳ chọn Hiệu
    schema để sửa JSON không lệch âm thầm. · cỡ L
 6. **Tách `run.gd`** (≈3.200 dòng: mô phỏng, vẽ, FX, lên cấp, ví, camera, boss) thành các node / lớp riêng; **bọc mảng
    của `Enemies`** (36 chỗ `run.gd` truy cập trực tiếp). Làm sau mục 5, từng phần một, test giữ nguyên. · cỡ XL
-Đo trước / sau bằng `xvfb-run -a godot --path . res://src/run/run.tscn -- --bench=200`.
+Đo trước / sau bằng `godot --path . res://src/run/run.tscn -- --bench=200` **có GPU** (cửa sổ thật). Chạy dưới
+`xvfb-run` thì vẽ bằng CPU: `frame_ms` (~42 ms) không so được với số GPU (~9,6 ms); `sim_ms` vẫn so được.
 
 **Đã xong sau đó (2026-11-21):** mục 1 (bụi dậm: cụm bụi quanh mép, mờ bằng alpha, `9d3bbe2`); mục 2 (boss tách:
 không đè hình hai vua, chỉ một vương miện; sửa quầng nội tại của slime con che boss: quầng vẽ trước mọi quái,
@@ -182,7 +183,7 @@ xoay 16 hướng: phải vẽ lại từng hướng như `boltfx`, cỡ M). Mụ
 `cfg.get(…, số)` trong `src/`, số mặc định phải bằng JSON hoặc trung tính 0 / 1 (sửa 2 chỗ lệch: `max_enemies` 600 → 200,
 `gold_chance` 0,1 → 0,12). **Còn:** mở rộng cách kiểm này cho `monsters.json`, `upgrades_*.json`, `items.json`.
 Mục 6–7 đang làm theo lát (mỗi lát giữ nguyên test và hình): lát 1 `StatusView` (`src/run/status_view.gd`: trạng thái trên
-quái, `run.gd` 3.341 → 3.308 dòng). Lát kế: tham số dòng lệnh, bench + overlay debug, vẽ boss (root walls, bolts,
+quái, `run.gd` 3.341 → 3.308 dòng); lát 2 `RunDebug` (`src/run/run_debug.gd`: bench + overlay F1, còn 3.256 dòng). Lát kế: tham số dòng lệnh, bench + overlay debug, vẽ boss (root walls, bolts,
 waves), level-up / ví, rồi hành vi quái theo kiểu Strategy trong `enemies.gd`.
 
 **Đánh giá ngoài lần 3 (2026-11-21), đã kiểm từng ý:**

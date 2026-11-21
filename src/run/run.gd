@@ -200,10 +200,6 @@ var _status_all: Array[String] = []   # --status-all=a,b (shots: every monster g
 var _status_all_t := 0.0
 var damage_taken := 0.0   # end-of-run table
 var healed := 0.0
-var _bench_frames := 0
-var _bench_tick_us: PackedInt64Array = []
-var _bench_frame_us: PackedInt64Array = []
-var _bench_last_us := 0
 var _demo_pick_t := 0.0
 
 var _sprite_scale := 2.0
@@ -537,15 +533,13 @@ func _parse_args() -> void:
 
 func _process(delta: float) -> void:
 	if bench > 0:
-		_bench_sample()
+		_dbg().bench_sample()
 	var t0 := Time.get_ticks_usec()
 	for _i in sim_steps:
 		_tick(STEP if sim_steps > 1 or bench > 0 else minf(delta, 0.05))
 	var sim_us := Time.get_ticks_usec() - t0
-	if bench > 0 and _bench_frames > 60:
-		_bench_tick_us.append(sim_us)
-	if _debug_label != null:
-		_update_debug_overlay(sim_us)
+	if bench > 0 or _debug != null:
+		_dbg().add_tick(sim_us)
 	_camera.position = player_pos.round()
 	if OS.get_cmdline_user_args().has("--count-log") and Engine.get_process_frames() % 300 == 0:
 		printerr("GK: t=%.0f alive=%d" % [clock, enemies.living()])
@@ -1430,44 +1424,22 @@ func _slash_anim(d: Vector2) -> String:
 ## hits once, on the animation's active frames, through the sprite hitbox.
 ## Adds an effect; returns it (empty when the sprite or animation is missing).
 ## A moving effect (fx["vel"]) with fx["rehit"] keeps hitting every rehit s.
-# --- debug overlay (F1, or --debug-overlay for shots) -------------------------------
-var _debug_label: Label
-var _debug_sim_ms := 0.0
-var _debug_frame_ms := 0.0      # wall clock between frames (the engine fps is fixed when recording shots)
-var _debug_last_us := 0
+## The run's bench and F1 overlay live in RunDebug (src/run/run_debug.gd).
+var _debug: RunDebug
 
 
-## Shows / hides the debug overlay: fps, sim ms (smoothed), living monsters, effects, floor redraws.
+func _dbg() -> RunDebug:
+	if _debug == null:
+		_debug = RunDebug.new(self)
+	return _debug
+
+
 func toggle_debug_overlay() -> void:
-	if _debug_label != null:
-		_debug_label.get_parent().queue_free()
-		_debug_label = null
-		return
-	var layer := CanvasLayer.new()
-	layer.layer = 50
-	add_child(layer)
-	_debug_label = UiKit.label("", 14, Color("b8ffb0"))
-	_debug_label.position = Vector2(12, 84)
-	var bg := UiKit.style(Color(0, 0, 0, 0.6), 6, Color(0, 0, 0, 0), 0)
-	_debug_label.add_theme_stylebox_override("normal", bg)
-	layer.add_child(_debug_label)
+	_dbg().toggle()
 
 
 func debug_overlay_text(sim_ms: float) -> String:
-	return "FPS %d · khung %.1f ms\nMô phỏng %.2f ms\nQuái %d / %d\nHiệu ứng %d · nền vẽ lại %d\nThiếu FX: %s" % [
-		roundi(1000.0 / maxf(0.1, _debug_frame_ms)) if _debug_frame_ms > 0.0 else 0, _debug_frame_ms, sim_ms,
-		enemies.living() if enemies != null else 0, int(cfg.get("max_enemies", 0)), _fx.size(),
-		_ground.redraws if _ground != null else 0, "không" if missing_fx.is_empty() else ", ".join(missing_fx)]
-
-
-func _update_debug_overlay(sim_us: int) -> void:
-	_debug_sim_ms = lerpf(_debug_sim_ms, sim_us / 1000.0, 0.1)
-	var now := Time.get_ticks_usec()
-	if _debug_last_us > 0:
-		_debug_frame_ms = lerpf(_debug_frame_ms, (now - _debug_last_us) / 1000.0, 0.1)
-	_debug_last_us = now
-	if Engine.get_process_frames() % 10 == 0:
-		_debug_label.text = debug_overlay_text(_debug_sim_ms)
+	return _dbg().overlay_text(sim_ms)
 
 
 ## Effects that failed to show (sprite not loaded / animation missing), each "sprite:anim" once. Review
@@ -3281,28 +3253,4 @@ func _draw_hitboxes(view: Rect2) -> void:
 			hb.draw(self, Color(1.0, 0.2, 0.2, 0.95) if on else Color(1.0, 0.6, 0.2, 0.4), 2.0 if on else 1.0)
 
 
-# --- bench -------------------------------------------------------------------
 
-func _bench_sample() -> void:
-	var now := Time.get_ticks_usec()
-	_bench_frames += 1
-	if _bench_frames > 61:
-		_bench_frame_us.append(now - _bench_last_us)
-	_bench_last_us = now
-	if _bench_frames >= 660:
-		var tick := Array(_bench_tick_us)
-		var frame := Array(_bench_frame_us)
-		tick.sort()
-		frame.sort()
-		var avg_tick := 0.0
-		for v: int in tick:
-			avg_tick += v
-		avg_tick /= maxf(1.0, tick.size())
-		var avg_frame := 0.0
-		for v: int in frame:
-			avg_frame += v
-		avg_frame /= maxf(1.0, frame.size())
-		print("BENCH enemies=%d living=%d sim_ms avg=%.2f p95=%.2f frame_ms avg=%.2f p95=%.2f fps=%.0f" % [
-			bench, enemies.living(), avg_tick / 1000.0, tick[int(tick.size() * 0.95)] / 1000.0,
-			avg_frame / 1000.0, frame[int(frame.size() * 0.95)] / 1000.0, 1000000.0 / avg_frame])
-		get_tree().quit()
