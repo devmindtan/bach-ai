@@ -226,8 +226,8 @@ không giới hạn + bảng tỉ lệ (`c05a9f8`), 4 thử thách dễ hơn + T
 ## Yêu cầu người dùng 2026-11-21 (đợt 2)
 
 **Đã xong:** Chém kiếm xa hơn + hệ số 1.3 (`83d023e`); icon Bất khuất cân (`4ff7ee5`); sự kiện vùng: Lốc cỏ
-(`842b4e1`), Cây đổ (`c78eb26`), Nước độc dâng (`ffb2c1e`), cổng màn 5 (`fd1f455`). Còn bước 6–7 của
-`design/region-events-plan.md` (xoá code thiên thạch, tài liệu); cây gốc vẫn đứng khi thân cây đổ (làm ẩn cây gốc).
+(`842b4e1`), Cây đổ (`c78eb26`), Nước độc dâng (`ffb2c1e`), cổng màn 5 (`fd1f455`). Bước 6–7 của
+`design/region-events-plan.md` xong (bỏ thiên thạch, tài liệu, gốc cây cụt).
 
 **Việc lớn (tham khảo ≥ 2 game cùng thể loại → tài liệu thiết kế → code theo lát):**
 

@@ -1,8 +1,7 @@
 # Sự kiện trong trận (6B.2)
 
-> Mưa thiên thạch đang **tắt** (`run_config.json` → `events.meteor.enabled: false`) và sẽ được thay bằng một sự
-> kiện riêng cho mỗi vùng. Kế hoạch thực hiện: [`region-events-plan.md`](region-events-plan.md) (2026-11-21).
-> Mục Mưa thiên thạch bên dưới giữ lại làm mẫu cho tới khi bước 6 của kế hoạch xoá nó.
+> Mưa thiên thạch đã **bỏ** (2026-11-21): mỗi vùng có một sự kiện riêng hợp với địa hình của vùng, và sự kiện vùng
+> chỉ có từ màn 5 (`events.min_stage`). Kế hoạch và số liệu khởi đầu: [`region-events-plan.md`](region-events-plan.md).
 
 ## Tham khảo
 
@@ -35,20 +34,21 @@ trong bản đồ), đứng trong tổng 8 s thì xong (ra ngoài giữ nguyên 
   mở, khi xong ("Hoàn thành thử thách!") và khi hỏng ("Thử thách thất bại").
 - Test: `tests/unit/run/challenge_ring_test.gd` (gồm lỗi vòng nằm ngoài biên bản đồ).
 
-## Mưa thiên thạch (`MeteorShower`)
+## Sự kiện riêng của vùng (`src/run/region_events/`, 2026-11-21)
 
-Tham khảo: Risk of Rain 2, Glowing Meteorite ([wiki.gg](https://riskofrain2.wiki.gg/wiki/Glowing_Meteorite),
-[fandom](https://riskofrain.fandom.com/wiki/Glowing_Meteorite_(Risk_of_Rain_2))): vòng báo trên đất khoảng 1 s trước khi
-rơi, nổ trúng **cả người lẫn quái**. Diễn đàn Last Epoch về vòng báo ([vòng khó thấy trên nền cùng màu](https://forum.lastepoch.com/t/poorly-telegraphed-high-damage-abilities/15075?page=8),
-[quá nhiều vòng](https://forum.lastepoch.com/t/you-have-gone-overboard-with-the-telegraphing/26464)): vòng phải tương phản
-với nền, không dày đặc. **Học:** báo trước rõ, nổ trúng cả quái (người chơi dụ quái vào vòng). **Tránh:** vòng cùng màu
-nền, vòng chồng nhau, quá nhiều vòng một lúc. **Quyết định:**
-- Mỗi vùng một lần (`stages.json` events kind `meteor`: Đồng cỏ 180 s, Rừng 170 s, Đầm 150 s); không có ở thử thách.
-- 10 s; cứ 0,6 s một vòng đỏ (bán kính 36) trong 150 px quanh người chơi, rơi sau 1,2 s; tối đa 4 vòng, **không chồng
-  nhau**. Trúng người chơi 12 (trừ giáp, khiên chặn được), trúng quái 80. Số liệu `run_config.json` events.meteor.
-- Vẽ: vòng đỏ dẹt, đĩa trong lớn dần khi sắp rơi; viên đá có đuôi lửa rơi chéo từ trên phải xuống đúng vòng; nổ cam
-  lõi trắng 0,4 s. Câu báo "Mưa thiên thạch! Tránh các vòng đỏ". Cờ chụp `--meteor-at=<giây>`.
-- Test: `tests/unit/run/meteor_shower_test.gd`.
+Thay Mưa thiên thạch (bài học còn giữ, Risk of Rain 2 Glowing Meteorite và Last Epoch: báo trước rõ, tương phản với
+nền, không chồng vòng). Tham khảo thêm (chưa mở lại được trong ngày, xem `region-events-plan.md` §3): Vampire
+Survivors (mỗi màn hiểm hoạ riêng), Brotato / Halls of Torment (hiểm hoạ ngắn, có báo trước, có thưởng). Mỗi vùng một
+lần, ở chỗ cũ của thiên thạch (`stages.json`: Đồng cỏ 180 s, Rừng 170 s, Đầm 150 s); không có ở màn 1–4, không có ở
+thử thách. Cờ chụp `--event=<kind>@<giây>`. Số liệu `run_config.json` events.<kind>.
+
+| Vùng | Sự kiện | Cách chơi | Số liệu | Test |
+|---|---|---|---|---|
+| Đồng cỏ | Lốc cỏ (`tornado`) | Né đường thẳng: vòng báo 1,5 s + vạch hướng, lốc chạy qua chỗ người chơi 170 px/s trong 9 s | người 8 / chạm (hit_invuln), quái 30 / 0,5 s; 3 hạt (vàng) dọc đường | `tornado_test.gd` |
+| Rừng Âm U | Cây đổ (`falling_trees`) | Đổi không gian: 3 cây gần nhất (≤ 300 px) đổ về phía người chơi, báo 1,2 s bằng dải sáng | người 14 / cây, quái 60; thân cây chặn đường 4 s, chỗ cây cũ còn gốc cụt | `falling_trees_test.gd` |
+| Đầm Lầy Độc | Nước độc dâng (`poison_tide`) | Đọc vùng nguy hiểm: 3 vũng (ưu tiên vũng có sẵn) sôi 1,5 s, nở tới 110 px, giữ 7 s, rút | 6 máu/s, không trừ giáp (như vũng đầm); vũng cách nhau, luôn có lối ra; 2 vàng khi rút | `poison_tide_test.gd` |
+
+Cổng màn: `region_event_gate_test.gd`. Ảnh: `production/qa/evidence/region-events/`.
 
 ## Rương vàng (`Pickups.GOLD_CHEST`)
 

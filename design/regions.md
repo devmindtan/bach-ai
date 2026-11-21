@@ -46,3 +46,13 @@ Boss mọi vùng dùng chung `boss`.
 
 `tests/integration/data/regions_test.gd`: mỗi vùng có `music` khác nhau và có trong `audio.json` (có file `.wav`),
 `ground.props` khác nhau; thử thách có `music`.
+
+## Sự kiện riêng của vùng (2026-11-21)
+
+| Vùng | Sự kiện riêng | Dùng thứ có sẵn của vùng |
+|---|---|---|
+| Đồng cỏ | Lốc cỏ | khoảng trống rộng, ít vật cản |
+| Rừng Âm U | Cây đổ | cây `obstacle-tree` |
+| Đầm Lầy Độc | Nước độc dâng | vũng độc của đầm |
+
+Chi tiết: [`events.md`](events.md) mục "Sự kiện riêng của vùng".

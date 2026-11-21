@@ -1,6 +1,6 @@
 # Kế hoạch: sự kiện vùng theo từng bản đồ
 
-Trạng thái: **kế hoạch, chưa code**. Người viết: OpenCode 2026-11-21. Người thực hiện: agent khác.
+Trạng thái: **đã xong 2026-11-21** (bước 2–7; bước tra cứu Internet mục 3 vẫn còn). Người viết: OpenCode 2026-11-21. Người thực hiện: agent khác.
 Mục tiêu: thay **Mưa thiên thạch** bằng **một sự kiện riêng cho mỗi vùng**, hợp với địa hình và quái của vùng đó;
 màn 1–4 không có sự kiện vùng, từ màn 5 mới có.
 
