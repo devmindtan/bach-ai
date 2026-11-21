@@ -12,7 +12,8 @@ extends Node
 ## Enemies (src/run/enemies.gd) emits [signal slam_done] and [signal split_done].
 
 const SPRITES := "res://assets/sprites/custom/"
-const BOSS_SCALE := 1.8   # boss sprites are ~2x player sprites; effect needs to match
+const BOSS_SCALE := 2.0    # whole scale (review 2026-11-21: x1.8 smeared the 72 px art); boss-sized like the boss
+const SPLIT_SCALE := 2.0   # the split burst, same whole scale (was 1.8 x 0.8 = 1.44)
 
 var _layer: CanvasLayer
 var _view: Control
@@ -59,7 +60,7 @@ func _on_slam(pos: Vector2) -> void:
 
 
 func _on_split(pos: Vector2) -> void:
-	_spawn("boss-split", "burst", pos, BOSS_SCALE * 0.8)
+	_spawn("boss-split", "burst", pos, SPLIT_SCALE)
 
 
 func _spawn(sprite: String, anim: String, pos: Vector2, scale: float) -> void:
