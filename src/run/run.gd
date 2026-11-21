@@ -1018,7 +1018,8 @@ func _skills(dt: float) -> void:
 			var sc := _sprite_scale * skill_size("blade_arc")
 			var sprite := _skill_sprite("blade_arc", s)   # tier I-V by level
 			_aim()
-			_add_fx(sprite, _slash_anim(attack_dir), sc, dmg, -1.0, null, "blade_arc")
+			var off := float(s.get("offset", 0.0)) * skill_size("blade_arc")
+			_add_fx(sprite, _slash_anim(attack_dir), sc, dmg, -1.0, null, "blade_arc")["offset"] = attack_dir * off
 			# amount: one more slash at each next nearest monster's side
 			var extra := amount_for("blade_arc")
 			if extra > 0:
@@ -1027,13 +1028,13 @@ func _skills(dt: float) -> void:
 					var d2 := slash_dir(enemies.center_of(i) - (player_pos + _hit_center))
 					if not done.has(d2):
 						done.append(d2)
-						_add_fx(sprite, _slash_anim(d2), sc, dmg, -1.0, null, "blade_arc")
+						_add_fx(sprite, _slash_anim(d2), sc, dmg, -1.0, null, "blade_arc")["offset"] = d2 * off
 						if done.size() > extra:
 							break
 			var back := int(levels.get("back_slash", 0))
 			if back > 0:
 				var mul := float(s.get("back_damage_mul", 0.5)) + float(s.get("back_damage_per_level", 0.25)) * (back - 1)
-				_add_fx(sprite, _slash_anim(-attack_dir), sc, dmg * mul, -1.0, null, "back_slash")
+				_add_fx(sprite, _slash_anim(-attack_dir), sc, dmg * mul, -1.0, null, "back_slash")["offset"] = -attack_dir * off
 	if levels.get("whirlwind", 0) > 0:
 		var w: Dictionary = skills["whirlwind"]
 		if _whirl_left > 0.0:
@@ -1594,8 +1595,8 @@ func _draw_zones() -> void:
 
 
 func _fx_pos(fx: Dictionary) -> Vector2:
-	if bool(fx.get("follow", true)):
-		return player_pos + _hit_center
+	if bool(fx.get("follow", true)):   # offset: a slash sits out in front (blade_arc "offset", user 2026-11-21)
+		return player_pos + _hit_center + (fx.get("offset", Vector2.ZERO) as Vector2)
 	return fx.get("pos", player_pos + _hit_center)
 
 

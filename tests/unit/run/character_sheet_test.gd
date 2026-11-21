@@ -43,8 +43,8 @@ func test_skill_info_uses_the_same_numbers_as_casting() -> void:
 	var ids := info.map(func(s: Dictionary) -> String: return s["id"])
 	_check(ids == ["blade_arc", "whirlwind"], "owned skills in pool order, got %s" % [ids])
 	var blade: Dictionary = info[0]
-	# 20 base * 1.15 sharpen * 1.4 (blade_arc +20% per level, level 2)
-	_check(is_equal_approx(float(blade["damage"]), 20.0 * 1.15 * 1.4), "blade damage, got %s" % blade["damage"])
+	# 20 base * 1.3 blade_arc damage_mul * 1.15 sharpen * 1.4 (blade_arc +20% per level, level 2)
+	_check(is_equal_approx(float(blade["damage"]), 20.0 * 1.3 * 1.15 * 1.4), "blade damage, got %s" % blade["damage"])
 	_check(is_equal_approx(float(blade["cooldown"]), r.skill_cooldown("blade_arc")), "cooldown from skill_cooldown")
 	_check(is_equal_approx(float(blade["cooldown"]), 0.9 * 0.8), "haste 2: 0.9 s -> 0.72 s, got %s" % blade["cooldown"])
 	var whirl: Dictionary = info[1]
