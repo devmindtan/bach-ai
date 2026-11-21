@@ -222,7 +222,7 @@ var _panels: RunPanels
 func _ready() -> void:
 	region_ev.run = self
 	challenges.run = self
-	_parse_args()
+	RunArgs.apply(self)
 	RunInput.register()
 	cfg = GameData.load_json(DATA + "run_config.json")
 	_armor_k = float(cfg.get("player", {}).get("armor_k", 15.0))
@@ -454,101 +454,6 @@ func _ready() -> void:
 			var a := rng.randf() * TAU
 			enemies.spawn(enemies.kind_ids[i % enemies.kind_ids.size()],
 				Vector2(cos(a), sin(a)) * rng.randf_range(140.0, 700.0))
-
-
-func _parse_args() -> void:
-	var seeded := false
-	for a in OS.get_cmdline_user_args():
-		if a == "--demo":
-			demo = true
-		elif a == "--level-now":   # shots: a level-up panel as the run starts (card flip)
-			_level_now = true
-		elif a == "--gold-chest":   # shots: a Rương vàng on the ground beside the hero
-			_shot_gold_chest = true
-		elif a.begins_with("--seed="):
-			rng.seed = int(a.get_slice("=", 1))
-			seeded = true
-		elif a.begins_with("--buff="):
-			# Debug/shots: start with these buffs active, e.g. --buff=magnetic_shield,power_orb
-			for id in a.get_slice("=", 1).split(",", false):
-				_forced_buffs.append(id)
-		elif a.begins_with("--buff-ground="):
-			# Debug/shots: these buffs lie on the ground near the start
-			for id in a.get_slice("=", 1).split(",", false):
-				_ground_buffs.append(id)
-		elif a.begins_with("--status-all="):
-			for st in a.get_slice("=", 1).split(",", false):
-				_status_all.append(st)
-		elif a.begins_with("--monster-hp="):
-			monster_hp_mul = maxf(0.01, float(a.get_slice("=", 1)))
-		elif a.begins_with("--boss-hp="):
-			_boss_hp_share = float(a.get_slice("=", 1))
-		elif a.begins_with("--gear-plus="):
-			_gear_plus = int(a.get_slice("=", 1))
-		elif a.begins_with("--gear="):
-			for id in a.get_slice("=", 1).split(",", false):
-				_gear.append(id)
-		elif a.begins_with("--stage="):
-			stage_number = maxi(1, int(a.get_slice("=", 1)))
-			_stage_arg_set = true
-		elif a.begins_with("--dash-at="):
-			dash_at = float(a.get_slice("=", 1))
-		elif a == "--god":
-			god = true
-		elif a.begins_with("--pause-view="):
-			pause_view = a.get_slice("=", 1)
-		elif a.begins_with("--pause-at="):
-			pause_at = float(a.get_slice("=", 1))
-		elif a.begins_with("--walk="):
-			var xy := a.get_slice("=", 1).split(",")
-			forced_walk = Vector2(float(xy[0]), float(xy[1])).normalized()
-			demo = true
-		elif a.begins_with("--skills="):
-			# Debug/testing: force skill levels, e.g. --skills=frost_nova:5,earth_strike:5
-			for pair in a.get_slice("=", 1).split(","):
-				var kv := pair.split(":")
-				if kv.size() == 2:
-					levels[kv[0]] = int(kv[1])
-			demo = true
-		elif a.begins_with("--offer="):
-			# Debug/shots: the first level-up offers these cards, e.g. --offer=earth_strike,haste,back_slash
-			for id in a.get_slice("=", 1).split(",", false):
-				offer.append(id)
-		elif a.begins_with("--pick-card="):
-			_pick_card = a.get_slice("=", 1)
-		elif a.begins_with("--spawn-only="):
-			_spawn_only = a.get_slice("=", 1)
-		elif a.begins_with("--level-view="):
-			_level_view_arg = a.get_slice("=", 1)
-		elif a.begins_with("--challenge="):
-			challenge_id = a.get_slice("=", 1)
-		elif a.begins_with("--milestone="):
-			_ms_queue.append(int(a.get_slice("=", 1)))
-		elif a.begins_with("--rewards="):
-			# Debug/shots/tests: milestone rewards the slot owns, e.g. --rewards=earthquake,bloodthirst
-			_rewards_arg = true
-			for id in a.get_slice("=", 1).split(",", false):
-				rewards.append(id)
-		elif a == "--no-auto-pick":
-			auto_pick = false
-		elif a == "--hitboxes":
-			show_hitboxes = true
-		elif a.begins_with("--event="):   # shots: --event=hunt@3
-			var spec := a.get_slice("=", 1)
-			_forced_events.append([float(spec.get_slice("@", 1)), spec.get_slice("@", 0)])
-		elif a == "--pool-here":   # shots: a poison pool under the hero's start (poison look)
-			_pool_here = true
-		elif a.begins_with("--vfx="):   # shots: the Cài đặt "Hiệu ứng" level 0..2
-			Prefs.current().vfx = clampi(int(a.get_slice("=", 1)), 0, 2)
-		elif a == "--debug-overlay":
-			toggle_debug_overlay.call_deferred()
-		elif a.begins_with("--sim-steps="):
-			sim_steps = maxi(1, int(a.get_slice("=", 1)))
-		elif a.begins_with("--bench="):
-			bench = maxi(1, int(a.get_slice("=", 1)))
-			demo = true
-	if not seeded:
-		rng.randomize()
 
 
 func _process(delta: float) -> void:
