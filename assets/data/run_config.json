@@ -101,12 +101,12 @@
     "hp_bar_time": 2.0
   },
   "events": {
-    "_doc": "6B events (design/events.md). ring = Vòng thử thách: opens `distance` px from the player at the region's event times (stages.json regions[].events), radius px, need = seconds inside to complete, limit = seconds before it fails, gold = coins dropped with the chest. meteor = Mưa thiên thạch: for duration s a mark every interval s within spread px of the player, lands warn s later (radius px), at most max_marks at once; hits the player for player_damage (armor applies) and monsters for monster_damage. gold_chest = Rương vàng: chance a dropped chest is gold; opening gives picks card picks in a row, gold coins, a sure item, and counts_as chests for Mảnh thẻ. source_names / source_icons: name (starting \"Sự kiện:\", so it is not mistaken for a skill) and icon of each event damage source in the end-of-run table.",
+    "_doc": "6B events (design/events.md). ring = Vòng thử thách: opens `distance` px from the player at the region's event times (stages.json regions[].events), radius px, need = seconds inside to complete, limit = seconds before it fails, gold = coins dropped with the chest. meteor = Mưa thiên thạch: for duration s a mark every interval s within spread px of the player, lands warn s later (radius px), at most max_marks at once; hits the player for player_damage (armor applies) and monsters for monster_damage. gold_chest = Rương vàng: chance a dropped chest is gold; opening gives picks card picks in a row, gold coins, a sure item, and counts_as chests for Mảnh thẻ. source_names / source_icons: name (starting \"Sự kiện:\", so it is not mistaken for a skill) and icon of each event damage source in the end-of-run table. collect = Thu thập sao: count stars within spread px, pick each within pick px, all before limit s. hunt = Săn tinh anh: the region's elite (marked) appears distance px away, kill it before limit s. Rewards: a chest + gold coins (user 2026-11-21: challenges easier and more varied; ring radius 110 / need 5 / limit 40).",
     "ring": {
       "distance": 220.0,
-      "radius": 70.0,
-      "need": 8.0,
-      "limit": 30.0,
+      "radius": 110.0,
+      "need": 5.0,
+      "limit": 40.0,
       "gold": 10
     },
     "meteor": {
@@ -130,6 +130,18 @@
     },
     "source_icons": {
       "event.meteor": "meteor"
+    },
+    "collect": {
+      "count": 5,
+      "spread": 260.0,
+      "limit": 20.0,
+      "pick": 28.0,
+      "gold": 10
+    },
+    "hunt": {
+      "distance": 320.0,
+      "limit": 25.0,
+      "gold": 15
     }
   },
   "crit": {

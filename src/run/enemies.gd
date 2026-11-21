@@ -125,6 +125,7 @@ var bolt_pops := PackedVector2Array()    # where bolts burst this step (the run 
 var _player_center := Vector2.ZERO
 # elite affixes (run_config.json elite.affixes, design 6A): one per elite, by index into affix_ids
 var affix := PackedInt32Array()          # -1 = none
+var hunted := PackedByteArray()          # 1 = the marked elite of a Săn tinh anh challenge
 var buffed := PackedByteArray()          # 1 = spawned under the boss's aura (boss_aura)
 ## The living boss's passive (monsters.json "aura", set by the run while the boss lives; {} otherwise):
 ## hp_mul, damage_mul, regen (share of max hp per second) for every monster spawned under it (user 2026-11-21).
@@ -209,6 +210,7 @@ func _init(monsters: Dictionary, cfg: Dictionary, sheets: Dictionary, seed_value
 	hp_show.resize(capacity)
 	affix.resize(capacity)
 	buffed.resize(capacity)
+	hunted.resize(capacity)
 	phase_on.resize(capacity)
 	tongue_dir.resize(capacity)
 	for a: Variant in [slow_t, slow_mul, stun_t, freeze_t, bleed_t, bleed_dps, burn_t, burn_dps, shock_t, flee_t, dot_wait, phase_t, summon_t, tongue_t, tongue_len]:
@@ -316,6 +318,7 @@ func spawn(id: String, p: Vector2) -> bool:
 	hp_show[i] = 0.0
 	affix[i] = -1
 	buffed[i] = 1 if (k_boss[k] == 0 and not boss_aura.is_empty()) else 0
+	hunted[i] = 0
 	if buffed[i] == 1:
 		hp[i] *= float(boss_aura.get("hp_mul", 1.0))
 	if k_elite[k] == 1 and not affix_ids.is_empty():   # every elite gets one affix
@@ -1363,6 +1366,14 @@ func _split(i: int, hp_before: float) -> void:
 				spawn(String(e.get("split_into", "slime")), pos[i] + Vector2(cos(a), sin(a)) * (k_radius[kind[i]] + 12.0))
 
 
+## True while a marked (hunted) monster is alive.
+func hunted_alive() -> bool:
+	for i in count:
+		if hunted[i] == 1 and state[i] != DYING:
+			return true
+	return false
+
+
 ## Every living monster starts dying (its death animation), without counting as a kill or dropping anything:
 ## the boss outro clears the field (user 2026-11-21).
 func wipe() -> void:
@@ -1461,6 +1472,7 @@ func _remove(i: int) -> void:
 		hp_show[i] = hp_show[last]
 		affix[i] = affix[last]
 		buffed[i] = buffed[last]
+		hunted[i] = hunted[last]
 		slow_t[i] = slow_t[last]
 		slow_mul[i] = slow_mul[last]
 		stun_t[i] = stun_t[last]

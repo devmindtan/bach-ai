@@ -57,3 +57,15 @@ hiếm, ánh vàng, chắc chắn có đồ tốt và rải vàng. **Học:** c�
   tính là 3 rương khi chia Mảnh thẻ.
 - Sprite `chest-gold` (nâng cấp từ `chest`: cùng dáng, thân vàng, khóa ngọc đỏ, sao lấp lánh). Cờ chụp `--gold-chest`.
 - Test: `tests/unit/run/gold_chest_test.gd`.
+
+## Thử thách dễ hơn và đa dạng hơn (người dùng 2026-11-21)
+
+- **Vòng thử thách** dễ hơn: bán kính 110 (cũ 70), đứng tổng 5 s (cũ 8), hạn 40 s (cũ 30).
+- **Thu thập sao** (`FieldChallenge` collect): 5 ngôi sao rải trong 260 px quanh người chơi, nhặt hết trong 20 s → rương + 10 vàng.
+- **Săn tinh anh** (`FieldChallenge` hunt): tinh anh của vùng xuất hiện cách 320 px, có vòng đỏ đánh dấu, hạ trong 25 s →
+  rương + 15 vàng.
+- Mỗi vùng 4 sự kiện xen kẽ (`stages.json` regions[].events): Đồng cỏ vòng 70 s / săn 130 s / thiên thạch 180 s / sao 230 s;
+  Rừng sao 60 / vòng 90 / thiên thạch 170 / săn 220; Đầm săn 80 / vòng 110 / thiên thạch 150 / sao 200.
+- **Mưa thiên thạch** là sự kiện của vùng (không phải lỗi): tới giây đã định, vòng đỏ hiện quanh người chơi rồi thiên thạch
+  rơi sau 1,2 s, trúng cả người lẫn quái. Câu báo giờ nói rõ: "Sự kiện vùng: Mưa thiên thạch! Tránh vòng đỏ, dụ quái vào".
+- Cờ chụp: `--event=K@T` (ring | collect | hunt | meteor).

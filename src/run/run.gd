@@ -21,6 +21,7 @@ extends Node2D
 ##   --pick-card=ID  take count card ID at the start and open its skill pick (shots)
 ##   --no-auto-pick  the demo stops at the first level-up panel (for shots)
 ##   --spawn-only=ID[,ID] only the waves of these monsters spawn, from the start (shots)
+##   --event=K@T     run event K (ring | collect | hunt | meteor) at T seconds (shots)
 ##   --pool-here     a poison pool under the hero's start (shots of the poison look)
 ##   --vfx=N         Cài đặt "Hiệu ứng" level for shots (0 Đầy đủ, 1 Giảm, 2 Tối thiểu)
 ##   --debug-overlay show the F1 debug overlay from the start (shots)
@@ -177,7 +178,10 @@ var bosses_killed := 0   # this run, for Mảnh thẻ
 var chests_opened := 0   # this run, for Mảnh thẻ
 var ring := ChallengeRing.new()   # Vòng thử thách (design/events.md)
 var _ring_cfg: Dictionary = {}
-var _ring_times: Array = []      # clock times this run's region opens a ring
+var _ring_times: Array = []
+var _forced_events: Array = []   # --event=K@T
+var _field_events: Array = []    # [time, "collect" | "hunt"] of this run's region (FieldChallenge)
+var field := FieldChallenge.new()      # clock times this run's region opens a ring
 var obstacles: Obstacles = null   # the stage's rocks / trees / poison pools (design/obstacles.md)
 var meteors := MeteorShower.new()   # Mưa thiên thạch (design/events.md)
 var _meteor_cfg: Dictionary = {}
@@ -251,7 +255,14 @@ func _ready() -> void:
 			_ring_times.append(float(ev.get("t", 60.0)))
 		elif String(ev.get("kind", "")) == "meteor" and challenge_id == "":
 			_meteor_times.append(float(ev.get("t", 150.0)))
+		elif String(ev.get("kind", "")) in ["collect", "hunt"] and challenge_id == "":
+			_field_events.append([float(ev.get("t", 120.0)), String(ev["kind"])])
 	_meteor_cfg = cfg.get("events", {}).get("meteor", {})
+	for fe: Array in _forced_events:   # --event (shots)
+		match String(fe[1]):
+			"ring": _ring_times = [fe[0]]
+			"meteor": _meteor_times = [fe[0]]
+			_: _field_events = [fe]
 	# each region and the challenges have their own song (design/regions.md)
 	run_music = String(Challenges.load_default().data.get("music", "run")) if challenge_id != "" \
 		else String(stages.region(stage_number).get("music", "run"))
@@ -527,6 +538,9 @@ func _parse_args() -> void:
 			auto_pick = false
 		elif a == "--hitboxes":
 			show_hitboxes = true
+		elif a.begins_with("--event="):   # shots: --event=hunt@3
+			var spec := a.get_slice("=", 1)
+			_forced_events.append([float(spec.get_slice("@", 1)), spec.get_slice("@", 0)])
 		elif a == "--pool-here":   # shots: a poison pool under the hero's start (poison look)
 			_pool_here = true
 		elif a.begins_with("--vfx="):   # shots: the Cài đặt "Hiệu ứng" level 0..2
@@ -644,6 +658,7 @@ func _tick(dt: float) -> void:
 	if _outro_t < 0.0:   # no new monster once the boss has fallen
 		_spawn(clock - dt, clock)
 	_step_ring(dt)
+	_step_field(dt)
 	_step_meteors(dt)
 	_hp_min = minf(_hp_min, hp)
 	for i in range(_absorb_fx.size() - 1, -1, -1):
@@ -2637,6 +2652,7 @@ func _draw() -> void:
 	_draw_zones()
 	_draw_ground_fx()
 	_draw_ring()
+	_draw_field()
 	_draw_meteors()
 	_draw_charge_lanes(view)
 	_boss_view.draw_pools(view)
@@ -2887,6 +2903,76 @@ func _draw_statuses(view: Rect2) -> void:
 
 
 
+## Thu thập sao / Săn tinh anh (FieldChallenge, user 2026-11-21): start at the region's event times when no other
+## challenge runs; done drops a chest and coins at the hero.
+func _step_field(dt: float) -> void:
+	var ev: Dictionary = cfg.get("events", {})
+	for fe: Array in _field_events:
+		if clock - dt < float(fe[0]) and float(fe[0]) <= clock and not field.active() and not ring.active:
+			if fe[1] == "collect":
+				var c: Dictionary = ev.get("collect", {})
+				var pts := []
+				for k in int(c.get("count", 5)):
+					var p := player_pos + Vector2.from_angle(k * TAU / float(c.get("count", 5)) + rng.randf()) * float(c.get("spread", 260.0)) * rng.randf_range(0.5, 1.0)
+					var lim := _arena_half - 30.0
+					pts.append(p.clamp(Vector2(-lim, -lim), Vector2(lim, lim)))
+				field.start_collect(pts, float(c.get("limit", 20.0)), float(c.get("pick", 28.0)))
+				wave_call = "Thu thập sao! Nhặt hết %d sao trong %d giây" % [pts.size(), roundi(field.limit)]
+			else:
+				var h: Dictionary = ev.get("hunt", {})
+				var elite := _hunt_kind()
+				if enemies.spawn(elite, player_pos + Vector2.from_angle(rng.randf() * TAU) * float(h.get("distance", 320.0))):
+					enemies.hunted[enemies.count - 1] = 1
+				field.start_hunt(float(h.get("limit", 25.0)))
+				wave_call = "Săn tinh anh! Hạ con bị đánh dấu trong %d giây" % roundi(field.limit)
+			wave_call_t = 3.0
+	match field.step(dt, player_pos, enemies.hunted_alive()):
+		"done":
+			_drop_chest(player_pos + Vector2(24, 0))
+			var g := int(ev.get(field.kind if field.kind != "" else "collect", {}).get("gold", 10))
+			for k in g:
+				pickups.drop(Pickups.COIN, player_pos + Vector2.from_angle(k * 2.4) * (20.0 + 3.0 * k), 1.0)
+			wave_call = "Hoàn thành thử thách!"
+			wave_call_t = 2.5
+			Sfx.play("chest")
+		"fail":
+			wave_call = "Thử thách thất bại"
+			wave_call_t = 2.0
+
+
+## The elite to hunt: the first elite of this stage's waves (the region's), else a goblin elite.
+func _hunt_kind() -> String:
+	for w: Variant in stage.get("waves", []):
+		if w is Dictionary and String(w.get("monster", "")).ends_with("@elite"):
+			return String(w["monster"])
+	return "goblin@elite"
+
+
+## Stars to collect and the hunted elite's mark, with the challenge's count / time left over the hero.
+func _draw_field() -> void:
+	if not field.active():
+		return
+	var pulse := 0.5 + 0.5 * sin(clock * 6.0)
+	if field.kind == "collect":
+		for p: Vector2 in field.stars:
+			var pts := PackedVector2Array()
+			for k in 10:
+				var a := -PI / 2.0 + k * PI / 5.0
+				pts.append(p + Vector2.from_angle(a) * (11.0 if k % 2 == 0 else 5.0) * (1.0 + 0.15 * pulse))
+			draw_colored_polygon(pts, Color(1.0, 0.85, 0.3))
+			draw_polyline(pts + PackedVector2Array([pts[0]]), Color(0.35, 0.2, 0.05), 1.5)
+			draw_arc(p, 18.0 + 4.0 * pulse, 0.0, TAU, 20, Color(1.0, 0.9, 0.4, 0.5), 2.0)
+	else:
+		for i in enemies.count:
+			if enemies.hunted[i] == 1 and enemies.state[i] != Enemies.DYING:
+				var c := enemies.center_of(i)
+				var r := enemies.k_radius[enemies.kind[i]] * 1.6
+				draw_arc(c, r + 3.0 * pulse, 0.0, TAU, 28, Color(1.0, 0.3, 0.25, 0.9), 2.5)
+	var left := ("Sao %d/%d" % [field.total - field.stars.size(), field.total]) if field.kind == "collect" else "Săn tinh anh"
+	var txt := "%s · %d s" % [left, ceili(field.time_left())]
+	draw_string(ThemeDB.fallback_font, player_pos + Vector2(-60, -64), txt, HORIZONTAL_ALIGNMENT_CENTER, 120, 13, Color(1.0, 0.9, 0.5))
+
+
 ## Vòng thử thách (design/events.md): opens at the region's event times near the player; stand
 ## inside to charge it; done drops a chest and coins, time out fails it.
 func _step_ring(dt: float) -> void:
@@ -2955,7 +3041,7 @@ func _step_meteors(dt: float) -> void:
 	for t: float in _meteor_times:
 		if clock - dt < t and t <= clock and not meteors.busy():
 			meteors.start(_meteor_cfg)
-			wave_call = "Mưa thiên thạch! Tránh các vòng đỏ"
+			wave_call = "Sự kiện vùng: Mưa thiên thạch! Tránh vòng đỏ, dụ quái vào"
 			wave_call_t = 3.0
 			Sfx.play("boss_spawn")
 	for p: Vector2 in meteors.step(dt, player_pos, rng):

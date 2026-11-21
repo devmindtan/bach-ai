@@ -52,8 +52,16 @@
           "t": 70
         },
         {
+          "kind": "hunt",
+          "t": 130
+        },
+        {
           "kind": "meteor",
           "t": 180
+        },
+        {
+          "kind": "collect",
+          "t": 230
         }
       ],
       "obstacles": {
@@ -100,12 +108,20 @@
       "music": "run_forest",
       "events": [
         {
+          "kind": "collect",
+          "t": 60
+        },
+        {
           "kind": "ring",
           "t": 90
         },
         {
           "kind": "meteor",
           "t": 170
+        },
+        {
+          "kind": "hunt",
+          "t": 220
         }
       ],
       "obstacles": {
@@ -151,12 +167,20 @@
       "music": "run_marsh",
       "events": [
         {
+          "kind": "hunt",
+          "t": 80
+        },
+        {
           "kind": "ring",
           "t": 110
         },
         {
           "kind": "meteor",
           "t": 150
+        },
+        {
+          "kind": "collect",
+          "t": 200
         }
       ],
       "obstacles": {
