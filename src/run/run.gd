@@ -176,12 +176,8 @@ var level_view := "cards"   # level-up: "cards", "character" (Tab) or "hidden" (
 var deck_cards: Array = []   # the active deck's card ids (design/skill-tree-v2.md §2)
 var bosses_killed := 0   # this run, for Mảnh thẻ
 var chests_opened := 0   # this run, for Mảnh thẻ
-var ring := ChallengeRing.new()   # Vòng thử thách (design/events.md)
-var _ring_cfg: Dictionary = {}
-var _ring_times: Array = []
+var challenges := ChallengeEvents.new()   # Vòng thử thách / Thu thập sao / Săn tinh anh (challenge_events.gd)
 var _forced_events: Array = []   # --event=K@T
-var _field_events: Array = []    # [time, "collect" | "hunt"] of this run's region (FieldChallenge)
-var field := FieldChallenge.new()      # clock times this run's region opens a ring
 var obstacles: Obstacles = null   # the stage's rocks / trees / poison pools (design/obstacles.md)
 var region_ev := RegionEvents.new()   # the region's own event (region_events.gd)
 var _heal_fx: Array = []   # [{p, r, t}] Hồn Đầm heal rings being drawn
@@ -225,6 +221,7 @@ var _panels: RunPanels
 
 func _ready() -> void:
 	region_ev.run = self
+	challenges.run = self
 	_parse_args()
 	RunInput.register()
 	cfg = GameData.load_json(DATA + "run_config.json")
@@ -247,22 +244,22 @@ func _ready() -> void:
 		challenge_id = ""
 		stage = stages.load_stage(stage_number)
 	stage_ground = stages.ground(stage_number)
-	_ring_cfg = cfg.get("events", {}).get("ring", {})
-	_ring_times = []
+	challenges.ring_cfg = cfg.get("events", {}).get("ring", {})
+	challenges.ring_times = []
 	for ev: Dictionary in stages.region(stage_number).get("events", []):
 		if not events_open(cfg, stage_number) or not event_enabled(cfg, String(ev.get("kind", ""))):
 			continue   # stages before events.min_stage are quiet; --event below still forces one
 		if String(ev.get("kind", "")) == "ring" and challenge_id == "":
-			_ring_times.append(float(ev.get("t", 60.0)))
+			challenges.ring_times.append(float(ev.get("t", 60.0)))
 		elif String(ev.get("kind", "")) in RegionEvents.OWN_EVENTS and challenge_id == "":
 			region_ev.times.append([float(ev.get("t", 150.0)), String(ev["kind"])])
 		elif String(ev.get("kind", "")) in ["collect", "hunt"] and challenge_id == "":
-			_field_events.append([float(ev.get("t", 120.0)), String(ev["kind"])])
+			challenges.field_times.append([float(ev.get("t", 120.0)), String(ev["kind"])])
 	for fe: Array in _forced_events:   # --event (shots)
 		match String(fe[1]):
-			"ring": _ring_times = [fe[0]]
+			"ring": challenges.ring_times = [fe[0]]
 			"tornado", "falling_trees", "poison_tide": region_ev.times = [fe]
-			_: _field_events = [fe]
+			_: challenges.field_times = [fe]
 	# each region and the challenges have their own song (design/regions.md)
 	run_music = String(Challenges.load_default().data.get("music", "run")) if challenge_id != "" \
 		else String(stages.region(stage_number).get("music", "run"))
@@ -655,8 +652,7 @@ func _tick(dt: float) -> void:
 	_move_player(dt)
 	if _outro_t < 0.0:   # no new monster once the boss has fallen
 		_spawn(clock - dt, clock)
-	_step_ring(dt)
-	_step_field(dt)
+	challenges.step(dt)
 	region_ev.step(dt)
 	_hp_min = minf(_hp_min, hp)
 	for i in range(_absorb_fx.size() - 1, -1, -1):
@@ -2708,8 +2704,7 @@ func _draw() -> void:
 	_draw_ground_buffs(view)
 	_draw_zones()
 	_draw_ground_fx()
-	_draw_ring()
-	_draw_field()
+	challenges.draw()
 	region_ev.draw()
 	_draw_charge_lanes(view)
 	_boss_view.draw_pools(view)
@@ -2954,105 +2949,6 @@ func _draw_statuses(view: Rect2) -> void:
 			sk.draw(self, "loop", float(s["t"]), b, _sprite_scale)
 
 
-
-
-
-
-
-
-## Thu thập sao / Săn tinh anh (FieldChallenge, user 2026-11-21): start at the region's event times when no other
-## challenge runs; done drops a chest and coins at the hero.
-func _step_field(dt: float) -> void:
-	var ev: Dictionary = cfg.get("events", {})
-	for fe: Array in _field_events:
-		if clock - dt < float(fe[0]) and float(fe[0]) <= clock and not field.active() and not ring.active:
-			if fe[1] == "collect":
-				var c: Dictionary = ev.get("collect", {})
-				var pts := []
-				for k in int(c.get("count", 5)):
-					var p := player_pos + Vector2.from_angle(k * TAU / float(c.get("count", 5)) + rng.randf()) * float(c.get("spread", 260.0)) * rng.randf_range(0.5, 1.0)
-					var lim := _arena_half - 30.0
-					pts.append(p.clamp(Vector2(-lim, -lim), Vector2(lim, lim)))
-				field.start_collect(pts, float(c.get("limit", 20.0)), float(c.get("pick", 28.0)))
-				wave_call = "Thu thập sao! Nhặt hết %d sao trong %d giây" % [pts.size(), roundi(field.limit)]
-			else:
-				var h: Dictionary = ev.get("hunt", {})
-				var elite := _hunt_kind()
-				if enemies.spawn(elite, player_pos + Vector2.from_angle(rng.randf() * TAU) * float(h.get("distance", 320.0))):
-					enemies.hunted[enemies.count - 1] = 1
-				field.start_hunt(float(h.get("limit", 25.0)))
-				wave_call = "Săn tinh anh! Hạ con bị đánh dấu trong %d giây" % roundi(field.limit)
-			wave_call_t = 3.0
-	match field.step(dt, player_pos, enemies.hunted_alive()):
-		"done":
-			_drop_chest(player_pos + Vector2(24, 0))
-			var g := int(ev.get(field.kind if field.kind != "" else "collect", {}).get("gold", 10))
-			for k in g:
-				pickups.drop(Pickups.COIN, player_pos + Vector2.from_angle(k * 2.4) * (20.0 + 3.0 * k), 1.0)
-			wave_call = "Hoàn thành thử thách!"
-			wave_call_t = 2.5
-			Sfx.play("chest")
-		"fail":
-			wave_call = "Thử thách thất bại"
-			wave_call_t = 2.0
-
-
-## The elite to hunt: the first elite of this stage's waves (the region's), else a goblin elite.
-func _hunt_kind() -> String:
-	for w: Variant in stage.get("waves", []):
-		if w is Dictionary and String(w.get("monster", "")).ends_with("@elite"):
-			return String(w["monster"])
-	return "goblin@elite"
-
-
-## Stars to collect and the hunted elite's mark, with the challenge's count / time left over the hero.
-func _draw_field() -> void:
-	if not field.active():
-		return
-	var pulse := 0.5 + 0.5 * sin(clock * 6.0)
-	if field.kind == "collect":
-		for p: Vector2 in field.stars:
-			var pts := PackedVector2Array()
-			for k in 10:
-				var a := -PI / 2.0 + k * PI / 5.0
-				pts.append(p + Vector2.from_angle(a) * (11.0 if k % 2 == 0 else 5.0) * (1.0 + 0.15 * pulse))
-			draw_colored_polygon(pts, Color(1.0, 0.85, 0.3))
-			draw_polyline(pts + PackedVector2Array([pts[0]]), Color(0.35, 0.2, 0.05), 1.5)
-			draw_arc(p, 18.0 + 4.0 * pulse, 0.0, TAU, 20, Color(1.0, 0.9, 0.4, 0.5), 2.0)
-	else:
-		for i in enemies.count:
-			if enemies.hunted[i] == 1 and enemies.state[i] != Enemies.DYING:
-				var c := enemies.center_of(i)
-				var r := enemies.k_radius[enemies.kind[i]] * 1.6
-				draw_arc(c, r + 3.0 * pulse, 0.0, TAU, 28, Color(1.0, 0.3, 0.25, 0.9), 2.5)
-	var left := ("Sao %d/%d" % [field.total - field.stars.size(), field.total]) if field.kind == "collect" else "Săn tinh anh"
-	var txt := "%s · %d s" % [left, ceili(field.time_left())]
-	draw_string(ThemeDB.fallback_font, player_pos + Vector2(-60, -64), txt, HORIZONTAL_ALIGNMENT_CENTER, 120, 13, Color(1.0, 0.9, 0.5))
-
-
-## Vòng thử thách (design/events.md): opens at the region's event times near the player; stand
-## inside to charge it; done drops a chest and coins, time out fails it.
-func _step_ring(dt: float) -> void:
-	for t: float in _ring_times:
-		if clock - dt < t and t <= clock and not ring.active:
-			var d := float(_ring_cfg.get("distance", 220.0))
-			ring.start(player_pos + Vector2.from_angle(rng.randf() * TAU) * d, float(_ring_cfg.get("radius", 70.0)),
-				float(_ring_cfg.get("need", 8.0)), float(_ring_cfg.get("limit", 30.0)), _arena_half)
-			wave_call = "Vòng thử thách! Đứng trong vòng %d giây" % roundi(ring.need)
-			wave_call_t = 3.0
-	match ring.step(dt, player_pos):
-		"done":
-			_drop_chest(ring.center)
-			for g in int(_ring_cfg.get("gold", 10)):
-				pickups.drop(Pickups.COIN, ring.center + Vector2.from_angle(g * 2.4) * (14.0 + 3.0 * g), 1.0)
-			wave_call = "Hoàn thành thử thách!"
-			wave_call_t = 2.5
-			Sfx.play("chest")
-		"fail":
-			wave_call = "Thử thách thất bại"
-			wave_call_t = 2.0
-
-
 ## Vũng độc (design/obstacles.md): standing in a poison pool loses pool_dps hp a second (no armor,
 ## no hurt flinch, so walking through is a choice, not a stun).
 func _step_pools_hazard(dt: float) -> void:
@@ -3098,21 +2994,7 @@ func _draw_obstacles(view: Rect2, front: bool) -> void:
 
 
 
-func _draw_ring() -> void:
-	if not ring.active:
-		return
-	var c := ring.center
-	var pulse := 0.5 + 0.5 * sin(clock * 4.0)
-	draw_set_transform(c, 0.0, Vector2(1.0, 0.55))   # flat on the ground
-	draw_circle(Vector2.ZERO, ring.radius, Color(1.0, 0.85, 0.3, 0.10 + (0.12 if ring.inside else 0.0)))
-	draw_arc(Vector2.ZERO, ring.radius, 0.0, TAU, 64, Color(1.0, 0.85, 0.35, 0.5 + 0.3 * pulse), 3.0)
-	draw_arc(Vector2.ZERO, ring.radius - 6.0, -PI / 2.0, -PI / 2.0 + TAU * ring.progress(), 64, Color(1.0, 0.95, 0.5), 5.0)
-	draw_set_transform(Vector2.ZERO)
-	var font := ThemeDB.fallback_font
-	var txt := "%d s" % ceili(ring.time_left())
-	var at := c + Vector2(-12.0, -ring.radius * 0.55 - 10.0)
-	draw_string_outline(font, at, txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, 4, Color(0.05, 0.04, 0.08))
-	draw_string(font, at, txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color(1.0, 0.92, 0.5))
+
 
 
 ## Telegraphed charges (Sói Rừng, design 6A): the lane a winding-up charger will
