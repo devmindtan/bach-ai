@@ -937,7 +937,7 @@ func _drops() -> void:
 		return
 	Sfx.play("kill")
 	count_special_kills(enemies.kill_pos.size())
-	var gold_chance := float(cfg.get("pickups", {}).get("gold_chance", 0.1))
+	var gold_chance := float(cfg.get("pickups", {}).get("gold_chance", 0.12))
 	var heal_frac := heal_on_kill()   # Khát máu: elites and bosses feed the hero
 	for i in enemies.kill_pos.size():
 		if drops_xp(enemies.kill_elite[i] == 1 or enemies.kill_boss[i] == 1):

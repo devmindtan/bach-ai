@@ -178,7 +178,9 @@ không đè hình hai vua, chỉ một vương miện; sửa quầng nội tại
 hiện +7…+25%, ải boss +18…+27%, ải 11 +37%; `tests/integration/data/difficulty_curve_test.gd`). Mục 9 (`gamekit tidy` bỏ 10 agent Unity / Unreal của
 game Godot; chạy lại sau mỗi lần nâng framework). Mục 4 phần lớn (Chém kiếm, Lốc xoáy và các bậc ở mật độ
 gấp đôi `px_scale` 0,5; `tierfx` mang `px_scale` sang bậc). **Còn:** Sóng kiếm (`sword-wave` cắt từ `cleave-wave` rồi
-xoay 16 hướng: phải vẽ lại từng hướng như `boltfx`, cỡ M).
+xoay 16 hướng: phải vẽ lại từng hướng như `boltfx`, cỡ M). Mục 5 phần `run_config`: test `config_defaults_test` quét mọi
+`cfg.get(…, số)` trong `src/`, số mặc định phải bằng JSON hoặc trung tính 0 / 1 (sửa 2 chỗ lệch: `max_enemies` 600 → 200,
+`gold_chance` 0,1 → 0,12). **Còn:** mở rộng cách kiểm này cho `monsters.json`, `upgrades_*.json`, `items.json`.
 
 **Đánh giá ngoài lần 3 (2026-11-21), đã kiểm từng ý:**
 - Đã làm: save ghi qua file tạm + giữ `.bak`, tự khôi phục khi file hỏng (`e68f57a`); tối đa 2 hiệu ứng trạng thái vẽ

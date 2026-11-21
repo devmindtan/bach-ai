@@ -191,7 +191,7 @@ func _init(monsters: Dictionary, cfg: Dictionary, sheets: Dictionary, seed_value
 	var sep: Dictionary = cfg.get("separation", {})
 	_hash = SpatialHash.new(float(sep.get("cell", 48.0)))
 	_push = float(sep.get("push", 60.0))
-	capacity = int(cfg.get("max_enemies", 600))
+	capacity = int(cfg.get("max_enemies", 200))
 	# packed arrays are values: each member is resized on its own
 	pos.resize(capacity)
 	knock.resize(capacity)
