@@ -132,6 +132,9 @@ công khai trên màn, pity huyền thoại ở lượt 50 mỗi banner, món tr
 **Kế hoạch nâng cấp (2026-11-18):** `production/upgrade-plan.md` (quái vật, bản đồ, gameplay, giao diện, class mới).
 - 5 vùng × 20 ải (đồng cỏ, nghĩa địa, hang băng, núi lửa, hư không); mỗi vùng 3–4 loài quái mới + 2 boss.
 - Class **Cung thủ** và **Sát thủ** (chiêu và giáp đã có trong Sprite Lab; cần vẽ nhân vật).
+  Ghi chú 2026-11-21 (đánh giá ngoài, người dùng đưa vào kế hoạch): dựng nhân vật trên `sprite-lab/lib/minifig.py`
+  (6 lớp giấy: head, chest, arms, legs, feet, weapon) như kiếm sĩ / pháp sư; dùng lại `ranger-*`, `bow-*`, `arrow-rain`,
+  `assassin-*`, `dagger-*`, `shadow-dash` có sẵn; cần thêm bộ chiêu 5 bậc, cây kỹ năng, cây thẻ, cân bằng bằng mô phỏng.
 - Tiến hoá chiêu (chiêu cấp 5 + nội tại phù hợp → bản tiến hoá).
 - **Mô phỏng cân bằng:** bot chạy headless từng ải với build mẫu, ghi thời gian sống/DPS → điều chỉnh công thức.
 **Xong khi:** ải 100 vượt được với build đầu tư hợp lý, không vượt được với build trống (số đo từ mô phỏng).
@@ -148,6 +151,8 @@ trên Web). Còn: nhạc theo vùng, đổi phím, tay cầm, tiếng Anh, Steam
 ## Đợt 8: Mobile (sau khi có bản PC)
 **🔒 KHOÁ (người dùng 2026-11-18):** không làm, kể cả khi đợt 6 xong, cho tới khi người dùng ưng ý và tự mở.
 - Joystick ảo, UI theo ngón tay, tỉ lệ màn hình; export Android, rồi iOS.
+- Ghi chú 2026-11-21 (đánh giá ngoài): khi mở đợt này, `gamekit ui-shots` chụp mỗi màn ở 1280×720 và một độ phân giải
+  dọc của điện thoại; mở rộng `ui_layout_rules_test.gd` kiểm khung chữ / nút không tràn ở cả hai.
 
 ## Sau đó
 - Chế độ endgame (ải vô tận, thử thách tuần, boss rush), thêm class, mùa sự kiện.
