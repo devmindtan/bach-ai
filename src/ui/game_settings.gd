@@ -29,6 +29,9 @@ var scale := 0                      # 0 = auto, else 1..3
 var damage_numbers := true
 var monster_hp := true
 var screen_shake := true   # Rung màn hình (6C.2)
+var vfx := 0               # Hiệu ứng: 0 Đầy đủ, 1 Giảm, 2 Tối thiểu (review 2026-11-21: visual clutter late game)
+const VFX_NAMES := ["Đầy đủ", "Giảm", "Tối thiểu"]
+const VFX_ALPHA := [1.0, 0.7, 0.4]
 var music_volume := _volume_default("music", 60)   # 0..100 %, Music bus (design/audio.md)
 var sfx_volume := _volume_default("sfx", 80)       # 0..100 %, SFX bus
 var hero := "knight"                # the class chosen in the lobby (classes.json id)
@@ -233,6 +236,11 @@ func _apply_slot(id: String) -> bool:
 
 
 ## Changes one setting, saves and applies it.
+## Opacity of the player's skill / status effects at the chosen "Hiệu ứng" level.
+func vfx_alpha() -> float:
+	return float(VFX_ALPHA[clampi(vfx, 0, 2)])
+
+
 func set_value(key: String, value: Variant) -> void:
 	set(key, value)
 	if not _fixed:
@@ -289,6 +297,7 @@ func _load() -> void:
 	damage_numbers = bool(cfg.get_value("hud", "damage_numbers", damage_numbers))
 	monster_hp = bool(cfg.get_value("hud", "monster_hp", monster_hp))
 	screen_shake = bool(cfg.get_value("hud", "screen_shake", screen_shake))
+	vfx = clampi(int(cfg.get_value("hud", "vfx", vfx)), 0, 2)
 	music_volume = clampi(int(cfg.get_value("audio", "music", music_volume)), 0, 100)
 	sfx_volume = clampi(int(cfg.get_value("audio", "sfx", sfx_volume)), 0, 100)
 	hero = String(cfg.get_value("game", "hero", hero))
@@ -303,6 +312,7 @@ func _save() -> void:
 	cfg.set_value("hud", "damage_numbers", damage_numbers)
 	cfg.set_value("hud", "monster_hp", monster_hp)
 	cfg.set_value("hud", "screen_shake", screen_shake)
+	cfg.set_value("hud", "vfx", vfx)
 	cfg.set_value("audio", "music", music_volume)
 	cfg.set_value("audio", "sfx", sfx_volume)
 	cfg.set_value("game", "hero", hero)

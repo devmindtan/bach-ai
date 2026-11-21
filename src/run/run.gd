@@ -21,6 +21,7 @@ extends Node2D
 ##   --pick-card=ID  take count card ID at the start and open its skill pick (shots)
 ##   --no-auto-pick  the demo stops at the first level-up panel (for shots)
 ##   --spawn-only=ID[,ID] only the waves of these monsters spawn, from the start (shots)
+##   --vfx=N         Cài đặt "Hiệu ứng" level for shots (0 Đầy đủ, 1 Giảm, 2 Tối thiểu)
 ##   --debug-overlay show the F1 debug overlay from the start (shots)
 ##   --hitboxes      draw hit areas: effects (red while dealing damage), monster
 ##                   bodies, the player's body and pickup radius
@@ -211,6 +212,7 @@ var _coin_sprite := "gold-coin"
 var _arena_half := 1400.0
 var _hit_center := Vector2(0, -26)
 var _camera: Camera2D
+var _vfx_alpha := 1.0      # Cài đặt "Hiệu ứng": fades skill / status effects, never bolts or bodies
 var _ground: GroundLayer   # cached arena floor (src/run/ground_layer.gd)
 var _hud: RunHud
 var _panels: RunPanels
@@ -513,6 +515,8 @@ func _parse_args() -> void:
 			auto_pick = false
 		elif a == "--hitboxes":
 			show_hitboxes = true
+		elif a.begins_with("--vfx="):   # shots: the Cài đặt "Hiệu ứng" level 0..2
+			Prefs.current().vfx = clampi(int(a.get_slice("=", 1)), 0, 2)
 		elif a == "--debug-overlay":
 			toggle_debug_overlay.call_deferred()
 		elif a.begins_with("--sim-steps="):
@@ -539,6 +543,7 @@ func _process(delta: float) -> void:
 	if OS.get_cmdline_user_args().has("--count-log") and Engine.get_process_frames() % 300 == 0:
 		printerr("GK: t=%.0f alive=%d" % [clock, enemies.living()])
 	shake.enabled = Prefs.current().screen_shake   # the pause menu's Cài đặt can turn it off mid-run
+	_vfx_alpha = Prefs.current().vfx_alpha()       # Cài đặt "Hiệu ứng" (also mid-run)
 	_camera.offset = shake.step(delta, Engine.get_process_frames())
 	queue_redraw()
 	_hud.queue_redraw()
@@ -2756,7 +2761,7 @@ func _draw_ground_fx() -> void:
 	for fx in _fx:
 		if bool(fx.get("ground", false)):
 			var sh: SpriteSheet = fx["sheet"]
-			sh.draw(self, fx["anim"], float(fx["t"]), _fx_pos(fx), float(fx["scale"]))
+			sh.draw(self, fx["anim"], float(fx["t"]), _fx_pos(fx), float(fx["scale"]), false, Color(1, 1, 1, _vfx_alpha * 0.85))   # the floor layer stays a little lower
 
 
 func _draw_fx(under: bool) -> void:
@@ -2766,7 +2771,7 @@ func _draw_fx(under: bool) -> void:
 		var sh: SpriteSheet = fx["sheet"]
 		var looping: bool = fx["anim"] == "spin" or fx.has("shot")
 		var t := fmod(float(fx["t"]), sh.duration(fx["anim"])) if looping else float(fx["t"])
-		sh.draw(self, fx["anim"], t, _fx_pos(fx), float(fx["scale"]))
+		sh.draw(self, fx["anim"], t, _fx_pos(fx), float(fx["scale"]), false, Color(1, 1, 1, _vfx_alpha))
 
 
 ## Monster bolts (shooters, design 6A): each kind's bolt_sprite, "fly" looping.
@@ -2817,7 +2822,7 @@ func _draw_statuses(view: Rect2) -> void:
 			var k := 0
 			for spot: Array in status_spots(r, bool(d.get("tile", false))):
 				sh.draw(self, "loop", clock + i * 0.17 + k * 0.29, p + (spot[0] as Vector2), float(spot[1]),
-					false, Color(1, 1, 1, float(d.get("alpha", 1.0))))   # see-through: the monster stays visible
+					false, Color(1, 1, 1, float(d.get("alpha", 1.0)) * _vfx_alpha))   # see-through: the monster stays visible
 				k += 1
 	for s in _shock_fx:
 		var a: Vector2 = s["a"]
