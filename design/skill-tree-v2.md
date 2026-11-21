@@ -26,8 +26,48 @@ số; bộ thẻ chọn trước trận. **Tránh:** cây khổng lồ khó đ�
 | Bộ thẻ | **8 chiêu + 6 thẻ chỉ số**, lưu 3 bộ |
 | Phạm vi đợt này | **Bộ thẻ + cây thẻ cho các thẻ chiêu**; cây nhân vật giữ như cũ; thẻ chỉ số làm sau |
 
+
+## 0. Tinh hoa, đặt lại cây và quyết định gốc (gộp từ bản v1, 2026-11-21)
+
+Bản v1 (`design/archive/skill-tree-v1.md`) đã lưu trữ; phần còn dùng được chép nguyên ở đây.
+
+> **Đã thay bằng cây v2** (`design/skill-tree-v2.md` §1, 2026-11-19): phần cây 3×3 dưới đây là bản cũ; tiền tệ
+> và đặt lại vẫn giữ.
+
+Dữ liệu: `assets/data/skill_tree.json` (node theo class), `assets/data/run_config.json` → `essence` (Tinh hoa rơi).
+Code: `src/meta/skill_tree.gd` (mua, mở khoá, đặt lại, hiệu ứng), slot giữ node đã mua và ví. Màn:
+`src/front/skill_tree.tscn` (`design/ux/skill-tree.md`). Test: `tests/unit/meta/skill_tree_test.gd`.
+
+Quyết định của người dùng (2026-11-18):
+- Node mua bằng **Tinh hoa**, nguyên liệu đặc biệt **rơi từ quái tinh anh và boss** khi cày ải.
+- **Đặt lại cây** cần **Tẩy Tủy Đan** (nguyên liệu hoàn trả) **và vàng**; Tẩy Tủy Đan có ở **chế độ Thử thách**
+  (`design/challenge.md`), cày lại được.
+
+### Tiền tệ
+
+| Thứ | Có từ đâu | Dùng để |
+|---|---|---|
+| **Tinh hoa** | quái tinh anh rơi 1, boss rơi 10 (`run_config.json` → `essence`); nhặt như vật phẩm; thua vẫn giữ phần đã nhặt | mua node |
+| **Tẩy Tủy Đan** | thắng một thử thách (chế độ Thử thách) | đặt lại cây (1 viên + vàng) |
+| Vàng | đã có | đặt lại cây: `10 × Tinh hoa đã tiêu` (ít nhất 50) |
+
+Tinh hoa, Tẩy Tủy Đan, vàng thuộc **slot** (mỗi nhân vật một ví).
+
+### Đặt lại
+
+- Nút "Đặt lại cây" cần 1 Tẩy Tủy Đan và vàng; hoàn **đủ** Tinh hoa đã tiêu, bỏ mọi node.
+- Không đủ thì nút tắt và ghi thiếu gì.
+
+### Tham khảo của bản v1
+
+| Nguồn | Điều lấy |
+|---|---|
+| Vampire Survivors, [PowerUp](https://vampire-survivors.fandom.com/wiki/PowerUp?oldid=5168), [hoàn trả](https://www.siliconera.com/how-to-reset-progress-in-vampire-survivors/) | Nâng cấp vĩnh viễn mua bằng tiền tệ cày được; giá tăng dần; hoàn lại **đủ** khi đặt lại. |
+| Soulstone Survivors, [cây kỹ năng](https://www.gamepressure.com/newsroom/soulstone-survivors-unique-skills-skill-tree-and-prestige/zf4c7a) | Cây chia nhánh theo vai trò (tấn công / phòng thủ / di chuyển), mua bằng tiền tệ riêng rơi trong trận; đặt lại được. |
+| [Wayline: respec design](https://www.wayline.io/blog/respec-your-game-adapting-skill-tree), [Gears Tactics: Reset Token](https://www.inverse.com/gaming/gears-tactics-reset-token-guide-respec-skill-points) | Đặt lại bằng **vật phẩm kiếm từ nội dung khó** làm quyết định có trọng lượng; phải chặn việc nhân đôi tài nguyên khi hoàn trả. |
+
 ## 1. Cây nhân vật (v2, người dùng 2026-11-19: "còn skill tree của nhân vật")
-Cây 3 nhánh × 3 tầng mua một lần (`design/skill-tree.md`) đổi sang **cùng kiểu với cây thẻ**: nút tròn trên lưới,
+Cây 3 nhánh × 3 tầng mua một lần (`design/archive/skill-tree-v1.md`) đổi sang **cùng kiểu với cây thẻ**: nút tròn trên lưới,
 nhiều cấp, toả nhánh tự do, nút then chốt; vẫn mua bằng **Tinh hoa**, đặt lại vẫn cần **Tẩy Tủy Đan + vàng**.
 
 Tham khảo thêm:

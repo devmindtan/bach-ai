@@ -1,5 +1,8 @@
 # Cây kỹ năng lâu dài (đợt 4)
 
+> **Lưu trữ (2026-11-21):** bản v1, đã thay bằng `design/skill-tree-v2.md` (phần tiền tệ và đặt lại đã gộp vào §0 ở đó).
+> Không dùng file này làm spec.
+
 > **Đã thay bằng cây v2** (`design/skill-tree-v2.md` §1, 2026-11-19): phần cây 3×3 dưới đây là bản cũ; tiền tệ
 > và đặt lại vẫn giữ.
 

@@ -1,5 +1,5 @@
 extends RefCounted
-## Tinh hoa (design/skill-tree.md): elites drop 1, bosses 10 (run_config.json
+## Tinh hoa (design/skill-tree-v2.md §0): elites drop 1, bosses 10 (run_config.json
 ## "essence"); picked up like the other drops and counted for the slot.
 
 var failures: Array[String] = []

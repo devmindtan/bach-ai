@@ -22,7 +22,7 @@ var magnet_speed := 520.0
 var collect_radius := 14.0
 var chests := 0   # chests collected and not yet opened (the run opens one per extra pick)
 var gold_chests := 0   # Rương vàng collected and not yet opened (design/events.md)
-var essence := 0  # Tinh hoa picked up this run (skill-tree material, design/skill-tree.md)
+var essence := 0  # Tinh hoa picked up this run (skill-tree material, design/skill-tree-v2.md §0)
 
 
 func _init(cfg: Dictionary, p_capacity := 400) -> void:

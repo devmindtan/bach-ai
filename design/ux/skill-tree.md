@@ -1,6 +1,6 @@
 # Màn cây kỹ năng
 
-Luật: `design/skill-tree-v2.md` §1 (cây v2; bản cũ `design/skill-tree.md`). Mở từ sảnh (nút "Cây kỹ năng"). `src/front/skill_tree.tscn`.
+Luật: `design/skill-tree-v2.md` §1 (cây v2; bản cũ lưu ở `design/archive/skill-tree-v1.md`). Mở từ sảnh (nút "Cây kỹ năng"). `src/front/skill_tree.tscn`.
 
 ## Tham khảo
 

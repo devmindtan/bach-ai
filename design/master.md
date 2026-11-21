@@ -31,7 +31,7 @@ chiêu riêng, sức mạnh lâu dài vào cây kỹ năng, trang bị và gacha
 │                                                              │
 │  Sảnh: thẻ chỉ số (gồm trang bị), nội tại, chiêu, mốc 10/20/30 │
 │   ├─ Trang bị (Màn Trang bị)                                 │
-│   ├─ Cây kỹ năng (Đợt 4, design/skill-tree.md)               │
+│   ├─ Cây kỹ năng (design/skill-tree-v2.md)                │
 │   ├─ Gacha (Đợt 5, design/gacha.md)                          │
 │   └─ Chọn ải / chế độ (design/ux/stage-select.md)            │
 └───────────────────────────┬──────────────────────────────────┘
@@ -59,7 +59,7 @@ chiêu riêng, sức mạnh lâu dài vào cây kỹ năng, trang bị và gacha
 | 3 | Quái | ✅ | `design/monsters.md` | slime/dơi/goblin/boss; `waves/stage_NNN.json` |
 | 4 | Class & nội tại | ✅ | `design/classes.md` | 2 class đầu (Kiếm sĩ, Pháp sư) |
 | 5 | Nâng cấp trong trận | ✅ | `assets/data/upgrades_<class>.json` | 6–9 thẻ mỗi class, bậc I–V |
-| 6 | Cây kỹ năng (dài hạn) | ✅ | `design/skill-tree.md` | mua bằng Tinh hoa (tinh anh/boss rơi), đặt lại bằng Tẩy Tủy Đan + vàng |
+| 6 | Cây kỹ năng (dài hạn) | ✅ | `design/skill-tree-v2.md` | mua bằng Tinh hoa (tinh anh/boss rơi), đặt lại bằng Tẩy Tủy Đan + vàng |
 | 14 | Chế độ Thử thách | ✅ | `design/challenge.md` | thử thách luật riêng, rơi Tẩy Tủy Đan |
 | 7 | Trang bị | ✅ | `design/equipment.md` | 5 ô, độ hiếm, màn trang bị, cường hoá +1..+5 bằng vàng |
 | 8 | Gacha | ✅ lõi | `design/gacha.md` | 2 banner, 10 đá/lượt, pity 50, trùng → vàng |
@@ -113,7 +113,7 @@ Lần đầu → Tiêu đề → Chọn nhân vật (tạo Kiếm sĩ/Pháp sư)
 | Spec | Vai trò |
 |---|---|
 | `design/master.md` | **file này** — bản đồ hệ thống |
-| `design/skill-tree.md` | Đợt 4 — cây kỹ năng lâu dài |
+| `design/skill-tree-v2.md` | Cây kỹ năng (v2; v1 lưu ở `design/archive/`) |
 | `design/challenge.md` | Đợt 4 — chế độ Thử thách |
 | `design/gacha.md` | Đợt 5 — hệ thống gacha |
 | `design/equipment.md` | Trang bị: ô, rarity, drop rate |
