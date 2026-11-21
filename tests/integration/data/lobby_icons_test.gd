@@ -21,3 +21,17 @@ func test_lobby_icons_exist_and_are_credited() -> void:
 	for id: String in seen:
 		_check(ResourceLoader.exists("res://assets/icons/lobby/%s.svg" % id), "%s.svg exists" % id)
 		_check(credits.contains(id + ".svg"), "%s.svg is credited" % id)
+
+
+func test_skill_tree_nodes_have_credited_vector_icons() -> void:
+	# User 2026-11-21: vector icons instead of pixel ones in the skill tree, one per node.
+	var credits := FileAccess.get_file_as_string("res://assets/credits/icons-skill-tree.txt")
+	var tree := FileAccess.get_file_as_string("res://assets/data/skill_tree.json")
+	var re := RegEx.create_from_string("\"vicon\": \"([a-z-]+)\"")
+	var n := 0
+	for m in re.search_all(tree):
+		var id := m.get_string(1)
+		n += 1
+		_check(ResourceLoader.exists("res://assets/icons/tree/%s.svg" % id), "%s.svg exists" % id)
+		_check(credits.contains(id + ".svg"), "%s.svg is credited" % id)
+	_check(n >= 26, "every node has a vector icon, got %d" % n)

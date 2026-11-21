@@ -1,0 +1,31 @@
+Skill tree node icons (assets/icons/tree/*.svg)
+Source: game-icons.net (https://game-icons.net), repository https://github.com/game-icons/icons
+License: CC BY 3.0 (https://creativecommons.org/licenses/by/3.0/)
+Changes: black background square removed, fill recoloured to #f2e6c8.
+
+muscle-up.svg  (Rèn thân)  by Lorc  https://game-icons.net/1x1/lorc/muscle-up.html
+meditation.svg  (Linh căn)  by Lorc  https://game-icons.net/1x1/lorc/meditation.html
+stopwatch.svg  (Tốc chiến)  by Lorc  https://game-icons.net/1x1/lorc/stopwatch.html
+hourglass.svg  (Niệm nhanh)  by Lorc  https://game-icons.net/1x1/lorc/hourglass.html
+healing.svg  (Hồi sức)  by Delapouite  https://game-icons.net/1x1/delapouite/healing.html
+angel-wings.svg  (Hộ mệnh)  by Lorc  https://game-icons.net/1x1/lorc/angel-wings.html
+broadsword.svg  (Lưỡi sắc)  by Lorc  https://game-icons.net/1x1/lorc/broadsword.html
+sword-spin.svg  (Vung rộng)  by Lorc  https://game-icons.net/1x1/lorc/sword-spin.html
+crossed-swords.svg  (Sát khí)  by Lorc  https://game-icons.net/1x1/lorc/crossed-swords.html
+sword-clash.svg  (Nhịp kiếm)  by Lorc  https://game-icons.net/1x1/lorc/sword-clash.html
+feathered-wing.svg  (Chân nhẹ)  by Lorc  https://game-icons.net/1x1/lorc/feathered-wing.html
+armor-upgrade.svg  (Giáp dày)  by Delapouite  https://game-icons.net/1x1/delapouite/armor-upgrade.html
+abdominal-armor.svg  (Mình đồng)  by Delapouite  https://game-icons.net/1x1/delapouite/abdominal-armor.html
+bloody-sword.svg  (Cuồng huyết)  by Lorc  https://game-icons.net/1x1/lorc/bloody-sword.html
+tornado.svg  (Bão kiếm)  by Lorc  https://game-icons.net/1x1/lorc/tornado.html
+mountaintop.svg  (Bất động)  by Lorc  https://game-icons.net/1x1/lorc/mountaintop.html
+fireball.svg  (Hỏa lực)  by Lorc  https://game-icons.net/1x1/lorc/fireball.html
+magic-swirl.svg  (Phép rộng)  by Lorc  https://game-icons.net/1x1/lorc/magic-swirl.html
+resonance.svg  (Cộng hưởng)  by Lorc  https://game-icons.net/1x1/lorc/resonance.html
+star-swirl.svg  (Lưu chuyển)  by Lorc  https://game-icons.net/1x1/lorc/star-swirl.html
+wingfoot.svg  (Bước gió)  by Lorc  https://game-icons.net/1x1/lorc/wingfoot.html
+magnet.svg  (Thu hút)  by Lorc  https://game-icons.net/1x1/lorc/magnet.html
+magic-shield.svg  (Khiên phép)  by Lorc  https://game-icons.net/1x1/lorc/magic-shield.html
+extraction-orb.svg  (Ma lực cuồng)  by Lorc  https://game-icons.net/1x1/lorc/extraction-orb.html
+double-ringed-orb.svg  (Song pháp)  by Lorc  https://game-icons.net/1x1/lorc/double-ringed-orb.html
+ankh.svg  (Bất tử)  by Lorc  https://game-icons.net/1x1/lorc/ankh.html

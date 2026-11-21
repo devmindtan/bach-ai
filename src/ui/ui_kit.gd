@@ -163,12 +163,41 @@ static func with_vector_icon(b: Button, id: String, px := 40) -> Button:
 	if not ResourceLoader.exists(path):
 		push_warning("UiKit: lobby icon %s missing" % path)
 		return b
-	b.icon = load(path)
-	b.expand_icon = true
-	b.add_theme_constant_override("icon_max_width", px)
+	b.icon = vector_texture(path, px)
 	b.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	b.add_theme_constant_override("h_separation", 10)
 	return b
+
+
+static var _vector_cache := {}
+
+
+## The SVG at [param path] rendered down to [param px] square (Lanczos, cached): a texture of the size it is
+## shown at, so layouts treat it like the pixel icons (a 512 px SVG texture kept its own size in a Button).
+static func vector_texture(path: String, px: int) -> Texture2D:
+	var key := "%s@%d" % [path, px]
+	if not _vector_cache.has(key):
+		var img := (load(path) as Texture2D).get_image()
+		img.resize(px, px, Image.INTERPOLATE_LANCZOS)
+		_vector_cache[key] = ImageTexture.create_from_image(img)
+	return _vector_cache[key]
+
+
+## A node / tooltip icon: the vector icon res://assets/icons/<folder>/<vector>.svg when [param vector] is set
+## (smooth, any size), else the pixel icon [param pixel] (user 2026-11-21: vector icons in the skill tree).
+static func node_icon(vector: String, pixel: String, px: float, folder := "tree") -> TextureRect:
+	var path := "res://assets/icons/%s/%s.svg" % [folder, vector]
+	if vector == "" or not ResourceLoader.exists(path):
+		return icon(pixel, px)
+	var t := TextureRect.new()
+	t.texture = vector_texture(path, int(px))
+	t.custom_minimum_size = Vector2(px, px)
+	t.size = t.custom_minimum_size
+	t.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	t.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	t.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	t.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return t
 
 
 static func panel(bg := PANEL, pad := 16, border := GOLD) -> PanelContainer:

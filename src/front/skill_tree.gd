@@ -150,10 +150,11 @@ func _node_button(n: Dictionary) -> Control:
 		b.add_theme_stylebox_override(s, hov)
 	Tip.attach(b, String(n.get("name", id)))
 	holder.add_child(b)
-	var ic := UiKit.icon(String(n.get("icon", "star")), side * 0.6)
+	var ic := UiKit.node_icon(String(n.get("vicon", "")), String(n.get("icon", "star")), side * 0.6)
 	ic.position = (Vector2(side, side) - ic.custom_minimum_size) / 2.0
 	ic.modulate = Color.WHITE if r > 0 else Color(0.5, 0.5, 0.56)
 	b.add_child(ic)
+	ic.size = ic.custom_minimum_size   # a Button is not a container: a 512 px SVG kept its own size otherwise
 	var lv := UiKit.label("%d/%d" % [r, mx], 14, UiKit.GOLD if r >= mx else (UiKit.TEXT if r > 0 else UiKit.MUTED))
 	lv.add_theme_stylebox_override("normal", UiKit.style(Color("100e16"), 3, Color(0, 0, 0, 0), 0))   # the edge passes under it
 	lv.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -192,7 +193,7 @@ func _detail(root: Control) -> void:
 	var head := HBoxContainer.new()
 	head.add_theme_constant_override("separation", 12)
 	v.add_child(head)
-	head.add_child(UiKit.icon(String(n.get("icon", "star")), 48.0))
+	head.add_child(UiKit.node_icon(String(n.get("vicon", "")), String(n.get("icon", "star")), 48.0))
 	var hv := VBoxContainer.new()
 	head.add_child(hv)
 	hv.add_child(UiKit.label(String(n.get("name", _view)), 24, UiKit.GOLD if owned else UiKit.TEXT))
