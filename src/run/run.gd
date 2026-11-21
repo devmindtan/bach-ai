@@ -213,6 +213,7 @@ var _arena_half := 1400.0
 var _hit_center := Vector2(0, -26)
 var _camera: Camera2D
 var _status_max_shown := 2   # statuses.json max_shown
+var _status_view_cache: StatusView
 var _vfx_alpha := 1.0      # Cài đặt "Hiệu ứng": fades skill / status effects, never bolts or bodies
 var _ground: GroundLayer   # cached arena floor (src/run/ground_layer.gd)
 var _hud: RunHud
@@ -2147,37 +2148,19 @@ func special_fx_sprites() -> Array[String]:
 	return out
 
 
-## The statuses to draw on one monster: at most statuses.json max_shown (2), highest "priority" first
-## (review 2026-11-21: burn + shock + slow + bleed stacked into clutter). Statuses not drawn still act.
+## Status look on monsters lives in StatusView (src/run/status_view.gd); these keep the run's API.
 func visible_statuses(list: Array) -> Array:
-	if list.size() <= 1:
-		return list
-	var sorted := list.duplicate()
-	sorted.sort_custom(func(a: Variant, b: Variant) -> bool:
-		return int(status_defs.get(a, {}).get("priority", 0)) > int(status_defs.get(b, {}).get("priority", 0)))
-	return sorted.slice(0, int(_status_max_shown))
+	return _status_view().visible(list)
 
 
-## Where to draw a status sprite on a body of [param radius] px: [[offset, scale], ...]. The sprites are
-## made for a body of radius 8 art px. A tiled status (statuses.json "tile", the burn) never blows one sprite
-## up (user 2026-11-20: blurry, blocky on big monsters): it draws several at a whole scale no larger than
-## the game's sprite scale, in a row along the lower half of the body; others keep one sprite at the whole
-## scale nearest to the body (never a fraction: fractional scales smear pixel art).
 func status_spots(radius: float, tile: bool) -> Array:
-	if not tile:   # one sprite fitted to the body, at a WHOLE scale so its pixels stay crisp
-		return [[Vector2.ZERO, maxf(1.0, roundf(radius / 8.0))]]
-	var full := 8.0 * _sprite_scale
-	if radius <= full:
-		return [[Vector2.ZERO, clampf(roundf(radius / 8.0), 1.0, _sprite_scale)]]
-	# a row along the lower half (user 2026-11-20: tall flames all over the body hid the monster)
-	var n := clampi(roundi(radius / full * 1.5), 2, 5)
-	var out := []
-	for k in n:
-		var t := (k + 0.5) / n * 2.0 - 1.0          # -1 .. 1 across the body
-		var x := t * radius * 0.7
-		var y := radius * (0.35 + 0.25 * (1.0 - absf(t)))   # follows the body's lower curve
-		out.append([Vector2(x, y), _sprite_scale])
-	return out
+	return _status_view().spots(radius, tile)
+
+
+func _status_view() -> StatusView:
+	if _status_view_cache == null or _status_view_cache.sprite_scale != _sprite_scale:
+		_status_view_cache = StatusView.new(status_defs, int(_status_max_shown), _sprite_scale)
+	return _status_view_cache
 
 
 ## True when the stage is won: a boss stage only by killing its boss (user 2026-11-21: the boss arrives
@@ -2861,23 +2844,7 @@ func _drain_shocks(dt: float) -> void:
 ## Status sprites on monsters (statuses.json "at": body / head / feet) and the
 ## shock arcs. Drawn over the monsters, under the skill effects.
 func _draw_statuses(view: Rect2) -> void:
-	for i in enemies.count:
-		if enemies.state[i] == Enemies.DYING or not view.has_point(enemies.pos[i]):
-			continue
-		for st in visible_statuses(enemies.statuses_of(i)):
-			var d: Dictionary = status_defs.get(st, {})
-			var sh: SpriteSheet = sheets.get(String(d.get("sprite", "")))
-			if sh == null:
-				continue
-			var r := enemies.k_radius[enemies.kind[i]]
-			var p := enemies.center_of(i)
-			if String(d.get("at", "body")) == "head":
-				p.y -= r
-			var k := 0
-			for spot: Array in status_spots(r, bool(d.get("tile", false))):
-				sh.draw(self, "loop", clock + i * 0.17 + k * 0.29, p + (spot[0] as Vector2), float(spot[1]),
-					false, Color(1, 1, 1, float(d.get("alpha", 1.0)) * _vfx_alpha))   # see-through: the monster stays visible
-				k += 1
+	_status_view().draw_on_monsters(self, enemies, sheets, clock, view, _vfx_alpha)
 	for s in _shock_fx:
 		var a: Vector2 = s["a"]
 		var b: Vector2 = s["b"]

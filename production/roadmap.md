@@ -181,6 +181,9 @@ gấp đôi `px_scale` 0,5; `tierfx` mang `px_scale` sang bậc). **Còn:** Són
 xoay 16 hướng: phải vẽ lại từng hướng như `boltfx`, cỡ M). Mục 5 phần `run_config`: test `config_defaults_test` quét mọi
 `cfg.get(…, số)` trong `src/`, số mặc định phải bằng JSON hoặc trung tính 0 / 1 (sửa 2 chỗ lệch: `max_enemies` 600 → 200,
 `gold_chance` 0,1 → 0,12). **Còn:** mở rộng cách kiểm này cho `monsters.json`, `upgrades_*.json`, `items.json`.
+Mục 6–7 đang làm theo lát (mỗi lát giữ nguyên test và hình): lát 1 `StatusView` (`src/run/status_view.gd`: trạng thái trên
+quái, `run.gd` 3.341 → 3.308 dòng). Lát kế: tham số dòng lệnh, bench + overlay debug, vẽ boss (root walls, bolts,
+waves), level-up / ví, rồi hành vi quái theo kiểu Strategy trong `enemies.gd`.
 
 **Đánh giá ngoài lần 3 (2026-11-21), đã kiểm từng ý:**
 - Đã làm: save ghi qua file tạm + giữ `.bak`, tự khôi phục khi file hỏng (`e68f57a`); tối đa 2 hiệu ứng trạng thái vẽ
