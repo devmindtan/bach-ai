@@ -56,7 +56,7 @@ func test_event_damage_never_crits() -> void:
 	e.crit_mul = 2.0
 	e.spawn("blob", Vector2(30, 0))
 	_settle(e)
-	e.hit_circle(Vector2.ZERO, 60.0, 5.0, 0.0, MeteorShower.SOURCE)
+	e.hit_circle(Vector2.ZERO, 60.0, 5.0, 0.0, Tornado.SOURCE)
 	_check(is_equal_approx(e.hit_val[0], 5.0), "an event's hit is not a crit")
 
 

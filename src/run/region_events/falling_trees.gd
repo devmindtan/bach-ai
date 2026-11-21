@@ -21,7 +21,8 @@ var _waves_left := 0
 var _interval := 2.5
 var _next := 0.0
 var _range := 300.0
-var _used: Array = []   # feet already felled this event
+var _used: Array = []   # feet already picked this event
+var felled: Array = []  # feet of trees that fell this run: drawn as stumps from then on (not reset by start)
 
 
 func start(cfg: Dictionary) -> void:
@@ -45,6 +46,7 @@ func step(dt: float, player: Vector2, feet: Array, rng: RandomNumberGenerator) -
 		marks[i]["t"] = float(marks[i]["t"]) - dt
 		if float(marks[i]["t"]) <= 0.0:
 			landed.append(marks[i])
+			felled.append(marks[i]["a"])
 			logs.append({"a": marks[i]["a"], "d": marks[i]["d"], "t": linger})
 			marks.remove_at(i)
 	for i in range(logs.size() - 1, -1, -1):

@@ -21,7 +21,7 @@ extends Node2D
 ##   --pick-card=ID  take count card ID at the start and open its skill pick (shots)
 ##   --no-auto-pick  the demo stops at the first level-up panel (for shots)
 ##   --spawn-only=ID[,ID] only the waves of these monsters spawn, from the start (shots)
-##   --event=K@T     run event K (ring | collect | hunt | meteor) at T seconds (shots)
+##   --event=K@T     run event K (ring | collect | hunt | tornado | falling_trees | poison_tide) at T seconds (shots)
 ##   --pool-here     a poison pool under the hero's start (shots of the poison look)
 ##   --vfx=N         Cài đặt "Hiệu ứng" level for shots (0 Đầy đủ, 1 Giảm, 2 Tối thiểu)
 ##   --debug-overlay show the F1 debug overlay from the start (shots)
@@ -183,10 +183,6 @@ var _forced_events: Array = []   # --event=K@T
 var _field_events: Array = []    # [time, "collect" | "hunt"] of this run's region (FieldChallenge)
 var field := FieldChallenge.new()      # clock times this run's region opens a ring
 var obstacles: Obstacles = null   # the stage's rocks / trees / poison pools (design/obstacles.md)
-var meteors := MeteorShower.new()   # Mưa thiên thạch (design/events.md)
-var _meteor_cfg: Dictionary = {}
-var _meteor_times: Array = []    # clock times this run's region starts a shower
-var _meteor_fx: Array = []       # [{p, t}] meteors that just landed (blast drawn for 0.4 s)
 var _own_events: Array = []      # [time, kind] the region's own event (design/region-events-plan.md)
 var tornado := Tornado.new()     # Lốc cỏ (Đồng cỏ)
 var trees := FallingTrees.new()  # Cây đổ (Rừng Âm U)
@@ -259,17 +255,13 @@ func _ready() -> void:
 			continue   # stages before events.min_stage are quiet; --event below still forces one
 		if String(ev.get("kind", "")) == "ring" and challenge_id == "":
 			_ring_times.append(float(ev.get("t", 60.0)))
-		elif String(ev.get("kind", "")) == "meteor" and challenge_id == "":
-			_meteor_times.append(float(ev.get("t", 150.0)))
 		elif String(ev.get("kind", "")) in OWN_EVENTS and challenge_id == "":
 			_own_events.append([float(ev.get("t", 150.0)), String(ev["kind"])])
 		elif String(ev.get("kind", "")) in ["collect", "hunt"] and challenge_id == "":
 			_field_events.append([float(ev.get("t", 120.0)), String(ev["kind"])])
-	_meteor_cfg = cfg.get("events", {}).get("meteor", {})
 	for fe: Array in _forced_events:   # --event (shots)
 		match String(fe[1]):
 			"ring": _ring_times = [fe[0]]
-			"meteor": _meteor_times = [fe[0]]
 			"tornado", "falling_trees", "poison_tide": _own_events = [fe]
 			_: _field_events = [fe]
 	# each region and the challenges have their own song (design/regions.md)
@@ -473,8 +465,6 @@ func _parse_args() -> void:
 	for a in OS.get_cmdline_user_args():
 		if a == "--demo":
 			demo = true
-		elif a.begins_with("--meteor-at="):   # shots: start a meteor shower at this clock time
-			_meteor_times = [float(a.get_slice("=", 1))]
 		elif a == "--level-now":   # shots: a level-up panel as the run starts (card flip)
 			_level_now = true
 		elif a == "--gold-chest":   # shots: a Rương vàng on the ground beside the hero
@@ -668,7 +658,6 @@ func _tick(dt: float) -> void:
 		_spawn(clock - dt, clock)
 	_step_ring(dt)
 	_step_field(dt)
-	_step_meteors(dt)
 	_step_own_event(dt)
 	_hp_min = minf(_hp_min, hp)
 	for i in range(_absorb_fx.size() - 1, -1, -1):
@@ -2679,7 +2668,7 @@ func _draw() -> void:
 	_draw_ground_fx()
 	_draw_ring()
 	_draw_field()
-	_draw_meteors()
+	_draw_region_events()
 	_draw_charge_lanes(view)
 	_boss_view.draw_pools(view)
 	_boss_view.draw_root_walls()
@@ -3049,6 +3038,12 @@ func _draw_obstacles(view: Rect2, front: bool) -> void:
 		var sh: SpriteSheet = sheets.get(String(s["sprite"]))
 		if sh == null:
 			continue
+		if p in trees.felled:   # Cây đổ: a stump where the tree stood (its trunk lies on the floor)
+			if not front:
+				draw_circle(p + Vector2(0, -4), 11.0, Color(0.22, 0.13, 0.07))
+				draw_circle(p + Vector2(0, -6), 8.0, Color(0.55, 0.38, 0.2))
+				draw_arc(p + Vector2(0, -6), 4.0, 0.0, TAU, 12, Color(0.4, 0.26, 0.12), 1.5)
+			continue
 		if front:
 			var size := sh.frame_size * _sprite_scale
 			var behind := player_pos.y < p.y and player_pos.y > p.y - size.y and absf(player_pos.x - p.x) < size.x * 0.45
@@ -3123,61 +3118,11 @@ func _step_own_event(dt: float) -> void:
 			pickups.drop(Pickups.COIN, q, 1.0)
 
 
-## Mưa thiên thạch (design/events.md): at the region's event time meteors are marked near the player
-## and land warn s later, hurting the player (armor applies) and the monsters inside the mark.
-func _step_meteors(dt: float) -> void:
-	for t: float in _meteor_times:
-		if clock - dt < t and t <= clock and not meteors.busy():
-			meteors.start(_meteor_cfg)
-			wave_call = "Sự kiện vùng: Mưa thiên thạch! Tránh vòng đỏ, dụ quái vào"
-			wave_call_t = 3.0
-			Sfx.play("boss_spawn")
-	for p: Vector2 in meteors.step(dt, player_pos, rng):
-		_meteor_fx.append({"p": p, "t": 0.4})
-		Sfx.play("quake")
-		enemies.hit_circle(p, meteors.radius, float(_meteor_cfg.get("monster_damage", 80.0)), 120.0, MeteorShower.SOURCE)
-		if meteors.hits(p, player_pos) and invuln <= 0.0 and not god and not buffs.invulnerable() and _dash_left <= 0.0:
-			if not _spend_ward():
-				_take_hit(float(_meteor_cfg.get("player_damage", 12.0)))
-	for i in range(_meteor_fx.size() - 1, -1, -1):
-		_meteor_fx[i]["t"] = float(_meteor_fx[i]["t"]) - dt
-		if float(_meteor_fx[i]["t"]) <= 0.0:
-			_meteor_fx.remove_at(i)
-
-
-## Marks: a red ring flat on the ground with a disc filling in as the meteor nears, the rock dropping
-## onto it from above; landed ones flash an orange blast.
-func _draw_meteors() -> void:
+## The region's own event, drawn on the floor under the monsters.
+func _draw_region_events() -> void:
 	tornado.draw(self, clock)
 	trees.draw(self)
 	tide.draw(self, clock)
-	var r := meteors.radius
-	for mk: Dictionary in meteors.marks:
-		var p: Vector2 = mk["p"]
-		var k := 1.0 - clampf(float(mk["t"]) / maxf(0.01, meteors.warn), 0.0, 1.0)   # 0 marked .. 1 lands
-		draw_set_transform(p, 0.0, Vector2(1.0, 0.55))
-		draw_circle(Vector2.ZERO, r, Color(1.0, 0.2, 0.1, 0.12))
-		draw_circle(Vector2.ZERO, r * k, Color(1.0, 0.3, 0.1, 0.30))
-		draw_arc(Vector2.ZERO, r, 0.0, TAU, 48, Color(1.0, 0.25, 0.15, 0.9), 3.0)
-		draw_set_transform(Vector2.ZERO)
-		var fall := Vector2(-0.3, 1.0).normalized()   # comes in from the upper right
-		var rock := p - fall * 260.0 * (1.0 - k)
-		var a := clampf(k * 2.0, 0.0, 1.0)
-		for j in range(6, 0, -1):   # a fiery tail: shrinking puffs behind the rock
-			var q := rock - fall * 9.0 * j
-			draw_circle(q, 11.0 - 1.4 * j, Color(1.0, 0.45 + 0.07 * j, 0.15, a * (0.75 - 0.1 * j)))
-		draw_circle(rock, 17.0, Color(1.0, 0.5, 0.15, 0.35 * a))   # glow
-		draw_circle(rock, 11.0, Color(0.2, 0.08, 0.06, a))         # outline
-		draw_circle(rock, 9.0, Color(0.55, 0.22, 0.12, a))
-		draw_circle(rock + Vector2(2.0, 2.0), 4.0, Color(1.0, 0.6, 0.2, a))   # molten cracks
-		draw_circle(rock + Vector2(-3.0, -3.0), 3.0, Color(0.8, 0.4, 0.25, a))
-	for fx: Dictionary in _meteor_fx:
-		var q := 1.0 - float(fx["t"]) / 0.4
-		draw_set_transform(fx["p"], 0.0, Vector2(1.0, 0.55))
-		draw_circle(Vector2.ZERO, r * (0.7 + 0.5 * q), Color(1.0, 0.55, 0.15, 0.8 * (1.0 - q)))
-		draw_circle(Vector2.ZERO, r * 0.45 * (1.0 - q), Color(1.0, 0.95, 0.6, 1.0 - q))   # white-hot core
-		draw_arc(Vector2.ZERO, r * (0.9 + 0.8 * q), 0.0, TAU, 48, Color(1.0, 0.85, 0.4, 1.0 - q), 5.0)
-		draw_set_transform(Vector2.ZERO)
 
 
 func _draw_ring() -> void:

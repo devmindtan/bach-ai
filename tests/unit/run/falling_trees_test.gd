@@ -25,6 +25,7 @@ func test_three_trees_fall_toward_the_player_once_each() -> void:
 		_check(t.hits(f, Vector2.ZERO), "each falls over the player's spot")
 		_check((f["a"] as Vector2).distance_to(Vector2.ZERO) <= 300.0, "only trees in range")
 	_check(not t.hits(landed[0], Vector2(0, -400)), "far away is safe")
+	_check(t.felled.size() == 3 and landed[0]["a"] in t.felled, "felled trees remembered (drawn as stumps)")
 
 
 func test_trunk_is_a_wall_then_goes() -> void:

@@ -21,11 +21,11 @@ func test_event_rows_have_an_icon_and_an_event_name_and_the_table_is_centred() -
 	var blob := SpriteSheet.from_meta("blob", {"frames": 1, "frame_size": [24, 24], "fps": 8.0, "anchor": [12.0, 12.0],
 		"body": {"anim": "default", "center": [12.0, 12.0], "radius": 6.0}})
 	r.enemies = Enemies.new(monsters, {"max_enemies": 4, "separation": {"push": 0.0}}, {"blob": blob}, 1)
-	r.enemies.damage_by = {"arcane_bolt": 100.0, "event.meteor": 20.0}
+	r.enemies.damage_by = {"arcane_bolt": 100.0, "event.tornado": 20.0}
 	var rows: Array = r.damage_report()
 	for row: Dictionary in rows:
 		_check(r.icon_texture(String(row.get("icon", row["id"]))) != null, "row %s has an icon" % row["id"])
-		if row["id"] == "event.meteor":
+		if row["id"] == "event.tornado":
 			_check(String(row["name"]).begins_with("Sự kiện"), "event row named as an event, got %s" % row["name"])
 	var p := RunPanels.new()
 	p.run = r
