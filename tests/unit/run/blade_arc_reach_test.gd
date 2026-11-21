@@ -21,3 +21,13 @@ func test_slash_sits_ahead_and_hits_harder_than_the_bolt() -> void:
 	var fx := {"follow": true, "offset": Vector2(30, 0)}
 	_check(r._fx_pos(fx) == r.player_pos + r._hit_center + Vector2(30, 0), "a following fx keeps its offset")
 	r.free()
+
+
+func test_slash_hitbox_is_a_solid_cone() -> void:
+	# design/blade-arc-redesign.md: the hitbox was a 10 px ring (inner 30, radius 40) measured from the thin
+	# drawn crescent, so monsters close to the hero were missed; the blade sweeps the whole fan
+	for tier in ["sword-slash", "sword-slash-ii", "sword-slash-iii", "sword-slash-iv", "sword-slash-v"]:
+		var m: Dictionary = GameData.load_json("res://assets/sprites/custom/%s/%s.json" % [tier, tier])
+		for a: Dictionary in m.get("animations", []):
+			var hb: Dictionary = a.get("hitbox", {})
+			_check(float(hb.get("inner", 99.0)) == 0.0, "%s %s: inner %s, want 0" % [tier, a["name"], hb.get("inner")])
