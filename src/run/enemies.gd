@@ -163,6 +163,7 @@ var pool_pos := PackedVector2Array()
 var pool_t := PackedFloat32Array()
 var pool_total := PackedFloat32Array()
 var pool_r := PackedFloat32Array()
+var player_in_pool := false   # the player stands in a monster's poison pool (drawn: Run poison look)
 var pool_purple := PackedByteArray()   # 1 = a Cóc Độc Bào Tử spore pool (drawn purple)
 var pool_dmg := PackedFloat32Array()   # roots that erupted this step (the run draws them)
 var vs_status_mul := 0.0        # class passive: extra damage taken by monsters with a status   # set by the run from the class sprite's body
@@ -585,6 +586,7 @@ func add_pool(p: Vector2, time: float, r: float, dmg: float, purple := false) ->
 
 func _step_pools(delta: float, player_center: Vector2) -> float:
 	var hit := 0.0
+	player_in_pool = false
 	var b := 0
 	while b < pool_pos.size():
 		pool_t[b] -= delta
@@ -598,6 +600,7 @@ func _step_pools(delta: float, player_center: Vector2) -> float:
 			continue
 		if pool_pos[b].distance_to(player_center) < pool_r[b] + player_hit_radius * 0.5:
 			hit = maxf(hit, pool_dmg[b])
+			player_in_pool = true
 		b += 1
 	return hit
 

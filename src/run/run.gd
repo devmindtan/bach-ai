@@ -21,6 +21,7 @@ extends Node2D
 ##   --pick-card=ID  take count card ID at the start and open its skill pick (shots)
 ##   --no-auto-pick  the demo stops at the first level-up panel (for shots)
 ##   --spawn-only=ID[,ID] only the waves of these monsters spawn, from the start (shots)
+##   --pool-here     a poison pool under the hero's start (shots of the poison look)
 ##   --vfx=N         Cài đặt "Hiệu ứng" level for shots (0 Đầy đủ, 1 Giảm, 2 Tối thiểu)
 ##   --debug-overlay show the F1 debug overlay from the start (shots)
 ##   --hitboxes      draw hit areas: effects (red while dealing damage), monster
@@ -49,6 +50,9 @@ var _boss_check_t := 0.0
 var challenge_id := ""        # playing a challenge (design/challenge.md); --challenge=ID for shots
 var _win_on_boss := true
 var boss_stage := false
+const POISON_LOOK := 0.2   # s the poison look stays after leaving a pool
+var poison_t := 0.0
+var _pool_here := false      # --pool-here          # > 0: the hero stands in poison (pool look)
 var _outro_t := -1.0          # the boss outro: seconds left (-1 not started, 0 over)
 var _last_boss_name := "Boss"   # a wave of this stage spawns a boss: won only by killing it
 var _delayed: Array = []
@@ -338,6 +342,9 @@ func _ready() -> void:
 	if challenge_id == "" and bench == 0:   # the region's props, seeded by the stage (same map every time)
 		obstacles = Obstacles.new(stages.region(stage_number).get("obstacles", {}), _arena_half, stage_number * 7919 + 13)
 		enemies.obstacles = obstacles
+	if _pool_here and obstacles != null:
+		obstacles.pools.append({"p": player_pos, "r": 60.0})
+		obstacles.pool_dps = maxf(obstacles.pool_dps, 1.0)
 	var bal: Dictionary = cfg.get("balance", {})   # global tuning (run_config.json balance, 2026-11-20)
 	enemies.scale_kinds(stages.hp_mul(stage_number) * float(stage.get("hp_mul", 1.0)) * float(bal.get("monster_hp_mul", 1.0)),
 		stages.damage_mul(stage_number) * float(bal.get("monster_damage_mul", 1.0)))
@@ -520,6 +527,8 @@ func _parse_args() -> void:
 			auto_pick = false
 		elif a == "--hitboxes":
 			show_hitboxes = true
+		elif a == "--pool-here":   # shots: a poison pool under the hero's start (poison look)
+			_pool_here = true
 		elif a.begins_with("--vfx="):   # shots: the Cài đặt "Hiệu ứng" level 0..2
 			Prefs.current().vfx = clampi(int(a.get_slice("=", 1)), 0, 2)
 		elif a == "--debug-overlay":
@@ -2703,7 +2712,17 @@ func _draw() -> void:
 		_draw_auras("back")
 		_draw_fx(true)
 		_draw_dash_trail(hero)
+		if poison_t > 0.0:   # standing in poison (user 2026-11-21): a pulsing green tint and rising bubbles
+			var pz := 0.5 + 0.5 * sin(clock * 10.0)
+			tint = Color(tint.r * (0.55 + 0.15 * pz), tint.g, tint.b * (0.45 + 0.15 * pz), tint.a)
 		hero.draw(self, _anim, _anim_t, player_pos, _sprite_scale, face_left, tint)
+		if poison_t > 0.0:
+			for q in 5:
+				var life := fmod(clock * 1.4 + q * 0.37, 1.0)
+				var bp := player_pos + _hit_center + Vector2(sin(q * 2.3 + clock * 2.0) * 10.0, 8.0 - life * 34.0)
+				var br := 2.0 + (q % 2)
+				draw_circle(bp, br, Color(0.45, 0.95, 0.35, 0.85 * (1.0 - life)))
+				draw_arc(bp, br, 0.0, TAU, 8, Color(0.1, 0.35, 0.1, 0.9 * (1.0 - life)), 1.0)
 		_draw_auras("front")
 	_draw_obstacles(view, true)   # a tree the hero walks behind: drawn again, see-through, over the hero
 	_draw_statuses(view)
@@ -2894,9 +2913,13 @@ func _step_ring(dt: float) -> void:
 ## Vũng độc (design/obstacles.md): standing in a poison pool loses pool_dps hp a second (no armor,
 ## no hurt flinch, so walking through is a choice, not a stun).
 func _step_pools_hazard(dt: float) -> void:
+	poison_t = maxf(0.0, poison_t - dt)
+	if enemies != null and enemies.player_in_pool:
+		poison_t = POISON_LOOK
 	if obstacles == null or obstacles.pools.is_empty() or god or buffs.invulnerable():
 		return
 	if obstacles.in_pool(player_pos):
+		poison_t = POISON_LOOK
 		var d := obstacles.pool_dps * dt
 		hp -= d
 		damage_taken += d
