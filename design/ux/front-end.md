@@ -71,3 +71,7 @@ Sảnh chuẩn bị ──Trang bị──→ Màn trang bị (design/ux/equipme
 - `gamekit ui-shots`: `00-title`, `00b-characters`, `00c-characters-new`, `01g-lobby-slot`; soi từng vùng ×2.
 - `tests/integration/ui/ux_spec_test.gd`: mỗi màn trong `production/ui/screens.json` có `spec` thì file đó tồn tại
   và có mục "Tham khảo" với ít nhất một liên kết; màn của `src/front/` và `src/lobby/` bắt buộc có `spec`.
+
+**Icon sảnh bằng ảnh vector (người dùng 2026-11-21).** Icon pixel 24 px trên nút sảnh trông giả; thay bằng icon SVG của
+game-icons.net (CC BY 3.0, ghi công ở `assets/credits/icons-game-icons-net.txt`), màu kem, 36–40 px, lọc mịn
+(`UiKit.with_vector_icon`). Icon thẻ trong trận vẫn là pixel art (`card-icons`).
