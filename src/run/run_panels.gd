@@ -431,6 +431,12 @@ func _upgrade_card(i: int, id: String) -> Button:
 
 
 ## "Cấp n/m", or "Cấp n · không giới hạn" for a card without a level cap.
+## Segments in a card's level bar: one per level, none for a card without a cap
+## (2^30 segments ran the pause screen out of memory, bug 2026-11-21).
+static func badge_segments(mx: int) -> int:
+	return 0 if mx > 20 else mx
+
+
 static func _lv_text(lv: int, mx: int) -> String:
 	return "Cấp %d · không giới hạn" % lv if mx > 20 else "Cấp %d/%d" % [lv, mx]
 
@@ -545,7 +551,7 @@ func _owned_tile(o: Dictionary, info: RichTextLabel) -> Button:
 	over.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	over.draw.connect(func() -> void: _draw_owned_badge(over, lv, mx, accent, maxed))
 	b.add_child(over)
-	Tip.attach(b, String(o["name"]), String(o.get("desc", "")), accent, String(o["id"]), "Cấp %d/%d" % [lv, mx])
+	Tip.attach(b, String(o["name"]), String(o.get("desc", "")), accent, String(o["id"]), _lv_text(lv, mx))
 	b.mouse_entered.connect(func() -> void: _show_owned_info(info, o))
 	b.focus_entered.connect(func() -> void: _show_owned_info(info, o))
 	return b
@@ -563,8 +569,12 @@ func _draw_owned_badge(c: Control, lv: int, mx: int, accent: Color, maxed: bool)
 	# level bar: one segment per level along the bottom edge
 	var x0 := 4.0
 	var bw := OWNED_TILE - 8.0
-	var seg := bw / mx
-	for l in mx:
+	var n := badge_segments(mx)
+	if n == 0:   # no level cap: one plain bar, the number above says the level
+		c.draw_rect(Rect2(x0, OWNED_TILE - 7, bw, 3), accent)
+		return
+	var seg := bw / n
+	for l in n:
 		var col := (MILESTONE if maxed else accent) if l < lv else PIP_EDGE.darkened(0.45)
 		c.draw_rect(Rect2(x0 + l * seg, OWNED_TILE - 7, maxf(1.0, seg - 1.0), 3), col)
 
