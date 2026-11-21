@@ -1,6 +1,6 @@
 # Kế hoạch: thiết kế lại Chém kiếm (`blade_arc`)
 
-Trạng thái: **kế hoạch, chưa code** (2026-11-21). Người dùng: "chiêu chém kiếm không đẹp và khá phế".
+Trạng thái: **đang làm**: bước 1 xong (2026-11-21). Người dùng: "chiêu chém kiếm không đẹp và khá phế".
 Thực hiện theo `.agents/skills/free-agent-workloop` (mỗi bước một commit có test + ảnh).
 
 ## 1. Hiện trạng (đã xem `sprite-lab/sprites/sword-slash/preview.png` và ảnh trong trận)
@@ -62,10 +62,9 @@ Thẻ Chém ngược vẫn giữ, nhưng thành "nhát sau +25% mỗi cấp" ch�
 
 ## 4. Các bước (mỗi bước một commit)
 
-1. **Hitbox `cone`.**
-   - Code: `SpriteAnchor`/hitbox addon (`tools/gamekit/addon`), `Enemies` hỏi "điểm trong nón".
-   - Test đơn vị.
-   - Commit ở gamekit + `gamekit install`.
+1. ✅ **Hitbox nón** (2026-11-21, `737f7ba`): addon đã có hình `arc` (vành tròn cắt theo góc); lỗi là `inner` đo từ nét
+   mảnh (vành 10 px). Thêm `"swept": true` trong spec hitbox (gamekit 1.26.8) → `inner` 0 = nón đặc; test
+   `blade_arc_reach_test`.
 2. **Sprite mới trong Lab.**
    - Tạo `families/sword-slash.py` (5 bậc), xem preview, `art shot sheet/move`, `art test`.
    - Promote vào game.
