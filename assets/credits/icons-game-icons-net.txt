@@ -1,0 +1,14 @@
+Lobby button icons (assets/icons/lobby/*.svg)
+Source: game-icons.net (https://game-icons.net), repository https://github.com/game-icons/icons
+License: CC BY 3.0 (https://creativecommons.org/licenses/by/3.0/)
+Changes: black background square removed, fill recoloured to #f2e6c8.
+
+nav_character.svg  "Visored helm"   by Lorc        https://game-icons.net/1x1/lorc/visored-helm.html
+nav_deck.svg       "Card exchange"  by Delapouite  https://game-icons.net/1x1/delapouite/card-exchange.html
+nav_gacha.svg      "Crystal ball"   by Lorc        https://game-icons.net/1x1/lorc/crystal-ball.html
+nav_missions.svg   "Scroll unfurled" by Lorc       https://game-icons.net/1x1/lorc/scroll-unfurled.html
+nav_settings.svg   "Cog"            by Lorc        https://game-icons.net/1x1/lorc/cog.html
+nav_title.svg      "House"          by Delapouite  https://game-icons.net/1x1/delapouite/house.html
+nav_tree.svg       "Tree growth"    by Delapouite  https://game-icons.net/1x1/delapouite/tree-growth.html
+nav_equipment.svg  "Breastplate"    by Lorc        https://game-icons.net/1x1/lorc/breastplate.html
+nav_stages.svg     "Flying flag"    by Lorc        https://game-icons.net/1x1/lorc/flying-flag.html

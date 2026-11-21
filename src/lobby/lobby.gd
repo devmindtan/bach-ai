@@ -179,7 +179,7 @@ func _build_ui() -> void:
 		var b: Button = top_buttons[k]
 		var label := b.text
 		b.text = ""
-		UiKit.with_icon(b, String(["nav_character", "nav_deck", "nav_gacha", "nav_missions", "nav_settings", "nav_title"][k]), 2)
+		UiKit.with_vector_icon(b, String(["nav_character", "nav_deck", "nav_gacha", "nav_missions", "nav_settings", "nav_title"][k]), 36)
 		b.custom_minimum_size = Vector2(64, 56)
 		b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		Tip.attach(b, String(tips[k][0]), String(tips[k][1]))
@@ -292,18 +292,18 @@ func _build_ui() -> void:
 	# (stages and modes have their own screen: design/ux/stage-select.md)
 	var start_x := vp.x - 32 - 300
 	var gear := _button("Trang bị", func() -> void: get_tree().change_scene_to_file(EQUIPMENT_SCENE))
-	UiKit.with_icon(gear, "nav_equipment", 2)
+	UiKit.with_vector_icon(gear, "nav_equipment", 40)
 	gear.custom_minimum_size = Vector2(200, ROW_H)
 	gear.add_theme_font_size_override("font_size", 22)
 	gear.position = Vector2(start_x - 16 - 200, vp.y - BOTTOM_ROW)
 	menu.add_child(gear)
 	var tree := _button("Cây kỹ năng", func() -> void: get_tree().change_scene_to_file(TREE_SCENE))
-	UiKit.with_icon(tree, "nav_tree", 2)
+	UiKit.with_vector_icon(tree, "nav_tree", 40)
 	tree.custom_minimum_size = Vector2(200, ROW_H)
 	tree.add_theme_font_size_override("font_size", 22)
 	tree.position = Vector2(start_x - 32 - 400, vp.y - BOTTOM_ROW)
 	menu.add_child(tree)
-	var start := UiKit.with_icon(_button("Chọn ải  ▶", func() -> void: get_tree().change_scene_to_file(STAGE_SCENE)), "nav_stages", 2)
+	var start := UiKit.with_vector_icon(_button("Chọn ải  ▶", func() -> void: get_tree().change_scene_to_file(STAGE_SCENE)), "nav_stages", 40)
 	start.custom_minimum_size = Vector2(300, ROW_H)
 	start.add_theme_font_size_override("font_size", 26)
 	start.add_theme_stylebox_override("normal", _style(accent.darkened(0.45), 8))

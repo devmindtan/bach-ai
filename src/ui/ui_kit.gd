@@ -155,6 +155,22 @@ static func with_icon(b: Button, id: String, scale := 1) -> Button:
 	return b
 
 
+## Puts the vector icon res://assets/icons/lobby/<id>.svg (game-icons.net, CC BY 3.0, assets/credits) on
+## [param b], [param px] wide, smooth-filtered (user 2026-11-21: the 24 px pixel icons looked fake on the
+## lobby buttons; use real icon images there).
+static func with_vector_icon(b: Button, id: String, px := 40) -> Button:
+	var path := "res://assets/icons/lobby/%s.svg" % id
+	if not ResourceLoader.exists(path):
+		push_warning("UiKit: lobby icon %s missing" % path)
+		return b
+	b.icon = load(path)
+	b.expand_icon = true
+	b.add_theme_constant_override("icon_max_width", px)
+	b.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	b.add_theme_constant_override("h_separation", 10)
+	return b
+
+
 static func panel(bg := PANEL, pad := 16, border := GOLD) -> PanelContainer:
 	var p := PanelContainer.new()
 	p.add_theme_stylebox_override("panel", style(bg, pad, border))
