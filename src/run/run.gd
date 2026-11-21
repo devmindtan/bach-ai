@@ -47,6 +47,7 @@ var _boss_music := false                # the boss song is on (a boss is alive)
 var _boss_check_t := 0.0
 var challenge_id := ""        # playing a challenge (design/challenge.md); --challenge=ID for shots
 var _win_on_boss := true
+var boss_stage := false   # a wave of this stage spawns a boss: won only by killing it
 var _delayed: Array = []
 var profile: Profile                # equipment (Prefs.current().profile())
 var won_items: Array[String] = []   # equipment won this run (end screen)
@@ -351,6 +352,10 @@ func _ready() -> void:
 	for k in _ground_buffs.size():
 		buffs.ground.append({"id": _ground_buffs[k], "pos": Vector2(120.0 + 70.0 * k, -60.0), "age": 0.0})
 	var wave_list: Array = stage.get("waves", [])
+	var mdefs := GameData.load_json(DATA + "monsters.json")
+	for w: Variant in wave_list:   # a boss among the waves: the stage is won by killing it (stage_won)
+		if w is Dictionary and bool(mdefs.get(String(w.get("monster", "")).get_slice("@", 0), {}).get("boss", false)):
+			boss_stage = challenge_id == "" or _win_on_boss
 	if _spawn_only != "":   # shots: one species alone, its waves moved to the start
 		var only: Array = []
 		for w: Dictionary in wave_list:
@@ -744,7 +749,7 @@ func _tick(dt: float) -> void:
 				Sfx.play("boss_spawn")
 	if hp <= 0.0:
 		_die()
-	elif (clock >= duration or (_boss_dead and _win_on_boss)) and bench == 0:
+	elif stage_won() and bench == 0:
 		_win()
 
 
@@ -2135,6 +2140,14 @@ func status_spots(radius: float, tile: bool) -> Array:
 		var y := radius * (0.35 + 0.25 * (1.0 - absf(t)))   # follows the body's lower curve
 		out.append([Vector2(x, y), _sprite_scale])
 	return out
+
+
+## True when the stage is won: a boss stage only by killing its boss (user 2026-11-21: the boss arrives
+## after minute 5 and the timer alone no longer wins), any other stage at its duration.
+func stage_won() -> bool:
+	if boss_stage:
+		return _boss_dead
+	return clock >= duration or (_boss_dead and _win_on_boss)
 
 
 ## Seeds the XP drop rolls (from the run seed; tests set their own).

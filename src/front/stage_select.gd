@@ -140,7 +140,7 @@ func _build() -> void:
 	iv.add_theme_constant_override("separation", 6)
 	info.add_child(iv)
 	iv.add_child(UiKit.label("Vượt ải", 20, UiKit.TEXT))
-	for line in ["Trụ hết giờ hoặc hạ boss để vượt ải; vượt ải nào thì mở ải kế tiếp.",
+	for line in ["Ải thường: trụ hết giờ để vượt. Ải boss: boss ra ở phút 5, hạ boss mới thắng.",
 			"Mỗi ải mạnh hơn ải trước: quái nhiều máu, đánh đau và đông hơn.",
 			"Ải 10, 20, 30 có boss. Cấp 10, 20, 30 trong trận: chọn phần thưởng mốc."]:
 		var l := UiKit.label("•  " + line, 14, UiKit.MUTED)

@@ -93,3 +93,8 @@ dùng mốc cấp thay cho rương boss vì mỗi ải là một trận 5 phút.
   trong bộ thẻ (tốn 3 điểm bộ thẻ, xem design/card-rarity.md).
 - Lý do: thẻ đặc biệt không có bậc nâng cấp nên hợp làm phần thưởng một lần; các chiêu có 5 bậc thì nên
   được lên cấp bằng thẻ trong trận.
+
+## Ải boss: boss ra ở phút 5, hạ boss mới thắng (người dùng 2026-11-21)
+
+- Ải 10 / 20 / 30: boss xuất hiện lúc 5:00 (`waves/stage_0N0.json`, t_from 300). Quái thường ra trong 5 phút đầu.
+- Ải boss chỉ thắng khi hạ boss (`Run.stage_won`); hết giờ không còn là thắng. Ải thường vẫn thắng khi hết giờ.

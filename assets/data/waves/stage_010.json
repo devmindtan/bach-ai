@@ -48,8 +48,8 @@
     },
     {
       "monster": "king_slime",
-      "t_from": 120,
-      "t_to": 120,
+      "t_from": 300,
+      "t_to": 300,
       "burst": 1,
       "announce": "Vua Thạch Nhầy đang tới!"
     }

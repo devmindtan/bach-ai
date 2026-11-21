@@ -68,8 +68,8 @@
     },
     {
       "monster": "toad_king",
-      "t_from": 120,
-      "t_to": 120,
+      "t_from": 300,
+      "t_to": 300,
       "burst": 1,
       "announce": "Cóc Chúa trồi khỏi đầm!"
     },
