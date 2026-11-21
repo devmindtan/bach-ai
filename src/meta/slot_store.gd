@@ -42,8 +42,9 @@ func load_slot(id: String) -> Dictionary:
 	var path := dir + id + ".json"
 	if not FileAccess.file_exists(path):
 		return {"id": id, "slot": null, "error": "không có file"}
-	var json := JSON.new()   # not JSON.parse_string: a broken file is reported here, not logged as an engine error
-	var data: Variant = json.data if json.parse(FileAccess.get_file_as_string(path)) == OK else null
+	var data: Variant = _read(path)
+	if not data is Dictionary and FileAccess.file_exists(path + ".bak"):   # broken: the previous save
+		data = _read(path + ".bak")
 	if not data is Dictionary:
 		return {"id": id, "slot": null, "error": "file hỏng"}
 	var s := Slot.new(defs)
@@ -54,19 +55,35 @@ func load_slot(id: String) -> Dictionary:
 	return {"id": id, "slot": s, "error": ""}
 
 
+## Writes the slot safely (review 2026-11-21): to <id>.json.tmp first, the previous save kept as <id>.json.bak,
+## then the temp file renamed over <id>.json, so a crash mid-write never leaves a half file.
+## The parsed JSON at [param path], or null when it is not valid JSON.
+func _read(path: String) -> Variant:
+	var json := JSON.new()   # not JSON.parse_string: a broken file is reported here, not logged as an engine error
+	return json.data if json.parse(FileAccess.get_file_as_string(path)) == OK else null
+
+
 func save(s: Slot) -> bool:
 	DirAccess.make_dir_recursive_absolute(dir)
-	var f := FileAccess.open(dir + s.id + ".json", FileAccess.WRITE)
+	var path := dir + s.id + ".json"
+	var f := FileAccess.open(path + ".tmp", FileAccess.WRITE)
 	if f == null:
 		return false
 	f.store_string(JSON.stringify(s.to_dict(), "  "))
-	return true
+	f.close()
+	if FileAccess.file_exists(path):
+		DirAccess.copy_absolute(_abs(path), _abs(path + ".bak"))
+	return DirAccess.rename_absolute(_abs(path + ".tmp"), _abs(path)) == OK
+
+
+func _abs(path: String) -> String:
+	return ProjectSettings.globalize_path(path) if path.begins_with("user://") else path
 
 
 func delete(id: String) -> void:
-	var path := dir + id + ".json"
-	if FileAccess.file_exists(path):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(path) if path.begins_with("user://") else path)
+	for path in [dir + id + ".json", dir + id + ".json.bak", dir + id + ".json.tmp"]:   # the backup goes too
+		if FileAccess.file_exists(path):
+			DirAccess.remove_absolute(_abs(path))
 
 
 ## True when another slot can be created.

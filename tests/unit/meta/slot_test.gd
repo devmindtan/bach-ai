@@ -94,3 +94,23 @@ func test_wins_give_rewards_and_keep_no_milestones() -> void:
 	var d := s.to_dict()
 	_check(not d.has("milestones") and not d.has("pending"), "no milestone data saved on the slot")
 	_check(not first.has("milestone"), "a win queues no milestone")
+
+
+# Review 2026-11-21: a save was written straight over the old file; a crash mid-write or a bad build lost the
+# character. Saves go through a temp file and keep the previous one as <id>.json.bak; a broken file loads
+# back from the backup.
+func test_save_keeps_a_backup_and_a_broken_file_loads_from_it() -> void:
+	_clean()
+	var store := SlotStore.new(_defs(), DIR)
+	var s := store.create("Lưu thử", "knight")
+	s.best = 3
+	store.save(s)
+	s.best = 4
+	store.save(s)
+	_check(FileAccess.file_exists(DIR + s.id + ".json.bak"), "the previous save is kept as .bak")
+	var f := FileAccess.open(DIR + s.id + ".json", FileAccess.WRITE)
+	f.store_string("{ broken")
+	f.close()
+	var r: Dictionary = store.load_slot(s.id)
+	_check(r["slot"] != null and int(r["slot"].best) == 3, "a broken save loads back from the backup, got %s" % [r.get("error")])
+	_clean()
