@@ -750,6 +750,7 @@ func _tick(dt: float) -> void:
 	if _boss_check_t <= 0.0:   # the boss song while a boss lives
 		_boss_check_t = 0.5
 		var boss := enemies.boss_index() >= 0
+		_update_boss_aura()
 		if boss != _boss_music:
 			_boss_music = boss
 			Sfx.music("boss" if boss else run_music)
@@ -2169,6 +2170,17 @@ func stage_won() -> bool:
 	return clock >= duration or (_boss_dead and _win_on_boss)
 
 
+## The living boss's passive (monsters.json "aura") buffs every monster spawned while it lives; called out
+## once when it starts (user 2026-11-21: during the boss fight monsters keep coming, few but strong).
+func _update_boss_aura() -> void:
+	var bi := enemies.boss_index()
+	var aura: Dictionary = enemies.k_extra[enemies.kind[bi]].get("aura", {}) if bi >= 0 else {}
+	if not aura.is_empty() and enemies.boss_aura.is_empty():
+		wave_call = "%s: %s" % [String(aura.get("name", "")), String(aura.get("short", ""))]   # short: fits the screen
+		wave_call_t = 4.0
+	enemies.boss_aura = aura
+
+
 ## Seeds the XP drop rolls (from the run seed; tests set their own).
 func seed_xp_drops(seed_value: int) -> void:
 	_xp_rng.seed = seed_value * 53 + 11
@@ -2628,6 +2640,12 @@ func _draw() -> void:
 				continue
 			var k := enemies.kind[i]
 			var a := enemies.anim_of(i)
+			if enemies.buffed[i] == 1 and not enemies.boss_aura.is_empty() and not pass_dying:   # the boss's aura: a glow under it
+				var gc := Color(String(enemies.boss_aura.get("color", "#ffffff")))
+				var gr := enemies.k_radius[k] * 1.3
+				var pulse := 0.25 + 0.1 * sin(clock * 4.0 + i)
+				draw_circle(enemies.pos[i] + Vector2(0, -2), gr, Color(gc, pulse))
+				draw_arc(enemies.pos[i] + Vector2(0, -2), gr, 0.0, TAU, 20, Color(gc, 0.7), 1.5)
 			var tint := Color(1.0, 0.55, 0.55) if enemies.flash[i] > 0.0 else _status_tint(i)
 			if enemies.state[i] == Enemies.WINDUP:
 				tint = Color(1.0, 0.8, 0.5)

@@ -86,6 +86,20 @@
       "t_to": 240,
       "burst": 3,
       "announce": "3 quái tinh anh xuất hiện!"
+    },
+    {
+      "monster": "toad",
+      "t_from": 300,
+      "t_to": 1200,
+      "rate": 0.6,
+      "escort": true
+    },
+    {
+      "monster": "bog_spirit",
+      "t_from": 300,
+      "t_to": 1200,
+      "rate": 0.25,
+      "escort": true
     }
   ]
 }

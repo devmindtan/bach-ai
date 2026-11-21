@@ -125,6 +125,10 @@ var bolt_pops := PackedVector2Array()    # where bolts burst this step (the run 
 var _player_center := Vector2.ZERO
 # elite affixes (run_config.json elite.affixes, design 6A): one per elite, by index into affix_ids
 var affix := PackedInt32Array()          # -1 = none
+var buffed := PackedByteArray()          # 1 = spawned under the boss's aura (boss_aura)
+## The living boss's passive (monsters.json "aura", set by the run while the boss lives; {} otherwise):
+## hp_mul, damage_mul, regen (share of max hp per second) for every monster spawned under it (user 2026-11-21).
+var boss_aura: Dictionary = {}
 var affix_ids: Array[String] = []
 var _affix_defs: Array[Dictionary] = []
 var _split_q: Array = []
@@ -203,6 +207,7 @@ func _init(monsters: Dictionary, cfg: Dictionary, sheets: Dictionary, seed_value
 	flip.resize(capacity)
 	hp_show.resize(capacity)
 	affix.resize(capacity)
+	buffed.resize(capacity)
 	phase_on.resize(capacity)
 	tongue_dir.resize(capacity)
 	for a: Variant in [slow_t, slow_mul, stun_t, freeze_t, bleed_t, bleed_dps, burn_t, burn_dps, shock_t, flee_t, dot_wait, phase_t, summon_t, tongue_t, tongue_len]:
@@ -309,6 +314,9 @@ func spawn(id: String, p: Vector2) -> bool:
 	flip[i] = 0
 	hp_show[i] = 0.0
 	affix[i] = -1
+	buffed[i] = 1 if (k_boss[k] == 0 and not boss_aura.is_empty()) else 0
+	if buffed[i] == 1:
+		hp[i] *= float(boss_aura.get("hp_mul", 1.0))
 	if k_elite[k] == 1 and not affix_ids.is_empty():   # every elite gets one affix
 		affix[i] = _rng.randi() % affix_ids.size()
 	slow_t[i] = 0.0
@@ -349,6 +357,12 @@ func center_of(i: int) -> Vector2:
 ## Moves every monster one step towards the player. Returns the largest
 ## contact damage a living monster deals this frame (0 when none touches).
 func step(delta: float, player_pos: Vector2, player_center: Vector2) -> float:
+	var regen := float(boss_aura.get("regen", 0.0))
+	if regen > 0.0:   # the aura heals its monsters over time (up to their buffed max)
+		var hm := float(boss_aura.get("hp_mul", 1.0)) * spawn_hp_mul
+		for j in count:
+			if buffed[j] == 1 and state[j] != DYING:
+				hp[j] = minf(k_hp[kind[j]] * hm, hp[j] + k_hp[kind[j]] * regen * delta)
 	_time += delta
 	_target = player_pos
 	_player_center = player_center
@@ -1013,6 +1027,8 @@ func phase_name(i: int) -> String:
 ## Contact damage of monster [param i] (phase 2 multiplies it).
 func contact_damage(i: int) -> float:
 	var d := k_damage[kind[i]]
+	if buffed[i] == 1:   # the boss's aura
+		d *= 1.0 + float(boss_aura.get("damage_mul", 0.0))
 	return d * float(_phase2(i).get("contact_mul", 1.0)) if phase_on[i] == 1 else d
 
 
@@ -1431,6 +1447,7 @@ func _remove(i: int) -> void:
 		flip[i] = flip[last]
 		hp_show[i] = hp_show[last]
 		affix[i] = affix[last]
+		buffed[i] = buffed[last]
 		slow_t[i] = slow_t[last]
 		slow_mul[i] = slow_mul[last]
 		stun_t[i] = stun_t[last]

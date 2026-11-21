@@ -105,3 +105,16 @@ mặt luôn cau, nhe nanh (tham khảo: [OpenGameArt treant](https://opengameart
   **hai chân thô** có chu kỳ chạy (move 8 khung).
 - `toad-king-spore`: cùng thân cóc, cụm nấm trên lưng **phình to, tím rực**, nhả khói bào tử; nốt sần hai bên **đỏ rực**
   phập phồng.
+
+## Quái hộ tống và nội tại boss (người dùng 2026-11-21)
+
+Sau 5:00 (boss ra) quái vẫn sinh nhưng **ít mà mạnh** (đợt `escort` trong `waves/stage_0N0.json`: một loài thường của
+vùng + thỉnh thoảng tinh anh). Khi boss còn sống, **nội tại** của nó (`monsters.json` → `aura`) buff mọi quái sinh ra:
+
+| Boss | Nội tại | Hiệu ứng |
+|---|---|---|
+| Vua Thạch Nhầy | Thần dân nhầy | quái +60% máu |
+| Mộc Yêu | Rễ nuôi | quái +50% máu, hồi 2% máu/giây (giai đoạn 2 hút chúng để hồi máu) |
+| Cóc Độc Bào Tử | Khí độc | quái +35% sát thương, +25% máu |
+
+Quái được buff có quầng màu của boss; tên nội tại báo giữa màn hình khi boss tới. Boss chết thì quái mới không còn buff.

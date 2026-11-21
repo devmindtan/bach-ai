@@ -52,6 +52,21 @@
       "t_to": 300,
       "burst": 1,
       "announce": "Vua Thạch Nhầy đang tới!"
+    },
+    {
+      "monster": "goblin",
+      "t_from": 300,
+      "t_to": 1200,
+      "rate": 0.6,
+      "escort": true
+    },
+    {
+      "monster": "goblin@elite",
+      "t_from": 300,
+      "t_to": 1200,
+      "rate": 0.08,
+      "escort": true,
+      "announce": "Tinh anh hộ vệ boss!"
     }
   ]
 }
