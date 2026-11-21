@@ -187,6 +187,8 @@ var meteors := MeteorShower.new()   # Mưa thiên thạch (design/events.md)
 var _meteor_cfg: Dictionary = {}
 var _meteor_times: Array = []    # clock times this run's region starts a shower
 var _meteor_fx: Array = []       # [{p, t}] meteors that just landed (blast drawn for 0.4 s)
+var _own_events: Array = []      # [time, kind] the region's own event (design/region-events-plan.md)
+var tornado := Tornado.new()     # Lốc cỏ (Đồng cỏ)
 var _heal_fx: Array = []   # [{p, r, t}] Hồn Đầm heal rings being drawn
 var _spawn_only := ""   # --spawn-only=ID (shots)
 var _level_view_arg := ""   # --level-view=character|hidden (shots): open that view on the first level-up
@@ -257,6 +259,8 @@ func _ready() -> void:
 			_ring_times.append(float(ev.get("t", 60.0)))
 		elif String(ev.get("kind", "")) == "meteor" and challenge_id == "":
 			_meteor_times.append(float(ev.get("t", 150.0)))
+		elif String(ev.get("kind", "")) in OWN_EVENTS and challenge_id == "":
+			_own_events.append([float(ev.get("t", 150.0)), String(ev["kind"])])
 		elif String(ev.get("kind", "")) in ["collect", "hunt"] and challenge_id == "":
 			_field_events.append([float(ev.get("t", 120.0)), String(ev["kind"])])
 	_meteor_cfg = cfg.get("events", {}).get("meteor", {})
@@ -264,6 +268,7 @@ func _ready() -> void:
 		match String(fe[1]):
 			"ring": _ring_times = [fe[0]]
 			"meteor": _meteor_times = [fe[0]]
+			"tornado", "falling_trees", "poison_tide": _own_events = [fe]
 			_: _field_events = [fe]
 	# each region and the challenges have their own song (design/regions.md)
 	run_music = String(Challenges.load_default().data.get("music", "run")) if challenge_id != "" \
@@ -662,6 +667,7 @@ func _tick(dt: float) -> void:
 	_step_ring(dt)
 	_step_field(dt)
 	_step_meteors(dt)
+	_step_own_event(dt)
 	_hp_min = minf(_hp_min, hp)
 	for i in range(_absorb_fx.size() - 1, -1, -1):
 		_absorb_fx[i]["t"] = float(_absorb_fx[i]["t"]) - dt
@@ -3049,6 +3055,32 @@ func _draw_obstacles(view: Rect2, front: bool) -> void:
 
 
 
+## Each region's own event (design/region-events-plan.md §4): kinds handled here; the rest are
+## scheduled by later steps of the plan and do nothing yet.
+const OWN_EVENTS := ["tornado", "falling_trees", "poison_tide"]
+
+
+func _step_own_event(dt: float) -> void:
+	var ev: Dictionary = cfg.get("events", {})
+	for oe: Array in _own_events:
+		if clock - dt < float(oe[0]) and float(oe[0]) <= clock and String(oe[1]) == "tornado" and not tornado.busy():
+			tornado.start(ev.get("tornado", {}), player_pos, rng)
+			wave_call = "Sự kiện vùng: Lốc cỏ! Né khỏi đường lốc, dụ quái vào"
+			wave_call_t = 3.0
+			Sfx.play("boss_spawn")
+	if not tornado.busy():
+		return
+	var tc: Dictionary = ev.get("tornado", {})
+	if tornado.step(dt):
+		enemies.hit_circle(tornado.pos, tornado.radius, float(tc.get("monster_damage", 30.0)), 160.0, Tornado.SOURCE)
+	if tornado.hits(player_pos) and invuln <= 0.0 and not god and not buffs.invulnerable() and _dash_left <= 0.0:
+		if not _spend_ward():
+			_take_hit(float(tc.get("player_damage", 8.0)))
+	if not tornado.busy():   # it just ended: seeds along its path
+		for q: Vector2 in tornado.seed_spots():
+			pickups.drop(Pickups.COIN, q, 1.0)
+
+
 ## Mưa thiên thạch (design/events.md): at the region's event time meteors are marked near the player
 ## and land warn s later, hurting the player (armor applies) and the monsters inside the mark.
 func _step_meteors(dt: float) -> void:
@@ -3074,6 +3106,7 @@ func _step_meteors(dt: float) -> void:
 ## Marks: a red ring flat on the ground with a disc filling in as the meteor nears, the rock dropping
 ## onto it from above; landed ones flash an orange blast.
 func _draw_meteors() -> void:
+	tornado.draw(self, clock)
 	var r := meteors.radius
 	for mk: Dictionary in meteors.marks:
 		var p: Vector2 = mk["p"]
