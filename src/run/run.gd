@@ -183,10 +183,7 @@ var _forced_events: Array = []   # --event=K@T
 var _field_events: Array = []    # [time, "collect" | "hunt"] of this run's region (FieldChallenge)
 var field := FieldChallenge.new()      # clock times this run's region opens a ring
 var obstacles: Obstacles = null   # the stage's rocks / trees / poison pools (design/obstacles.md)
-var _own_events: Array = []      # [time, kind] the region's own event (design/region-events-plan.md)
-var tornado := Tornado.new()     # Lốc cỏ (Đồng cỏ)
-var trees := FallingTrees.new()  # Cây đổ (Rừng Âm U)
-var tide := PoisonTide.new()     # Nước độc dâng (Đầm Lầy Độc)
+var region_ev := RegionEvents.new()   # the region's own event (region_events.gd)
 var _heal_fx: Array = []   # [{p, r, t}] Hồn Đầm heal rings being drawn
 var _spawn_only := ""   # --spawn-only=ID (shots)
 var _level_view_arg := ""   # --level-view=character|hidden (shots): open that view on the first level-up
@@ -227,6 +224,7 @@ var _panels: RunPanels
 
 
 func _ready() -> void:
+	region_ev.run = self
 	_parse_args()
 	RunInput.register()
 	cfg = GameData.load_json(DATA + "run_config.json")
@@ -256,14 +254,14 @@ func _ready() -> void:
 			continue   # stages before events.min_stage are quiet; --event below still forces one
 		if String(ev.get("kind", "")) == "ring" and challenge_id == "":
 			_ring_times.append(float(ev.get("t", 60.0)))
-		elif String(ev.get("kind", "")) in OWN_EVENTS and challenge_id == "":
-			_own_events.append([float(ev.get("t", 150.0)), String(ev["kind"])])
+		elif String(ev.get("kind", "")) in RegionEvents.OWN_EVENTS and challenge_id == "":
+			region_ev.times.append([float(ev.get("t", 150.0)), String(ev["kind"])])
 		elif String(ev.get("kind", "")) in ["collect", "hunt"] and challenge_id == "":
 			_field_events.append([float(ev.get("t", 120.0)), String(ev["kind"])])
 	for fe: Array in _forced_events:   # --event (shots)
 		match String(fe[1]):
 			"ring": _ring_times = [fe[0]]
-			"tornado", "falling_trees", "poison_tide": _own_events = [fe]
+			"tornado", "falling_trees", "poison_tide": region_ev.times = [fe]
 			_: _field_events = [fe]
 	# each region and the challenges have their own song (design/regions.md)
 	run_music = String(Challenges.load_default().data.get("music", "run")) if challenge_id != "" \
@@ -659,7 +657,7 @@ func _tick(dt: float) -> void:
 		_spawn(clock - dt, clock)
 	_step_ring(dt)
 	_step_field(dt)
-	_step_own_event(dt)
+	region_ev.step(dt)
 	_hp_min = minf(_hp_min, hp)
 	for i in range(_absorb_fx.size() - 1, -1, -1):
 		_absorb_fx[i]["t"] = float(_absorb_fx[i]["t"]) - dt
@@ -802,7 +800,7 @@ func _move_player(dt: float) -> void:
 		if obstacles != null:
 			player_pos = obstacles.push_out(player_pos, PLAYER_BODY)
 		player_pos = enemies.push_out_walls(player_pos, PLAYER_BODY)
-		player_pos = trees.push_out(player_pos, PLAYER_BODY)   # Cây đổ: fallen trunks
+		player_pos = region_ev.trees.push_out(player_pos, PLAYER_BODY)   # Cây đổ: fallen trunks
 	for pp: Array in enemies.phase_push:   # a boss starts phase 2: the hero is pushed away and the screen shakes
 		var away: Vector2 = player_pos - pp[0]
 		_knock += (away.normalized() if away.length() > 1.0 else Vector2.RIGHT) * float(pp[1])
@@ -839,7 +837,7 @@ func _move_player(dt: float) -> void:
 		if obstacles != null:
 			player_pos = obstacles.push_out(player_pos, PLAYER_BODY)
 		player_pos = enemies.push_out_walls(player_pos, PLAYER_BODY)
-		player_pos = trees.push_out(player_pos, PLAYER_BODY)   # Cây đổ: fallen trunks
+		player_pos = region_ev.trees.push_out(player_pos, PLAYER_BODY)   # Cây đổ: fallen trunks
 	_action_left = maxf(0.0, _action_left - dt)
 	if _action_left <= 0.0:
 		_set_anim("run" if _moving else "idle")
@@ -880,7 +878,7 @@ func _dash_step(dt: float) -> void:
 	if obstacles != null:
 		player_pos = obstacles.push_out(player_pos, PLAYER_BODY)
 	player_pos = enemies.push_out_walls(player_pos, PLAYER_BODY)   # a root wall is solid: no dashing through
-	player_pos = trees.push_out(player_pos, PLAYER_BODY)   # Cây đổ: fallen trunks
+	player_pos = region_ev.trees.push_out(player_pos, PLAYER_BODY)   # Cây đổ: fallen trunks
 	_dash_left -= step
 	# two cuts along the path: covering the half just travelled each time
 	var r := dist * 0.25 + float(sp.get("hit_radius", 26.0))
@@ -2712,7 +2710,7 @@ func _draw() -> void:
 	_draw_ground_fx()
 	_draw_ring()
 	_draw_field()
-	_draw_region_events()
+	region_ev.draw()
 	_draw_charge_lanes(view)
 	_boss_view.draw_pools(view)
 	_boss_view.draw_root_walls()
@@ -3082,7 +3080,7 @@ func _draw_obstacles(view: Rect2, front: bool) -> void:
 		var sh: SpriteSheet = sheets.get(String(s["sprite"]))
 		if sh == null:
 			continue
-		if p in trees.felled:   # Cây đổ: a stump where the tree stood (its trunk lies on the floor)
+		if p in region_ev.trees.felled:   # Cây đổ: a stump where the tree stood (its trunk lies on the floor)
 			if not front:
 				draw_circle(p + Vector2(0, -4), 11.0, Color(0.22, 0.13, 0.07))
 				draw_circle(p + Vector2(0, -6), 8.0, Color(0.55, 0.38, 0.2))
@@ -3098,75 +3096,6 @@ func _draw_obstacles(view: Rect2, front: bool) -> void:
 			sh.draw(self, "idle", 0.0, p, _sprite_scale)
 
 
-
-
-## Each region's own event (design/region-events-plan.md §4): kinds handled here; the rest are
-## scheduled by later steps of the plan and do nothing yet.
-const OWN_EVENTS := ["tornado", "falling_trees", "poison_tide"]
-
-
-func _step_own_event(dt: float) -> void:
-	var ev: Dictionary = cfg.get("events", {})
-	for oe: Array in _own_events:
-		if clock - dt < float(oe[0]) and float(oe[0]) <= clock and String(oe[1]) == "tornado" and not tornado.busy():
-			tornado.start(ev.get("tornado", {}), player_pos, rng)
-			wave_call = "Sự kiện vùng: Lốc cỏ! Né khỏi đường lốc, dụ quái vào"
-			wave_call_t = 3.0
-			Sfx.play("boss_spawn")
-		if clock - dt < float(oe[0]) and float(oe[0]) <= clock and String(oe[1]) == "falling_trees" and not trees.busy():
-			trees.start(ev.get("falling_trees", {}))
-			wave_call = "Sự kiện vùng: Cây đổ! Tránh dải sáng dưới gốc cây"
-			wave_call_t = 3.0
-			Sfx.play("boss_spawn")
-		if clock - dt < float(oe[0]) and float(oe[0]) <= clock and String(oe[1]) == "poison_tide" and not tide.busy():
-			tide.start(ev.get("poison_tide", {}), player_pos, obstacles.pools if obstacles != null else [], rng)
-			wave_call = "Sự kiện vùng: Nước độc dâng! Ra khỏi vũng đang sôi"
-			wave_call_t = 3.0
-			Sfx.play("boss_spawn")
-	if tide.busy():
-		tide.step(dt)
-		if tide.inside(player_pos):
-			poison_t = POISON_LOOK
-			if not god and not buffs.invulnerable():   # no armor, like the marsh pools
-				hp -= tide.dps * dt
-				damage_taken += tide.dps * dt
-		if not tide.busy():   # sunk: the gems where the pools were
-			for q: Vector2 in tide.dropped:
-				pickups.drop(Pickups.COIN, q, 1.0)
-	if trees.busy():
-		var fc: Dictionary = ev.get("falling_trees", {})
-		var feet := []
-		if obstacles != null:
-			for so: Dictionary in obstacles.solids:
-				if String(so.get("sprite", "")).contains("tree"):
-					feet.append(so["p"])
-		for f: Dictionary in trees.step(dt, player_pos, feet, rng):
-			Sfx.play("quake")
-			shake.add(5.0)
-			for k in 3:   # three touching circles along the strip (one hit per monster in practice)
-				var q: Vector2 = f["a"] + (f["d"] as Vector2) * trees.length * (k * 2 + 1) / 6.0
-				enemies.hit_circle(q, maxf(trees.width * 0.5, trees.length / 6.0), float(fc.get("monster_damage", 60.0)) / 3.0, 60.0, FallingTrees.SOURCE)
-			if trees.hits(f, player_pos, PLAYER_BODY) and not god and not buffs.invulnerable() and _dash_left <= 0.0:
-				if not _spend_ward():
-					_take_hit(float(fc.get("player_damage", 14.0)))
-	if not tornado.busy():
-		return
-	var tc: Dictionary = ev.get("tornado", {})
-	if tornado.step(dt):
-		enemies.hit_circle(tornado.pos, tornado.radius, float(tc.get("monster_damage", 30.0)), 160.0, Tornado.SOURCE)
-	if tornado.hits(player_pos) and invuln <= 0.0 and not god and not buffs.invulnerable() and _dash_left <= 0.0:
-		if not _spend_ward():
-			_take_hit(float(tc.get("player_damage", 8.0)))
-	if not tornado.busy():   # it just ended: seeds along its path
-		for q: Vector2 in tornado.seed_spots():
-			pickups.drop(Pickups.COIN, q, 1.0)
-
-
-## The region's own event, drawn on the floor under the monsters.
-func _draw_region_events() -> void:
-	tornado.draw(self, clock)
-	trees.draw(self)
-	tide.draw(self, clock)
 
 
 func _draw_ring() -> void:
