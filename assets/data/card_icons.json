@@ -1,0 +1,21 @@
+{
+  "_doc": "User 2026-11-21: stat cards show a vector icon (game-icons.net, CC BY 3.0, assets/icons/tree/<name>.svg, credited in assets/credits/icons-skill-tree.txt) instead of the pixel card icon. vector: card id -> svg name; px: raster size (UiIcons.texture). Ids not listed keep their pixel icon.",
+  "px": 64,
+  "vector": {
+    "sharpen": "broadsword",
+    "arcane_power": "magic-swirl",
+    "haste": "stopwatch",
+    "quick_cast": "hourglass",
+    "reach": "sword-spin",
+    "wide_magic": "star-swirl",
+    "vitality": "ankh",
+    "swift": "wingfoot",
+    "magnet": "magnet",
+    "regen": "healing",
+    "toughness": "abdominal-armor",
+    "mana_shield": "magic-shield",
+    "extra_strike": "crossed-swords",
+    "multicast": "double-ringed-orb",
+    "back_slash": "sword-clash"
+  }
+}

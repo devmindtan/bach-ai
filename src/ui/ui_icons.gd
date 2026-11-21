@@ -45,6 +45,10 @@ static func gear() -> SpriteSheet:
 ## gear-icons (item ids), then card-glyphs (card tree symbols, "shard").
 static func texture(icon: String) -> Texture2D:
 	if not _textures.has(icon):
+		var vec := _vector(icon)
+		if vec != null:
+			_textures[icon] = vec
+			return vec
 		if _cards == null:
 			_cards = SpriteSheet.load_dir(CARD_DIR, "card-icons")
 		var s := _cards
@@ -63,3 +67,18 @@ static func texture(icon: String) -> Texture2D:
 		t.region = s.src_rect(int(s.animation(icon).get("start", 0)))
 		_textures[icon] = t
 	return _textures[icon]
+
+
+static var _vector_map: Dictionary = {}
+
+
+## Stat cards draw a vector icon (assets/data/card_icons.json, user 2026-11-21); null when [param id]
+## has none, so the pixel sheets answer.
+static func _vector(id: String) -> Texture2D:
+	if _vector_map.is_empty():
+		_vector_map = GameData.load_json("res://assets/data/card_icons.json")
+	var name := String(_vector_map.get("vector", {}).get(id, ""))
+	var path := "res://assets/icons/tree/%s.svg" % name
+	if name == "" or not ResourceLoader.exists(path):
+		return null
+	return UiKit.vector_texture(path, int(_vector_map.get("px", 64)))
