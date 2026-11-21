@@ -1360,6 +1360,16 @@ func _split(i: int, hp_before: float) -> void:
 				spawn(String(e.get("split_into", "slime")), pos[i] + Vector2(cos(a), sin(a)) * (k_radius[kind[i]] + 12.0))
 
 
+## Every living monster starts dying (its death animation), without counting as a kill or dropping anything:
+## the boss outro clears the field (user 2026-11-21).
+func wipe() -> void:
+	for i in count:
+		if state[i] != DYING:
+			state[i] = DYING
+			timer[i] = 0.0
+			anim_t[i] = 0.0
+
+
 ## Indices of living monsters whose centre is within [param radius] of [param p].
 func living_within(p: Vector2, radius: float) -> Array[int]:
 	var out: Array[int] = []

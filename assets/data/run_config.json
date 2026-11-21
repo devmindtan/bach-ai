@@ -163,5 +163,12 @@
     "hp": 0.15,
     "damage": 0.1,
     "call": "Quái mạnh hơn! (+%d%% máu, +%d%% sát thương)"
+  },
+  "boss_outro": {
+    "_doc": "When the boss of a boss stage dies (user 2026-11-21): every monster plays its death, the world runs at time_scale for time real seconds, the screen shakes, the call names the boss; then the win panel.",
+    "time": 3.0,
+    "time_scale": 0.35,
+    "shake": 8.0,
+    "call": "Chiến thắng! Đã hạ %s"
   }
 }

@@ -48,7 +48,9 @@ var _boss_music := false                # the boss song is on (a boss is alive)
 var _boss_check_t := 0.0
 var challenge_id := ""        # playing a challenge (design/challenge.md); --challenge=ID for shots
 var _win_on_boss := true
-var boss_stage := false   # a wave of this stage spawns a boss: won only by killing it
+var boss_stage := false
+var _outro_t := -1.0          # the boss outro: seconds left (-1 not started, 0 over)
+var _last_boss_name := "Boss"   # a wave of this stage spawns a boss: won only by killing it
 var _delayed: Array = []
 var profile: Profile                # equipment (Prefs.current().profile())
 var won_items: Array[String] = []   # equipment won this run (end screen)
@@ -535,8 +537,12 @@ func _process(delta: float) -> void:
 	if bench > 0:
 		_dbg().bench_sample()
 	var t0 := Time.get_ticks_usec()
+	var slow := 1.0
+	if _outro_t > 0.0:   # the boss outro: the world slows, the timer runs in real time
+		_outro_t = maxf(0.0, _outro_t - delta)
+		slow = float(cfg.get("boss_outro", {}).get("time_scale", 0.35))
 	for _i in sim_steps:
-		_tick(STEP if sim_steps > 1 or bench > 0 else minf(delta, 0.05))
+		_tick((STEP if sim_steps > 1 or bench > 0 else minf(delta, 0.05)) * slow)
 	var sim_us := Time.get_ticks_usec() - t0
 	if bench > 0 or _debug != null:
 		_dbg().add_tick(sim_us)
@@ -626,7 +632,8 @@ func _tick(dt: float) -> void:
 			_panels.show_character()
 		return
 	_move_player(dt)
-	_spawn(clock - dt, clock)
+	if _outro_t < 0.0:   # no new monster once the boss has fallen
+		_spawn(clock - dt, clock)
 	_step_ring(dt)
 	_step_meteors(dt)
 	_hp_min = minf(_hp_min, hp)
@@ -757,7 +764,10 @@ func _tick(dt: float) -> void:
 	if hp <= 0.0:
 		_die()
 	elif stage_won() and bench == 0:
-		_win()
+		if boss_stage and _outro_t < 0.0:
+			_start_boss_outro()
+		elif not boss_stage or _outro_t == 0.0:
+			_win()
 
 
 func _move_player(dt: float) -> void:
@@ -2136,6 +2146,28 @@ func _status_view() -> StatusView:
 	return _status_view_cache
 
 
+## Boss outro (user 2026-11-21: the run ended abruptly when the boss died): the field clears (every monster
+## plays its death), the world slows for run_config boss_outro.time seconds, the screen shakes and a victory call
+## names the boss; the win panel comes after.
+func _start_boss_outro() -> void:
+	var oc: Dictionary = cfg.get("boss_outro", {})
+	_outro_t = float(oc.get("time", 3.0))
+	var bi := enemies.boss_index()
+	var boss_name := String(enemies.k_extra[enemies.kind[bi]].get("name", "Boss")) if bi >= 0 else _last_boss_name
+	enemies.wipe()
+	enemies.boss_aura = {}
+	wave_call = String(oc.get("call", "Chiến thắng! Đã hạ %s")) % boss_name
+	wave_call_t = _outro_t
+	shake.add(float(oc.get("shake", 8.0)))
+	Sfx.play("boss_slam")
+	Sfx.music("")
+
+
+## Seconds left of the boss outro (-1 before it, 0 when it is over).
+func outro_left() -> float:
+	return _outro_t
+
+
 ## True when the stage is won: a boss stage only by killing its boss (user 2026-11-21: the boss arrives
 ## after minute 5 and the timer alone no longer wins), any other stage at its duration.
 func stage_won() -> bool:
@@ -2149,6 +2181,8 @@ func stage_won() -> bool:
 func _update_boss_aura() -> void:
 	var bi := enemies.boss_index()
 	var aura: Dictionary = enemies.k_extra[enemies.kind[bi]].get("aura", {}) if bi >= 0 else {}
+	if bi >= 0:
+		_last_boss_name = String(enemies.k_extra[enemies.kind[bi]].get("name", "Boss"))   # for the outro call
 	if not aura.is_empty() and enemies.boss_aura.is_empty():
 		wave_call = "%s: %s" % [String(aura.get("name", "")), String(aura.get("short", ""))]   # short: fits the screen
 		wave_call_t = 4.0

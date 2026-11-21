@@ -118,3 +118,9 @@ vùng + thỉnh thoảng tinh anh). Khi boss còn sống, **nội tại** của 
 | Cóc Độc Bào Tử | Khí độc | quái +35% sát thương, +25% máu |
 
 Quái được buff có quầng màu của boss; tên nội tại báo giữa màn hình khi boss tới. Boss chết thì quái mới không còn buff.
+
+## Hạ boss: đoạn kết (người dùng 2026-11-21)
+
+Boss chết thì chưa hiện bảng thắng ngay: mọi quái trên sân chạy hoạt ảnh chết (không tính hạ, không rơi đồ), thời gian
+chậm lại (×0,35) trong 3 giây thật, màn hình rung, giữa màn hình "Chiến thắng! Đã hạ <tên boss>", nhạc tắt; hết 3 giây
+mới hiện bảng Vượt ải (`run_config.json` → `boss_outro`).
