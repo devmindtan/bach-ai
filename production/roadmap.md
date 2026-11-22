@@ -295,6 +295,10 @@ Trước mỗi nhóm: tham khảo ≥ 2 game cùng thể loại, ghi nguồn và
 - F1. Tham khảo (viền sáng theo hình, hào quang dưới chân, biểu tượng nhỏ trên đầu); bỏ vòng tròn đỏ/màu khoanh quanh.
 - F2. Vẽ trong Sprite Lab (2–3 phương án để chọn), áp vào game, ảnh nhiều loại quái.
 
+**H. Vẽ lại hiệu ứng của thẻ đặc biệt (chuyển từ vật phẩm), trừ khiên** — kế hoạch `design/special-fx-redesign.md`
+- H1–H10: mỗi hiệu ứng một bước (Phản chấn, Thánh kiếm, Lôi ấn, Hoả y, Băng ấn, Huyết quyền, Phong hành, Lưu tinh,
+  Tim bất diệt, Vĩnh cửu): mật độ gấp đôi, có pha, không chấm/dither, màu riêng; ảnh trong trận.
+
 **G. Quái mạnh dần: âm thầm, theo bản đồ, từ màn 6** — ✅ 2026-11-22 (G1–G3)
 - G1. Bỏ câu báo "Quái mạnh hơn! (+30% máu, +20% sát thương)" (`run_config.json` `time_scale.call`).
 - G2. Hệ số tăng theo phút đặt theo vùng/bản đồ (`stages.json` regions[].time_scale), không chung một bộ.
