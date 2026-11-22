@@ -411,6 +411,8 @@ func step(delta: float, player_pos: Vector2, player_center: Vector2) -> float:
 			continue
 		var dir := to_player / dist if dist > 0.001 else Vector2.ZERO
 		flip[n] = 1 if to_player.x < 0.0 else 0
+		if k_behaviour[k] == FLEE:   # runs away from the player: faces its way of running (bug 2026-11-22)
+			flip[n] = 1 - flip[n]
 		var stopped := stun_t[n] > 0.0 or freeze_t[n] > 0.0
 		_slam_i = -1
 		if k_boss[k] == 1 and phase_on[n] == 0:   # hp set without a hit (a shot's --boss-hp) also starts phase 2
