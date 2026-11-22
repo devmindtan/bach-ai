@@ -1,5 +1,7 @@
 {
   "_doc": "Level milestone rewards (design/progression.md, user 2026-11-17): reaching level 10, 20 or 30 in a run lets the player pick one of the rewards listed for that level that fit the class, for that run only (like Vampire Survivors' Arcanas, found mid-run and gone when the run ends). kind card = a special card of the class (upgrades_<class>.json, unique, one level: the former item specials, user 2026-11-20); kind skill = a unique class skill, starting at level 1 and levelled by cards; passive = an always-on effect with its own numbers; rule = changes a run rule. effects (like a card's) are added to the stats; picks_now = card picks given at once. owned_skill_count (Đa phép, user 2026-11-20): +N count to each skill the hero owns when the reward is picked, not to skills learnt later.",
+  "offer_count": 4,
+  "_offer_doc": "User 2026-11-22: at every milestone, offer_count rewards are drawn at random from all the levels' lists below (that fit the class, not already owned); the per-level lists are only the pool.",
   "levels": {
     "10": [
       "sp_aegis_boots",

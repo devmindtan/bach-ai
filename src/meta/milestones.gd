@@ -45,6 +45,22 @@ func offers(n: int, cls: String) -> Array[String]:
 	return out
 
 
+## Rewards offered at a milestone (user 2026-11-22: shuffled across all milestones, not fixed per level):
+## offer_count ids drawn from every level's rewards that fit class [param cls], minus [param owned].
+func random_offers(cls: String, owned: Array, rng: RandomNumberGenerator) -> Array[String]:
+	var pool: Array[String] = []
+	for lv in milestone_levels():
+		for id in offers(lv, cls):
+			if not owned.has(id) and not pool.has(id):
+				pool.append(id)
+	for i in range(pool.size() - 1, 0, -1):   # Fisher-Yates with the run's rng (seeded runs stay repeatable)
+		var j := rng.randi_range(0, i)
+		var t := pool[i]
+		pool[i] = pool[j]
+		pool[j] = t
+	return pool.slice(0, mini(int(data.get("offer_count", 4)), pool.size()))
+
+
 ## {name, desc, kind, icon} of reward [param id]; a skill reward reads its card in
 ## [param upgrades] (upgrades_<class>.json "upgrades").
 func info(id: String, upgrades: Array) -> Dictionary:

@@ -271,3 +271,24 @@ func test_card_tree_nodes_change_the_skill_in_the_run() -> void:
 	_check(st.has("bleed"), "Rỉ máu adds bleeding on hit, got %s" % [st])
 	r.free()
 	plain.free()
+
+
+func test_milestone_offers_are_drawn_from_every_level() -> void:
+	# user 2026-11-22: the level 10/20/30 rewards are shuffled together, not fixed per milestone
+	var m := Milestones.load_default()
+	var n := int(m.data.get("offer_count", 0))
+	_check(n >= 3, "offer_count in milestones.json, got %d" % n)
+	var pool: Array[String] = []
+	for lv in m.milestone_levels():
+		pool.append_array(m.offers(lv, "knight"))
+	var seen_late_at_10 := false
+	for seed in 12:
+		var rng := RandomNumberGenerator.new()
+		rng.seed = seed
+		var ids: Array[String] = m.random_offers("knight", ["sp_aegis_boots"], rng)
+		_check(ids.size() == n, "%d offers, got %s" % [n, ids])
+		for id in ids:
+			_check(pool.has(id) and id != "sp_aegis_boots", "%s: a knight reward not already owned" % id)
+			if m.offers(30, "knight").has(id):
+				seen_late_at_10 = true
+	_check(seen_late_at_10, "a level-30 reward can come up at any milestone")

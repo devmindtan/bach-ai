@@ -26,7 +26,7 @@ func open() -> void:
 	if not run._ms_queue.is_empty() and run.milestones != null:
 		run.ms_level = run._ms_queue.pop_front()
 		run._ms_done.append(run.ms_level)
-		var offers = run.milestones.offers(run.ms_level, run.class_id).filter(func(id: String) -> bool: return not run.rewards.has(id))
+		var offers = run.milestones.random_offers(run.class_id, run.rewards, run.rng)   # shuffled across all milestones (2026-11-22)
 		if not offers.is_empty():
 			run.choices.assign(offers)
 			run.state = run.State.LEVEL_UP
