@@ -182,6 +182,7 @@ var obstacles: Obstacles = null   # the stage's rocks / trees / poison pools (de
 var _obstacle_view := ObstacleView.new()   # rocks / trees drawing (obstacle_view.gd)
 var _sheet := RunSheet.new()   # character sheet / card preview data (run_sheet.gd)
 var _kill_drops := KillDrops.new()
+var _level := LevelFlow.new()
 var region_ev := RegionEvents.new()   # the region's own event (region_events.gd)
 var _heal_fx: Array = []   # [{p, r, t}] Hồn Đầm heal rings being drawn
 var _spawn_only := ""   # --spawn-only=ID (shots)
@@ -224,6 +225,7 @@ var _panels: RunPanels
 
 func _init() -> void:   # helpers get the run before _ready: tests build a Run with .new()
 	_sheet.run = self
+	_level.run = self
 	_kill_drops.run = self
 
 
@@ -293,7 +295,7 @@ func _ready() -> void:
 	_num_val.resize(n_max)
 	_num_crit.resize(n_max)
 	_crit_cfg = cfg.get("crit", {})
-	reset_level_actions()
+	_level.reset_actions()
 	shake.enabled = Prefs.current().screen_shake
 	_num_t.resize(n_max)
 	_num_t.fill(-1.0)
@@ -376,7 +378,7 @@ func _ready() -> void:
 		pickups.drop(Pickups.GOLD_CHEST, player_pos + Vector2(60, 0), 1.0)   # inside the magnet: it is picked up
 	if _level_now:
 		pending_levels += 1
-		_open_level_up.call_deferred()
+		_level.open.call_deferred()
 		if "--banish-mode" in OS.get_cmdline_user_args():   # shots: Loại armed
 			(func() -> void: _panels.toggle_banish()).call_deferred()
 	buffs = Buffs.new(_buff_defs, cfg.get("buffs", {}), rng.seed + 7)
@@ -449,13 +451,13 @@ func _ready() -> void:
 
 	# --milestone=N (shots): the level milestone pick opens at the start
 	if not _ms_queue.is_empty():
-		_open_level_up.call_deferred()
+		_level.open.call_deferred()
 	elif _pick_card != "":   # --pick-card=ID (shots): its skill pick at the start
 		(func() -> void:
 			choices.assign([_pick_card])
 			state = State.LEVEL_UP
 			pending_levels += 1
-			choose(0)).call_deferred()
+			_level.choose(0)).call_deferred()
 
 	if bench > 0:
 		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
@@ -496,7 +498,7 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and level_view == "cards":   # Đổi / Loại / Bỏ qua
 		var done := true
 		match event.keycode:
-			KEY_R: reroll()
+			KEY_R: _level.reroll()
 			KEY_X:
 				if _panels != null: _panels.toggle_banish()
 			_: done = false   # Bỏ qua has no key: S also walks, a tap must not throw a level away
@@ -506,7 +508,7 @@ func _input(event: InputEvent) -> void:
 	var v := "character" if event.is_action_pressed("character") else ("hidden" if event.is_action_pressed("peek") else "")
 	if v == "":
 		return
-	toggle_level_view(v)
+	_level.toggle_view(v)
 	if is_inside_tree():
 		get_viewport().set_input_as_handled()
 
@@ -532,7 +534,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif state == State.LEVEL_UP and level_view == "cards":   # no blind picks
 		for i in 3:
 			if event.is_action_pressed("choose_%d" % (i + 1)) and i < choices.size():
-				choose(i)
+				_level.choose(i)
 	elif (state == State.DEAD or state == State.WON) and event.is_action_pressed("restart"):
 		restart()
 
@@ -547,7 +549,7 @@ func _tick(dt: float) -> void:
 	if state == State.LEVEL_UP and demo and auto_pick:
 		_demo_pick_t += dt
 		if _demo_pick_t > 0.4:
-			choose(0)
+			_level.choose(0)
 		return
 	if state != State.PLAYING:
 		return
@@ -623,17 +625,17 @@ func _tick(dt: float) -> void:
 	if pickups.gold_chests > 0 and state == State.PLAYING:   # Rương vàng: several picks, gold, a sure item
 		pickups.gold_chests -= 1
 		open_gold_chest()
-		_open_level_up()
+		_level.open()
 	elif pickups.chests > 0 and state == State.PLAYING:   # a chest from an elite: one extra pick
 		pickups.chests -= 1
 		Sfx.play("chest")
 		if rng.randf() < float(cfg.get("rewards", {}).get("chest_item_chance", 0.0)):
 			_win_item()
 		pending_levels += 1
-		_log_level("chest -> +1 pick")
+		_level.log_level("chest -> +1 pick")
 		chests_opened += 1
 		_chest_open = true
-		_open_level_up()
+		_level.open()
 	for p in enemies.bolt_pops:   # monster bolts that burst (hit or out of range)
 		_add_fx(_bolt_sprite_at(p), "pop", _sprite_scale, 0.0, -1.0, p)
 	enemies.bolt_pops.clear()
@@ -861,6 +863,37 @@ func essence_drop(elite: bool, boss: bool) -> int:
 	if elite:
 		return int(e.get("elite", 0))
 	return 0
+
+## Level-up panel title: where the pick comes from and how many more wait
+## (user 2026-11-18: several picks in a row read as a bug without it).
+func level_up_title(chest: bool) -> String:
+	return _level.title(chest)
+
+## Level-up views (design/ux/level-up.md): [param v] "character" or "hidden"
+## opens that view; asking for the open one goes back to the cards. Only while
+## choosing; the run stays paused in every view.
+func toggle_level_view(v: String) -> void:
+	_level.toggle_view(v)
+
+## Charges of Đổi / Loại / Bỏ qua for a new run (run_config.json level_actions, 6C.3).
+func reset_level_actions() -> void:
+	_level.reset_actions()
+
+## Đổi: a new hand for one charge; false (nothing changes) without one.
+func reroll() -> bool:
+	return _level.reroll()
+
+## Loại: card [param index] leaves the deck for the rest of the run, then a new hand.
+func banish(index: int) -> bool:
+	return _level.banish(index)
+
+## Bỏ qua: the level is used without a card, for skip_gold gold.
+func skip_level() -> bool:
+	return _level.skip_level()
+
+## Applies choice [param index] of the open level-up and continues the run.
+func choose(index: int) -> void:
+	_level.choose(index)
 
 
 # --- skills ------------------------------------------------------------------
@@ -1838,9 +1871,9 @@ func _gain_xp(amount: float) -> void:
 	_queue_milestones(before, level)
 	if int(r[2]) > 0:
 		pending_levels += int(r[2])
-		_log_level("xp %.0f -> +%d level(s), level %d" % [amount, int(r[2]), level])
+		_level.log_level("xp %.0f -> +%d level(s), level %d" % [amount, int(r[2]), level])
 		if state == State.PLAYING:
-			_open_level_up()
+			_level.open()
 
 
 ## Milestone levels passed going from [param from] to [param to] join the queue
@@ -1851,71 +1884,6 @@ func _queue_milestones(from: int, to: int) -> void:
 	for lv in milestones.milestone_levels():
 		if from < lv and lv <= to and not _ms_done.has(lv) and not _ms_queue.has(lv):
 			_ms_queue.append(lv)
-
-
-## --log-levels: every source of a level-up pick, with the clock (diagnosis).
-func _log_level(what: String) -> void:
-	if OS.get_cmdline_user_args().has("--log-levels"):
-		printerr("LEVEL %6.1fs pending %d: %s" % [clock, pending_levels, what])
-
-
-## Level-up panel title: where the pick comes from and how many more wait
-## (user 2026-11-18: several picks in a row read as a bug without it).
-func level_up_title(chest: bool) -> String:
-	var head := "Rương vàng! Chọn một" if _gold_left > 0 else ("Rương báu! Chọn một" if chest else "Lên cấp %d! Chọn một" % level)
-	var left := pending_levels - 1
-	return head + (" (còn %d lượt)" % left if left > 0 else "")
-
-
-func _open_level_up() -> void:
-	# a milestone reached comes first: one of three rewards for the rest of the run
-	if not _ms_queue.is_empty() and milestones != null:
-		ms_level = _ms_queue.pop_front()
-		_ms_done.append(ms_level)
-		var offers := milestones.offers(ms_level, class_id).filter(func(id: String) -> bool: return not rewards.has(id))
-		if not offers.is_empty():
-			choices.assign(offers)
-			state = State.LEVEL_UP
-			_demo_pick_t = 0.0
-			Sfx.play("milestone")
-			_panels.show_milestone_pick(ms_level, choices)
-			return
-		ms_level = 0
-	ms_level = 0
-	deal_hand()
-	if not offer.is_empty():
-		choices = offer.duplicate()
-		offer.clear()
-	if choices.is_empty():
-		pending_levels = 0
-		hp = float(stats["max_hp"])
-		return
-	state = State.LEVEL_UP
-	_demo_pick_t = 0.0
-	if not _chest_open:
-		Sfx.play("level_up")
-	level_view = "cards"
-	_panels.show_level_up(choices, level_up_title(_chest_open))
-	_chest_open = false
-	_gold_left = maxi(0, _gold_left - 1)
-	if _level_view_arg != "":
-		toggle_level_view(_level_view_arg)
-		_level_view_arg = ""
-
-
-## Level-up views (design/ux/level-up.md): [param v] "character" or "hidden"
-## opens that view; asking for the open one goes back to the cards. Only while
-## choosing; the run stays paused in every view.
-func toggle_level_view(v: String) -> void:
-	if state != State.LEVEL_UP:
-		return
-	level_view = "cards" if level_view == v else v
-	if _panels == null:
-		return
-	match level_view:
-		"character": _panels.show_character()
-		"hidden": _panels.show_peek()
-		_: _panels.reshow()
 
 
 ## Skill ids a run can use: every skill card the level-ups may offer (deck_pool), the starting skills and
@@ -1964,95 +1932,13 @@ func deal_hand() -> void:
 		state = State.LEVEL_UP
 
 
-## Charges of Đổi / Loại / Bỏ qua for a new run (run_config.json level_actions, 6C.3).
-func reset_level_actions() -> void:
-	var la: Dictionary = cfg.get("level_actions", {})
-	rerolls = int(la.get("reroll", 0))
-	banishes = int(la.get("banish", 0))
-	skips = int(la.get("skip", 0))
-	banished.clear()
-
-
 func _can_act() -> bool:
 	return state == State.LEVEL_UP and ms_level == 0 and skill_pick == 0   # cards only, not milestones or a count pick
 
 
-## Đổi: a new hand for one charge; false (nothing changes) without one.
-func reroll() -> bool:
-	if rerolls <= 0 or not _can_act():
-		return false
-	rerolls -= 1
-	deal_hand()
-	_flip_reshow()
-	return true
-
-
-## Loại: card [param index] leaves the deck for the rest of the run, then a new hand.
-func banish(index: int) -> bool:
-	if banishes <= 0 or not _can_act() or index < 0 or index >= choices.size():
-		return false
-	banishes -= 1
-	banished.append(choices[index])
-	deal_hand()
-	_flip_reshow()
-	return true
-
-
-## Bỏ qua: the level is used without a card, for skip_gold gold.
-func skip_level() -> bool:
-	if skips <= 0 or not _can_act():
-		return false
-	skips -= 1
-	gold += int(cfg.get("level_actions", {}).get("skip_gold", 0))
-	Sfx.play("coin")
-	_log_level("skip -> +gold")
-	pending_levels -= 1
-	state = State.PLAYING
-	if _panels == null:
-		return true
-	_panels.hide_all()
-	if pending_levels > 0:
-		_open_level_up()
-	return true
-
-
 func _flip_reshow() -> void:
 	if _panels != null:
-		_panels.show_level_up(choices, level_up_title(_chest_open))
-
-
-## Applies choice [param index] of the open level-up and continues the run.
-func choose(index: int) -> void:
-	if state != State.LEVEL_UP or index >= choices.size():
-		return
-	var id := choices[index]
-	if id.begins_with("filler_"):   # Túi vàng / Linh đan: no level, a small gift
-		var f := upgrade(id)
-		gold += int(f.get("gold", 0))
-		hp = minf(float(stats["max_hp"]), hp + float(stats["max_hp"]) * float(f.get("heal", 0.0)))
-		_after_pick()
-		return
-	if ms_level > 0:
-		take_milestone(id)
-		return
-	if skill_pick > 0:   # the skill a count card goes on
-		add_skill_extra(id, skill_pick)
-		skill_pick = 0
-		_after_pick()
-		return
-	levels[id] = int(levels.get(id, 0)) + 1
-	if upgrade(id).has("special"):   # a special card: the run's specials change (their timers restart)
-		set_specials(card_specials())
-	var n_pick := int(upgrade(id).get("pick_skill", 0))
-	if n_pick > 0 and not skill_pick_ids().is_empty():
-		# Thêm đòn / Thêm phép: the player now picks the one skill it adds to
-		skill_pick = n_pick
-		choices = skill_pick_ids()
-		_demo_pick_t = 0.0
-		if _panels != null:
-			_panels.show_skill_pick(String(upgrade(id).get("name", id)), choices)
-		return
-	_after_pick()
+		_panels.show_level_up(choices, _level.title(_chest_open))
 
 
 func _after_pick() -> void:
@@ -2065,7 +1951,7 @@ func _after_pick() -> void:
 	_panels.hide_all()
 	state = State.PLAYING
 	if pending_levels > 0:
-		_open_level_up()
+		_level.open()
 
 
 ## Monster multiplier [param what] ("hp" | "damage") at run time [param t] s: 1 + step * full minute marks
@@ -2171,14 +2057,14 @@ func take_milestone(id: String) -> void:
 	_recompute_stats()
 	hp += maxf(0.0, float(stats["max_hp"]) - old_max)
 	pending_levels += int(milestones.number([id], "picks_now"))
-	_log_level("milestone %s -> +%d pick(s)" % [id, int(milestones.number([id], "picks_now"))])
+	_level.log_level("milestone %s -> +%d pick(s)" % [id, int(milestones.number([id], "picks_now"))])
 	ms_level = 0
 	if _panels == null:   # no scene (unit tests): the numbers only
 		return
 	_panels.hide_all()
 	state = State.PLAYING
 	if pending_levels > 0 or not _ms_queue.is_empty():
-		_open_level_up()
+		_level.open()
 
 
 func upgrade(id: String) -> Dictionary:
@@ -2322,7 +2208,7 @@ func open_gold_chest() -> void:
 	_gold_left = int(g.get("picks", 3))
 	chests_opened += int(g.get("counts_as", 3))
 	_chest_open = true
-	_log_level("gold chest -> +%d picks" % int(g.get("picks", 3)))   # the panel title names it (no wave call over it)
+	_level.log_level("gold chest -> +%d picks" % int(g.get("picks", 3)))   # the panel title names it (no wave call over it)
 
 
 func _win_item() -> String:
