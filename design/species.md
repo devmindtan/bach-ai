@@ -27,21 +27,22 @@ Mỗi quái thuộc một **loài**. Loài cho quái một đặc tính hành vi
 | Hệ | Chiêu |
 |---|---|
 | Vật lý | Chém kiếm, Lốc xoáy, Đất nứt, Dậm đất, Sóng kiếm, Lướt, Địa chấn, Búa thần |
-| Thánh | Cột thánh quang, Thái dương xạ |
+| **Ánh sáng** (hệ đặc biệt) | Cột thánh quang, Thái dương xạ (chưa chốt, xem câu hỏi mở) |
 | Lửa | Cầu lửa, Mưa thiên thạch |
 | Băng | Băng nổ, Bão tuyết |
 | Sét | Sét đánh, Giáo sấm, Bão sét |
-| Phép | Tia phép, Cầu hư không |
+| Phép | Tia phép |
+| **Bóng tối** (hệ đặc biệt) | Cầu hư không |
 
-Sát thương từ trạng thái tính theo hệ của trạng thái: Bỏng là lửa, Giật điện là sét, Chảy máu là vật lý.
+Sát thương từ trạng thái tính theo hệ của trạng thái: Bỏng là lửa, Giật điện là sét, Chảy máu là vật lý, Thánh ấn là ánh sáng, Ăn mòn là bóng tối.
 
 ## Các loài
 
 | Loài | Quái | Đặc tính | Yếu (×1,5) | Kháng (×0,6) |
 |---|---|---|---|---|
 | **Nhầy** | Thạch Nhầy, Vua Thạch Nhầy | Không trúng đòn 2 giây thì hồi 3% máu/giây; Bỏng chặn hồi | Lửa | Vật lý; miễn Chảy máu |
-| **Thú** | Sói Rừng, Dơi | Còn dưới 30% máu thì nổi điên (+30% tốc độ); Sói cắn gây Chảy máu lên người chơi | Vật lý (Chảy máu ×1,5) | Băng (Làm chậm còn một nửa thời gian) |
-| **Linh hồn** | Ma Trơi, Hồn Đầm | Bay xuyên vật cản và xuyên quái khác | Thánh, Phép | Vật lý; miễn Chảy máu |
+| **Thú** | Sói Rừng, Dơi | Còn dưới 30% máu thì nổi điên (+30% tốc độ); Sói cắn gây Chảy máu lên người chơi | Vật lý (Chảy máu ×1,5), Bóng tối | Băng (Làm chậm còn một nửa thời gian) |
+| **Linh hồn** | Ma Trơi, Hồn Đầm | Bay xuyên vật cản và xuyên quái khác | Ánh sáng, Phép | Vật lý, Bóng tối; miễn Chảy máu |
 | **Côn trùng** | Bọ Lửa | Theo đàn: có ≥ 3 con cùng loài trong 80 px thì +20% tốc độ; vỏ cứng: đòn đầu chỉ nhận 50% | Băng | Lửa |
 | **Thực vật** | Nấm Phun, Mộc Yêu | Bám rễ: miễn đẩy lùi và Choáng | Lửa (Bỏng ×2 thời gian) | Sét |
 | **Lưỡng cư** | Cóc Độc, Cóc Chúa | Nhảy qua vật cản; da ướt: Bỏng chỉ kéo dài nửa thời gian | Sét | Lửa |
@@ -53,9 +54,29 @@ Sát thương từ trạng thái tính theo hệ của trạng thái: Bỏng là
 
 - **Đồng cỏ** (Nhầy, Thú, Yêu tinh): kiếm sĩ đánh vật lý, mạnh với Thú nhưng yếu với Nhầy, nên cần Bỏng hoặc phép.
   Pháp sư có Cầu lửa thì dễ.
-- **Rừng** (Linh hồn, Thực vật, Côn trùng, Thú): Thánh/Phép diệt Linh hồn; Lửa diệt Thực vật nhưng Côn trùng kháng
+- **Rừng** (Linh hồn, Thực vật, Côn trùng, Thú): Ánh sáng/Phép diệt Linh hồn, Bóng tối đánh Thú; Lửa diệt Thực vật nhưng Côn trùng kháng
   lửa. Phải phối hai hệ.
 - **Đầm** (Lưỡng cư, Linh hồn, Nhầy): Sét mạnh với Cóc; Lửa yếu đi trước Cóc nhưng vẫn mạnh với Nhầy.
+
+## Hai hệ đặc biệt: Ánh sáng và Bóng tối (người dùng 2026-11-22)
+
+Hai hệ này hiếm hơn và có **trạng thái riêng**, mạnh theo kiểu khác bốn hệ nguyên tố. Ánh sáng là hệ khống chế và
+bảo vệ; Bóng tối là hệ khuếch đại sát thương và lan.
+
+| | Ánh sáng | Bóng tối |
+|---|---|---|
+| Trạng thái gây ra | **Thánh ấn** (2,5 giây) | **Ăn mòn** (3 giây, cộng dồn tối đa 3 tầng) |
+| Hiệu ứng | quái bị chói: sát thương chạm −30%; kẻ địch Linh hồn còn bị Làm chậm 30%; hết Thánh ấn thì nổ sáng nhỏ (10% đòn gốc, bán kính 40) | mỗi tầng: quái nhận +8% sát thương từ mọi nguồn; quái chết khi có ≥ 2 tầng thì nổ bóng (bán kính 56) lan 1 tầng Ăn mòn sang quái gần |
+| Mạnh với | Linh hồn (yếu ×1,5), đám đông đông, khi người chơi máu thấp | boss và tinh anh (máu dày nên tầng có thời gian phát huy), đàn quái dày |
+| Yếu với | không có loài kháng, nhưng sát thương gốc thấp hơn hệ nguyên tố | Linh hồn kháng; quái máu mỏng chết trước khi tầng có tác dụng |
+| Màu chủ đạo | trắng ngà, vàng nhạt (`f6e7b0`, `fff6d8`) | tím than, đen (`3a1f4f`, `7a3fa8`), viền tím sáng |
+| Hiệu ứng nhìn | **Thánh ấn**: dấu thánh 4 cánh nhỏ trên đầu quái, nhấp nháy chậm; nổ sáng: vòng tia sáng tròn đặc, 8 frame | **Ăn mòn**: khói tím bốc lên từ thân, số tầng là 1–3 vệt nứt tối dưới chân; nổ bóng: quả cầu tối co rồi bung thành tua, 10 frame |
+| Số bay | màu vàng nhạt | màu tím |
+
+- Các thẻ chỉ số mới (gợi ý, chốt khi làm): "Thánh lực" (+thời gian Thánh ấn), "Vực thẳm" (+1 tầng Ăn mòn tối đa).
+- Vẽ trong Sprite Lab, **2–3 phương án** cho mỗi hiệu ứng (dấu Thánh ấn, nổ sáng, khói Ăn mòn, nổ bóng) để người
+  dùng chọn; mật độ gấp đôi (`px_scale` 0,5), không dither (chuẩn của `design/special-fx-redesign.md`).
+- Dữ liệu: `statuses.json` thêm `holy_mark` và `corrode` (tên, màu, icon); test cộng dồn, hệ số, nổ lan.
 
 ## Dữ liệu và code (E2–E4)
 
@@ -78,3 +99,9 @@ Sát thương từ trạng thái tính theo hệ của trạng thái: Bỏng là
   7. Thực vật bám rễ;
   8. Lưỡng cư nhảy qua vật cản và da ướt.
 - E4: bảng Chi tiết ải và Album ghi loài, hệ yếu và hệ kháng.
+- E5: Ánh sáng: trạng thái Thánh ấn, phương án hiệu ứng, áp vào Cột thánh quang.
+- E6: Bóng tối: trạng thái Ăn mòn, phương án hiệu ứng, áp vào Cầu hư không.
+
+## Câu hỏi mở
+
+- Thái dương xạ thuộc Ánh sáng hay Lửa?
