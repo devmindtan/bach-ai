@@ -184,7 +184,7 @@ game Godot; chạy lại sau mỗi lần nâng framework). Mục 4 phần lớn 
 gấp đôi `px_scale` 0,5; `tierfx` mang `px_scale` sang bậc). **Còn:** Sóng kiếm (`sword-wave` cắt từ `cleave-wave` rồi
 xoay 16 hướng: phải vẽ lại từng hướng như `boltfx`, cỡ M). Mục 5 phần `run_config`: test `config_defaults_test` quét mọi
 `cfg.get(…, số)` trong `src/`, số mặc định phải bằng JSON hoặc trung tính 0 / 1 (sửa 2 chỗ lệch: `max_enemies` 600 → 200,
-`gold_chance` 0,1 → 0,12). **Còn:** mở rộng cách kiểm này cho `monsters.json`, `upgrades_*.json`, `items.json`.
+`gold_chance` 0,1 → 0,12). ✅ 2026-11-22 mở rộng: `tests/unit/core/data_keys_test.gd` — mọi khoá của quái, `skills` (hai lớp) và trang bị phải được code đọc (khoá đổi tên / gõ sai không còn âm thầm rơi về mặc định; đã thử: thêm `slime.spead_typo` → test fail). Số mặc định của chiêu/quái không so được với một giá trị chung (mỗi mục một số), nên chặn ở tầng tên khoá.
 Mục 6–7 đang làm theo lát (mỗi lát giữ nguyên test và hình): lát 1 `StatusView` (`src/run/status_view.gd`: trạng thái trên
 quái, `run.gd` 3.341 → 3.308 dòng); lát 2 `RunDebug` (`src/run/run_debug.gd`: bench + overlay F1, còn 3.256 dòng). Lát kế: tham số dòng lệnh, bench + overlay debug, vẽ boss (root walls, bolts,
 waves), level-up / ví, rồi hành vi quái theo kiểu Strategy trong `enemies.gd`.
@@ -242,7 +242,7 @@ không giới hạn + bảng tỉ lệ (`c05a9f8`), 4 thử thách dễ hơn + T
    của chiêu (`skill_damage.<id>`). Kéo theo: thẻ/đồ có ý nghĩa cho nhiều lối xây dựng (kiếm sĩ trâu scale giáp,
    pháp sư scale tốc độ…), bảng Nhân vật ghi "scale theo", dashboard hiện cột này. Tham khảo: Brotato (chỉ số
    scale ghi trên vũ khí), Halls of Torment, Vampire Survivors.
-3. ✅ 2026-11-22 **Thiết kế lại Sóng kiếm** (bước 1–4 xong; còn bước 5 đo tỉ trọng sát thương, bước 6 dashboard) và **Cột thánh quang** (ấn thánh báo trước, cột mép thẳng, rơi vào chỗ quái đông). **Thiết kế lại Sóng kiếm** (người dùng 2026-11-21: "không đẹp, khá phế"): kế hoạch `design/cleave-wave-redesign.md`
+3. ✅ 2026-11-22 **Thiết kế lại Sóng kiếm** (bước 1–6 xong: số đo trong `design/cleave-wave-redesign.md`, dashboard `2b82245`) và **Cột thánh quang** (ấn thánh báo trước, cột mép thẳng, rơi vào chỗ quái đông). **Thiết kế lại Sóng kiếm** (người dùng 2026-11-21: "không đẹp, khá phế"): kế hoạch `design/cleave-wave-redesign.md`
    (vẽ từng hướng, vệt kéo, màu riêng, nở rộng khi bay, hitbox xoay theo hướng, lên cấp xoè/vỡ lưỡi). Gộp luôn
    nợ kỹ thuật mục 4 (Sóng kiếm vẽ lại từng hướng). Làm trước Album. (Lần đầu nhầm sang Chém kiếm:
    `blade-arc-redesign.md` dừng sau bước 1, giữ phần đã sửa.)
