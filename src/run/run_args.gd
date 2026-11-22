@@ -31,6 +31,8 @@ static func apply(run) -> void:
 		elif a.begins_with("--status-all="):
 			for st in a.get_slice("=", 1).split(",", false):
 				run._status_all.append(st)
+		elif a.begins_with("--show-special-fx="):   # shots: every special card's effect drawn once at T s (look only)
+			run.show_special_fx_at = float(a.get_slice("=", 1))
 		elif a.begins_with("--monster-hp="):
 			run.monster_hp_mul = maxf(0.01, float(a.get_slice("=", 1)))
 		elif a.begins_with("--boss-hp="):

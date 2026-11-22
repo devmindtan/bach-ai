@@ -22,6 +22,7 @@ extends Node2D
 ##   --no-auto-pick  the demo stops at the first level-up panel (for shots)
 ##   --spawn-only=ID[,ID] only the waves of these monsters spawn, from the start (shots)
 ##   --event=K@T     run event K (ring | collect | hunt | tornado | falling_trees | poison_tide) at T seconds (shots)
+##   --show-special-fx=T  every special card's effect drawn once at T seconds, look only (shots)
 ##   --pool-here     a poison pool under the hero's start (shots of the poison look)
 ##   --vfx=N         Cài đặt "Hiệu ứng" level for shots (0 Đầy đủ, 1 Giảm, 2 Tối thiểu)
 ##   --debug-overlay show the F1 debug overlay from the start (shots)
@@ -1673,6 +1674,9 @@ func card_specials() -> Array:
 
 
 ## Sets the active specials and their timers (each "every" starts full).
+var show_special_fx_at := -1.0   # --show-special-fx=T (shots): draw every special card's effect once at T s
+
+
 func set_specials(list: Array) -> void:
 	specials = list
 	_special_t.clear()
@@ -1685,6 +1689,15 @@ func set_specials(list: Array) -> void:
 ## Timed specials: shield, pulse, chain_shock, reset_cd fire every "every" s;
 ## retaliate's cooldown runs down here too.
 func step_specials(dt: float) -> void:
+	if show_special_fx_at >= 0.0 and clock >= show_special_fx_at:   # shots: every special card's look, once
+		show_special_fx_at = -1.0
+		for sp: Dictionary in specials:
+			if String(sp.get("fx", "")) == "":
+				continue
+			if String(sp.get("kind", "")) in ["retaliate", "pulse", "freeze_nova", "burn_aura"]:
+				_ring_fx(float(sp.get("radius", 120.0)), String(sp["fx"]), "shock" if sp["fx"] == "retaliate-shock" else "cast")
+			else:
+				_item_fx(sp)
 	for k in specials.size():
 		var sp: Dictionary = specials[k]
 		_special_t[k] -= dt
