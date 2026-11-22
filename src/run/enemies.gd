@@ -85,6 +85,10 @@ signal split_done(pos: Vector2)
 var hit_pos := PackedVector2Array()
 var hit_val := PackedFloat32Array()
 var hit_crit := PackedByteArray()        # 1 = that hit was a crit (its number draws as one)
+var hit_tag := PackedByteArray()         # species x element of that hit: 0 plain, 1 weak, 2 resisted (number colour)
+## Species (species.json, design/species.md): weak / resist by element; set by set_species.
+var species := {}
+var element_of := {}   # damage source (skill id) -> element; sources not in it take no species change
 var crit_chance := 0.0   # Chí mạng of direct hits (the run sets it from the stats, 6C.2)
 var crit_mul := 1.75
 var _crit_next := false
@@ -270,6 +274,28 @@ func _register(id: String, m: Dictionary, sheet: SpriteSheet, world_scale: float
 	k_extra.append(m)
 	k_elite.append(1 if is_elite else 0)
 	k_boss.append(1 if bool(m.get("boss", false)) else 0)
+
+
+## Species table (species.json) and the element of each damage source (skill id -> element).
+func set_species(table: Dictionary, elements_by_source: Dictionary) -> void:
+	species = table
+	element_of = elements_by_source
+
+
+## Damage multiplier for kind [param k] hit by [param element]: mul_weak / mul_resist of its species,
+## bosses take boss_scale of the change (design/species.md).
+func species_mul(k: int, element: String) -> float:
+	if element == "" or species.is_empty():
+		return 1.0
+	var sp: Dictionary = species.get("species", {}).get(String(k_extra[k].get("species", "")), {})
+	var mul := 1.0
+	if sp.get("weak", []).has(element):
+		mul = float(species.get("mul_weak", 1.5))
+	elif sp.get("resist", []).has(element):
+		mul = float(species.get("mul_resist", 0.6))
+	if k_boss[k] == 1:
+		mul = 1.0 + (mul - 1.0) * float(species.get("boss_scale", 0.5))
+	return mul
 
 
 ## Kind index of a monster id, or -1.
@@ -1173,6 +1199,8 @@ func _damage(i: int, amount: float, kb: Vector2, source := "") -> void:
 		bonus_by["vs_status"] = float(bonus_by.get("vs_status", 0.0)) + amount * vs_status_mul   # end report: indirect damage
 		amount *= 1.0 + vs_status_mul
 	amount *= float(_affix_def(i).get("damage_taken_mul", 1.0))   # Giáp
+	var smul := species_mul(kind[i], String(element_of.get(source, "")))   # loài: weak / resisted element
+	amount *= smul
 	damage_by[source] = float(damage_by.get(source, 0.0)) + minf(amount, maxf(0.0, hp[i]))
 	hits_by[source] = int(hits_by.get(source, 0)) + 1
 	hp[i] -= amount
@@ -1181,6 +1209,7 @@ func _damage(i: int, amount: float, kb: Vector2, source := "") -> void:
 	hit_pos.append(center_of(i) - Vector2(0.0, k_radius[kind[i]]))
 	hit_val.append(amount)
 	hit_crit.append(1 if _crit_next else 0)
+	hit_tag.append(1 if smul > 1.0 else (2 if smul < 1.0 else 0))
 	_crit_next = false
 	if state[i] != DASH and k_boss[kind[i]] == 0:   # bosses are not knocked back
 		knock[i] += kb
@@ -1351,6 +1380,7 @@ func drain_hits() -> void:
 	hit_pos.clear()
 	hit_val.clear()
 	hit_crit.clear()
+	hit_tag.clear()
 	crit_heavy = 0
 
 

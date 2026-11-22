@@ -13,7 +13,8 @@
           "mul": 0.2
         }
       },
-      "rarity": "common"
+      "rarity": "common",
+      "element": "arcane"
     },
     {
       "id": "fireball",
@@ -30,7 +31,8 @@
           "mul": 0.1
         }
       },
-      "rarity": "rare"
+      "rarity": "rare",
+      "element": "fire"
     },
     {
       "id": "frost_nova",
@@ -47,7 +49,8 @@
           "mul": 0.08
         }
       },
-      "rarity": "epic"
+      "rarity": "epic",
+      "element": "ice"
     },
     {
       "id": "lightning",
@@ -61,7 +64,8 @@
           "mul": 0.2
         }
       },
-      "rarity": "rare"
+      "rarity": "rare",
+      "element": "lightning"
     },
     {
       "id": "thunder_javelin",
@@ -75,7 +79,8 @@
           "mul": 0.2
         }
       },
-      "rarity": "epic"
+      "rarity": "epic",
+      "element": "lightning"
     },
     {
       "id": "meteor",
@@ -92,7 +97,8 @@
           "mul": 0.08
         }
       },
-      "rarity": "epic"
+      "rarity": "epic",
+      "element": "fire"
     },
     {
       "id": "dash",
@@ -109,7 +115,8 @@
           "mul": -0.12
         }
       },
-      "rarity": "common"
+      "rarity": "common",
+      "element": "physical"
     },
     {
       "id": "void_orb",
@@ -126,7 +133,8 @@
           "mul": 0.1
         }
       },
-      "rarity": "legendary"
+      "rarity": "legendary",
+      "element": "dark"
     },
     {
       "id": "blizzard",
@@ -143,7 +151,8 @@
           "mul": 0.08
         }
       },
-      "rarity": "legendary"
+      "rarity": "legendary",
+      "element": "ice"
     },
     {
       "id": "storm",
@@ -157,7 +166,8 @@
           "mul": 0.25
         }
       },
-      "rarity": "legendary"
+      "rarity": "legendary",
+      "element": "lightning"
     },
     {
       "id": "arcane_power",
@@ -487,7 +497,10 @@
       ]
     },
     "frost_nova": {
-      "scale": {"damage": 1.0, "armor": 1.0},
+      "scale": {
+        "damage": 1.0,
+        "armor": 1.0
+      },
       "sprite": "frost-nova-i",
       "tier_sprites": [
         "frost-nova-i",
@@ -716,7 +729,10 @@
       ]
     },
     "blizzard": {
-      "scale": {"damage": 1.0, "max_hp": 0.04},
+      "scale": {
+        "damage": 1.0,
+        "max_hp": 0.04
+      },
       "sprite": "blizzard-vortex",
       "tier_sprites": [
         "blizzard-vortex",
@@ -775,7 +791,18 @@
         4,
         5
       ],
-      "zone": {"kind": "pulse", "time": 2.0, "pulses": [2, 2, 3, 3, 4], "damage_mul": 0.35},
+      "zone": {
+        "kind": "pulse",
+        "time": 2.0,
+        "pulses": [
+          2,
+          2,
+          3,
+          3,
+          4
+        ],
+        "damage_mul": 0.35
+      },
       "on_hit": [
         {
           "from": 1,

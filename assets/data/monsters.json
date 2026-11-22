@@ -8,7 +8,8 @@
     "damage": 8.0,
     "speed": 42.0,
     "xp": 1.0,
-    "scale": 2
+    "scale": 2,
+    "species": "ooze"
   },
   "bat": {
     "name": "Dơi",
@@ -19,7 +20,8 @@
     "speed": 95.0,
     "xp": 1.0,
     "scale": 2,
-    "wobble": 26.0
+    "wobble": 26.0,
+    "species": "beast"
   },
   "goblin": {
     "name": "Yêu Tinh",
@@ -34,7 +36,8 @@
     "windup": 0.45,
     "dash_speed": 330.0,
     "dash_time": 0.35,
-    "charge_cooldown": 2.2
+    "charge_cooldown": 2.2,
+    "species": "goblinoid"
   },
   "king_slime": {
     "name": "Vua Thạch Nhầy",
@@ -81,7 +84,8 @@
       "regen": 0.0,
       "color": "#7fe0a0",
       "short": "quái +60% máu"
-    }
+    },
+    "species": "ooze"
   },
   "spore": {
     "name": "Nấm Phun",
@@ -100,7 +104,8 @@
     "bolt_speed": 140.0,
     "bolt_damage": 10.0,
     "bolt_range": 420.0,
-    "bolt_radius": 6.0
+    "bolt_radius": 6.0,
+    "species": "plant"
   },
   "ember_beetle": {
     "name": "Bọ Lửa",
@@ -115,7 +120,8 @@
       "delay": 0.8,
       "radius": 64.0,
       "damage": 18.0
-    }
+    },
+    "species": "insect"
   },
   "wisp": {
     "name": "Ma Trơi",
@@ -127,7 +133,8 @@
     "xp": 1.0,
     "scale": 2,
     "zig_angle": 55.0,
-    "zig_time": 0.45
+    "zig_time": 0.45,
+    "species": "spirit"
   },
   "wolf": {
     "name": "Sói Rừng",
@@ -143,7 +150,8 @@
     "dash_speed": 380.0,
     "dash_time": 0.4,
     "charge_cooldown": 2.6,
-    "telegraph": true
+    "telegraph": true,
+    "species": "beast"
   },
   "tree_boss": {
     "name": "Mộc Yêu",
@@ -213,7 +221,8 @@
       "regen": 0.02,
       "color": "#a0d060",
       "short": "quái +50% máu, tự hồi máu"
-    }
+    },
+    "species": "plant"
   },
   "toad": {
     "name": "Cóc Độc",
@@ -233,7 +242,8 @@
       "radius": 30.0,
       "damage": 9.0
     },
-    "hop_height": 18.0
+    "hop_height": 18.0,
+    "species": "amphibian"
   },
   "bog_spirit": {
     "name": "Hồn Đầm",
@@ -247,7 +257,8 @@
     "keep_range": 200.0,
     "heal_every": 3.0,
     "heal_radius": 130.0,
-    "heal_pct": 0.25
+    "heal_pct": 0.25,
+    "species": "spirit"
   },
   "toad_king": {
     "name": "Cóc Chúa",
@@ -328,7 +339,8 @@
       "regen": 0.0,
       "color": "#c080ff",
       "short": "quái +35% sát thương, +25% máu"
-    }
+    },
+    "species": "amphibian"
   },
   "gold_goblin": {
     "name": "Yêu Tinh Vàng",
@@ -345,6 +357,7 @@
     "trail_every": 0.7,
     "gold_drop": 25,
     "chest_drop": true,
-    "spawn_dist": 300.0
+    "spawn_dist": 300.0,
+    "species": "goblinoid"
   }
 }

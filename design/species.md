@@ -19,7 +19,7 @@ Mỗi quái thuộc một **loài**. Loài cho quái một đặc tính hành vi
 **Quyết định:**
 - yếu ×1,5, kháng ×0,6;
 - chỉ miễn **trạng thái** (ví dụ Chảy máu), không miễn **sát thương**;
-- số bay màu cam khi trúng hệ yếu, màu xám khi trúng hệ kháng;
+- số bay màu đỏ khi trúng hệ yếu (cam đã là chí mạng), màu xám khi trúng hệ kháng;
 - bảng Chi tiết ải và Album ghi loài, hệ yếu và hệ kháng.
 
 ## Hệ sát thương của chiêu (thêm `element` vào mỗi chiêu)

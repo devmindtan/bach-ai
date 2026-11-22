@@ -13,7 +13,8 @@
           "mul": 0.2
         }
       },
-      "rarity": "common"
+      "rarity": "common",
+      "element": "physical"
     },
     {
       "id": "back_slash",
@@ -44,7 +45,8 @@
           "mul": 0.1
         }
       },
-      "rarity": "epic"
+      "rarity": "epic",
+      "element": "physical"
     },
     {
       "id": "sharpen",
@@ -159,7 +161,8 @@
           "mul": 0.08
         }
       },
-      "rarity": "rare"
+      "rarity": "rare",
+      "element": "physical"
     },
     {
       "id": "ground_slam",
@@ -176,7 +179,8 @@
           "mul": 0.08
         }
       },
-      "rarity": "epic"
+      "rarity": "epic",
+      "element": "physical"
     },
     {
       "id": "cleave_wave",
@@ -190,7 +194,8 @@
           "mul": 0.2
         }
       },
-      "rarity": "rare"
+      "rarity": "rare",
+      "element": "physical"
     },
     {
       "id": "holy_column",
@@ -204,7 +209,8 @@
           "mul": 0.2
         }
       },
-      "rarity": "epic"
+      "rarity": "epic",
+      "element": "light"
     },
     {
       "id": "dash",
@@ -221,7 +227,8 @@
           "mul": -0.12
         }
       },
-      "rarity": "common"
+      "rarity": "common",
+      "element": "physical"
     },
     {
       "id": "earthquake",
@@ -238,7 +245,8 @@
           "mul": 0.08
         }
       },
-      "rarity": "legendary"
+      "rarity": "legendary",
+      "element": "physical"
     },
     {
       "id": "solar_ray",
@@ -252,7 +260,8 @@
           "mul": 0.25
         }
       },
-      "rarity": "legendary"
+      "rarity": "legendary",
+      "element": "light"
     },
     {
       "id": "god_hammer",
@@ -269,7 +278,8 @@
           "mul": 0.1
         }
       },
-      "rarity": "legendary"
+      "rarity": "legendary",
+      "element": "physical"
     },
     {
       "id": "toughness",
@@ -509,7 +519,10 @@
       ]
     },
     "ground_slam": {
-      "scale": {"damage": 1.0, "max_hp": 0.05},
+      "scale": {
+        "damage": 1.0,
+        "max_hp": 0.05
+      },
       "sprite": "stomp-i",
       "tier_sprites": [
         "stomp-i",
@@ -556,10 +569,38 @@
       "cooldown": 2.75,
       "speed": 320.0,
       "duration": 1.0,
-      "count": [1, 1, 2, 2, 3],
-      "spread_deg": [0, 0, 15, 15, 25],
-      "grow": {"from": 0.8, "to": [1.2, 1.3, 1.3, 1.35, 1.4]},
-      "split": {"from": 4, "count": 3, "spread_deg": 60, "damage_mul": 0.4, "duration": 0.45, "scale": 0.55},
+      "count": [
+        1,
+        1,
+        2,
+        2,
+        3
+      ],
+      "spread_deg": [
+        0,
+        0,
+        15,
+        15,
+        25
+      ],
+      "grow": {
+        "from": 0.8,
+        "to": [
+          1.2,
+          1.3,
+          1.3,
+          1.35,
+          1.4
+        ]
+      },
+      "split": {
+        "from": 4,
+        "count": 3,
+        "spread_deg": 60,
+        "damage_mul": 0.4,
+        "duration": 0.45,
+        "scale": 0.55
+      },
       "on_hit": [
         {
           "from": 1,
@@ -569,9 +610,11 @@
         }
       ]
     },
-
     "holy_column": {
-      "scale": {"damage": 1.4, "armor": 1.0},
+      "scale": {
+        "damage": 1.4,
+        "armor": 1.0
+      },
       "sprite": "holy-column",
       "tier_sprites": [
         "holy-column",
@@ -604,7 +647,10 @@
       ]
     },
     "dash": {
-      "scale": {"damage": 0.8, "move_speed": 0.03},
+      "scale": {
+        "damage": 0.8,
+        "move_speed": 0.03
+      },
       "sprite": "swordsman",
       "anim": "dash",
       "cast": "active",

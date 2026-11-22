@@ -153,6 +153,7 @@ var _end_t := 0.0
 # floating damage numbers (ring buffer, sizes from run_config "ui")
 var _num_pos := PackedVector2Array()
 var _num_val := PackedFloat32Array()
+var _num_tag := PackedByteArray()    # 1 = weak element (red), 2 = resisted (grey): design/species.md
 var _num_crit := PackedByteArray()   # 1 = that number is a crit (bigger, orange, "!")
 var shake := ScreenShake.new()       # camera shake (6C.2); Cài đặt can turn it off
 var _hitstop := 0.0                  # s the sim stays frozen after a crit on an elite / boss
@@ -333,6 +334,7 @@ func _ready() -> void:
 	_num_pos.resize(n_max)
 	_num_val.resize(n_max)
 	_num_crit.resize(n_max)
+	_num_tag.resize(n_max)
 	_crit_cfg = cfg.get("crit", {})
 	_level.reset_actions()
 	shake.enabled = Prefs.current().screen_shake
@@ -400,6 +402,11 @@ func _ready() -> void:
 		hero_sheet.compose_layers()
 
 	enemies = Enemies.new(monsters, cfg, sheets, rng.seed)
+	var elems := {}
+	for u: Dictionary in pool.get("upgrades", []):
+		if u.has("element"):
+			elems[String(u["id"])] = String(u["element"])
+	enemies.set_species(GameData.load_json("res://assets/data/species.json"), elems)   # design/species.md
 	if challenge_id == "" and bench == 0:   # the region's props, seeded by the stage (same map every time)
 		obstacles = Obstacles.new(stages.region(stage_number).get("obstacles", {}), _arena_half, stage_number * 7919 + 13)
 		enemies.obstacles = obstacles
@@ -2701,6 +2708,7 @@ func _step_damage_numbers(dt: float) -> void:
 		_num_pos[_num_next] = enemies.hit_pos[k] + Vector2(rng.randf_range(-6.0, 6.0), 0.0)
 		_num_val[_num_next] = enemies.hit_val[k]
 		_num_crit[_num_next] = enemies.hit_crit[k] if k < enemies.hit_crit.size() else 0
+		_num_tag[_num_next] = enemies.hit_tag[k] if k < enemies.hit_tag.size() else 0
 		_num_t[_num_next] = 0.0
 		_num_next = (_num_next + 1) % _num_t.size()
 	enemies.drain_hits()
@@ -2940,6 +2948,10 @@ func _draw_damage_numbers(view: Rect2) -> void:
 		var txt := str(maxi(1, roundi(_num_val[i]))) + ("!" if crit else "")
 		var sz := roundi(_num_size * 1.4) if crit else _num_size
 		var col := Color(1.0, 0.55, 0.15, a) if crit else Color(1.0, 0.93, 0.6, a)
+		if _num_tag[i] == 1:   # weak element: red (design/species.md)
+			col = Color(1.0, 0.36, 0.42, a)
+		elif _num_tag[i] == 2:   # resisted: grey
+			col = Color(0.66, 0.66, 0.7, a)
 		draw_string_outline(font, p, txt, HORIZONTAL_ALIGNMENT_CENTER, 60.0, sz, 5 if crit else 4, Color(0.1, 0.05, 0.08, a))
 		draw_string(font, p, txt, HORIZONTAL_ALIGNMENT_CENTER, 60.0, sz, col)
 
