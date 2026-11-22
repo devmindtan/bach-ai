@@ -27,6 +27,7 @@ var kind := PackedInt32Array()
 var state := PackedInt32Array()
 var hp := PackedFloat32Array()
 var hp_cap := PackedFloat32Array()   # hp at spawn: the most a species regen heals back to
+var shell_on := PackedByteArray()   # 1 = Côn trùng's shell still takes the next hit
 var calm_t := PackedFloat32Array()   # seconds since the last hit (Nhầy regen waits for it)
 var timer := PackedFloat32Array()     # state timer (windup / dash / dying)
 var charge_cd := PackedFloat32Array()
@@ -217,6 +218,7 @@ func _init(monsters: Dictionary, cfg: Dictionary, sheets: Dictionary, seed_value
 	flash.resize(capacity)
 	hp_cap.resize(capacity)
 	calm_t.resize(capacity)
+	shell_on.resize(capacity)
 	anim_t.resize(capacity)
 	phase.resize(capacity)
 	flip.resize(capacity)
@@ -305,6 +307,22 @@ func enrage_mul(i: int) -> float:
 	return float(en.get("speed_mul", 1.3)) if hp[i] < hp_cap[i] * float(en.get("below", 0.3)) else 1.0
 
 
+## Côn trùng (species trait swarm): speed x swarm.speed_mul with swarm.count of its species within
+## swarm.radius px (itself included), else 1.
+func swarm_mul(i: int) -> float:
+	if not has_trait(kind[i], "swarm"):
+		return 1.0
+	var sw: Dictionary = _species_of(kind[i]).get("swarm", {})
+	var sid := String(k_extra[kind[i]].get("species", ""))
+	var near := PackedInt32Array()
+	_hash.query(pos[i], float(sw.get("radius", 80.0)), near)
+	var n := 0
+	for j in near:
+		if state[j] != DYING and String(k_extra[kind[j]].get("species", "")) == sid and pos[j].distance_to(pos[i]) <= float(sw.get("radius", 80.0)):
+			n += 1
+	return float(sw.get("speed_mul", 1.2)) if n >= int(sw.get("count", 3)) else 1.0
+
+
 ## Nhầy (species trait regen): after regen.delay s without a hit it heals regen.pct of its spawn hp a
 ## second, up to that hp; Bỏng stops it (design/species.md).
 func _step_regen(i: int, delta: float) -> void:
@@ -384,6 +402,7 @@ func spawn(id: String, p: Vector2) -> bool:
 	state[i] = MOVE
 	hp[i] = k_hp[k] * (1.0 if k_boss[k] == 1 else spawn_hp_mul)   # bosses keep their designed hp
 	hp_cap[i] = hp[i]
+	shell_on[i] = 1 if has_trait(k, "shell") else 0
 	calm_t[i] = 0.0
 	timer[i] = 0.0
 	charge_cd[i] = float(k_extra[k].get("charge_cooldown", 2.0)) * _rng.randf()
@@ -521,6 +540,7 @@ func step(delta: float, player_pos: Vector2, player_center: Vector2) -> float:
 				push += d / l * (min_d - l) / min_d
 		vel *= float(_affix_def(n).get("speed_mul", 1.0))   # Nhanh
 		vel *= enrage_mul(n)   # Thú: faster when nearly dead
+		vel *= swarm_mul(n)   # Côn trùng: faster in a swarm
 		vel += push * _push
 		knock[n] = knock[n] * maxf(0.0, 1.0 - KNOCKBACK_DECAY * delta)
 		pos[n] += (vel + knock[n]) * delta
@@ -1253,6 +1273,9 @@ func _damage(i: int, amount: float, kb: Vector2, source := "") -> void:
 		amount *= 1.0 + vs_status_mul
 	amount *= float(_affix_def(i).get("damage_taken_mul", 1.0))   # Giáp
 	var smul := species_mul(kind[i], String(element_of.get(source, "")))   # loài: weak / resisted element
+	if shell_on[i] == 1:   # Côn trùng: the shell takes the first hit
+		shell_on[i] = 0
+		amount *= float(_species_of(kind[i]).get("shell", {}).get("first_hit_mul", 0.5))
 	amount *= smul
 	damage_by[source] = float(damage_by.get(source, 0.0)) + minf(amount, maxf(0.0, hp[i]))
 	hits_by[source] = int(hits_by.get(source, 0)) + 1

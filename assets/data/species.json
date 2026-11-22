@@ -1,5 +1,5 @@
 {
-  "_doc": "Monster species (design/species.md, roadmap E). Each monster names one in monsters.json species. weak / resist: elements (skill 'element' in upgrades_*.json; statuses by their element: burn fire, shock lightning, bleed physical, holy_mark light, corrode dark) taking mul_weak / mul_resist; bosses take boss_scale of that change (x1.25 / x0.8). immune_status: statuses that never land. traits: behaviour ids coded in E3. regen (trait regen): after delay s without a hit, heals pct of its spawn hp per second; Bỏng stops it. enrage (trait enrage): below `below` of its spawn hp, speed x speed_mul. bite_bleed (trait bite_bleed): a contact hit makes the player bleed for time s at dps_mul x the hit per second.",
+  "_doc": "Monster species (design/species.md, roadmap E). Each monster names one in monsters.json species. weak / resist: elements (skill 'element' in upgrades_*.json; statuses by their element: burn fire, shock lightning, bleed physical, holy_mark light, corrode dark) taking mul_weak / mul_resist; bosses take boss_scale of that change (x1.25 / x0.8). immune_status: statuses that never land. traits: behaviour ids coded in E3. regen (trait regen): after delay s without a hit, heals pct of its spawn hp per second; Bỏng stops it. enrage (trait enrage): below `below` of its spawn hp, speed x speed_mul. bite_bleed (trait bite_bleed): a contact hit makes the player bleed for time s at dps_mul x the hit per second. swarm (trait swarm): with count of its species (itself included) within radius px, speed x speed_mul. shell (trait shell): the first hit it takes deals first_hit_mul.",
   "mul_weak": 1.5,
   "mul_resist": 0.6,
   "boss_scale": 0.5,
@@ -84,7 +84,15 @@
       "traits": [
         "swarm",
         "shell"
-      ]
+      ],
+      "swarm": {
+        "radius": 80.0,
+        "count": 3,
+        "speed_mul": 1.2
+      },
+      "shell": {
+        "first_hit_mul": 0.5
+      }
     },
     "plant": {
       "name": "Thực vật",

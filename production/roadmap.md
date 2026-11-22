@@ -288,7 +288,7 @@ Trước mỗi nhóm: tham khảo ≥ 2 game cùng thể loại, ghi nguồn và
 - E1. ✅ Thiết kế: 7 loài, hệ yếu ×1,5 / kháng ×0,6, boss nửa hiệu ứng; hai hệ đặc biệt Ánh sáng, Bóng tối.
 - E2. ✅ Data `species.json`, `monsters.json` `species`, `element` cho mỗi chiêu (Thái dương xạ tạm Ánh sáng); test hợp lệ.
 - E3. Code đặc tính, mỗi cái một commit + test: ✅ hệ số yếu/kháng + số bay màu (đỏ = yếu, xám = kháng) → ✅ miễn trạng thái → ✅ Linh hồn bay
-  xuyên → ✅ Nhầy hồi máu → ✅ Thú nổi điên/chảy máu → Côn trùng theo đàn/vỏ cứng → Thực vật bám rễ → Lưỡng cư.
+  xuyên → ✅ Nhầy hồi máu → ✅ Thú nổi điên/chảy máu → ✅ Côn trùng theo đàn/vỏ cứng → Thực vật bám rễ → Lưỡng cư.
 - E4. Bảng Chi tiết ải + Album ghi loài, hệ yếu, hệ kháng.
 - E5. Ánh sáng: trạng thái Thánh ấn; 2–3 phương án hiệu ứng trong Sprite Lab để chọn; áp vào Cột thánh quang.
 - E6. Bóng tối: trạng thái Ăn mòn; 2–3 phương án hiệu ứng để chọn; áp vào Cầu hư không.

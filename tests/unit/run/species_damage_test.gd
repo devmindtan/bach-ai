@@ -105,3 +105,21 @@ func test_beast_bite_marks_contact_bleed() -> void:
 	o.step(0.016, Vector2.ZERO, Vector2.ZERO)
 	if not o.contact_bleed.is_empty():
 		failures.append("ooze contact marked a bleed")
+
+
+func test_insect_shell_halves_first_hit_only() -> void:
+	var e := _enemies("insect", false)
+	var got := [_hit(e, "storm"), _hit(e, "storm")]
+	if not (is_equal_approx(got[0], 50.0) and is_equal_approx(got[1], 100.0)):
+		failures.append("insect shell hits should be 50 then 100, got %s" % [got])
+
+
+func test_insect_swarm_speeds_up_with_three_near() -> void:
+	var e := _enemies("insect", false)
+	if e.swarm_mul(0) != 1.0:
+		failures.append("lone insect sped up")
+	e.spawn("blob", Vector2(20, 0))
+	e.spawn("blob", Vector2(0, 20))
+	e.step(0.0, Vector2(500, 500), Vector2(500, 500))   # rebuilds the spatial hash
+	if not is_equal_approx(e.swarm_mul(0), 1.2):
+		failures.append("insect with 2 near did not speed up: %s" % e.swarm_mul(0))
