@@ -179,6 +179,7 @@ var chests_opened := 0   # this run, for Mảnh thẻ
 var challenges := ChallengeEvents.new()   # Vòng thử thách / Thu thập sao / Săn tinh anh (challenge_events.gd)
 var _forced_events: Array = []   # --event=K@T
 var obstacles: Obstacles = null   # the stage's rocks / trees / poison pools (design/obstacles.md)
+var _obstacle_view := ObstacleView.new()   # rocks / trees drawing (obstacle_view.gd)
 var region_ev := RegionEvents.new()   # the region's own event (region_events.gd)
 var _heal_fx: Array = []   # [{p, r, t}] Hồn Đầm heal rings being drawn
 var _spawn_only := ""   # --spawn-only=ID (shots)
@@ -221,6 +222,7 @@ var _panels: RunPanels
 
 func _ready() -> void:
 	region_ev.run = self
+	_obstacle_view.run = self
 	challenges.run = self
 	RunArgs.apply(self)
 	RunInput.register()
@@ -2687,7 +2689,7 @@ func _draw() -> void:
 		add_child(_ground)
 	_ground.follow(_camera.position, get_viewport_rect().size)
 	_boss_view.draw_hazard_pools()
-	_draw_obstacles(view, false)
+	_obstacle_view.draw(view, false)
 	var gem: SpriteSheet = sheets.get(_gem_sprite)
 	var coin: SpriteSheet = sheets.get(_coin_sprite)
 	for i in pickups.count:
@@ -2794,7 +2796,7 @@ func _draw() -> void:
 				draw_circle(bp, br, Color(0.45, 0.95, 0.35, 0.85 * (1.0 - life)))
 				draw_arc(bp, br, 0.0, TAU, 8, Color(0.1, 0.35, 0.1, 0.9 * (1.0 - life)), 1.0)
 		_draw_auras("front")
-	_draw_obstacles(view, true)   # a tree the hero walks behind: drawn again, see-through, over the hero
+	_obstacle_view.draw(view, true)   # a tree the hero walks behind: drawn again, see-through, over the hero
 	_draw_statuses(view)
 	_draw_fx(false)
 	if Prefs.current().monster_hp:
@@ -2964,39 +2966,6 @@ func _step_pools_hazard(dt: float) -> void:
 		var d := obstacles.pool_dps * dt
 		hp -= d
 		damage_taken += d
-
-
-## Solid props: the foot's shadow first, then the sprite on its anchor. [param front]: only those whose
-## foot is below the hero and that cover it, drawn see-through so the hero stays visible behind them.
-func _draw_obstacles(view: Rect2, front: bool) -> void:
-	if obstacles == null:
-		return
-	for s: Dictionary in obstacles.solids:
-		var p: Vector2 = s["p"]
-		if not view.has_point(p):
-			continue
-		var sh: SpriteSheet = sheets.get(String(s["sprite"]))
-		if sh == null:
-			continue
-		if p in region_ev.trees.felled:   # Cây đổ: a stump where the tree stood (its trunk lies on the floor)
-			if not front:
-				draw_circle(p + Vector2(0, -4), 11.0, Color(0.22, 0.13, 0.07))
-				draw_circle(p + Vector2(0, -6), 8.0, Color(0.55, 0.38, 0.2))
-				draw_arc(p + Vector2(0, -6), 4.0, 0.0, TAU, 12, Color(0.4, 0.26, 0.12), 1.5)
-			continue
-		if front:
-			var size := sh.frame_size * _sprite_scale
-			var behind := player_pos.y < p.y and player_pos.y > p.y - size.y and absf(player_pos.x - p.x) < size.x * 0.45
-			if not behind:
-				continue
-			sh.draw(self, "idle", 0.0, p, _sprite_scale, false, Color(1, 1, 1, 0.5))
-		else:
-			sh.draw(self, "idle", 0.0, p, _sprite_scale)
-
-
-
-
-
 
 
 ## Telegraphed charges (Sói Rừng, design 6A): the lane a winding-up charger will
