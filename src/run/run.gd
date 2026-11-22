@@ -1726,7 +1726,8 @@ func trigger_special(sp: Dictionary) -> void:
 			for i in enemies.living_within(center, float(sp.get("radius", 100.0))):
 				enemies.apply_status(i, "burn", {"time": float(sp.get("time", 2.0)), "dps_mul": float(sp.get("damage_mul", 0.3))},
 					float(stats.get("damage", 10.0)), src)
-			_item_fx(sp)
+			# the flame ring at the burn's reach (H4, 2026-11-22: it was drawn at scale 1, a quarter of the burn)
+			_ring_fx(float(sp.get("radius", 100.0)), String(sp.get("fx", "ward-burn")), "cast")   # the same reach the burn uses
 		"freeze_nova":
 			var reach := float(sp.get("radius", 150.0)) * float(stats.get("area", 1.0))
 			for i in enemies.living_within(center, reach):
