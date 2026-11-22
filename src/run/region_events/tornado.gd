@@ -90,7 +90,7 @@ func draw(c: CanvasItem, clock: float) -> void:
 	var dust := Color(0.93, 0.88, 0.62)
 	if warn_left > 0.0:
 		var k := 1.0 - warn_left / maxf(0.01, warn)
-		c.draw_set_transform(pos, 0.0, Vector2.ONE)   # 2D round = hits()
+		c.draw_set_transform(pos, 0.0, Vector2(1.0, 0.55))
 		for i in 16:   # dashed ring
 			var a := i * TAU / 16.0 + clock * 2.0
 			c.draw_arc(Vector2.ZERO, radius, a, a + TAU / 32.0, 6, Color(dust, 0.9), 3.0)
@@ -98,7 +98,7 @@ func draw(c: CanvasItem, clock: float) -> void:
 		c.draw_set_transform(Vector2.ZERO)
 		c.draw_line(pos, pos + dir * radius * 1.6, Color(dust, 0.8), 3.0)   # which way it will run
 		return
-	c.draw_set_transform(pos, 0.0, Vector2.ONE)   # 2D round = hits()
+	c.draw_set_transform(pos, 0.0, Vector2(1.0, 0.55))
 	c.draw_arc(Vector2.ZERO, radius, 0.0, TAU, 40, Color(dust, 0.55), 2.0)   # its reach on the ground
 	c.draw_set_transform(Vector2.ZERO)
 	var greens := [Color(0.55, 0.78, 0.30), Color(0.36, 0.60, 0.22)]
