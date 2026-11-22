@@ -180,6 +180,7 @@ var challenges := ChallengeEvents.new()   # Vòng thử thách / Thu thập sao 
 var _forced_events: Array = []   # --event=K@T
 var obstacles: Obstacles = null   # the stage's rocks / trees / poison pools (design/obstacles.md)
 var _obstacle_view := ObstacleView.new()   # rocks / trees drawing (obstacle_view.gd)
+var _sheet := RunSheet.new()   # character sheet / card preview data (run_sheet.gd)
 var region_ev := RegionEvents.new()   # the region's own event (region_events.gd)
 var _heal_fx: Array = []   # [{p, r, t}] Hồn Đầm heal rings being drawn
 var _spawn_only := ""   # --spawn-only=ID (shots)
@@ -218,6 +219,10 @@ var _vfx_alpha := 1.0      # Cài đặt "Hiệu ứng": fades skill / status ef
 var _ground: GroundLayer   # cached arena floor (src/run/ground_layer.gd)
 var _hud: RunHud
 var _panels: RunPanels
+
+
+func _init() -> void:
+	_sheet.run = self   # before _ready: tests build a Run with .new() and ask the sheet directly
 
 
 func _ready() -> void:
@@ -1257,11 +1262,7 @@ static func _dir_name(d: Vector2) -> String:
 ## Brotato's per-weapon scaling); without "scale", damage x damage_mul.
 ## "Scale theo: sát thương ×1.0 + giáp ×1.0" for a skill with "scale", "" otherwise.
 func scale_text(id: String) -> String:
-	var sc: Dictionary = pool.get("skills", {}).get(id, {}).get("scale", {})
-	var parts := []
-	for k: String in sc:
-		parts.append("%s ×%s" % [String(STAT_LABEL.get(k, k)).to_lower(), str(sc[k])])
-	return "" if parts.is_empty() else "Scale theo: " + " + ".join(parts)
+	return _sheet.scale_text(id)
 
 
 static func skill_base(sp: Dictionary, st: Dictionary) -> float:
@@ -1368,64 +1369,14 @@ func damage_report() -> Array:
 ## What a card does right now, in numbers, for the pause menu: one line per
 ## effect, e.g. "Hồi chiêu -40% (0.54 s) · áp lên: Chém kiếm, Lốc xoáy".
 func card_effect_text(id: String) -> String:
-	var u := upgrade(id)
-	var lv := int(levels.get(id, 0))
-	var parts := []
-	var owned_skills := skill_info().map(func(si: Dictionary) -> String: return String(si["name"]))
-	for key: String in u.get("effects", {}):
-		var e: Dictionary = u["effects"][key]
-		if key == "back_slash":
-			var ba: Dictionary = pool.get("skills", {}).get("blade_arc", {})
-			var pct := float(ba.get("back_damage_mul", 0.5)) + float(ba.get("back_damage_per_level", 0.25)) * (lv - 1)
-			parts.append("Nhát chém sau %d%% sát thương của Chém kiếm" % roundi(pct * 100.0))
-			continue
-		var amount: String = ("%+d%%" % roundi(float(e["mul"]) * lv * 100.0)) if e.has("mul") else signed(float(e["add"]) * lv)
-		if key.begins_with("skill_damage.") or key.begins_with("skill_area."):
-			parts.append("%s %s" % ["Sát thương" if key.begins_with("skill_damage.") else "Vùng", amount])
-			continue
-		var line := "%s %s (hiện %s)" % [STAT_LABEL.get(key, key), amount, _fmt_stat(key, float(stats.get(key, 0.0)))]
-		if key in ["damage", "cooldown", "area"] and not owned_skills.is_empty():
-			line += " · áp lên: " + ", ".join(owned_skills)
-		parts.append(line)
-	return "\n".join(parts)
+	return _sheet.card_effect_text(id)
 
 
 ## Owned skills (kind "skill"), pool order: {id, name, level, max, damage, cooldown,
 ## size, base_damage, base_cooldown, sources}. sources = the cards changing this
 ## skill: [{id, name, level, what, text}], e.g. what "Hồi chiêu", text "-20%".
 func skill_info() -> Array:
-	var out := []
-	var plain := PlayerStats.compute(base_stats, [], {})   # class stats, no cards
-	for u: Dictionary in pool.get("upgrades", []):
-		var id := String(u["id"])
-		var lv := int(levels.get(id, 0))
-		if u.get("kind") != "skill" or lv <= 0:
-			continue
-		var touches := {"damage": "Sát thương", "cooldown": "Hồi chiêu", "area": "Vùng",
-			"skill_damage." + id: "Sát thương", "skill_area." + id: "Vùng", "skill_cd." + id: "Hồi chiêu"}
-		var sources := []
-		var lv_all := effect_levels()
-		for v: Dictionary in effect_pool():
-			var vl := int(lv_all.get(v["id"], 0))
-			if vl <= 0:
-				continue
-			var effects: Dictionary = v.get("effects", {})
-			for key: String in effects:
-				var e: Dictionary = effects[key]
-				if touches.has(key):
-					var t: String = ("%+d%%" % roundi(float(e["mul"]) * vl * 100.0)) if e.has("mul") else signed(float(e["add"]) * vl)
-					sources.append({"id": v["id"], "name": v.get("name", v["id"]), "level": vl, "what": touches[key], "text": t,
-						"pct": float(e.get("mul", 0.0)) * vl * 100.0})
-				elif key == "back_slash" and id == "blade_arc":
-					var ba: Dictionary = pool.get("skills", {}).get("blade_arc", {})
-					var pct := float(ba.get("back_damage_mul", 0.5)) + float(ba.get("back_damage_per_level", 0.25)) * (vl - 1)
-					sources.append({"id": v["id"], "name": v.get("name", v["id"]), "level": vl, "what": "Nhát sau", "text": "%d%%" % roundi(pct * 100.0)})
-		out.append({"id": id, "name": u.get("name", id), "level": lv, "max": UpgradeRoller.cap(u),
-			"damage": skill_damage(id), "cooldown": skill_cooldown(id), "size": skill_size(id),
-			"base_damage": skill_damage(id, plain), "base_cooldown": skill_cooldown(id, plain), "sources": sources,
-			"scale_text": scale_text(id),
-			"statuses": on_hit(id), "count": skill_count_now(id), "count_parts": count_parts(id)})
-	return out
+	return _sheet.skill_info()
 
 
 func _aim() -> void:
@@ -2286,63 +2237,7 @@ func upgrade(id: String) -> Dictionary:
 ## level about to be gained ("" when it is an ordinary level) }. Numbers come from
 ## PlayerStats with the upgrade one level higher, so the card shows real values.
 func upgrade_preview(id: String) -> Dictionary:
-	var u := upgrade(id)
-	var lv := int(levels.get(id, 0))
-	var nxt := lv + 1
-	var max_lv := UpgradeRoller.cap(u)
-	# "after" is built from the same sources as the current stats (cards, milestones,
-	# buffs, equipment, skill tree) plus this card one level up; built from the cards
-	# alone it lost every lasting bonus and showed a drop (user 2026-11-18)
-	var after_levels := effect_levels()
-	after_levels[id] = nxt
-	var after := compute_stats(after_levels)   # the same balance as the run (a raw compute showed 17 -> 23)
-	var lines := []
-	var skills: Dictionary = pool.get("skills", {})
-	if u.get("kind") == "skill" and skills.has(id):
-		var sp: Dictionary = skills[id]
-		lines.append(["Sát thương", "—" if lv == 0 else str(roundi(skill_damage(id, stats))), str(roundi(skill_damage(id, after)))])
-		if lv == 0 or not is_equal_approx(skill_size(id, stats), skill_size(id, after)):
-			lines.append(["Cỡ", "—" if lv == 0 else "×%.2f" % skill_size(id, stats), "×%.2f" % skill_size(id, after)])
-		if sp.has("cooldown"):
-			var cd_now := "—" if lv == 0 else "%.1fs" % skill_cooldown(id, stats)
-			lines.append(["Hồi chiêu", cd_now, "%.1fs" % skill_cooldown(id, after)])
-		# more casts at this level (count grows for dense hordes)
-		var now_n := 0 if lv == 0 else _skill_count(id, sp)
-		levels[id] = nxt
-		var next_n := _skill_count(id, sp)
-		levels[id] = lv
-		if lv == 0:
-			levels.erase(id)
-		if next_n != now_n and (lv > 0 or next_n > 1):
-			lines.append(["Số lượng", "—" if lv == 0 else str(now_n), str(next_n)])
-	else:
-		for key: String in u.get("effects", {}):
-			if key == "back_slash":
-				var ba: Dictionary = skills.get("blade_arc", {})
-				var pct := func(l: int) -> String:
-					return "—" if l <= 0 else "%d%%" % roundi(100.0 * (float(ba.get("back_damage_mul", 0.5)) + float(ba.get("back_damage_per_level", 0.25)) * (l - 1)))
-				lines.append(["Nhát chém sau", pct.call(lv), pct.call(nxt)])
-			else:
-				lines.append([STAT_LABEL.get(key, key), _fmt_stat(key, float(stats.get(key, 0.0))), _fmt_stat(key, float(after.get(key, 0.0)))])
-	# milestones: a new look (tier sprite) at a level, and the last level
-	var milestones := [max_lv]
-	var tiers: Array = skills.get(id, {}).get("tier_sprites", [])
-	for i in range(1, tiers.size()):
-		if tiers[i] != tiers[i - 1]:
-			milestones.append(i + 1)
-	var text := ""
-	if tiers.size() > 1 and nxt <= tiers.size() and (nxt == 1 or tiers[nxt - 1] != tiers[nxt - 2]):
-		text = "Bậc %s · hình mới" % ["I", "II", "III", "IV", "V"][mini(nxt, 5) - 1]
-	# a level that adds a status (on_hit "from") is a milestone too
-	for e: Dictionary in skills.get(id, {}).get("on_hit", []):
-		var f := int(e.get("from", 1))
-		if not milestones.has(f):
-			milestones.append(f)
-		if f == nxt:
-			text = (text + " · " if text != "" else "") + "Thêm: " + String(status_defs.get(String(e.get("status", "")), {}).get("name", e.get("status", "")))
-	if nxt == max_lv:
-		text = (text + " · " if text != "" else "") + "Cấp tối đa"
-	return {"lines": lines, "milestones": milestones, "milestone": text, "level": lv, "max": max_lv}
+	return _sheet.upgrade_preview(id)
 
 
 const STAT_LABEL := {"max_hp": "Máu tối đa", "damage": "Sát thương", "cooldown": "Hồi chiêu", "area": "Vùng đánh", "amount": "Số lượng",
@@ -2400,22 +2295,7 @@ func compute_stats(lv: Dictionary) -> Dictionary:
 ## PlayerStats.breakdown with the same balance multipliers as compute_stats(), each shown as a
 ## "Độ khó" part, so the character sheet agrees with the level-up cards.
 func stat_breakdown() -> Dictionary:
-	var bd := PlayerStats.breakdown(base_stats, effect_pool(), effect_levels())
-	var bal: Dictionary = cfg.get("balance", {})
-	for pair: Array in [["damage", "player_damage_mul"], ["area", "player_area_mul"]]:
-		var m := float(bal.get(pair[1], 1.0))
-		if bd.has(pair[0]) and not is_equal_approx(m, 1.0):
-			bd[pair[0]]["final"] = float(bd[pair[0]]["final"]) * m
-			bd[pair[0]]["parts"].append({"id": "skull", "name": "Độ khó", "level": 0, "mul": m - 1.0})
-	# every cast is capped at player.cooldown_floor (skill_cooldown): the sheet shows the same number
-	var cd_floor := float(cfg.get("player", {}).get("cooldown_floor", 0.0))
-	if bd.has("cooldown") and float(bd["cooldown"]["final"]) < cd_floor:
-		bd["cooldown"]["final"] = cd_floor
-		bd["cooldown"]["capped"] = true
-	return bd
-	if enemies != null:   # Chí mạng: run_config.json crit + any crit_chance / crit_mul effects (6C.2)
-		enemies.crit_chance = float(cfg.get("crit", {}).get("chance", 0.0)) + float(stats.get("crit_chance", 0.0))
-		enemies.crit_mul = float(cfg.get("crit", {}).get("mul", 1.75)) + float(stats.get("crit_mul", 0.0))
+	return _sheet.stat_breakdown()
 
 
 ## Card upgrades plus active buffs (as level-1 upgrades): what the stats are made of.
