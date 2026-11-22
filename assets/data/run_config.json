@@ -197,11 +197,11 @@
     "xp_drop_chance": 0.8
   },
   "time_scale": {
-    "_doc": "Monsters grow stronger at each minute mark of a run (user 2026-11-20): after k full every s, monsters spawned (not bosses) have hp x (1 + hp*k) and every monster hit deals damage x (1 + damage*k); the mark is called on screen (call).",
+    "_doc": "Monsters grow stronger at each minute mark of a run (user 2026-11-20): after k full every s, monsters spawned (not bosses) have hp x (1 + hp*k) and every monster hit deals damage x (1 + damage*k). User 2026-11-22: silently (no call), only from min_stage, at the region's own rates (stages.json regions[].time_scale {hp, damage}); hp / damage here are the fallback.",
     "every": 60.0,
+    "min_stage": 6,
     "hp": 0.15,
-    "damage": 0.1,
-    "call": "Quái mạnh hơn! (+%d%% máu, +%d%% sát thương)"
+    "damage": 0.1
   },
   "boss_outro": {
     "_doc": "When the boss of a boss stage dies (user 2026-11-21): every monster plays its death, the world runs at time_scale for time real seconds, the screen shakes, the call names the boss; then the win panel.",

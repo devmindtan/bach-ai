@@ -90,7 +90,6 @@ var _ms_queue: Array[int] = []    # milestone levels reached, their pick not sho
 var _ms_done: Array[int] = []     # milestone levels already offered in this run
 var ms_level := 0                 # the milestone level whose pick is open (0 = a normal level-up)
 var _xp_rng := RandomNumberGenerator.new()   # its own stream: XP drop rolls must not shift spawns
-var _time_mark := -1               # the time_scale step last seen (its call shows once per minute)
 var _owned_count_done := false     # Đa phép already gave its +1 to the skills owned when picked
 var skill_extra := {}             # skill id -> count added by Thêm đòn / Thêm phép on that skill only
 var skill_pick := 0               # > 0: the open panel picks the skill a count card adds to
@@ -576,14 +575,7 @@ func _tick(dt: float) -> void:
 		if float(_absorb_fx[i]["t"]) <= 0.0:
 			_absorb_fx.remove_at(i)
 	_step_pools_hazard(dt)
-	enemies.spawn_hp_mul = time_mul(clock, "hp")   # monsters grow stronger each minute (time_scale)
-	var mark := int(time_mul(clock, "hp") * 1000.0)
-	if mark != _time_mark:
-		if _time_mark >= 0 and clock < duration - 0.5 and String(cfg.get("time_scale", {}).get("call", "")) != "":   # not at the final bell
-			var ts: Dictionary = cfg["time_scale"]
-			wave_call = String(ts["call"]) % [roundi((time_mul(clock, "hp") - 1.0) * 100.0), roundi((time_mul(clock, "damage") - 1.0) * 100.0)]
-			wave_call_t = 2.5
-		_time_mark = mark
+	enemies.spawn_hp_mul = time_mul(clock, "hp")   # monsters grow stronger each minute, silently (time_scale)
 	var contact := enemies.step(dt, player_pos, player_pos + _hit_center) * time_mul(clock, "damage")
 	if god and contact > 0.0 and invuln <= 0.0:   # balance runs: count what would have been taken, keep the hp
 		damage_taken += maxf(1.0, contact * armor_mul(float(stats.get("armor", 0.0)), _armor_k) * damage_taken_mul())
@@ -1957,11 +1949,17 @@ func _after_pick() -> void:
 ## Monster multiplier [param what] ("hp" | "damage") at run time [param t] s: 1 + step * full minute marks
 ## passed (run_config time_scale, user 2026-11-20).
 func time_mul(t: float, what: String) -> float:
-	var ts: Dictionary = cfg.get("time_scale", {})
+	return time_scale_mul(cfg.get("time_scale", {}), stages.region(stage_number).get("time_scale", {}) if stages != null else {},
+		stage_number, t, what)
+
+
+## Monster growth at clock [param t] (user 2026-11-22): none before time_scale.min_stage; the region's own
+## per-minute rates (stages.json regions[].time_scale) over the run_config ones; 1 + rate x full minutes.
+static func time_scale_mul(ts: Dictionary, region_ts: Dictionary, stage: int, t: float, what: String) -> float:
 	var every := float(ts.get("every", 0.0))
-	if every <= 0.0:
+	if every <= 0.0 or stage < int(ts.get("min_stage", 1)):
 		return 1.0
-	return 1.0 + float(ts.get(what, 0.0)) * floorf(t / every)
+	return 1.0 + float(region_ts.get(what, ts.get(what, 0.0))) * floorf(t / every)
 
 
 ## Sprites the special cards draw (their "special.fx"), loaded with the run. User 2026-11-20: the specials

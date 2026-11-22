@@ -295,7 +295,7 @@ Trước mỗi nhóm: tham khảo ≥ 2 game cùng thể loại, ghi nguồn và
 - F1. Tham khảo (viền sáng theo hình, hào quang dưới chân, biểu tượng nhỏ trên đầu); bỏ vòng tròn đỏ/màu khoanh quanh.
 - F2. Vẽ trong Sprite Lab (2–3 phương án để chọn), áp vào game, ảnh nhiều loại quái.
 
-**G. Quái mạnh dần: âm thầm, theo bản đồ, từ màn 6**
+**G. Quái mạnh dần: âm thầm, theo bản đồ, từ màn 6** — ✅ 2026-11-22 (G1–G3)
 - G1. Bỏ câu báo "Quái mạnh hơn! (+30% máu, +20% sát thương)" (`run_config.json` `time_scale.call`).
 - G2. Hệ số tăng theo phút đặt theo vùng/bản đồ (`stages.json` regions[].time_scale), không chung một bộ.
 - G3. Chỉ bật từ màn 6 (`time_scale.min_stage` 6); test: màn 1–5 không tăng, màn 6+ tăng theo vùng.

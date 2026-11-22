@@ -15,6 +15,7 @@ func _check(cond: bool, msg: String) -> void:
 func test_monster_stats_step_up_at_each_minute_mark() -> void:
 	var r: Node = Run.new()
 	r.cfg = GameData.load_json("res://assets/data/run_config.json")
+	r.stage_number = 6   # growth starts at time_scale.min_stage (user 2026-11-22); no stages: the fallback rates
 	var ts: Dictionary = r.cfg.get("time_scale", {})
 	_check(float(ts.get("every", 0.0)) == 60.0, "a step every 60 s")
 	var hp0: float = r.time_mul(0.0, "hp")

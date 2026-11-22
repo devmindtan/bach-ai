@@ -1,5 +1,5 @@
 {
-  "_doc": "Stages 1..count (design/progression.md). Monster hp x = 1 + hp_lin*(n-1) + hp_quad*(n-1)^2, damage x = 1 + dmg_lin*(n-1), spawn rate x = min(rate_max, 1 + rate_lin*(n-1)) (bursts too). Every boss_every-th stage is a boss stage and a milestone (milestones.json). A region's stages play its waves file (boss stages: boss_waves) unless waves/stage_NNN.json exists. ground = the floor colours. rewards: gold on a win = gold_base + gold_per_stage*n; gems first win gems_first (boss stage gems_boss_first), later wins gems_repeat. music = the region's run song (audio.json); ground.props = decorations RunGround scatters (design/regions.md). events: in-run events of the region (design/events.md): {kind: ring | collect | hunt | tornado | falling_trees | poison_tide, t: seconds}; each region has one own event (design/region-events-plan.md). obstacles: the region's props (design/obstacles.md): solid [{sprite, radius (foot, blocks), count}], pools {count, radius, dps} (poison, hurts but does not block), clear_start px free round the start, spacing px between props. ground.patch = terrain patches in clusters (RunGround): kind dirt | water | clover, color, share of tiles, seed (each region its own layout).",
+  "_doc": "Stages 1..count (design/progression.md). Monster hp x = 1 + hp_lin*(n-1) + hp_quad*(n-1)^2, damage x = 1 + dmg_lin*(n-1), spawn rate x = min(rate_max, 1 + rate_lin*(n-1)) (bursts too). Every boss_every-th stage is a boss stage and a milestone (milestones.json). A region's stages play its waves file (boss stages: boss_waves) unless waves/stage_NNN.json exists. ground = the floor colours. rewards: gold on a win = gold_base + gold_per_stage*n; gems first win gems_first (boss stage gems_boss_first), later wins gems_repeat. music = the region's run song (audio.json); ground.props = decorations RunGround scatters (design/regions.md). events: in-run events of the region (design/events.md): {kind: ring | collect | hunt | tornado | falling_trees | poison_tide, t: seconds}; each region has one own event (design/region-events-plan.md). obstacles: the region's props (design/obstacles.md): solid [{sprite, radius (foot, blocks), count}], pools {count, radius, dps} (poison, hurts but does not block), clear_start px free round the start, spacing px between props. time_scale = the region's monster growth per minute {hp, damage} (run_config time_scale, from its min_stage; user 2026-11-22). ground.patch = terrain patches in clusters (RunGround): kind dirt | water | clover, color, share of tiles, seed (each region its own layout).",
   "count": 30,
   "boss_every": 10,
   "scale": {
@@ -20,6 +20,7 @@
     {
       "id": "meadow",
       "name": "Đồng cỏ",
+      "time_scale": {"hp": 0.1, "damage": 0.06},
       "from": 1,
       "to": 10,
       "waves": "stage_001",
@@ -79,6 +80,7 @@
     {
       "id": "dark_forest",
       "name": "Rừng Âm U",
+      "time_scale": {"hp": 0.15, "damage": 0.1},
       "from": 11,
       "to": 20,
       "waves": "stage_011",
@@ -139,6 +141,7 @@
     {
       "id": "poison_marsh",
       "name": "Đầm Lầy Độc",
+      "time_scale": {"hp": 0.2, "damage": 0.12},
       "from": 21,
       "to": 30,
       "waves": "stage_021",
