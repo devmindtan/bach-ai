@@ -82,7 +82,7 @@ func draw_pools(view: Rect2) -> void:
 		var c1 := Color(0.7, 0.35, 0.9, a * 0.8) if purple else Color(0.55, 0.85, 0.2, a * 0.8)
 		var c2 := Color(0.25, 0.08, 0.35, a + 0.2) if purple else Color(0.2, 0.35, 0.08, a + 0.2)
 		var cb := Color(0.9, 0.6, 1.0) if purple else Color(0.75, 1.0, 0.4)
-		run.draw_set_transform(p, 0.0, Vector2(1.0, 0.6))   # flat on the ground
+		run.draw_set_transform(p, 0.0, Vector2.ONE)   # 2D: round, the damage area is a circle (user 2026-11-22)
 		run.draw_circle(Vector2.ZERO, r, c0)
 		run.draw_circle(Vector2(-r * 0.2, -r * 0.15), r * 0.6, c1)
 		run.draw_arc(Vector2.ZERO, r, 0.0, TAU, 32, c2, 2.0)
@@ -124,7 +124,7 @@ func draw_hazard_pools() -> void:
 	for pl: Dictionary in run.obstacles.pools:
 		var p: Vector2 = pl["p"]
 		var r := float(pl["r"])
-		run.draw_set_transform(p, 0.0, Vector2(1.0, 0.55))
+		run.draw_set_transform(p, 0.0, Vector2.ONE)   # 2D round pool = its in_pool circle
 		run.draw_circle(Vector2.ZERO, r, Color(0.35, 0.55, 0.1, 0.55))
 		run.draw_circle(Vector2(-r * 0.2, -r * 0.15), r * 0.65, Color(0.55, 0.8, 0.15, 0.45))
 		run.draw_arc(Vector2.ZERO, r, 0.0, TAU, 40, Color(0.2, 0.3, 0.05, 0.9), 2.0)

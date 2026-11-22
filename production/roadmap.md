@@ -301,7 +301,7 @@ Trước mỗi nhóm: tham khảo ≥ 2 game cùng thể loại, ghi nguồn và
 
 **I. Phong cách 2D cho mọi hiệu ứng còn vẽ kiểu 2.5D** (người dùng 2026-11-22: game 2D, không 2.5D)
 - ✅ I1 (2026-11-22: Rune tốc độ và Thần hộ vẽ lại tròn quanh thân, bỏ quỹ đạo sau; các hào quang khác đã 2D). Hào quang buff (Rune tốc độ, Ngọc sức mạnh, Hoa hồi phục, Khiên từ…): tâm ở thân nhân vật, vòng tròn.
-- I2. Ấn thánh của Cột thánh quang, vòng của Vòng thử thách / Lốc cỏ / Nước độc dâng, sóng chấn boss: tròn, không dẹt.
+- ✅ I2 (2026-11-22: ấn thánh, Vòng thử thách, Lốc cỏ, Nước độc dâng, vũng độc đầm và boss vẽ tròn; giữ bóng khi nhảy và thân phễu lốc). Ấn thánh của Cột thánh quang, vòng của Vòng thử thách / Lốc cỏ / Nước độc dâng, sóng chấn boss: tròn, không dẹt.
 - I3. Soát mọi sprite hiệu ứng có elip dẹt (tìm `squash`, `* 0.5x` theo trục y trong `sprite-lab/lib`), sửa từng nhóm, ảnh trong trận.
 
 **G. Quái mạnh dần: âm thầm, theo bản đồ, từ màn 6** — ✅ 2026-11-22 (G1–G3)

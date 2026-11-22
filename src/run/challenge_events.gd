@@ -124,7 +124,7 @@ func _draw_ring() -> void:
 		return
 	var c := ring.center
 	var pulse := 0.5 + 0.5 * sin(run.clock * 4.0)
-	run.draw_set_transform(c, 0.0, Vector2(1.0, 0.55))   # flat on the ground
+	run.draw_set_transform(c, 0.0, Vector2.ONE)   # 2D: round like its reach (user 2026-11-22)
 	run.draw_circle(Vector2.ZERO, ring.radius, Color(1.0, 0.85, 0.3, 0.10 + (0.12 if ring.inside else 0.0)))
 	run.draw_arc(Vector2.ZERO, ring.radius, 0.0, TAU, 64, Color(1.0, 0.85, 0.35, 0.5 + 0.3 * pulse), 3.0)
 	run.draw_arc(Vector2.ZERO, ring.radius - 6.0, -PI / 2.0, -PI / 2.0 + TAU * ring.progress(), 64, Color(1.0, 0.95, 0.5), 5.0)

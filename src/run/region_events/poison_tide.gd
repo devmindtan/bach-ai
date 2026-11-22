@@ -104,7 +104,7 @@ func draw(c: CanvasItem, clock: float) -> void:
 		return
 	for s: Dictionary in spots:
 		var p: Vector2 = s["p"]
-		c.draw_set_transform(p, 0.0, Vector2(1.0, 0.6))
+		c.draw_set_transform(p, 0.0, Vector2.ONE)   # 2D round = inside()
 		if phase == "warn":
 			for i in 20:
 				var a := i * TAU / 20.0 + clock
