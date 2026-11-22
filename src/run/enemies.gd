@@ -169,6 +169,7 @@ var pool_r := PackedFloat32Array()
 var player_in_pool := false   # the player stands in a monster's poison pool (drawn: Run poison look)
 var pool_purple := PackedByteArray()   # 1 = a Cóc Độc Bào Tử spore pool (drawn purple)
 var pool_dmg := PackedFloat32Array()   # roots that erupted this step (the run draws them)
+var bonus_by := {}   # extra damage added by passives ("vs_status": Cộng hưởng nguyên tố), end report
 var vs_status_mul := 0.0        # class passive: extra damage taken by monsters with a status   # set by the run from the class sprite's body
 
 var _hash: SpatialHash
@@ -1169,6 +1170,7 @@ func _damage(i: int, amount: float, kb: Vector2, source := "") -> void:
 		amount *= float(_phase2(i).get("damage_taken_mul", 1.0))
 	var hp_before := hp[i]
 	if vs_status_mul > 0.0 and (slow_t[i] > 0.0 or stun_t[i] > 0.0 or freeze_t[i] > 0.0 or bleed_t[i] > 0.0 or burn_t[i] > 0.0 or shock_t[i] > 0.0):
+		bonus_by["vs_status"] = float(bonus_by.get("vs_status", 0.0)) + amount * vs_status_mul   # end report: indirect damage
 		amount *= 1.0 + vs_status_mul
 	amount *= float(_affix_def(i).get("damage_taken_mul", 1.0))   # Giáp
 	damage_by[source] = float(damage_by.get(source, 0.0)) + minf(amount, maxf(0.0, hp[i]))

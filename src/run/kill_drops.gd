@@ -36,7 +36,7 @@ func step() -> void:
 			run._boss_dead = true
 			run.bosses_killed += 1
 		if heal_frac > 0.0 and (run.enemies.kill_elite[i] == 1 or run.enemies.kill_boss[i] == 1):
-			run.heal_max(heal_frac)
+			run.heal_max(heal_frac, "bloodthirst")
 		if run.rng.randf() < gold_chance:
 			run.pickups.drop(Pickups.COIN, run.enemies.kill_pos[i] + Vector2(10, 0), 1.0)
 		for g in int(run.enemies.kill_gold[i]):   # Yêu tinh vàng: a burst of coins

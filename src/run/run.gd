@@ -207,6 +207,14 @@ var _status_all: Array[String] = []   # --status-all=a,b (shots: every monster g
 var _status_all_t := 0.0
 var damage_taken := 0.0   # end-of-run table
 var healed := 0.0
+var taken_by := {}     # end report (roadmap B, 2026-11-22): hp lost by source ("monster", "pool", "event.*")
+var reduced_by := {}   # damage prevented by source ("armor", "passive", "ward")
+var heal_by := {}      # hp healed by source ("regen", a card id, "milestone", ...)
+
+
+func _add_to(d: Dictionary, key: String, v: float) -> void:
+	if v > 0.0:
+		d[key] = float(d.get(key, 0.0)) + v
 var _demo_pick_t := 0.0
 
 var _sprite_scale := 2.0
@@ -584,6 +592,8 @@ func _tick(dt: float) -> void:
 	if contact > 0.0 and invuln <= 0.0 and bench == 0 and not god and not buffs.invulnerable() and _dash_left <= 0.0:
 		if not _spend_ward():
 			_take_hit(contact)
+		else:
+			_add_to(reduced_by, "ward", contact)
 	invuln = maxf(0.0, invuln - dt)
 	var had := buffs.active.size()
 	buffs.step(dt, player_pos + _hit_center, enemies.player_hit_radius if enemies != null else 0.0)
@@ -594,6 +604,7 @@ func _tick(dt: float) -> void:
 	var before := hp
 	hp = minf(float(stats["max_hp"]), hp + float(stats.get("regen", 0.0)) * dt)
 	healed += maxf(0.0, hp - before)
+	_add_to(heal_by, "regen", hp - before)
 	_skills(dt)
 	if not _status_all.is_empty():
 		_status_all_t -= dt
@@ -837,8 +848,12 @@ func _spawn(t0: float, t1: float) -> void:
 			enemies.spawn(id, enemies.ring_point(player_pos))
 
 
-func _take_hit(amount: float) -> void:
-	var taken := maxf(1.0, amount * armor_mul(float(stats.get("armor", 0.0)), _armor_k) * damage_taken_mul())
+func _take_hit(amount: float, src := "monster") -> void:
+	var after_armor := amount * armor_mul(float(stats.get("armor", 0.0)), _armor_k)
+	var taken := maxf(1.0, after_armor * damage_taken_mul())
+	_add_to(reduced_by, "armor", amount - after_armor)
+	_add_to(reduced_by, "passive", after_armor - after_armor * damage_taken_mul())
+	_add_to(taken_by, src, taken)
 	shake.add(clampf(taken * float(_crit_cfg.get("shake_per_hurt", 0.25)), 2.0, 7.0))   # a boss slam shakes harder
 	hp -= taken
 	damage_taken += taken
@@ -1627,11 +1642,12 @@ func heal_on_kill() -> float:
 
 
 ## Heals [param frac] of max hp; returns how much was healed.
-func heal_max(frac: float) -> float:
+func heal_max(frac: float, src := "heal") -> float:
 	var top := float(stats.get("max_hp", hp))
 	var before := hp
 	hp = minf(top, hp + top * frac)
 	healed += hp - before
+	_add_to(heal_by, src, hp - before)
 	return hp - before
 
 
@@ -1818,7 +1834,7 @@ func count_special_kills(n: int) -> void:
 		while _special_kills[k] >= every:
 			_special_kills[k] -= every
 			if sp.has("heal_frac"):
-				heal_max(float(sp["heal_frac"]))
+				heal_max(float(sp["heal_frac"]), String(sp.get("item", "special")))
 			if sp.has("buff"):
 				_special_buff(sp)
 			_item_fx(sp)
@@ -2731,6 +2747,7 @@ func _step_pools_hazard(dt: float) -> void:
 		var d := obstacles.pool_dps * dt
 		hp -= d
 		damage_taken += d
+		_add_to(taken_by, "pool", d)
 
 
 ## Telegraphed charges (Sói Rừng, design 6A): the lane a winding-up charger will

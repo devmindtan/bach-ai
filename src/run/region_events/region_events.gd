@@ -42,6 +42,7 @@ func step(dt: float) -> void:
 			if not run.god and not run.buffs.invulnerable():   # no armor, like the marsh pools
 				run.hp -= tide.dps * dt
 				run.damage_taken += tide.dps * dt
+				run._add_to(run.taken_by, PoisonTide.SOURCE, tide.dps * dt)
 		if not tide.busy():   # sunk: the gems where the pools were
 			for q: Vector2 in tide.dropped:
 				run.pickups.drop(Pickups.COIN, q, 1.0)
@@ -60,7 +61,7 @@ func step(dt: float) -> void:
 				run.enemies.hit_circle(q, maxf(trees.width * 0.5, trees.length / 6.0), float(fc.get("monster_damage", 60.0)) / 3.0, 60.0, FallingTrees.SOURCE)
 			if trees.hits(f, run.player_pos, run.PLAYER_BODY) and not run.god and not run.buffs.invulnerable() and run._dash_left <= 0.0:
 				if not run._spend_ward():
-					run._take_hit(float(fc.get("player_damage", 14.0)))
+					run._take_hit(float(fc.get("player_damage", 14.0)), FallingTrees.SOURCE)
 	if not tornado.busy():
 		return
 	var tc: Dictionary = ev.get("tornado", {})
@@ -68,7 +69,7 @@ func step(dt: float) -> void:
 		run.enemies.hit_circle(tornado.pos, tornado.radius, float(tc.get("monster_damage", 30.0)), 160.0, Tornado.SOURCE)
 	if tornado.hits(run.player_pos) and run.invuln <= 0.0 and not run.god and not run.buffs.invulnerable() and run._dash_left <= 0.0:
 		if not run._spend_ward():
-			run._take_hit(float(tc.get("player_damage", 8.0)))
+			run._take_hit(float(tc.get("player_damage", 8.0)), Tornado.SOURCE)
 	if not tornado.busy():   # it just ended: seeds along its path
 		for q: Vector2 in tornado.seed_spots():
 			run.pickups.drop(Pickups.COIN, q, 1.0)
