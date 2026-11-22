@@ -123,3 +123,18 @@ func test_insect_swarm_speeds_up_with_three_near() -> void:
 	e.step(0.0, Vector2(500, 500), Vector2(500, 500))   # rebuilds the spatial hash
 	if not is_equal_approx(e.swarm_mul(0), 1.2):
 		failures.append("insect with 2 near did not speed up: %s" % e.swarm_mul(0))
+
+
+func test_plant_is_never_knocked_back_nor_stunned() -> void:
+	var e := _enemies("plant", false)
+	e._damage(0, 1.0, Vector2(300, 0), "storm")
+	e.apply_status(0, "stun", {"time": 1.0}, 1.0, "god_hammer")
+	if e.knock[0] != Vector2.ZERO or e.stun_t[0] > 0.0:
+		failures.append("plant knocked %s / stunned %s" % [e.knock[0], e.stun_t[0]])
+
+
+func test_amphibian_burn_lasts_half() -> void:
+	var e := _enemies("amphibian", false)
+	e.apply_status(0, "burn", {"time": 4.0, "dps_mul": 0.3}, 10.0, "fireball")
+	if not is_equal_approx(e.burn_t[0], 2.0):
+		failures.append("wet burn should last 2 s, got %s" % e.burn_t[0])

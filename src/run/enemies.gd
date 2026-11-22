@@ -545,7 +545,7 @@ func step(delta: float, player_pos: Vector2, player_center: Vector2) -> float:
 		knock[n] = knock[n] * maxf(0.0, 1.0 - KNOCKBACK_DECAY * delta)
 		pos[n] += (vel + knock[n]) * delta
 		pos[n] = pos[n].clamp(Vector2(-arena_half, -arena_half), Vector2(arena_half, arena_half))
-		if obstacles != null and not ghost:
+		if obstacles != null and not ghost and not has_trait(k, "hop_over"):   # Lưỡng cư hops over props
 			pos[n] = obstacles.push_out(pos[n], r)
 		if not wall_a.is_empty() and k_boss[k] == 0:   # root walls block plain monsters too
 			pos[n] = push_out_walls(pos[n], r)
@@ -1287,7 +1287,7 @@ func _damage(i: int, amount: float, kb: Vector2, source := "") -> void:
 	hit_crit.append(1 if _crit_next else 0)
 	hit_tag.append(1 if smul > 1.0 else (2 if smul < 1.0 else 0))
 	_crit_next = false
-	if state[i] != DASH and k_boss[kind[i]] == 0:   # bosses are not knocked back
+	if state[i] != DASH and k_boss[kind[i]] == 0 and not has_trait(kind[i], "rooted"):   # bosses / Thực vật hold their ground
 		knock[i] += kb
 	_split(i, hp_before)
 	_check_phase(i)
@@ -1338,6 +1338,8 @@ func apply_status(i: int, status: String, p: Dictionary, hit_damage: float, sour
 			bleed_dps[i] = maxf(bleed_dps[i], hit_damage * float(p.get("dps_mul", 0.2)))
 			bleed_src[i] = source
 		"burn":
+			if has_trait(kind[i], "wet"):   # Lưỡng cư: wet skin, the burn dies down sooner
+				t *= float(_species_of(kind[i]).get("wet", {}).get("burn_time_mul", 0.5))
 			burn_t[i] = maxf(burn_t[i], t)
 			burn_dps[i] = maxf(burn_dps[i], hit_damage * float(p.get("dps_mul", 0.3)))
 			burn_src[i] = source
