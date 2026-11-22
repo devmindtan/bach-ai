@@ -296,7 +296,7 @@ Trước mỗi nhóm: tham khảo ≥ 2 game cùng thể loại, ghi nguồn và
 - F2. Vẽ trong Sprite Lab (2–3 phương án để chọn), áp vào game, ảnh nhiều loại quái.
 
 **H. Vẽ lại hiệu ứng của thẻ đặc biệt (chuyển từ vật phẩm), trừ khiên** — kế hoạch `design/special-fx-redesign.md`
-- ✅ H1 Phản chấn, ✅ H2 Thánh kiếm, ✅ H3 Lôi ấn, ✅ H4 Hoả y, ✅ H5 Băng ấn (2026-11-22). - H1–H10: mỗi hiệu ứng một bước (Phản chấn, Thánh kiếm, Lôi ấn, Hoả y, Băng ấn, Huyết quyền, Phong hành, Lưu tinh,
+- ✅ H1 Phản chấn, ✅ H2 Thánh kiếm, ✅ H3 Lôi ấn, ✅ H4 Hoả y, ✅ H5 Băng ấn, ✅ H6 Huyết quyền (2026-11-22). Còn: cờ chụp ảnh ép kích hoạt thẻ đặc biệt (Phản chấn, Huyết quyền khó bắt khoảnh khắc). - H1–H10: mỗi hiệu ứng một bước (Phản chấn, Thánh kiếm, Lôi ấn, Hoả y, Băng ấn, Huyết quyền, Phong hành, Lưu tinh,
   Tim bất diệt, Vĩnh cửu): mật độ gấp đôi, có pha, không chấm/dither, màu riêng; ảnh trong trận.
 
 **G. Quái mạnh dần: âm thầm, theo bản đồ, từ màn 6** — ✅ 2026-11-22 (G1–G3)
