@@ -281,7 +281,7 @@ Trước mỗi nhóm: tham khảo ≥ 2 game cùng thể loại, ghi nguồn và
 
 **D. Thông tin ải linh động, có nút mở rộng**
 - D1. ✅ 2026-11-22 Ô "Quái xuất hiện" không tràn: tối đa 5 ô, nhiều hơn thì 4 con + "+k" (tip ghi tên các con còn lại).
-- D2. Nút "Chi tiết" mở bảng: mọi quái của ải (tên, chỉ số, tinh anh), boss, sự kiện của vùng và các mốc thời gian
+- D2. ✅ 2026-11-22 Nút "Chi tiết" mở bảng: mọi quái của ải (tên, chỉ số, tinh anh), boss, sự kiện của vùng và các mốc thời gian
   (sóng, sự kiện, boss phút 5), phần thưởng. Spec `design/ux/stage-detail.md` + ảnh.
 
 **E. Chủng loài quái (đặc tính nội tại theo loài)**

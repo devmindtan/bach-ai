@@ -25,6 +25,8 @@ var _ch := ""             # the challenge shown in trials mode
 var _challenges: Challenges
 var _scroll := Vector2.ZERO
 var _layer: CanvasLayer
+var _detail_layer: CanvasLayer   # the Chi tiết overlay (design/ux/stage-detail.md), null when closed
+var _run_cfg := {}
 
 
 func _ready() -> void:
@@ -40,6 +42,7 @@ func _ready() -> void:
 	if _slot == null:
 		get_tree().change_scene_to_file.call_deferred("res://src/front/characters.tscn")
 		return
+	_run_cfg = GameData.load_json("res://assets/data/run_config.json")
 	_n = clampi(prefs.stage_target, 1, _slot.unlocked(_stages.count()))
 	_challenges = Challenges.load_default()
 	if prefs.challenge_target != "" and _challenges.mode_open(_slot):
@@ -54,6 +57,8 @@ func _ready() -> void:
 		if a.begins_with("--stage-pick="):
 			_n = clampi(int(a.get_slice("=", 1)), 1, _stages.count())
 	_build()
+	if OS.get_cmdline_user_args().has("--stage-detail"):   # shots of the Chi tiết overlay
+		_open_detail()
 
 
 func _process(delta: float) -> void:
@@ -66,6 +71,10 @@ func _draw() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel") and _detail_layer != null:
+		_close_detail()
+		get_viewport().set_input_as_handled()
+		return
 	if event.is_action_pressed("ui_cancel"):
 		get_tree().change_scene_to_file(LOBBY_SCENE)
 
@@ -294,7 +303,13 @@ func _detail(panel: PanelContainer, unlocked: int) -> void:
 		val.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		diff.add_child(val)
 	# monsters in this stage
-	v.add_child(UiKit.label("Quái xuất hiện", 15, UiKit.MUTED))
+	var mh := HBoxContainer.new()
+	var ml := UiKit.label("Quái xuất hiện", 15, UiKit.MUTED)
+	ml.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	ml.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	mh.add_child(ml)
+	mh.add_child(UiKit.button("Chi tiết", _open_detail, Vector2(96, 30), 15))   # design/ux/stage-detail.md
+	v.add_child(mh)
 	v.add_child(_monster_row(st))
 	# rewards and wins
 	v.add_child(UiKit.label("Phần thưởng khi thắng", 15, UiKit.MUTED))
@@ -531,3 +546,144 @@ func _challenge_detail(panel: PanelContainer) -> void:
 	rw.add_child(UiKit.stat("pill", "+%d" % (int(_challenges.data.get("pills_first", 2)) if first else int(_challenges.data.get("pills", 1))), "Tẩy Tủy Đan", 16))
 	rw.add_child(UiKit.stat("coin", "+%d" % int(_stages.rewards(base, false)["gold"]), "Vàng", 16))
 
+
+
+# --- Chi tiết: the stage's monsters, time marks and rewards (design/ux/stage-detail.md, roadmap D2) ---
+
+const EVENT_NAMES := {"ring": "Vòng thử thách", "collect": "Thu thập sao", "hunt": "Săn tinh anh",
+	"tornado": "Lốc xoáy", "falling_trees": "Cây đổ", "poison_tide": "Triều độc"}
+
+
+## The stage's monsters for the detail table: [{id, name, hp, damage, speed, elite, boss}], hp and damage
+## scaled by the stage ([param hp_mul], [param dmg_mul]), in order of first appearance.
+static func detail_monsters(st: Dictionary, monsters: Dictionary, hp_mul: float, dmg_mul: float) -> Array:
+	var out := []
+	var elites := []
+	for w: Dictionary in st.get("waves", []):
+		var raw := String(w.get("monster", ""))
+		if raw.get_slice("@", 1) == "elite":
+			elites.append(raw.get_slice("@", 0))
+	for id: String in stage_monsters(st, monsters):
+		var m: Dictionary = monsters[id]
+		out.append({"id": id, "name": String(m.get("name", id)), "hp": float(m.get("hp", 0)) * hp_mul,
+			"damage": float(m.get("damage", 0)) * dmg_mul, "speed": float(m.get("speed", 0)),
+			"elite": elites.has(id), "boss": bool(m.get("boss", false))})
+	return out
+
+
+## Time marks of the stage, sorted by time: [[seconds, text]]: a monster's first appearance, elite bursts,
+## the boss, and the region's events (from stage [param min_stage]; [param cfg_events] enabled false skips).
+static func detail_timeline(st: Dictionary, monsters: Dictionary, region_events: Array, n: int, min_stage: int, cfg_events: Dictionary) -> Array:
+	var marks := []
+	var seen := []
+	for w: Dictionary in st.get("waves", []):
+		var raw := String(w.get("monster", ""))
+		var id := raw.get_slice("@", 0)
+		if not monsters.has(id):
+			continue
+		var t := float(w.get("t_from", 0))
+		var nm := String(monsters[id].get("name", id))
+		if bool(monsters[id].get("boss", false)):
+			marks.append([t, "BOSS: " + nm])
+		elif raw.get_slice("@", 1) == "elite":
+			marks.append([t, "%d %s tinh anh" % [int(w.get("burst", 1)), nm]])
+		elif not seen.has(id):
+			seen.append(id)
+			if t > 0.0:
+				marks.append([t, nm + " bắt đầu xuất hiện"])
+	if n >= min_stage:
+		for ev: Dictionary in region_events:
+			var kind := String(ev.get("kind", ""))
+			if not bool(cfg_events.get(kind, {}).get("enabled", true)):
+				continue
+			marks.append([float(ev.get("t", 0)), "Sự kiện: " + String(EVENT_NAMES.get(kind, kind))])
+	marks.sort_custom(func(a: Array, b: Array) -> bool: return float(a[0]) < float(b[0]))
+	return marks
+
+
+func _open_detail() -> void:
+	if _detail_layer != null:
+		return
+	var st := _stages.load_stage(_n)
+	_detail_layer = CanvasLayer.new()
+	_detail_layer.layer = 5
+	add_child(_detail_layer)
+	var dim := ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.6)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_detail_layer.add_child(dim)
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_detail_layer.add_child(center)
+	var panel := UiKit.panel(UiKit.PANEL, 20)
+	panel.custom_minimum_size = Vector2(980, 0)
+	center.add_child(panel)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 12)
+	panel.add_child(v)
+	var head := HBoxContainer.new()
+	var title := UiKit.label("Ải %d · %s" % [_n, String(st.get("name", ""))], 26, UiKit.GOLD)
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.add_child(title)
+	head.add_child(UiKit.button("Đóng (Esc)", _close_detail, Vector2(120, 36), 16))
+	v.add_child(head)
+	var cols := HBoxContainer.new()
+	cols.add_theme_constant_override("separation", 24)
+	v.add_child(cols)
+	# left: the monsters
+	var left := VBoxContainer.new()
+	left.add_theme_constant_override("separation", 6)
+	left.custom_minimum_size = Vector2(520, 0)
+	cols.add_child(left)
+	left.add_child(UiKit.label("Quái của ải (đã tính độ khó)", 15, UiKit.MUTED))
+	var grid := GridContainer.new()
+	grid.columns = 5
+	grid.add_theme_constant_override("h_separation", 14)
+	grid.add_theme_constant_override("v_separation", 4)
+	left.add_child(grid)
+	for h in ["", "Tên", "Máu", "Sát thương", "Tốc độ"]:
+		grid.add_child(UiKit.label(h, 14, UiKit.MUTED))
+	for m: Dictionary in detail_monsters(st, _monsters, _stages.hp_mul(_n), _stages.damage_mul(_n)):
+		grid.add_child(_monster_box(String(m["id"])))
+		var nm := String(m["name"]) + ("  · BOSS" if m["boss"] else ("  · có tinh anh" if m["elite"] else ""))
+		var nl := UiKit.label(nm, 15, BOSS_GOLD if m["boss"] else (UiKit.GOLD if m["elite"] else UiKit.TEXT))
+		nl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		nl.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		grid.add_child(nl)
+		for x in [roundi(m["hp"]), roundi(m["damage"]), roundi(m["speed"])]:
+			var l := UiKit.label(str(x), 15, UiKit.TEXT)
+			l.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+			l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			grid.add_child(l)
+	# right: time marks and rewards
+	var right := VBoxContainer.new()
+	right.add_theme_constant_override("separation", 4)
+	right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	cols.add_child(right)
+	var dur := int(st.get("duration", 300))
+	right.add_child(UiKit.label("Mốc thời gian (trận %02d:%02d)" % [dur / 60, dur % 60], 15, UiKit.MUTED))
+	var ev_cfg: Dictionary = _run_cfg.get("events", {})
+	for mk: Array in detail_timeline(st, _monsters, _stages.region(_n).get("events", []), _n, int(ev_cfg.get("min_stage", 0)), ev_cfg):
+		var t := int(mk[0])
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 10)
+		var tl := UiKit.label("%02d:%02d" % [t / 60, t % 60], 15, UiKit.MUTED)
+		tl.custom_minimum_size = Vector2(52, 0)
+		row.add_child(tl)
+		var txt := String(mk[1])
+		var col := BOSS_GOLD if txt.begins_with("BOSS") else (Color("8fd0ff") if txt.begins_with("Sự kiện") else (UiKit.GOLD if txt.contains("tinh anh") else UiKit.TEXT))
+		var xl := UiKit.label(txt, 15, col)
+		xl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		xl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(xl)
+		right.add_child(row)
+	right.add_child(UiKit.label("Phần thưởng khi thắng", 15, UiKit.MUTED))
+	var first := _stages.rewards(_n, true)
+	var again := _stages.rewards(_n, false)
+	right.add_child(UiKit.label("Vàng %d · Đá lần đầu %d · Đá các lần sau %d" % [int(first["gold"]), int(first["gems"]), int(again["gems"])], 15, UiKit.TEXT))
+
+
+func _close_detail() -> void:
+	if _detail_layer != null:
+		_detail_layer.queue_free()
+		_detail_layer = null
