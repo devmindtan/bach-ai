@@ -80,3 +80,28 @@ func test_ooze_regens_after_calm_unless_burning() -> void:
 	b._step_status(0, 3.0)
 	if b.hp[0] > blow:
 		failures.append("burning ooze healed")
+
+
+func test_beast_enrages_below_threshold() -> void:
+	var e := _enemies("beast", false)
+	if e.enrage_mul(0) != 1.0:
+		failures.append("full-hp beast enraged")
+	e.hp[0] = e.hp_cap[0] * 0.2
+	if not is_equal_approx(e.enrage_mul(0), 1.3):
+		failures.append("beast at 20%% hp not enraged: %s" % e.enrage_mul(0))
+	var o := _enemies("ooze", false)
+	o.hp[0] = o.hp_cap[0] * 0.2
+	if o.enrage_mul(0) != 1.0:
+		failures.append("ooze enraged")
+
+
+func test_beast_bite_marks_contact_bleed() -> void:
+	var e := _enemies("beast", false)
+	e.pos[0] = Vector2.ZERO
+	e.step(0.016, Vector2.ZERO, Vector2.ZERO)
+	if e.contact_bleed.is_empty():
+		failures.append("beast contact did not mark a bleed")
+	var o := _enemies("ooze", false)
+	o.step(0.016, Vector2.ZERO, Vector2.ZERO)
+	if not o.contact_bleed.is_empty():
+		failures.append("ooze contact marked a bleed")

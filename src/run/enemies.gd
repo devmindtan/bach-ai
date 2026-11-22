@@ -91,7 +91,8 @@ var hit_tag := PackedByteArray()         # species x element of that hit: 0 plai
 ## Species (species.json, design/species.md): weak / resist by element; set by set_species.
 var species := {}
 var k_phase := PackedByteArray()   # 1 = the kind's species flies through props and other monsters (Linh hồn)
-var element_of := {}   # damage source (skill id) -> element; sources not in it take no species change
+var element_of := {}
+var contact_bleed := {}   # the last step's contact came from a bite_bleed species: its bite_bleed {time, dps_mul}, else {}   # damage source (skill id) -> element; sources not in it take no species change
 var crit_chance := 0.0   # Chí mạng of direct hits (the run sets it from the stats, 6C.2)
 var crit_mul := 1.75
 var _crit_next := false
@@ -291,6 +292,19 @@ func set_species(table: Dictionary, elements_by_source: Dictionary) -> void:
 		k_phase[k] = 1 if has_trait(k, "phase") else 0
 
 
+## The species entry of kind [param k] (species.json), {} without one.
+func _species_of(k: int) -> Dictionary:
+	return species.get("species", {}).get(String(k_extra[k].get("species", "")), {})
+
+
+## Thú (species trait enrage): speed x enrage.speed_mul below enrage.below of its spawn hp, else 1.
+func enrage_mul(i: int) -> float:
+	if not has_trait(kind[i], "enrage") or hp_cap[i] <= 0.0:
+		return 1.0
+	var en: Dictionary = _species_of(kind[i]).get("enrage", {})
+	return float(en.get("speed_mul", 1.3)) if hp[i] < hp_cap[i] * float(en.get("below", 0.3)) else 1.0
+
+
 ## Nhầy (species trait regen): after regen.delay s without a hit it heals regen.pct of its spawn hp a
 ## second, up to that hp; Bỏng stops it (design/species.md).
 func _step_regen(i: int, delta: float) -> void:
@@ -425,6 +439,7 @@ func center_of(i: int) -> Vector2:
 ## Moves every monster one step towards the player. Returns the largest
 ## contact damage a living monster deals this frame (0 when none touches).
 func step(delta: float, player_pos: Vector2, player_center: Vector2) -> float:
+	contact_bleed = {}
 	var regen := float(boss_aura.get("regen", 0.0))
 	if regen > 0.0:   # the aura heals its monsters over time (up to their buffed max)
 		var hm := float(boss_aura.get("hp_mul", 1.0)) * spawn_hp_mul
@@ -505,6 +520,7 @@ func step(delta: float, player_pos: Vector2, player_center: Vector2) -> float:
 				var l := sqrt(l2)
 				push += d / l * (min_d - l) / min_d
 		vel *= float(_affix_def(n).get("speed_mul", 1.0))   # Nhanh
+		vel *= enrage_mul(n)   # Thú: faster when nearly dead
 		vel += push * _push
 		knock[n] = knock[n] * maxf(0.0, 1.0 - KNOCKBACK_DECAY * delta)
 		pos[n] += (vel + knock[n]) * delta
@@ -514,7 +530,10 @@ func step(delta: float, player_pos: Vector2, player_center: Vector2) -> float:
 		if not wall_a.is_empty() and k_boss[k] == 0:   # root walls block plain monsters too
 			pos[n] = push_out_walls(pos[n], r)
 		if not stopped and (center_of(n) - player_center).length() < r + player_hit_radius:
-			contact = maxf(contact, contact_damage(n))
+			var cd := contact_damage(n)
+			if cd > contact and has_trait(k, "bite_bleed"):   # Thú (Sói): the bite bleeds
+				contact_bleed = _species_of(k).get("bite_bleed", {})
+			contact = maxf(contact, cd)
 	contact = maxf(contact, _step_waves(delta, player_center))
 	for q: Array in _split_q:   # monsters from Phân thân, spawned after the loop over the living
 		if int(q[0]) >= 0 and spawn(kind_ids[int(q[0])], q[1]) and q.size() > 2 and bool(q[2]):

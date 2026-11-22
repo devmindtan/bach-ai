@@ -54,6 +54,8 @@ var _win_on_boss := true
 var boss_stage := false
 const POISON_LOOK := 0.2   # s the poison look stays after leaving a pool
 var poison_t := 0.0
+var bleed_t := 0.0     # the hero bleeds (a Thú bite, design/species.md): seconds left
+var bleed_dps := 0.0
 var _pool_here := false      # --pool-here          # > 0: the hero stands in poison (pool look)
 var _outro_t := -1.0          # the boss outro: seconds left (-1 not started, 0 over)
 var _last_boss_name := "Boss"   # a wave of this stage spawns a boss: won only by killing it
@@ -222,7 +224,7 @@ func ledger_rows(d: Dictionary) -> Array:
 	var total := 0.0
 	for k: String in d:
 		total += float(d[k])
-	var names := {"monster": "Quái", "pool": "Vũng độc", "armor": "Giáp", "ward": "Vỏ đá (Bàn thạch)",
+	var names := {"monster": "Quái", "pool": "Vũng độc", "bleed": "Chảy máu (Thú cắn)", "armor": "Giáp", "ward": "Vỏ đá (Bàn thạch)",
 		"regen": "Hồi máu theo thời gian", "bloodthirst": "Khát máu", "heal": "Khác",
 		"passive": String(passive().get("name", "Nội tại")), "vs_status": String(passive().get("name", "Nội tại"))}
 	var ev: Dictionary = cfg.get("events", {}).get("source_names", {})
@@ -625,6 +627,7 @@ func _tick(dt: float) -> void:
 		if float(_absorb_fx[i]["t"]) <= 0.0:
 			_absorb_fx.remove_at(i)
 	_step_pools_hazard(dt)
+	_step_bleed(dt)
 	enemies.spawn_hp_mul = time_mul(clock, "hp")   # monsters grow stronger each minute, silently (time_scale)
 	var contact := enemies.step(dt, player_pos, player_pos + _hit_center) * time_mul(clock, "damage")
 	if god and contact > 0.0 and invuln <= 0.0:   # balance runs: count what would have been taken, keep the hp
@@ -633,6 +636,9 @@ func _tick(dt: float) -> void:
 	if contact > 0.0 and invuln <= 0.0 and bench == 0 and not god and not buffs.invulnerable() and _dash_left <= 0.0:
 		if not _spend_ward():
 			_take_hit(contact)
+			if not enemies.contact_bleed.is_empty():   # Sói: the bite bleeds
+				bleed_t = maxf(bleed_t, float(enemies.contact_bleed.get("time", 3.0)))
+				bleed_dps = maxf(bleed_dps if bleed_t > 0.0 else 0.0, contact * float(enemies.contact_bleed.get("dps_mul", 0.25)))
 		else:
 			_add_to(reduced_by, "ward", contact)
 	invuln = maxf(0.0, invuln - dt)
@@ -887,6 +893,19 @@ func _spawn(t0: float, t1: float) -> void:
 			enemies.spawn(id, player_pos + Vector2.from_angle(rng.randf() * TAU) * near)
 		else:
 			enemies.spawn(id, enemies.ring_point(player_pos))
+
+
+## The hero's bleed (a Thú bite): bleed_dps hp a second while bleed_t lasts; god / invulnerable skip it.
+func _step_bleed(dt: float) -> void:
+	if bleed_t <= 0.0:
+		return
+	bleed_t = maxf(0.0, bleed_t - dt)
+	if god or buffs.invulnerable():
+		return
+	var d := bleed_dps * dt
+	hp -= d
+	damage_taken += d
+	_add_to(taken_by, "bleed", d)
 
 
 func _take_hit(amount: float, src := "monster") -> void:
@@ -2613,6 +2632,14 @@ func _draw() -> void:
 				var br := 2.0 + (q % 2)
 				draw_circle(bp, br, Color(0.45, 0.95, 0.35, 0.85 * (1.0 - life)))
 				draw_arc(bp, br, 0.0, TAU, 8, Color(0.1, 0.35, 0.1, 0.9 * (1.0 - life)), 1.0)
+		if bleed_t > 0.0:   # bleeding (Sói bite): red drops fall from the body
+			for q in 4:
+				var life := fmod(clock * 1.8 + q * 0.29, 1.0)
+				var dp := (player_pos + _hit_center + Vector2(-10.0 + q * 7.0, 6.0 + life * 20.0)).round()
+				var al := 1.0 - life
+				draw_rect(Rect2(dp - Vector2(1, 1), Vector2(5, 6)), Color(0.18, 0.02, 0.04, al))   # dark rim: reads on red cloth
+				draw_rect(Rect2(dp, Vector2(3, 4)), Color(0.95, 0.12, 0.16, al))
+				draw_rect(Rect2(dp, Vector2(1, 1)), Color(1.0, 0.6, 0.6, al))
 		_draw_auras("front")
 	_obstacle_view.draw(view, true)   # a tree the hero walks behind: drawn again, see-through, over the hero
 	_draw_statuses(view)
