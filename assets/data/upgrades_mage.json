@@ -149,7 +149,7 @@
       "id": "storm",
       "kind": "skill",
       "name": "Bão sét",
-      "desc": "Bão sét đánh xuống nhiều quái quanh bạn, gây giật điện, lan sang mọi quái đang mang dấu giật. Mỗi cấp: +25% sát thương. Cấp 1: 2 chỗ; cấp 2: 3; cấp 4: 4; cấp 5: 5.",
+      "desc": "Bão sét đánh xuống nhiều quái quanh bạn rồi đọng lại 2 giây, giật thêm theo số cột sét (bậc I–II: 2 lượt, III–IV: 3, V: 4), mỗi lượt gây giật điện, lan sang mọi quái đang mang dấu giật. Mỗi cấp: +25% sát thương. Cấp 1: 2 chỗ; cấp 2: 3; cấp 4: 4; cấp 5: 5.",
       "max_level": 5,
       "weight": 2,
       "effects": {
@@ -774,6 +774,7 @@
         4,
         5
       ],
+      "zone": {"kind": "pulse", "time": 2.0, "pulses": [2, 2, 3, 3, 4], "damage_mul": 0.35},
       "on_hit": [
         {
           "from": 1,

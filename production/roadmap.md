@@ -259,7 +259,7 @@ không giới hạn + bảng tỉ lệ (`c05a9f8`), 4 thử thách dễ hơn + T
 
 Trước mỗi nhóm: tham khảo ≥ 2 game cùng thể loại, ghi nguồn vào tài liệu thiết kế (quy tắc "không đoán mò").
 
-**A. Bão sét (huyền thoại) đọng 2 s trên sân**
+**A. Bão sét (huyền thoại) đọng 2 s trên sân** — ✅ 2026-11-22 (vùng `pulse`, anim `linger`, cột theo bậc)
 - A1. Thiết kế `design/storm-redesign.md`: mỗi điểm sét tồn tại cố định 2 s, giật theo nhịp; số lượt giật trong 2 s =
   số cột sét của bậc (I/II: 2, III/IV: 3, V: 4); mỗi lượt giật vẫn gây "giật điện" (shock) và lan như hiện tại.
 - A2. Data `upgrades_mage.json` `storm`: `linger` 2.0, `pulses` theo bậc; test nhịp giật (đúng số lượt, đúng 2 s, mỗi lượt có shock).

@@ -1473,9 +1473,18 @@ func spawn_zone(zd: Dictionary, sheet: SpriteSheet, anim: String, sc: float, at:
 	var start := SpriteHitbox.frame_time(a, int(act[0]))
 	var hits := SpriteHitbox.frame_time(a, int(act[1]) + 1) - start
 	var kind := String(zd.get("kind", "burn"))
-	zones.append({"kind": kind, "pos": hb.center, "r": hb.radius * float(zd.get("radius_mul", 1.0)),
+	var z := {"kind": kind, "pos": hb.center, "r": hb.radius * float(zd.get("radius_mul", 1.0)),
 		"wait": start, "t": float(zd.get("time", hits)), "life": float(zd.get("time", hits)),
-		"tick": 0.0, "src": src, "dmg": dmg, "zd": zd})
+		"tick": 0.0, "src": src, "dmg": dmg, "zd": zd}
+	if kind == "pulse":   # Bão sét (user 2026-11-22): pulses = the tier's bolt columns, evenly over the zone's time
+		var pl: Array = zd.get("pulses", [2])
+		var n := maxi(1, int(pl[clampi(int(levels.get(src, 1)) - 1, 0, pl.size() - 1)]))
+		z["every"] = float(z["life"]) / n
+		z["tick"] = float(z["every"]) * 0.5   # mid-slot: the last pulse lands before the zone ends
+		z["sheet"] = sheet
+		z["sc"] = sc
+		z["at"] = at
+	zones.append(z)
 
 
 func step_zones(dt: float) -> void:
@@ -1498,6 +1507,13 @@ func step_zones(dt: float) -> void:
 				z["tick"] = float(zd.get("tick", 0.5))
 				for i in enemies.living_within(c, float(z["r"])):
 					enemies.apply_status(i, "burn", zd.get("burn", {"time": 1.0, "dps_mul": 0.15}), float(z["dmg"]), String(z["src"]))
+		elif z["kind"] == "pulse":
+			z["tick"] = float(z["tick"]) - dt
+			if float(z["tick"]) <= 0.0:
+				z["tick"] = float(z["tick"]) + float(z["every"])
+				enemies.hit_circle(c, float(z["r"]), float(z["dmg"]) * float(zd.get("damage_mul", 0.35)), 30.0,
+					String(z["src"]), on_hit(String(z["src"])))
+				Sfx.play("zap")
 		elif z["kind"] == "pull":
 			var pull := float(zd.get("strength", 60.0)) * dt
 			for i in enemies.living_within(c, float(z["r"])):
@@ -1512,6 +1528,12 @@ func step_zones(dt: float) -> void:
 ## Burn zones drawn as scorched ground under the monsters, fading out at the end.
 func _draw_zones() -> void:
 	for z in zones:
+		if z["kind"] == "pulse" and float(z["wait"]) <= 0.0:   # the storm cloud lingers, bolts flickering
+			var ps: SpriteSheet = z["sheet"]
+			if ps.has_animation("linger"):
+				var fade_p := clampf(float(z["t"]) / 0.4, 0.0, 1.0)
+				ps.draw(self, "linger", float(z["life"]) - float(z["t"]), z["at"], float(z["sc"]), false, Color(1, 1, 1, fade_p))
+			continue
 		if z["kind"] != "burn" or float(z["wait"]) > 0.0:
 			continue
 		var sh: SpriteSheet = sheets.get(String(z["zd"].get("sprite", "scorch")))

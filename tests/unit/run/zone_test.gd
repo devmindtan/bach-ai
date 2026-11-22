@@ -64,3 +64,29 @@ func test_a_pull_zone_drags_monsters_toward_its_centre() -> void:
 	var d1: float = r.enemies.center_of(0).distance_to(z["pos"])
 	_check(d1 < d0 - 10.0, "pulled in: %.0f -> %.0f" % [d0, d1])
 	r.free()
+
+
+func test_storm_lingers_two_seconds_pulsing_by_tier() -> void:
+	# user 2026-11-22: Bão sét stays 2 s; pulses in that time = its bolt columns (I/II 2, III/IV 3, V 4),
+	# each pulse shocks like a strike
+	var r := _run()
+	var zd: Dictionary = r.pool["skills"]["storm"]["zone"]
+	_check(String(zd.get("kind", "")) == "pulse" and is_equal_approx(float(zd.get("time", 0.0)), 2.0), "a 2 s pulse zone")
+	_check((zd.get("pulses", []) as Array).map(func(v: Variant) -> int: return int(v)) == [2, 2, 3, 3, 4], "pulses by tier I..V: %s" % [zd.get("pulses")])
+	r.levels["storm"] = 5
+	r.enemies.spawn("blob", Vector2(0, 0))
+	r.enemies.step(0.0001, Vector2(0, 900), Vector2(0, 900))
+	r.spawn_zone(zd, _sheet("lightning-storm-v"), "spell", 1.0, Vector2(0, 0), "storm", 40.0)
+	var z: Dictionary = r.zones[0]
+	r.step_zones(float(z["wait"]) + 0.001)
+	var hp0: float = r.enemies.hp[0]
+	var pulses := 0
+	for i in 220:   # 2.2 s
+		var before: float = r.enemies.hp[0]
+		r.step_zones(0.01)
+		if r.enemies.hp[0] < before:
+			pulses += 1
+	_check(pulses == 4, "tier V: 4 pulses in 2 s, got %d" % pulses)
+	_check(r.enemies.hp[0] < hp0 and r.enemies.statuses_of(0).has("shock"), "the pulses hurt and shock")
+	_check(r.zones.is_empty(), "gone after 2 s")
+	r.free()
