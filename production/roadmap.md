@@ -299,6 +299,11 @@ Trước mỗi nhóm: tham khảo ≥ 2 game cùng thể loại, ghi nguồn và
 - ✅ H1 Phản chấn, ✅ H2 Thánh kiếm, ✅ H3 Lôi ấn, ✅ H4 Hoả y, ✅ H5 Băng ấn, ✅ H6 Huyết quyền, ✅ H7 Phong hành, ✅ H8 Lưu tinh (2026-11-22). Cờ chụp `--show-special-fx=T` đã có (vẽ hiệu ứng mọi thẻ đặc biệt một lần ở giây T). - H1–H10: mỗi hiệu ứng một bước (Phản chấn, Thánh kiếm, Lôi ấn, Hoả y, Băng ấn, Huyết quyền, Phong hành, Lưu tinh,
   Tim bất diệt, Vĩnh cửu): mật độ gấp đôi, có pha, không chấm/dither, màu riêng; ảnh trong trận.
 
+**I. Phong cách 2D cho mọi hiệu ứng còn vẽ kiểu 2.5D** (người dùng 2026-11-22: game 2D, không 2.5D)
+- I1. Hào quang buff (Rune tốc độ, Ngọc sức mạnh, Hoa hồi phục, Khiên từ…): tâm ở thân nhân vật, vòng tròn.
+- I2. Ấn thánh của Cột thánh quang, vòng của Vòng thử thách / Lốc cỏ / Nước độc dâng, sóng chấn boss: tròn, không dẹt.
+- I3. Soát mọi sprite hiệu ứng có elip dẹt (tìm `squash`, `* 0.5x` theo trục y trong `sprite-lab/lib`), sửa từng nhóm, ảnh trong trận.
+
 **G. Quái mạnh dần: âm thầm, theo bản đồ, từ màn 6** — ✅ 2026-11-22 (G1–G3)
 - G1. Bỏ câu báo "Quái mạnh hơn! (+30% máu, +20% sát thương)" (`run_config.json` `time_scale.call`).
 - G2. Hệ số tăng theo phút đặt theo vùng/bản đồ (`stages.json` regions[].time_scale), không chung một bộ.
