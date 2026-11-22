@@ -55,3 +55,28 @@ func test_spirit_passes_through_props_and_monsters() -> void:
 	var o := _enemies("ooze", false)
 	if o.k_phase[0] != 0:
 		failures.append("ooze marked to phase")
+
+
+func test_ooze_regens_after_calm_unless_burning() -> void:
+	var e := _enemies("ooze", false)
+	e._damage(0, 500.0, Vector2.ZERO, "storm")
+	var low := e.hp[0]
+	e._step_status(0, 1.0)
+	if e.hp[0] != low:
+		failures.append("ooze healed before 2 s calm")
+	e._step_status(0, 1.5)
+	if e.hp[0] <= low:
+		failures.append("ooze did not heal after 2 s calm")
+	var g := _enemies("goblinoid", false)
+	g._damage(0, 500.0, Vector2.ZERO, "storm")
+	var glow := g.hp[0]
+	g._step_status(0, 3.0)
+	if g.hp[0] != glow:
+		failures.append("goblin healed")
+	var b := _enemies("ooze", false)
+	b._damage(0, 500.0, Vector2.ZERO, "storm")
+	b.apply_status(0, "burn", {"time": 10.0, "dps_mul": 0.0}, 0.0, "fireball")
+	var blow := b.hp[0]
+	b._step_status(0, 3.0)
+	if b.hp[0] > blow:
+		failures.append("burning ooze healed")

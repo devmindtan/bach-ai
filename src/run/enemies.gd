@@ -26,6 +26,8 @@ var dash_dir := PackedVector2Array()
 var kind := PackedInt32Array()
 var state := PackedInt32Array()
 var hp := PackedFloat32Array()
+var hp_cap := PackedFloat32Array()   # hp at spawn: the most a species regen heals back to
+var calm_t := PackedFloat32Array()   # seconds since the last hit (Nhầy regen waits for it)
 var timer := PackedFloat32Array()     # state timer (windup / dash / dying)
 var charge_cd := PackedFloat32Array()
 var flash := PackedFloat32Array()
@@ -212,6 +214,8 @@ func _init(monsters: Dictionary, cfg: Dictionary, sheets: Dictionary, seed_value
 	timer.resize(capacity)
 	charge_cd.resize(capacity)
 	flash.resize(capacity)
+	hp_cap.resize(capacity)
+	calm_t.resize(capacity)
 	anim_t.resize(capacity)
 	phase.resize(capacity)
 	flip.resize(capacity)
@@ -287,6 +291,17 @@ func set_species(table: Dictionary, elements_by_source: Dictionary) -> void:
 		k_phase[k] = 1 if has_trait(k, "phase") else 0
 
 
+## Nhầy (species trait regen): after regen.delay s without a hit it heals regen.pct of its spawn hp a
+## second, up to that hp; Bỏng stops it (design/species.md).
+func _step_regen(i: int, delta: float) -> void:
+	calm_t[i] += delta
+	if burn_t[i] > 0.0 or hp[i] >= hp_cap[i] or not has_trait(kind[i], "regen"):
+		return
+	var rg: Dictionary = species["species"][String(k_extra[kind[i]].get("species", ""))].get("regen", {})
+	if calm_t[i] >= float(rg.get("delay", 2.0)):
+		hp[i] = minf(hp_cap[i], hp[i] + hp_cap[i] * float(rg.get("pct", 0.03)) * delta)
+
+
 ## True when kind [param k]'s species has behaviour trait [param t] (species.json traits).
 func has_trait(k: int, t: String) -> bool:
 	return species.get("species", {}).get(String(k_extra[k].get("species", "")), {}).get("traits", []).has(t)
@@ -354,6 +369,8 @@ func spawn(id: String, p: Vector2) -> bool:
 	kind[i] = k
 	state[i] = MOVE
 	hp[i] = k_hp[k] * (1.0 if k_boss[k] == 1 else spawn_hp_mul)   # bosses keep their designed hp
+	hp_cap[i] = hp[i]
+	calm_t[i] = 0.0
 	timer[i] = 0.0
 	charge_cd[i] = float(k_extra[k].get("charge_cooldown", 2.0)) * _rng.randf()
 	flash[i] = 0.0
@@ -1211,6 +1228,7 @@ func _damage(i: int, amount: float, kb: Vector2, source := "") -> void:
 	if phase_on[i] == 1:
 		amount *= float(_phase2(i).get("damage_taken_mul", 1.0))
 	var hp_before := hp[i]
+	calm_t[i] = 0.0
 	if vs_status_mul > 0.0 and (slow_t[i] > 0.0 or stun_t[i] > 0.0 or freeze_t[i] > 0.0 or bleed_t[i] > 0.0 or burn_t[i] > 0.0 or shock_t[i] > 0.0):
 		bonus_by["vs_status"] = float(bonus_by.get("vs_status", 0.0)) + amount * vs_status_mul   # end report: indirect damage
 		amount *= 1.0 + vs_status_mul
@@ -1291,6 +1309,7 @@ func apply_status(i: int, status: String, p: Dictionary, hit_damage: float, sour
 
 ## Status timers and damage over time for one living monster.
 func _step_status(i: int, delta: float) -> void:
+	_step_regen(i, delta)
 	slow_t[i] = maxf(0.0, slow_t[i] - delta)
 	if slow_t[i] <= 0.0:
 		slow_mul[i] = 1.0
