@@ -25,11 +25,12 @@ func test_looping_animation_hitbox_stays_active_after_first_loop() -> void:
 
 
 func test_one_shot_animation_hitbox_ends() -> void:
-	var sheet := SpriteSheet.load_dir("res://assets/sprites/custom/sword-wave", "sword-wave")
+	# a one-shot animation (Chém kiếm's slash; sword-wave no longer has an impact, 2026-11-22)
+	var sheet := SpriteSheet.load_dir("res://assets/sprites/custom/sword-slash", "sword-slash")
 	if sheet == null:
 		return
-	var hb := SpriteHitbox.of(sheet, "impact", Vector2.ZERO, 2.0)
-	_check(not hb.is_active(sheet.duration("impact") + 0.5), "a one-shot (impact) hitbox stays off after its frames")
+	var hb := SpriteHitbox.of(sheet, "slash_right", Vector2.ZERO, 2.0)
+	_check(not hb.is_active(sheet.duration("slash_right") + 0.5), "a one-shot (slash) hitbox stays off after its frames")
 
 
 func test_sword_wave_hits_a_monster_beyond_its_first_loop() -> void:

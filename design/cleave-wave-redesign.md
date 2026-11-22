@@ -1,6 +1,6 @@
 # Kế hoạch: thiết kế lại Sóng kiếm (`cleave_wave`)
 
-Trạng thái: **kế hoạch, chưa code** (2026-11-21). Người dùng: chiêu "không đẹp và khá phế". Lần đầu nhầm sang Chém kiếm;
+Trạng thái: **đã làm bước 1–4** (2026-11-22): người dùng bảo làm luôn; dùng mặc định xanh ngọc-trắng và cấp 4 vỡ 3 lưỡi. Người dùng: chiêu "không đẹp và khá phế". Lần đầu nhầm sang Chém kiếm;
 phần đã sửa ở Chém kiếm (hitbox quạt đặc, xa hơn, hệ số 1,3) được giữ lại.
 Thực hiện theo `.agents/skills/free-agent-workloop` (mỗi bước một commit có test + ảnh).
 

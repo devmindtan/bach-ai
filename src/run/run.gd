@@ -1137,15 +1137,59 @@ func _cast(sid: String, ts: Dictionary, how: String) -> void:
 					"impact": String(ts.get("impact", "impact")), "wait": 0.0,
 					"impact_sprite": _tier_name(ts.get("impact_tiers", []), sid)}
 		"wave":
-			# straight at the nearest monster, then behind, then both sides
-			var first := to_target.normalized()
-			var dirs := [first, -first, first.orthogonal(), -first.orthogonal()]
-			for k in mini(_skill_count(sid, ts), dirs.size()):
-				var dv: Vector2 = dirs[k]
-				var fx := _add_fx(sprite, _fly_anim(sprite, String(ts.get("anim_prefix", "fly_")), dv), sc, dmg, float(ts.get("duration", 0.9)), center, sid, kb)
-				if not fx.is_empty():
-					fx["vel"] = dv * float(ts.get("speed", 300.0))
-					fx["rehit"] = float(ts.get("rehit", 0.25))
+			# Sóng kiếm (cleave-wave-redesign.md): a fan toward the nearest monster, widening as it flies,
+			# each monster hit once; level >= split.from breaks into small blades at the end
+			var lv := int(levels.get(sid, 1))
+			var spreads: Array = ts.get("spread_deg", [0])
+			var spread := float(spreads[clampi(lv - 1, 0, spreads.size() - 1)])
+			for deg: float in wave_fan(_skill_count(sid, ts), spread):
+				var dv := to_target.normalized().rotated(deg_to_rad(deg))
+				_launch_wave(sprite, ts, dv, center, sc, dmg, sid, kb, float(ts.get("duration", 0.9)), lv, true)
+
+
+## Angles (degrees) of [param n] waves fanned [param spread] apart around the aim: 1 -> [0], 2 -> [-s, s],
+## 3 -> [-s, 0, s]; more keep the same step.
+static func wave_fan(n: int, spread: float) -> Array:
+	if n <= 1:
+		return [0.0]
+	var out := []
+	for k in n:
+		var t := float(k) - (n - 1) / 2.0
+		out.append(t * (spread * 2.0 if n == 2 else spread))
+	return out
+
+
+## Scale factor of a flying wave at [param t] (0 start .. 1 end of its flight): grow.from -> grow.to[level].
+static func wave_grow(grow: Dictionary, level: int, t: float) -> float:
+	var to: Array = grow.get("to", [1.0])
+	return lerpf(float(grow.get("from", 1.0)), float(to[clampi(level - 1, 0, to.size() - 1)]), clampf(t, 0.0, 1.0))
+
+
+func _launch_wave(sprite: String, ts: Dictionary, dv: Vector2, at: Vector2, sc: float, dmg: float, sid: String,
+		kb: float, life: float, lv: int, main: bool) -> void:
+	var fx := _add_fx(sprite, _fly_anim(sprite, String(ts.get("anim_prefix", "fly_")), dv), sc, dmg, life, at, sid, kb)
+	if fx.is_empty():
+		return
+	fx["vel"] = dv * float(ts.get("speed", 300.0))
+	fx["hit_once"] = {}
+	fx["base_scale"] = float(fx["scale"])
+	fx["grow"] = ts.get("grow", {}) if main else {}
+	fx["lv"] = lv
+	var sp: Dictionary = ts.get("split", {})
+	if main and not sp.is_empty() and lv >= int(sp.get("from", 99)):
+		fx["split"] = sp
+
+
+## A wave that reaches the end of its flight at level >= split.from breaks into small blades.
+func _split_wave(fx: Dictionary) -> void:
+	var sp: Dictionary = fx["split"]
+	var ts: Dictionary = pool.get("skills", {}).get(String(fx["source"]), {})
+	var dv := (fx["vel"] as Vector2).normalized()
+	for deg: float in wave_fan(int(sp.get("count", 3)), float(sp.get("spread_deg", 60)) / 2.0):
+		_launch_wave(String((fx["sheet"] as SpriteSheet).name), ts, dv.rotated(deg_to_rad(deg)), fx["pos"],
+			float(fx["base_scale"]) * float(sp.get("scale", 0.55)) / float((fx["sheet"] as SpriteSheet).meta.get("px_scale", 1.0)),
+			float(fx["damage"]) * float(sp.get("damage_mul", 0.4)), String(fx["source"]), 60.0,
+			float(sp.get("duration", 0.45)), int(fx["lv"]), false)
 
 
 ## The flight animation closest to direction [param d]: "<prefix><degrees>" when
@@ -1519,6 +1563,8 @@ func _step_fx(dt: float) -> void:
 		fx["t"] = float(fx["t"]) + dt
 		if fx.has("vel"):
 			fx["pos"] = (fx["pos"] as Vector2) + (fx["vel"] as Vector2) * dt
+		if not (fx.get("grow", {}) as Dictionary).is_empty():   # Sóng kiếm widens as it flies
+			fx["scale"] = float(fx["base_scale"]) * wave_grow(fx["grow"], int(fx["lv"]), float(fx["t"]) / float(fx["life"]))
 		if fx.has("shot") and _step_shot(fx, dt):
 			_fx.remove_at(i)
 			continue
@@ -1526,6 +1572,9 @@ func _step_fx(dt: float) -> void:
 			var hb := SpriteHitbox.of(fx["sheet"], fx["anim"], _fx_pos(fx), float(fx["scale"]))
 			if hb == null:
 				fx["done"] = true
+			elif fx.has("hit_once"):   # each monster once, every step (Sóng kiếm)
+				if hb.is_active(float(fx["t"])):
+					enemies.hit_box(hb, float(fx["damage"]), float(fx.get("kb", 140.0)), String(fx.get("source", "")), fx.get("effects", []), fx["hit_once"])
 			elif hb.is_active(float(fx["t"])) and float(fx.get("hit_wait", 0.0)) <= 0.0:
 				enemies.hit_box(hb, float(fx["damage"]), float(fx.get("kb", 140.0)), String(fx.get("source", "")), fx.get("effects", []))
 				if fx.has("rehit"):
@@ -1534,6 +1583,8 @@ func _step_fx(dt: float) -> void:
 					fx["done"] = true
 			fx["hit_wait"] = float(fx.get("hit_wait", 0.0)) - dt
 		if float(fx["t"]) >= float(fx["life"]):
+			if fx.has("split"):
+				_split_wave(fx)
 			_fx.remove_at(i)
 		else:
 			i += 1

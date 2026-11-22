@@ -125,6 +125,8 @@ var bolt_pops := PackedVector2Array()    # where bolts burst this step (the run 
 var _player_center := Vector2.ZERO
 # elite affixes (run_config.json elite.affixes, design 6A): one per elite, by index into affix_ids
 var affix := PackedInt32Array()          # -1 = none
+var uid := PackedInt32Array()            # unique per spawn (survives swap-removes): "hit once" sets
+var _next_uid := 1
 var hunted := PackedByteArray()          # 1 = the marked elite of a Săn tinh anh challenge
 var buffed := PackedByteArray()          # 1 = spawned under the boss's aura (boss_aura)
 ## The living boss's passive (monsters.json "aura", set by the run while the boss lives; {} otherwise):
@@ -209,6 +211,7 @@ func _init(monsters: Dictionary, cfg: Dictionary, sheets: Dictionary, seed_value
 	flip.resize(capacity)
 	hp_show.resize(capacity)
 	affix.resize(capacity)
+	uid.resize(capacity)
 	buffed.resize(capacity)
 	hunted.resize(capacity)
 	phase_on.resize(capacity)
@@ -317,6 +320,8 @@ func spawn(id: String, p: Vector2) -> bool:
 	flip[i] = 0
 	hp_show[i] = 0.0
 	affix[i] = -1
+	uid[i] = _next_uid
+	_next_uid += 1
 	buffed[i] = 1 if (k_boss[k] == 0 and not boss_aura.is_empty()) else 0
 	hunted[i] = 0
 	if buffed[i] == 1:
@@ -1094,7 +1099,9 @@ func _query_pad(hb: SpriteHitbox) -> float:
 	return reach + max_hit_r
 
 
-func hit_box(hb: SpriteHitbox, damage: float, knockback := 140.0, source := "", effects: Array = []) -> int:
+## [param once]: when given, monsters whose uid is in it are skipped and each one hit is added, so a
+## moving effect (Sóng kiếm) hits every monster once however long it overlaps (cleave-wave-redesign.md).
+func hit_box(hb: SpriteHitbox, damage: float, knockback := 140.0, source := "", effects: Array = [], once: Variant = null) -> int:
 	_query.clear()
 	_hash.query(hb.center, _query_pad(hb), _query)
 	for j in range(_hashed_count, count):   # spawned since the hash was built
@@ -1106,6 +1113,10 @@ func hit_box(hb: SpriteHitbox, damage: float, knockback := 140.0, source := "", 
 		var c := center_of(i)
 		if not hb.contains(c, k_radius[kind[i]]):
 			continue
+		if once is Dictionary:
+			if (once as Dictionary).has(uid[i]):
+				continue
+			(once as Dictionary)[uid[i]] = true
 		hits += 1
 		var d := c - hb.center
 		var dmg := damage
@@ -1471,6 +1482,7 @@ func _remove(i: int) -> void:
 		flip[i] = flip[last]
 		hp_show[i] = hp_show[last]
 		affix[i] = affix[last]
+		uid[i] = uid[last]
 		buffed[i] = buffed[last]
 		hunted[i] = hunted[last]
 		slow_t[i] = slow_t[last]

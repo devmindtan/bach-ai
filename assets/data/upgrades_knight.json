@@ -182,7 +182,7 @@
       "id": "cleave_wave",
       "kind": "skill",
       "name": "Sóng kiếm",
-      "desc": "Phóng sóng kiếm bay xuyên qua quái về phía quái gần nhất. Mỗi cấp: +20% sát thương; cấp 3: thêm sóng phía sau; cấp 5: thêm sóng lên và xuống. Gây chảy máu.",
+      "desc": "Phóng lưỡi khí bay xuyên quái về phía quái gần nhất, nở rộng dần khi bay, mỗi quái trúng một lần. Gây chảy máu. Mỗi cấp: +20% sát thương; cấp 2: sóng to hơn; cấp 3: 2 sóng xoè; cấp 4: cuối đường vỡ thành 3 lưỡi nhỏ; cấp 5: 3 sóng xoè.",
       "max_level": 5,
       "weight": 2,
       "effects": {
@@ -551,19 +551,15 @@
       ],
       "cast": "wave",
       "anim_prefix": "fly_",
-      "damage_mul": 0.9,
+      "damage_mul": 1.1,
       "size_mul": 1.0,
       "cooldown": 2.75,
-      "speed": 300.0,
-      "duration": 0.9,
-      "count": [
-        1,
-        2,
-        2,
-        3,
-        4
-      ],
-      "rehit": 0.25,
+      "speed": 340.0,
+      "duration": 1.1,
+      "count": [1, 1, 2, 2, 3],
+      "spread_deg": [0, 0, 15, 15, 25],
+      "grow": {"from": 0.8, "to": [1.3, 1.5, 1.5, 1.5, 1.6]},
+      "split": {"from": 4, "count": 3, "spread_deg": 60, "damage_mul": 0.4, "duration": 0.45, "scale": 0.55},
       "on_hit": [
         {
           "from": 1,
@@ -573,6 +569,7 @@
         }
       ]
     },
+
     "holy_column": {
       "scale": {"damage": 1.4, "armor": 1.0},
       "sprite": "holy-column",
