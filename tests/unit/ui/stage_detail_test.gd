@@ -46,3 +46,12 @@ func test_monsters_scaled_and_elites_marked() -> void:
 		return
 	if not is_equal_approx(float(rows[0]["hp"]), float(monsters["slime"]["hp"]) * 2.0) or not bool(rows[0]["elite"]):
 		failures.append("slime row wrong: %s" % rows[0])
+
+
+func test_species_line_names_weak_and_resist() -> void:
+	var sp := GameData.load_json("res://assets/data/species.json")
+	var line := StageSelect.species_line("ooze", sp)
+	if line != "Nhầy · yếu Lửa · kháng Vật lý":
+		failures.append("ooze line: %s" % line)
+	if StageSelect.species_line("goblinoid", sp) != "Yêu tinh":
+		failures.append("goblin line: %s" % StageSelect.species_line("goblinoid", sp))

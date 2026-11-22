@@ -27,6 +27,7 @@ var _scroll := Vector2.ZERO
 var _layer: CanvasLayer
 var _detail_layer: CanvasLayer   # the Chi tiết overlay (design/ux/stage-detail.md), null when closed
 var _run_cfg := {}
+var _species := {}   # species.json (design/species.md): the detail table names each monster's species
 
 
 func _ready() -> void:
@@ -43,6 +44,7 @@ func _ready() -> void:
 		get_tree().change_scene_to_file.call_deferred("res://src/front/characters.tscn")
 		return
 	_run_cfg = GameData.load_json("res://assets/data/run_config.json")
+	_species = GameData.load_json("res://assets/data/species.json")
 	_n = clampi(prefs.stage_target, 1, _slot.unlocked(_stages.count()))
 	_challenges = Challenges.load_default()
 	if prefs.challenge_target != "" and _challenges.mode_open(_slot):
@@ -601,6 +603,20 @@ static func detail_timeline(st: Dictionary, monsters: Dictionary, region_events:
 	return marks
 
 
+## "Nhầy · yếu Lửa · kháng Vật lý" for species [param sid] (design/species.md), "" without one.
+static func species_line(sid: String, table: Dictionary) -> String:
+	var sp: Dictionary = table.get("species", {}).get(sid, {})
+	if sp.is_empty():
+		return ""
+	var names: Dictionary = table.get("elements", {})
+	var parts := [String(sp.get("name", sid))]
+	if not sp.get("weak", []).is_empty():
+		parts.append("yếu " + ", ".join(sp["weak"].map(func(e: String) -> String: return String(names.get(e, e)))))
+	if not sp.get("resist", []).is_empty():
+		parts.append("kháng " + ", ".join(sp["resist"].map(func(e: String) -> String: return String(names.get(e, e)))))
+	return " · ".join(parts)
+
+
 func _open_detail() -> void:
 	if _detail_layer != null:
 		return
@@ -646,10 +662,13 @@ func _open_detail() -> void:
 	for m: Dictionary in detail_monsters(st, _monsters, _stages.hp_mul(_n), _stages.damage_mul(_n)):
 		grid.add_child(_monster_box(String(m["id"])))
 		var nm := String(m["name"]) + ("  · BOSS" if m["boss"] else ("  · có tinh anh" if m["elite"] else ""))
-		var nl := UiKit.label(nm, 15, BOSS_GOLD if m["boss"] else (UiKit.GOLD if m["elite"] else UiKit.TEXT))
-		nl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		nl.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		grid.add_child(nl)
+		var nv := VBoxContainer.new()
+		nv.add_theme_constant_override("separation", 0)
+		nv.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		nv.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		nv.add_child(UiKit.label(nm, 15, BOSS_GOLD if m["boss"] else (UiKit.GOLD if m["elite"] else UiKit.TEXT)))
+		nv.add_child(UiKit.label(species_line(String(_monsters[m["id"]].get("species", "")), _species), 13, UiKit.MUTED))
+		grid.add_child(nv)
 		for x in [roundi(m["hp"]), roundi(m["damage"]), roundi(m["speed"])]:
 			var l := UiKit.label(str(x), 15, UiKit.TEXT)
 			l.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
