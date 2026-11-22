@@ -275,7 +275,7 @@ Trước mỗi nhóm: tham khảo ≥ 2 game cùng thể loại, ghi nguồn và
 - B4. Giao diện bảng: tab hoặc khối gọn (Gây ra / Nhận vào / Hồi), không tràn; ảnh `ui-shots`.
 - B5. Kiểm lại: ảnh người dùng còn dòng "Sự kiện: Mưa thiên thạch" (bản build trước khi bỏ sự kiện) — xác nhận bản hiện tại không còn.
 
-**C. Viền giới hạn sân cắt gọn**
+**C. Viền giới hạn sân cắt gọn** — ✅ 2026-11-22 (mặt nạ ngoài sân + dải tường, nhân vật cách mép 26 px)
 - C1. Tìm mọi thứ vẽ tràn qua viền (nền, mảng đất, cây, quái, hiệu ứng); viết test/ảnh ở mép sân.
 - C2. Cắt bằng clip (vẽ trong vùng sân) hoặc che bằng khung viền đặc; thiết kế khung viền đẹp hơn (tham khảo game cùng thể loại).
 

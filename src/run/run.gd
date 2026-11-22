@@ -742,7 +742,7 @@ func _move_player(dt: float) -> void:
 	if _knock.length_squared() > 1.0:   # pushed (a boss transforming, a shockwave): slides, decays
 		player_pos += _knock * dt
 		_knock *= exp(-5.0 * dt)
-		player_pos = player_pos.clamp(Vector2(-_arena_half, -_arena_half), Vector2(_arena_half, _arena_half))
+		player_pos = _keep_inside(player_pos)
 		if obstacles != null:
 			player_pos = obstacles.push_out(player_pos, PLAYER_BODY)
 		player_pos = enemies.push_out_walls(player_pos, PLAYER_BODY)
@@ -779,7 +779,7 @@ func _move_player(dt: float) -> void:
 			face_left = facing.x < 0.0
 			_update_body()
 		player_pos += dir.limit_length(1.0) * float(stats["move_speed"]) * dt
-		player_pos = player_pos.clamp(Vector2(-_arena_half, -_arena_half), Vector2(_arena_half, _arena_half))
+		player_pos = _keep_inside(player_pos)
 		if obstacles != null:
 			player_pos = obstacles.push_out(player_pos, PLAYER_BODY)
 		player_pos = enemies.push_out_walls(player_pos, PLAYER_BODY)
@@ -820,7 +820,7 @@ func _dash_step(dt: float) -> void:
 	var dist := float(sp.get("distance", 130.0))
 	var step := minf(dt, _dash_left)
 	player_pos += _dash_dir * dist / total * step
-	player_pos = player_pos.clamp(Vector2(-_arena_half, -_arena_half), Vector2(_arena_half, _arena_half))
+	player_pos = _keep_inside(player_pos)
 	if obstacles != null:
 		player_pos = obstacles.push_out(player_pos, PLAYER_BODY)
 	player_pos = enemies.push_out_walls(player_pos, PLAYER_BODY)   # a root wall is solid: no dashing through
@@ -2613,11 +2613,54 @@ func _draw() -> void:
 	_draw_affix_tags()
 	if show_hitboxes:
 		_draw_hitboxes(view)
+	_draw_arena_mask(view)   # after the world, before the hero's bar: nothing shows past the edge (roadmap C)
 	# hp bar under the hero
 	var w := 44.0
 	var bar := Rect2(player_pos + Vector2(-w * 0.5, 8.0), Vector2(w, 5.0))
 	draw_rect(bar, Color(0.1, 0.05, 0.08))
 	draw_rect(Rect2(bar.position, Vector2(w * clampf(hp / float(stats["max_hp"]), 0.0, 1.0), 5.0)), Color(0.85, 0.2, 0.25))
+
+
+## The hero stays a body width plus its bar inside the edge, so the arena mask never cuts the hero or its hp bar.
+func _keep_inside(p: Vector2) -> Vector2:
+	var m := _arena_half - 26.0
+	return p.clamp(Vector2(-m, -m), Vector2(m, m))
+
+
+## The parts of [param view] outside the arena square ±[param half] (up to four rects, no overlap with the arena).
+static func outside_rects(view: Rect2, half: float) -> Array:
+	var out := []
+	var l := view.position.x
+	var t := view.position.y
+	var r := view.end.x
+	var b := view.end.y
+	if l < -half:
+		out.append(Rect2(l, t, minf(r, -half) - l, b - t))
+	if r > half:
+		out.append(Rect2(maxf(l, half), t, r - maxf(l, half), b - t))
+	var x0 := maxf(l, -half)
+	var x1 := minf(r, half)
+	if x1 > x0:
+		if t < -half:
+			out.append(Rect2(x0, t, x1 - x0, minf(b, -half) - t))
+		if b > half:
+			out.append(Rect2(x0, maxf(t, half), x1 - x0, b - maxf(t, half)))
+	return out
+
+
+## Roadmap C (user 2026-11-22): cut everything at the arena edge. Solid outside colour over whatever spilled past
+## it, then a thick dark band with a light inner line so the edge reads as a wall.
+func _draw_arena_mask(view: Rect2) -> void:
+	var rects := outside_rects(view, _arena_half)
+	if rects.is_empty():
+		return
+	var pal: Dictionary = stage_ground if stage_ground is Dictionary else {}
+	var outside := Color(String(pal.get("outside", "1b2419")))
+	for rc: Rect2 in rects:
+		draw_rect(rc, outside)
+	var h := _arena_half
+	draw_rect(Rect2(-h - 10.0, -h - 10.0, h * 2 + 20.0, h * 2 + 20.0), outside.darkened(0.45), false, 12.0)   # the wall band
+	draw_rect(Rect2(-h + 1.0, -h + 1.0, h * 2 - 2.0, h * 2 - 2.0), outside.lightened(0.35), false, 2.0)   # light inner line
 
 
 ## The camera centre in world space (the HUD's edge arrows measure from it).
