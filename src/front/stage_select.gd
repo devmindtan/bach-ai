@@ -295,16 +295,7 @@ func _detail(panel: PanelContainer, unlocked: int) -> void:
 		diff.add_child(val)
 	# monsters in this stage
 	v.add_child(UiKit.label("Quái xuất hiện", 15, UiKit.MUTED))
-	var mons := HFlowContainer.new()   # wraps: a stage with many monsters pushed the panel off screen (2026-11-20)
-	mons.add_theme_constant_override("h_separation", 6)
-	mons.add_theme_constant_override("v_separation", 6)
-	v.add_child(mons)
-	var seen := []
-	for w: Dictionary in st.get("waves", []):
-		var id := String(w.get("monster", "")).get_slice("@", 0)
-		if id != "" and not seen.has(id) and _monsters.has(id):
-			seen.append(id)
-			mons.add_child(_monster_box(id))
+	v.add_child(_monster_row(st))
 	# rewards and wins
 	v.add_child(UiKit.label("Phần thưởng khi thắng", 15, UiKit.MUTED))
 	var first := _stages.rewards(_n, true)
@@ -321,6 +312,41 @@ func _detail(panel: PanelContainer, unlocked: int) -> void:
 
 
 ## A monster's first frame in a small box; the tooltip names it.
+## The stage's monsters, one box each, at most MONSTER_ROW boxes: more show the first ones and a "+k" box
+## (user 2026-11-22: a sixth monster spilled past the panel edge); the "+k" tip names the rest.
+const MONSTER_ROW := 5
+
+
+func _monster_row(st: Dictionary) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	var ids := stage_monsters(st, _monsters)
+	var shown := ids if ids.size() <= MONSTER_ROW else ids.slice(0, MONSTER_ROW - 1)
+	for id: String in shown:
+		row.add_child(_monster_box(id))
+	if ids.size() > shown.size():
+		var rest := ids.slice(shown.size())
+		var more := UiKit.panel(UiKit.PANEL_DARK, 4)
+		more.custom_minimum_size = Vector2(44, 44)
+		var l := UiKit.label("+%d" % rest.size(), 16, UiKit.GOLD)
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		more.add_child(l)
+		Tip.attach(more, "Còn %d loại quái" % rest.size(), ", ".join(rest.map(func(id: String) -> String: return String(_monsters[id].get("name", id)))), UiKit.GOLD, "", "Quái vật")
+		row.add_child(more)
+	return row
+
+
+## Monster ids of a stage's waves, in order of first appearance, known ones only.
+static func stage_monsters(st: Dictionary, monsters: Dictionary) -> Array:
+	var seen := []
+	for w: Dictionary in st.get("waves", []):
+		var id := String(w.get("monster", "")).get_slice("@", 0)
+		if id != "" and not seen.has(id) and monsters.has(id):
+			seen.append(id)
+	return seen
+
+
 func _monster_box(id: String) -> Control:
 	var m: Dictionary = _monsters[id]
 	var sprite := String(m.get("sprite", id))
@@ -496,16 +522,7 @@ func _challenge_detail(panel: PanelContainer) -> void:
 		val.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		diff.add_child(val)
 	v.add_child(UiKit.label("Quái xuất hiện", 15, UiKit.MUTED))
-	var mons := HFlowContainer.new()   # wraps: a stage with many monsters pushed the panel off screen (2026-11-20)
-	mons.add_theme_constant_override("h_separation", 6)
-	mons.add_theme_constant_override("v_separation", 6)
-	v.add_child(mons)
-	var seen := []
-	for w: Dictionary in st.get("waves", []):
-		var id := String(w.get("monster", "")).get_slice("@", 0)
-		if id != "" and not seen.has(id) and _monsters.has(id):
-			seen.append(id)
-			mons.add_child(_monster_box(id))
+	v.add_child(_monster_row(st))
 	v.add_child(UiKit.label("Phần thưởng khi thắng", 15, UiKit.MUTED))
 	var rw := HBoxContainer.new()
 	rw.add_theme_constant_override("separation", 18)
