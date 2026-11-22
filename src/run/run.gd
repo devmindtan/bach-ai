@@ -181,6 +181,7 @@ var _forced_events: Array = []   # --event=K@T
 var obstacles: Obstacles = null   # the stage's rocks / trees / poison pools (design/obstacles.md)
 var _obstacle_view := ObstacleView.new()   # rocks / trees drawing (obstacle_view.gd)
 var _sheet := RunSheet.new()   # character sheet / card preview data (run_sheet.gd)
+var _kill_drops := KillDrops.new()
 var region_ev := RegionEvents.new()   # the region's own event (region_events.gd)
 var _heal_fx: Array = []   # [{p, r, t}] Hồn Đầm heal rings being drawn
 var _spawn_only := ""   # --spawn-only=ID (shots)
@@ -221,8 +222,9 @@ var _hud: RunHud
 var _panels: RunPanels
 
 
-func _init() -> void:
-	_sheet.run = self   # before _ready: tests build a Run with .new() and ask the sheet directly
+func _init() -> void:   # helpers get the run before _ready: tests build a Run with .new()
+	_sheet.run = self
+	_kill_drops.run = self
 
 
 func _ready() -> void:
@@ -607,7 +609,7 @@ func _tick(dt: float) -> void:
 					if st != "shock" or i % 6 == 0:
 						enemies.apply_status(i, st, {"time": 1.0, "mul": 0.5, "dps_mul": 0.01, "chain": 2, "radius": 120.0}, 1.0, "test")
 	_drain_shocks(dt)
-	_drops()
+	_kill_drops.step()
 	var essence_before := pickups.essence
 	var got := pickups.step(dt, player_pos + _hit_center, float(stats.get("magnet", 1.0)))
 	gold += int(got.y)
@@ -859,46 +861,6 @@ func essence_drop(elite: bool, boss: bool) -> int:
 	if elite:
 		return int(e.get("elite", 0))
 	return 0
-
-
-func _drops() -> void:
-	for p in enemies.gold_trail:   # Yêu tinh vàng drops coins as it runs (a trail to follow)
-		pickups.drop(Pickups.COIN, p, 1.0)
-	enemies.gold_trail.clear()
-	if not enemies.escaped.is_empty():
-		wave_call = "Yêu tinh vàng đã trốn mất!"
-		wave_call_t = 2.5
-		for p in enemies.escaped:
-			_add_fx("arcane-bolt-impact-iii", "impact", _sprite_scale * 1.5, 0.0, -1.0, p)
-		enemies.escaped.clear()
-	if enemies.kill_pos.is_empty():
-		return
-	Sfx.play("kill")
-	count_special_kills(enemies.kill_pos.size())
-	var gold_chance := float(cfg.get("pickups", {}).get("gold_chance", 0.12))
-	var heal_frac := heal_on_kill()   # Khát máu: elites and bosses feed the hero
-	for i in enemies.kill_pos.size():
-		if drops_xp(enemies.kill_elite[i] == 1 or enemies.kill_boss[i] == 1):
-			pickups.drop(Pickups.GEM, enemies.kill_pos[i], enemies.kill_xp[i])
-		if enemies.kill_elite[i] == 1 or enemies.kill_boss[i] == 1:
-			elite_kills += 1
-		if enemies.kill_elite[i] == 1:
-			_drop_chest(enemies.kill_pos[i] + Vector2(-10, 0))
-		var ess := essence_drop(enemies.kill_elite[i] == 1, enemies.kill_boss[i] == 1)
-		if ess > 0:   # Tinh hoa: the skill-tree material
-			pickups.drop(Pickups.ESSENCE, enemies.kill_pos[i] + Vector2(0, -12), float(ess))
-		if enemies.kill_boss[i] == 1:
-			_boss_dead = true
-			bosses_killed += 1
-		if heal_frac > 0.0 and (enemies.kill_elite[i] == 1 or enemies.kill_boss[i] == 1):
-			heal_max(heal_frac)
-		if rng.randf() < gold_chance:
-			pickups.drop(Pickups.COIN, enemies.kill_pos[i] + Vector2(10, 0), 1.0)
-		for g in int(enemies.kill_gold[i]):   # Yêu tinh vàng: a burst of coins
-			pickups.drop(Pickups.COIN, enemies.kill_pos[i] + Vector2.from_angle(g * 2.4) * (10.0 + 3.0 * g), 1.0)
-		if enemies.kill_chest[i] == 1 and enemies.kill_elite[i] == 0:
-			_drop_chest(enemies.kill_pos[i] + Vector2(0, -14))
-	enemies.drain_kills()
 
 
 # --- skills ------------------------------------------------------------------
