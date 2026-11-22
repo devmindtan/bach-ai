@@ -83,3 +83,18 @@ hướng bay.
 
 - Màu xanh ngọc-trắng có hợp không (để khác Chém kiếm), hay muốn màu khác?
 - Cấp 4 "vỡ thành 3 lưỡi" hay "dội ngược lại một lần" (boomerang)?
+
+## Số đo cân bằng (bước 5, 2026-11-22)
+
+`gamekit shot … -- --demo --god --sim-steps=8 --skills=blade_arc:3,cleave_wave:3,whirlwind:3,earth_strike:3`, dòng
+`GK: damage` (tỉ trọng sát thương cả trận, demo tự chọn thẻ):
+
+| damage_mul, tầm, nở | Sóng kiếm | Chém kiếm | Đất nứt | Lốc xoáy |
+|---|---|---|---|---|
+| 1,1 · 340 px/s × 1,1 s · ×1,3–1,6 | 58–66% | 14–15% | 12–23% | 4–5% |
+| 0,6 · 320 × 1,0 · ×1,2–1,4 | 46–54% | 21–22% | 17–22% | 7–10% |
+| 0,45 · như trên | 43–54% | 21–22% | 16–22% | 6–11% |
+
+Hệ số sát thương ít tác dụng: tỉ trọng đến từ việc sóng với tới quái ở xa mà chiêu cận chiến không chạm. **Chốt 0,6**
+(mỗi nhát vẫn có lực; người dùng chê chiêu cũ yếu), tầm 320 × 1,0, nở ×1,2–1,4. **Lốc xoáy chỉ 4–11%**: chiêu yếu
+nhất, cần xem lại (ghi vào roadmap).

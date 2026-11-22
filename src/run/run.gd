@@ -2582,6 +2582,19 @@ func _die() -> void:
 	_panels.show_end(false)
 
 
+## "blade_arc 31% · cleave_wave 22% · ..." of enemies.damage_by, largest first (demo / balance runs).
+func damage_shares() -> String:
+	var total := 0.0
+	for k: String in enemies.damage_by:
+		total += float(enemies.damage_by[k])
+	var keys: Array = enemies.damage_by.keys()
+	keys.sort_custom(func(a: String, b: String) -> bool: return float(enemies.damage_by[a]) > float(enemies.damage_by[b]))
+	var parts := []
+	for k: String in keys:
+		parts.append("%s %d%%" % [k, roundi(100.0 * float(enemies.damage_by[k]) / maxf(1.0, total))])
+	return " · ".join(parts)
+
+
 func _win() -> void:
 	state = State.WON
 	Sfx.music("")
@@ -2591,6 +2604,8 @@ func _win() -> void:
 		_win_item()
 	_finish(true)
 	print("Run over: won, level %d, kills %d, gold %d, hp_min %.0f/%.0f, taken %.0f" % [level, enemies.total_kills, gold, _hp_min, float(stats["max_hp"]), damage_taken])
+	if demo:   # balance runs: each source's share of the damage dealt (cleave-wave-redesign.md step 5)
+		print("GK: damage " + damage_shares())
 	_panels.show_end(true)
 
 

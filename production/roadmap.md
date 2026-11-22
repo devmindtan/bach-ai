@@ -243,7 +243,9 @@ không giới hạn + bảng tỉ lệ (`c05a9f8`), 4 thử thách dễ hơn + T
    (vẽ từng hướng, vệt kéo, màu riêng, nở rộng khi bay, hitbox xoay theo hướng, lên cấp xoè/vỡ lưỡi). Gộp luôn
    nợ kỹ thuật mục 4 (Sóng kiếm vẽ lại từng hướng). Làm trước Album. (Lần đầu nhầm sang Chém kiếm:
    `blade-arc-redesign.md` dừng sau bước 1, giữ phần đã sửa.)
-4. **Album (bách khoa).** Màn mới ở sảnh: mọi kỹ năng, quái, boss, vật phẩm; quái/boss **mở khoá sau khi hạ
+4. **Lốc xoáy yếu** (đo 2026-11-22: 4–11% sát thương cả trận khi cùng cấp với Chém kiếm / Đất nứt / Sóng kiếm,
+   `design/cleave-wave-redesign.md` mục số đo): xem lại số liệu hoặc cách đánh.
+5. **Album (bách khoa).** Màn mới ở sảnh: mọi kỹ năng, quái, boss, vật phẩm; quái/boss **mở khoá sau khi hạ
    lần đầu** (lưu trong slot), chưa mở thì hiện bóng đen "???"; trang chi tiết có chỉ số, chiêu, vùng xuất hiện.
    Kỹ năng có **mô phỏng** như trong trận (dùng lại sân demo của dashboard / `SpriteSheet` + hitbox). Tham khảo:
    Vampire Survivors Collection/Bestiary, Hades Codex, Brotato encyclopedia.
