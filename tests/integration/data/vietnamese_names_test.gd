@@ -32,3 +32,13 @@ func test_every_name_in_data_is_vietnamese() -> void:
 	for f in DirAccess.get_files_at(DATA):
 		if f.ends_with(".json"):
 			_walk(GameData.load_json(DATA + f), f, "")
+
+
+func test_every_monster_has_a_name() -> void:
+	# bug 2026-11-22: slime / bat / goblin had no "name" at all, so the stage panel and the dashboard showed the ids;
+	# the check above only reads the names that exist
+	var mons := GameData.load_json(DATA + "monsters.json")
+	for id: String in mons:
+		if mons[id] is Dictionary:
+			if String(mons[id].get("name", "")) == "":
+				failures.append("monster %s has no Vietnamese name" % id)
