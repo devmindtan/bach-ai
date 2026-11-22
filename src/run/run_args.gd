@@ -33,6 +33,8 @@ static func apply(run) -> void:
 				run._status_all.append(st)
 		elif a.begins_with("--show-special-fx="):   # shots: every special card's effect drawn once at T s (look only)
 			run.show_special_fx_at = float(a.get_slice("=", 1))
+		elif a.begins_with("--end-tab="):   # shots: the end report view shown first
+			run.end_tab = a.get_slice("=", 1)
 		elif a.begins_with("--monster-hp="):
 			run.monster_hp_mul = maxf(0.01, float(a.get_slice("=", 1)))
 		elif a.begins_with("--boss-hp="):

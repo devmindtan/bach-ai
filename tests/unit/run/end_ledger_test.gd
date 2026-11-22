@@ -50,3 +50,12 @@ func test_the_passive_bonus_is_counted_as_indirect_damage() -> void:
 	e.slow_t[0] = 1.0
 	e.hit_circle(Vector2.ZERO, 30.0, 100.0, 0.0, "arcane_bolt")
 	_check(is_equal_approx(float(e.bonus_by.get("vs_status", 0.0)), 20.0), "the passive added 20 on a slowed monster, got %s" % [e.bonus_by])
+
+
+func test_ledger_rows_are_named_in_vietnamese() -> void:
+	var r := _run()
+	r.class_data = {"passive": {"name": "Bất khuất"}}
+	var rows: Array = r.ledger_rows({"armor": 30.0, "passive": 10.0, "monster": 5.0})
+	_check(rows.size() == 3 and rows[0]["name"] == "Giáp" and rows[1]["name"] == "Bất khuất", "names, largest first: %s" % [rows])
+	_check(is_equal_approx(float(rows[0]["share"]), 30.0 / 45.0), "share of the total")
+	r.free()

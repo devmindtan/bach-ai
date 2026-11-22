@@ -207,9 +207,39 @@ var _status_all: Array[String] = []   # --status-all=a,b (shots: every monster g
 var _status_all_t := 0.0
 var damage_taken := 0.0   # end-of-run table
 var healed := 0.0
+var end_tab := "dealt"   # --end-tab=dealt|taken|heal (shots): the end report view shown first
 var taken_by := {}     # end report (roadmap B, 2026-11-22): hp lost by source ("monster", "pool", "event.*")
 var reduced_by := {}   # damage prevented by source ("armor", "passive", "ward")
 var heal_by := {}      # hp healed by source ("regen", a card id, "milestone", ...)
+
+
+## Rows of a ledger for the end report: [{name (Vietnamese), value, share}] largest first. Names: "monster" Quái,
+## "pool" Vũng độc, event sources by run_config events.source_names, "armor" Giáp, "passive" the class passive,
+## "ward" the stone shell, "regen", "bloodthirst", "vs_status", card ids by their card name.
+func ledger_rows(d: Dictionary) -> Array:
+	var total := 0.0
+	for k: String in d:
+		total += float(d[k])
+	var names := {"monster": "Quái", "pool": "Vũng độc", "armor": "Giáp", "ward": "Vỏ đá (Bàn thạch)",
+		"regen": "Hồi máu theo thời gian", "bloodthirst": "Khát máu", "heal": "Khác",
+		"passive": String(passive().get("name", "Nội tại")), "vs_status": String(passive().get("name", "Nội tại"))}
+	var ev: Dictionary = cfg.get("events", {}).get("source_names", {})
+	var out := []
+	for k: String in d:
+		var nm := String(names.get(k, ev.get(k, upgrade(k).get("name", k))))
+		out.append({"name": nm, "value": float(d[k]), "share": float(d[k]) / maxf(1.0, total)})
+	out.sort_custom(func(x: Dictionary, y: Dictionary) -> bool: return float(x["value"]) > float(y["value"]))
+	return out
+
+
+## What a hit of [param amount] costs after armor and the passive, recorded by source (taken / prevented).
+func _account_hit(amount: float, src := "monster") -> float:
+	var after_armor := amount * armor_mul(float(stats.get("armor", 0.0)), _armor_k)
+	var taken := maxf(1.0, after_armor * damage_taken_mul())
+	_add_to(reduced_by, "armor", amount - after_armor)
+	_add_to(reduced_by, "passive", after_armor - after_armor * damage_taken_mul())
+	_add_to(taken_by, src, taken)
+	return taken
 
 
 func _add_to(d: Dictionary, key: String, v: float) -> void:
@@ -587,7 +617,7 @@ func _tick(dt: float) -> void:
 	enemies.spawn_hp_mul = time_mul(clock, "hp")   # monsters grow stronger each minute, silently (time_scale)
 	var contact := enemies.step(dt, player_pos, player_pos + _hit_center) * time_mul(clock, "damage")
 	if god and contact > 0.0 and invuln <= 0.0:   # balance runs: count what would have been taken, keep the hp
-		damage_taken += maxf(1.0, contact * armor_mul(float(stats.get("armor", 0.0)), _armor_k) * damage_taken_mul())
+		damage_taken += _account_hit(contact)   # god (balance runs): counted by source too
 		invuln = float(cfg.get("player", {}).get("hit_invuln", 0.6))
 	if contact > 0.0 and invuln <= 0.0 and bench == 0 and not god and not buffs.invulnerable() and _dash_left <= 0.0:
 		if not _spend_ward():
@@ -849,11 +879,7 @@ func _spawn(t0: float, t1: float) -> void:
 
 
 func _take_hit(amount: float, src := "monster") -> void:
-	var after_armor := amount * armor_mul(float(stats.get("armor", 0.0)), _armor_k)
-	var taken := maxf(1.0, after_armor * damage_taken_mul())
-	_add_to(reduced_by, "armor", amount - after_armor)
-	_add_to(reduced_by, "passive", after_armor - after_armor * damage_taken_mul())
-	_add_to(taken_by, src, taken)
+	var taken := _account_hit(amount, src)
 	shake.add(clampf(taken * float(_crit_cfg.get("shake_per_hurt", 0.25)), 2.0, 7.0))   # a boss slam shakes harder
 	hp -= taken
 	damage_taken += taken

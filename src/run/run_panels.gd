@@ -968,8 +968,7 @@ func show_end(won: bool) -> void:
 		reward_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		root.add_child(reward_l)
 	var report: Array = run.damage_report()
-	if not report.is_empty():
-		root.add_child(_damage_table(report))
+	root.add_child(_end_tabs(report))
 	var total := 0.0
 	for r: Dictionary in report:
 		total += float(r["damage"])
@@ -1005,6 +1004,82 @@ func show_end(won: bool) -> void:
 		next_b.call_deferred("grab_focus")
 	else:
 		again.call_deferred("grab_focus")
+
+
+## The end report's three views (user 2026-11-22, roadmap B): Gây ra (the skill table + the passive's indirect
+## damage), Nhận vào (taken / prevented by source), Hồi máu (healed by source). Tabs keep the panel one size.
+func _end_tabs(report: Array) -> VBoxContainer:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 8)
+	var tabs := HBoxContainer.new()
+	tabs.alignment = BoxContainer.ALIGNMENT_CENTER
+	tabs.add_theme_constant_override("separation", 10)
+	box.add_child(tabs)
+	var holder := VBoxContainer.new()
+	holder.custom_minimum_size = Vector2(760, 210)
+	box.add_child(holder)
+	var views := {"dealt": "Gây ra", "taken": "Nhận vào", "heal": "Hồi máu"}
+	var show := func(which: String) -> void:
+		for ch in holder.get_children():
+			ch.queue_free()
+		holder.add_child(_end_view(which, report))
+		for b: Button in tabs.get_children():
+			b.modulate = Color.WHITE if b.get_meta("view") == which else Color(1, 1, 1, 0.55)
+	for v: String in views:
+		var b := _button(String(views[v]), func() -> void: show.call(v))
+		b.set_meta("view", v)
+		b.custom_minimum_size = Vector2(150, 34)
+		tabs.add_child(b)
+	show.call(String(run.end_tab) if String(run.end_tab) in views else "dealt")
+	return box
+
+
+func _end_view(which: String, report: Array) -> Control:
+	if which == "dealt":
+		var v := VBoxContainer.new()
+		if not report.is_empty():
+			v.add_child(_damage_table(report))
+		for r: Dictionary in run.ledger_rows(run.enemies.bonus_by):   # the passive's indirect share
+			var l := _label("Gián tiếp · %s: +%d sát thương" % [r["name"], roundi(float(r["value"]))], 14, BORDER)
+			l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			v.add_child(l)
+		return v
+	if which == "taken":
+		var h := HBoxContainer.new()
+		h.add_theme_constant_override("separation", 40)
+		h.alignment = BoxContainer.ALIGNMENT_CENTER
+		h.add_child(_ledger_list("Sát thương nhận vào", run.ledger_rows(run.taken_by), Color("ff8a8a")))
+		h.add_child(_ledger_list("Sát thương được giảm", run.ledger_rows(run.reduced_by), Color("8ad0ff")))
+		return h
+	var c := CenterContainer.new()
+	c.add_child(_ledger_list("Máu đã hồi", run.ledger_rows(run.heal_by), Color("8aff9a")))
+	return c
+
+
+## A titled list of ledger rows: name, amount, share bar; "Chưa có" when empty.
+func _ledger_list(title: String, rows: Array, col: Color) -> VBoxContainer:
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 4)
+	v.custom_minimum_size = Vector2(340, 0)
+	v.add_child(_label(title, 16, col))
+	if rows.is_empty():
+		v.add_child(_label("Chưa có", 14, MUTED))
+	for r: Dictionary in rows.slice(0, 6):
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 8)
+		var n := _label(String(r["name"]), 14, TEXT)
+		n.custom_minimum_size = Vector2(170, 0)
+		n.clip_text = true
+		row.add_child(n)
+		var bar := ColorRect.new()
+		bar.color = col.darkened(0.25)
+		bar.custom_minimum_size = Vector2(maxf(2.0, 90.0 * float(r["share"])), 8)
+		bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		row.add_child(bar)
+		var num := _label("%d (%d%%)" % [roundi(float(r["value"])), roundi(100.0 * float(r["share"]))], 14, MUTED)
+		row.add_child(num)
+		v.add_child(row)
+	return v
 
 
 func _milestone_choice(info: Dictionary, pick: Callable) -> Button:

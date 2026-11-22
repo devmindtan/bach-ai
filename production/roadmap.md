@@ -266,7 +266,7 @@ Trước mỗi nhóm: tham khảo ≥ 2 game cùng thể loại, ghi nguồn và
 - A3. Code: hiệu ứng đọng (zone) với hitbox giật theo nhịp; test + ảnh nhiều frame.
 - A4. Sprite Lab: bản đọng 2 s của `lightning-storm` (đám mây giữ lại, tia giật lặp, mờ dần), không lớp phủ vùng; promote.
 
-**B. Bảng thống kê cuối trận chi tiết hơn**
+**B. Bảng thống kê cuối trận chi tiết hơn** — ✅ B1–B4 (2026-11-22; B5 đã kiểm: bản hiện tại không còn "Sự kiện: Mưa thiên thạch"). Còn: tách phần gián tiếp của buff (Ngọc sức mạnh…) theo từng đòn.
 - B1. Thiết kế `design/ux/end-report.md` (tham khảo bảng cuối trận của Vampire Survivors, Brotato, Halls of Torment).
 - B2. Ghi nhận **đóng góp gián tiếp**: phần sát thương thêm do nội tại / buff / thẻ (ví dụ Cộng hưởng nguyên tố
   +% lên quái dính hiệu ứng) tách thành dòng riêng; test số cộng đúng.
