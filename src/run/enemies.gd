@@ -88,6 +88,7 @@ var hit_crit := PackedByteArray()        # 1 = that hit was a crit (its number d
 var hit_tag := PackedByteArray()         # species x element of that hit: 0 plain, 1 weak, 2 resisted (number colour)
 ## Species (species.json, design/species.md): weak / resist by element; set by set_species.
 var species := {}
+var k_phase := PackedByteArray()   # 1 = the kind's species flies through props and other monsters (Linh hồn)
 var element_of := {}   # damage source (skill id) -> element; sources not in it take no species change
 var crit_chance := 0.0   # Chí mạng of direct hits (the run sets it from the stats, 6C.2)
 var crit_mul := 1.75
@@ -272,6 +273,7 @@ func _register(id: String, m: Dictionary, sheet: SpriteSheet, world_scale: float
 	max_hit_r = maxf(max_hit_r, body.radius + body.center.length())
 	k_death_time.append(sheet.duration("death") if sheet != null and sheet.has_animation("death") else 0.4)
 	k_extra.append(m)
+	k_phase.append(1 if has_trait(k_extra.size() - 1, "phase") else 0)   # kinds added after set_species too
 	k_elite.append(1 if is_elite else 0)
 	k_boss.append(1 if bool(m.get("boss", false)) else 0)
 
@@ -280,6 +282,14 @@ func _register(id: String, m: Dictionary, sheet: SpriteSheet, world_scale: float
 func set_species(table: Dictionary, elements_by_source: Dictionary) -> void:
 	species = table
 	element_of = elements_by_source
+	k_phase.resize(k_extra.size())
+	for k in k_extra.size():
+		k_phase[k] = 1 if has_trait(k, "phase") else 0
+
+
+## True when kind [param k]'s species has behaviour trait [param t] (species.json traits).
+func has_trait(k: int, t: String) -> bool:
+	return species.get("species", {}).get(String(k_extra[k].get("species", "")), {}).get("traits", []).has(t)
 
 
 ## Damage multiplier for kind [param k] hit by [param element]: mul_weak / mul_resist of its species,
@@ -464,8 +474,9 @@ func step(delta: float, player_pos: Vector2, player_center: Vector2) -> float:
 		_query.clear()
 		_hash.query(pos[n], r * 2.0, _query)
 		var push := Vector2.ZERO
+		var ghost := k < k_phase.size() and k_phase[k] == 1   # Linh hồn: no crowding, no props
 		for j in _query:
-			if j == n:
+			if j == n or ghost or (kind[j] < k_phase.size() and k_phase[kind[j]] == 1):
 				continue
 			var d := pos[n] - pos[j]
 			var min_d := r + k_radius[kind[j]]
@@ -481,7 +492,7 @@ func step(delta: float, player_pos: Vector2, player_center: Vector2) -> float:
 		knock[n] = knock[n] * maxf(0.0, 1.0 - KNOCKBACK_DECAY * delta)
 		pos[n] += (vel + knock[n]) * delta
 		pos[n] = pos[n].clamp(Vector2(-arena_half, -arena_half), Vector2(arena_half, arena_half))
-		if obstacles != null:
+		if obstacles != null and not ghost:
 			pos[n] = obstacles.push_out(pos[n], r)
 		if not wall_a.is_empty() and k_boss[k] == 0:   # root walls block plain monsters too
 			pos[n] = push_out_walls(pos[n], r)

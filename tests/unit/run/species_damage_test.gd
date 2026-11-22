@@ -46,3 +46,12 @@ func test_ooze_never_bleeds_but_burns() -> void:
 		failures.append("ooze took bleed")
 	if e.burn_t[0] <= 0.0:
 		failures.append("ooze did not burn")
+
+
+func test_spirit_passes_through_props_and_monsters() -> void:
+	var e := _enemies("spirit", false)
+	if not e.has_trait(0, "phase") or e.k_phase[0] != 1:
+		failures.append("spirit kind not marked to phase")
+	var o := _enemies("ooze", false)
+	if o.k_phase[0] != 0:
+		failures.append("ooze marked to phase")
