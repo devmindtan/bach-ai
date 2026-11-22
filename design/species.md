@@ -27,7 +27,7 @@ Mỗi quái thuộc một **loài**. Loài cho quái một đặc tính hành vi
 | Hệ | Chiêu |
 |---|---|
 | Vật lý | Chém kiếm, Lốc xoáy, Đất nứt, Dậm đất, Sóng kiếm, Lướt, Địa chấn, Búa thần |
-| **Ánh sáng** (hệ đặc biệt) | Cột thánh quang, Thái dương xạ (chưa chốt, xem câu hỏi mở) |
+| **Ánh sáng** (hệ đặc biệt) | Cột thánh quang, Thái dương xạ (tạm, xem câu hỏi mở) |
 | Lửa | Cầu lửa, Mưa thiên thạch |
 | Băng | Băng nổ, Bão tuyết |
 | Sét | Sét đánh, Giáo sấm, Bão sét |
