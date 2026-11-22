@@ -369,7 +369,7 @@ func _upgrade_card(i: int, id: String) -> Button:
 	names.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	names.add_child(_label("%d. %s" % [i + 1, u.get("name", id)], 20, TEXT))
 	var lv: int = pv["level"]
-	var kind := ("CHIÊU" if skill else "CHỈ SỐ") + "  ·  " + String(UiKit.RARITY_NAME.get(tier, "")) + "  ·  " + ("Mới" if lv == 0 else "Cấp %d → %d" % [lv, lv + 1])
+	var kind := ("CHIÊU" if skill else "CHỈ SỐ") + "  ·  " + String(UiKit.RARITY_NAME.get(tier, "")) + ("  ·  Mới" if lv == 0 else "")   # "Cấp n → n+1" has its own line: one line was wider than the card (2026-11-22)
 	var kl := HBoxContainer.new()   # the tier's gem, then type · tier · level
 	kl.add_theme_constant_override("separation", 5)
 	kl.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -378,6 +378,8 @@ func _upgrade_card(i: int, id: String) -> Button:
 	kt.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	kl.add_child(kt)
 	names.add_child(kl)
+	if lv > 0:
+		names.add_child(_label("Cấp %d → %d" % [lv, lv + 1], 13, MUTED))
 	head.add_child(names)
 	v.add_child(head)
 	# level pips + the milestone this pick reaches
@@ -398,17 +400,14 @@ func _upgrade_card(i: int, id: String) -> Button:
 		var k := _label(String(line[0]), 15, MUTED)
 		k.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		grid.add_child(k)
-		var change := RichTextLabel.new()
-		change.bbcode_enabled = true
-		change.fit_content = true
-		change.scroll_active = false
-		change.autowrap_mode = TextServer.AUTOWRAP_OFF
-		change.custom_minimum_size = Vector2(120, 0)
-		change.add_theme_font_size_override("normal_font_size", 15)
-		change.add_theme_font_size_override("bold_font_size", 15)
+		var change := HBoxContainer.new()   # Labels report their width; an unwrapped RichTextLabel does not (ran past the card 2026-11-22)
+		change.alignment = BoxContainer.ALIGNMENT_END
+		change.add_theme_constant_override("separation", 6)
 		change.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		change.text = "[right][color=#%s]%s[/color]  →  [b][color=#%s]%s[/color][/b][/right]" % [
-			MUTED.to_html(false), line[1], (TEXT if line[1] == line[2] else GAIN).to_html(false), line[2]]   # unchanged: not a gain
+		change.add_child(_label(String(line[1]), 15, MUTED))
+		change.add_child(_label("→", 15, MUTED))
+		var after := _label(String(line[2]), 15, TEXT if line[1] == line[2] else GAIN)   # unchanged: not a gain
+		change.add_child(after)
 		grid.add_child(change)
 	v.add_child(grid)
 	var d := _label(String(u.get("desc", "")), 14, MUTED)
