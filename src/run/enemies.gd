@@ -298,6 +298,11 @@ func species_mul(k: int, element: String) -> float:
 	return mul
 
 
+## True when kind [param k]'s species never takes [param status] (species.json immune_status).
+func immune(k: int, status: String) -> bool:
+	return species.get("species", {}).get(String(k_extra[k].get("species", "")), {}).get("immune_status", []).has(status)
+
+
 ## Kind index of a monster id, or -1.
 func kind_of(id: String) -> int:
 	return kind_ids.find(id)
@@ -1245,6 +1250,8 @@ func _damage(i: int, amount: float, kb: Vector2, source := "") -> void:
 ## [param source].
 func apply_status(i: int, status: String, p: Dictionary, hit_damage: float, source: String) -> void:
 	if i < 0 or i >= count or state[i] == DYING:
+		return
+	if immune(kind[i], status):   # loài: e.g. Nhầy / Linh hồn never bleed (design/species.md)
 		return
 	var t := float(p.get("time", 1.0))
 	match status:

@@ -36,3 +36,13 @@ func test_boss_takes_half_the_species_change() -> void:
 	var got := [_hit(e, "fireball"), _hit(e, "blade_arc")]
 	if not (is_equal_approx(got[0], 125.0) and is_equal_approx(got[1], 80.0)):
 		failures.append("boss ooze fire/physical should be 125/80, got %s" % [got])
+
+
+func test_ooze_never_bleeds_but_burns() -> void:
+	var e := _enemies("ooze", false)
+	e.apply_status(0, "bleed", {"time": 2.0, "dps_mul": 0.2}, 10.0, "blade_arc")
+	e.apply_status(0, "burn", {"time": 2.0, "dps_mul": 0.3}, 10.0, "fireball")
+	if e.bleed_t[0] > 0.0:
+		failures.append("ooze took bleed")
+	if e.burn_t[0] <= 0.0:
+		failures.append("ooze did not burn")
