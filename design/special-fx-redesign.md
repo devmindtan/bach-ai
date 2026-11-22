@@ -1,6 +1,6 @@
 # Kế hoạch: vẽ lại hiệu ứng của thẻ đặc biệt (chuyển từ vật phẩm)
 
-Trạng thái: **kế hoạch** (2026-11-22). Người dùng: hiệu ứng của các kỹ năng chuyển từ vật phẩm "chưa được thiết
+Trạng thái: **xong H1–H10** (2026-11-22). Kèm sửa: kích thước hiệu ứng vòng (hitbox đo từ mask cho `_ring_fx`), Lôi ấn có tia trên từng quái, Hoả y đúng bán kính đốt, hiệu ứng quanh người theo `_sprite_scale`, cờ chụp `--show-special-fx=T`. Người dùng: hiệu ứng của các kỹ năng chuyển từ vật phẩm "chưa được thiết
 kế lại", trừ khiên (Thần hộ: giáp ảo, Bàn thạch: vỏ đá giữ nguyên).
 
 ## 1. Hiện trạng (đã xem preview của 10 sprite)
