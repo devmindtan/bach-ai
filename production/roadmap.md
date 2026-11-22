@@ -167,7 +167,10 @@ gom bậc chiêu, bỏ GIF khỏi git, boss FX cỡ nguyên, tuỳ chọn Hiệu
    vẽ lại ở mật độ gấp đôi theo `boltfx` / `icefx`. · cỡ L
 5. **Gom giá trị mặc định**: 305 chỗ `.get("khoá", mặc_định)` lặp lại số đã có trong JSON; đọc qua một lớp dữ liệu có
    schema để sửa JSON không lệch âm thầm. · cỡ L
-6. **Tách `run.gd`** (≈3.200 dòng: mô phỏng, vẽ, FX, lên cấp, ví, camera, boss) thành các node / lớp riêng; **bọc mảng
+6. **Tách `run.gd`** — tiến độ 2026-11-22: 3.341 → 3.003 dòng qua các lát `BossView`, `RegionEvents`, `ChallengeEvents`,
+   `RunArgs`, `ObstacleView`, `RunSheet` (mỗi lát một commit, test + ảnh giữ nguyên). Còn: lên cấp / thẻ (`_open_level_up`,
+   `choose`), ví + rơi đồ (`_drops`), camera, bọc mảng `Enemies`.
+   Mô tả gốc: **Tách `run.gd`** (≈3.200 dòng: mô phỏng, vẽ, FX, lên cấp, ví, camera, boss) thành các node / lớp riêng; **bọc mảng
    của `Enemies`** (36 chỗ `run.gd` truy cập trực tiếp). Làm sau mục 5, từng phần một, test giữ nguyên. · cỡ XL
 Đo trước / sau bằng `godot --path . res://src/run/run.tscn -- --bench=200` **có GPU** (cửa sổ thật). Chạy dưới
 `xvfb-run` thì vẽ bằng CPU: `frame_ms` (~42 ms) không so được với số GPU (~9,6 ms); `sim_ms` vẫn so được.
