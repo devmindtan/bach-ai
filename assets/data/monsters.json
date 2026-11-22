@@ -333,6 +333,7 @@
   "gold_goblin": {
     "name": "Yêu Tinh Vàng",
     "sprite": "gold-goblin",
+    "escape_sprite": "arcane-bolt-impact-iii",
     "behaviour": "flee",
     "hp": 120.0,
     "damage": 0.0,

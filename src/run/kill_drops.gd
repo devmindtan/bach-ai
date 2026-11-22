@@ -14,7 +14,8 @@ func step() -> void:
 		run.wave_call = "Yêu tinh vàng đã trốn mất!"
 		run.wave_call_t = 2.5
 		for p in run.enemies.escaped:
-			run._add_fx("arcane-bolt-impact-iii", "impact", run._sprite_scale * 1.5, 0.0, -1.0, p)
+			if run.escape_sprite != "":   # monsters.json escape_sprite, loaded with the monsters
+				run._add_fx(run.escape_sprite, "impact", run._sprite_scale * 1.5, 0.0, -1.0, p)
 		run.enemies.escaped.clear()
 	if run.enemies.kill_pos.is_empty():
 		return

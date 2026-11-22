@@ -208,6 +208,7 @@ var _status_all_t := 0.0
 var damage_taken := 0.0   # end-of-run table
 var healed := 0.0
 var end_tab := "dealt"   # --end-tab=dealt|taken|heal (shots): the end report view shown first
+var escape_sprite := ""   # monsters.json escape_sprite: drawn where a fleeing monster got away
 var taken_by := {}     # end report (roadmap B, 2026-11-22): hp lost by source ("monster", "pool", "event.*")
 var reduced_by := {}   # damage prevented by source ("armor", "passive", "ward")
 var heal_by := {}      # hp healed by source ("regen", a card id, "milestone", ...)
@@ -368,6 +369,9 @@ func _ready() -> void:
 			names.append(String(monsters[m].get("sprite", m)))
 			if monsters[m].has("bolt_sprite"):   # a shooter's bolt
 				names.append(String(monsters[m]["bolt_sprite"]))
+			if monsters[m].has("escape_sprite"):   # the gold goblin's escape puff (was typed in kill_drops, bug 2026-11-22)
+				names.append(String(monsters[m]["escape_sprite"]))
+				escape_sprite = String(monsters[m]["escape_sprite"])
 			if monsters[m].has("rage_sprite"):   # a boss's red body while enraged
 				names.append(String(monsters[m]["rage_sprite"]))
 			if monsters[m].has("root_sprite"):   # Mộc Yêu's roots
