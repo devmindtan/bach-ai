@@ -90,3 +90,12 @@ func test_storm_lingers_two_seconds_pulsing_by_tier() -> void:
 	_check(r.enemies.hp[0] < hp0 and r.enemies.statuses_of(0).has("shock"), "the pulses hurt and shock")
 	_check(r.zones.is_empty(), "gone after 2 s")
 	r.free()
+
+
+func test_storm_hits_the_monster_it_is_cast_on() -> void:
+	# bug 2026-11-22: the storm's hitbox, measured from its bolt spots, was a ring (inner 14-21 px) and the
+	# storm is cast on a monster, so that monster at the centre was missed
+	for t in ["lightning-storm", "lightning-storm-ii", "lightning-storm-iii", "lightning-storm-iv", "lightning-storm-v"]:
+		var m: Dictionary = GameData.load_json("res://assets/sprites/custom/%s/%s.json" % [t, t])
+		var hb: Dictionary = m["animations"][0]["hitbox"]
+		_check(float(hb.get("inner", 99.0)) == 0.0, "%s: solid hitbox, inner %s" % [t, hb.get("inner")])
