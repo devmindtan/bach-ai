@@ -295,6 +295,7 @@
         "kind": "chain_shock",
         "name": "Lôi ấn",
         "fx": "ward-shock",
+        "strike_fx": "ward-shock-strike",
         "every": 6.08,
         "count": 6,
         "damage_mul": 1.7,

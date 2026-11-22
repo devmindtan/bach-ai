@@ -1715,6 +1715,8 @@ func trigger_special(sp: Dictionary) -> void:
 			Sfx.play("quake")
 		"chain_shock":
 			for i in enemies.nearest_n(center, int(sp.get("count", 6))):
+				if String(sp.get("strike_fx", "")) != "":   # a bolt falls on each struck monster (H3, 2026-11-22)
+					_add_fx(String(sp["strike_fx"]), "strike", _sprite_scale, 0.0, -1.0, enemies.pos[i])
 				enemies.hit_circle(enemies.center_of(i), 8.0, dmg, 0.0, src)
 				enemies.apply_status(i, "shock", {"mul": 1.0, "chain": int(sp.get("chain", 2)),
 					"radius": float(sp.get("radius", 120.0))}, dmg, src)
@@ -1990,9 +1992,10 @@ func special_fx_sprites() -> Array[String]:
 	var out: Array[String] = []
 	for u: Variant in pool.get("upgrades", []):
 		if u is Dictionary and (u as Dictionary).has("special"):
-			var fx := String(u["special"].get("fx", ""))
-			if fx != "" and not out.has(fx):
-				out.append(fx)
+			for key in ["fx", "strike_fx"]:   # strike_fx: drawn on each struck monster (Lôi ấn)
+				var fx := String(u["special"].get(key, ""))
+				if fx != "" and not out.has(fx):
+					out.append(fx)
 	return out
 
 
