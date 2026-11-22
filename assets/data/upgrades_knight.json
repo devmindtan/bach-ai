@@ -452,11 +452,11 @@
     "whirlwind": {
       "sprite": "whirlwind",
       "under_hero": true,
-      "damage_mul": 0.6,
+      "damage_mul": 0.9,
       "size_mul": 1.5,
       "cooldown": 6.4,
-      "duration": 0.9,
-      "ticks": 3,
+      "duration": 1.5,
+      "ticks": 6,
       "on_hit": [
         {
           "from": 3,
