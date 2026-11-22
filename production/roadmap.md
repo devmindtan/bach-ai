@@ -255,6 +255,51 @@ không giới hạn + bảng tỉ lệ (`c05a9f8`), 4 thử thách dễ hơn + T
    Kỹ năng có **mô phỏng** như trong trận (dùng lại sân demo của dashboard / `SpriteSheet` + hitbox). Tham khảo:
    Vampire Survivors Collection/Bestiary, Hades Codex, Brotato encyclopedia.
 
+## Yêu cầu người dùng 2026-11-22 (để làm sau, mỗi dòng là một việc nguyên tử: một commit, có test/ảnh)
+
+Trước mỗi nhóm: tham khảo ≥ 2 game cùng thể loại, ghi nguồn vào tài liệu thiết kế (quy tắc "không đoán mò").
+
+**A. Bão sét (huyền thoại) đọng 2 s trên sân**
+- A1. Thiết kế `design/storm-redesign.md`: mỗi điểm sét tồn tại cố định 2 s, giật theo nhịp; số lượt giật trong 2 s =
+  số cột sét của bậc (I/II: 2, III/IV: 3, V: 4); mỗi lượt giật vẫn gây "giật điện" (shock) và lan như hiện tại.
+- A2. Data `upgrades_mage.json` `storm`: `linger` 2.0, `pulses` theo bậc; test nhịp giật (đúng số lượt, đúng 2 s, mỗi lượt có shock).
+- A3. Code: hiệu ứng đọng (zone) với hitbox giật theo nhịp; test + ảnh nhiều frame.
+- A4. Sprite Lab: bản đọng 2 s của `lightning-storm` (đám mây giữ lại, tia giật lặp, mờ dần), không lớp phủ vùng; promote.
+
+**B. Bảng thống kê cuối trận chi tiết hơn**
+- B1. Thiết kế `design/ux/end-report.md` (tham khảo bảng cuối trận của Vampire Survivors, Brotato, Halls of Torment).
+- B2. Ghi nhận **đóng góp gián tiếp**: phần sát thương thêm do nội tại / buff / thẻ (ví dụ Cộng hưởng nguyên tố
+  +% lên quái dính hiệu ứng) tách thành dòng riêng; test số cộng đúng.
+- B3. Hồi máu theo nguồn (Hồi phục, Khát máu, Hoa hồi phục, đồ…); sát thương nhận theo nguồn quái/sự kiện;
+  sát thương **được giảm** theo nguồn (giáp, khiên, giáp ảo, nội tại).
+- B4. Giao diện bảng: tab hoặc khối gọn (Gây ra / Nhận vào / Hồi), không tràn; ảnh `ui-shots`.
+- B5. Kiểm lại: ảnh người dùng còn dòng "Sự kiện: Mưa thiên thạch" (bản build trước khi bỏ sự kiện) — xác nhận bản hiện tại không còn.
+
+**C. Viền giới hạn sân cắt gọn**
+- C1. Tìm mọi thứ vẽ tràn qua viền (nền, mảng đất, cây, quái, hiệu ứng); viết test/ảnh ở mép sân.
+- C2. Cắt bằng clip (vẽ trong vùng sân) hoặc che bằng khung viền đặc; thiết kế khung viền đẹp hơn (tham khảo game cùng thể loại).
+
+**D. Thông tin ải linh động, có nút mở rộng**
+- D1. Ô "Quái xuất hiện" không tràn: hiện tối đa N con + "+k", bố cục co giãn.
+- D2. Nút "Chi tiết" mở bảng: mọi quái của ải (tên, chỉ số, tinh anh), boss, sự kiện của vùng và các mốc thời gian
+  (sóng, sự kiện, boss phút 5), phần thưởng. Spec `design/ux/stage-detail.md` + ảnh.
+
+**E. Chủng loài quái (đặc tính nội tại theo loài)**
+- E1. Thiết kế `design/species.md`: loài (ma/linh hồn, slime, thú, côn trùng, cóc…) và đặc tính, ví dụ ma bay xuyên vật
+  cản và quái khác, slime hồi máu, sói cắn gây chảy máu; quái mới chỉ cần khai báo loài là có đặc tính.
+- E2. Data `monsters.json` `species` + `species.json`; test mỗi quái có loài hợp lệ.
+- E3. Code từng đặc tính một (xuyên vật cản, hồi máu, chảy máu khi cắn…), mỗi đặc tính một commit + test.
+- E4. Album / bảng ải hiện loài và đặc tính.
+
+**F. Đánh dấu tinh anh / quái được boss buff đẹp hơn**
+- F1. Tham khảo (viền sáng theo hình, hào quang dưới chân, biểu tượng nhỏ trên đầu); bỏ vòng tròn đỏ/màu khoanh quanh.
+- F2. Vẽ trong Sprite Lab (2–3 phương án để chọn), áp vào game, ảnh nhiều loại quái.
+
+**G. Quái mạnh dần: âm thầm, theo bản đồ, từ màn 6**
+- G1. Bỏ câu báo "Quái mạnh hơn! (+30% máu, +20% sát thương)" (`run_config.json` `time_scale.call`).
+- G2. Hệ số tăng theo phút đặt theo vùng/bản đồ (`stages.json` regions[].time_scale), không chung một bộ.
+- G3. Chỉ bật từ màn 6 (`time_scale.min_stage` 6); test: màn 1–5 không tăng, màn 6+ tăng theo vùng.
+
 ## Sau đó
 - Chế độ endgame (ải vô tận, thử thách tuần, boss rush), thêm class, mùa sự kiện.
 
