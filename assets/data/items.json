@@ -96,7 +96,6 @@
       "name": "Khiên ảo",
       "icon": "item_shield",
       "aura": "aura-aegis",
-      "aura_back": "aura-aegis-back",
       "aura_layer": "front",
       "duration": 3.0,
       "effects": {

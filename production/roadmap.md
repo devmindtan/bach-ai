@@ -300,7 +300,7 @@ Trước mỗi nhóm: tham khảo ≥ 2 game cùng thể loại, ghi nguồn và
   Tim bất diệt, Vĩnh cửu): mật độ gấp đôi, có pha, không chấm/dither, màu riêng; ảnh trong trận.
 
 **I. Phong cách 2D cho mọi hiệu ứng còn vẽ kiểu 2.5D** (người dùng 2026-11-22: game 2D, không 2.5D)
-- I1. Hào quang buff (Rune tốc độ, Ngọc sức mạnh, Hoa hồi phục, Khiên từ…): tâm ở thân nhân vật, vòng tròn.
+- ✅ I1 (2026-11-22: Rune tốc độ và Thần hộ vẽ lại tròn quanh thân, bỏ quỹ đạo sau; các hào quang khác đã 2D). Hào quang buff (Rune tốc độ, Ngọc sức mạnh, Hoa hồi phục, Khiên từ…): tâm ở thân nhân vật, vòng tròn.
 - I2. Ấn thánh của Cột thánh quang, vòng của Vòng thử thách / Lốc cỏ / Nước độc dâng, sóng chấn boss: tròn, không dẹt.
 - I3. Soát mọi sprite hiệu ứng có elip dẹt (tìm `squash`, `* 0.5x` theo trục y trong `sprite-lab/lib`), sửa từng nhóm, ảnh trong trận.
 
