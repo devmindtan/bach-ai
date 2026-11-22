@@ -196,7 +196,7 @@
       "id": "holy_column",
       "kind": "skill",
       "name": "Cột thánh quang",
-      "desc": "Cột sáng giáng xuống quái ngẫu nhiên gần đó. Mỗi cấp: +20% sát thương; cấp 3: 2 cột; cấp 5: 3 cột. Cấp 2: gây bỏng.",
+      "desc": "Ấn thánh hiện dưới chỗ quái đông nhất rồi cột sáng giáng xuống. Mỗi cấp: +20% sát thương; cấp 3: 2 cột; cấp 5: 3 cột. Cấp 2: gây bỏng.",
       "max_level": 5,
       "weight": 2,
       "effects": {
@@ -580,7 +580,8 @@
         "holy-column-iv",
         "holy-column-v"
       ],
-      "cast": "random",
+      "cast": "crowd",
+      "crowd_radius": 60.0,
       "anim": "descend",
       "damage_mul": 1.4,
       "size_mul": 1.0,

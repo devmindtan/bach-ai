@@ -1121,6 +1121,15 @@ func _cast(sid: String, ts: Dictionary, how: String) -> void:
 					break
 				var i: int = pool_i.pop_at(rng.randi() % pool_i.size())
 				_add_fx(sprite, String(ts.get("anim", "burst")), sc, dmg, -1.0, enemies.pos[i], sid, kb)
+		"crowd":
+			# Cột thánh quang (2026-11-22): each column on the thickest crowd left, the next ones on other crowds
+			var near := enemies.living_within(center, float(ts.get("cast_range", 300.0)))
+			if near.size() > 60:   # nearest 60 are enough, keeps it O(60^2)
+				near.sort_custom(func(x: int, y: int) -> bool: return enemies.pos[x].distance_squared_to(center) < enemies.pos[y].distance_squared_to(center))
+				near.resize(60)
+			var pts: Array = near.map(func(i: int) -> Vector2: return enemies.pos[i])
+			for j: int in crowd_pick(pts, float(ts.get("crowd_radius", 60.0)), _skill_count(sid, ts)):
+				_add_fx(sprite, String(ts.get("anim", "burst")), sc, dmg, -1.0, pts[j], sid, kb)
 		"projectile":
 			# fired at the nearest monster; several fan out 12 degrees apart
 			var n := _skill_count(sid, ts)
@@ -1145,6 +1154,28 @@ func _cast(sid: String, ts: Dictionary, how: String) -> void:
 			for deg: float in wave_fan(_skill_count(sid, ts), spread):
 				var dv := to_target.normalized().rotated(deg_to_rad(deg))
 				_launch_wave(sprite, ts, dv, center, sc, dmg, sid, kb, float(ts.get("duration", 0.9)), lv, true)
+
+
+## Indices of [param n] points on the thickest crowds: each pick has the most points within [param radius],
+## and points within that radius of a pick are left out of the next picks (columns spread over crowds).
+static func crowd_pick(pts: Array, radius: float, n: int) -> Array:
+	var r2 := radius * radius
+	var left: Array = range(pts.size())
+	var out := []
+	while out.size() < n and not left.is_empty():
+		var best := -1
+		var best_score := -1
+		for i: int in left:
+			var score := 0
+			for j: int in left:
+				if (pts[i] as Vector2).distance_squared_to(pts[j]) <= r2:
+					score += 1
+			if score > best_score:
+				best_score = score
+				best = i
+		out.append(best)
+		left = left.filter(func(j: int) -> bool: return (pts[best] as Vector2).distance_squared_to(pts[j]) > r2)
+	return out
 
 
 ## Angles (degrees) of [param n] waves fanned [param spread] apart around the aim: 1 -> [0], 2 -> [-s, s],
