@@ -13,8 +13,9 @@ khi hạ lần đầu** (lưu trong slot), chưa mở thì hiện bóng đen "?"
 | Brotato, Encyclopedia ([Switch 2 Edition](https://www.wikiwand.com/en/articles/Brotato_%E2%80%93_Nintendo_Switch_2_Edition)) | Bách khoa tách theo mục (vũ khí, vật phẩm, quái) | — |
 
 **Quyết định:** 3 mục dạng thẻ (Quái, Boss, Kỹ năng; người dùng bỏ mục Vật phẩm 2026-11-23: trong trận không còn vật phẩm) đổi bằng Q/E (LB/RB); lưới 7 cột bên trái, khung chi
-tiết bên phải; quái ghi loài, hệ yếu (đỏ), hệ kháng (xám), chỉ số ở ải 1, số lần hạ; kỹ năng có ô **mô phỏng** (làm
-sau, dùng sân demo của dashboard).
+tiết bên phải; quái ghi loài, hệ yếu (đỏ), hệ kháng (xám), chỉ số ở ải 1, số lần hạ; kỹ năng có ô **mô phỏng** (`src/front/skill_sim.gd`, 2026-11-23): anh hùng tung chiêu vào slime hình nhân bằng
+sprite thật của game, lặp lại, mỗi vòng sang bậc hình kế (Bậc I→V); slime chớp đỏ khi trúng như trong trận. Góc nhìn ×2,
+hiệu ứng cao hơn khung (Cột thánh quang) thì cả cảnh thu về ×1 (giống rule `fitView` của sân demo Sprite Lab).
 
 ## Bố cục 1280×720
 

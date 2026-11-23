@@ -92,7 +92,7 @@ static func skill_entries() -> Array:
 			var sp: Dictionary = pool.get("skills", {}).get(u["id"], {})
 			out.append({"id": u["id"], "name": u.get("name", u["id"]), "element": String(elems.get(u.get("element", ""), "")),
 				"cls": String(classes.get(cls, {}).get("name", cls)), "cooldown": float(sp.get("cooldown", 0.0)),
-				"desc": String(u.get("desc", ""))})
+				"desc": String(u.get("desc", "")), "sp": sp, "hero": String(classes.get(cls, {}).get("sprite", cls))})
 	return out
 
 
@@ -291,9 +291,13 @@ func _detail(panel: PanelContainer, e: Variant) -> void:
 	v.add_child(art)
 	if _tab == 2:
 		var sk: Dictionary = e
-		art.draw.connect(func() -> void: art.draw_rect(Rect2(Vector2.ZERO, art.size), Color("0d1218")))
-		var ic := UiKit.card_icon(String(sk["id"]), 112.0)
-		ic.position = Vector2(180, 18)
+		art.custom_minimum_size = Vector2(0, 190)
+		var sim := SkillSim.new()   # the skill cast on a slime dummy, tiers I..V in turn
+		sim.setup(sk.get("sp", {}), String(sk.get("hero", "swordsman")))
+		sim.set_anchors_preset(Control.PRESET_FULL_RECT)
+		art.add_child(sim)
+		var ic := UiKit.card_icon(String(sk["id"]), 40.0)
+		ic.position = Vector2(416, 8)
 		art.add_child(ic)
 		v.add_child(UiKit.label(String(sk["name"]), 34, UiKit.TEXT))
 		v.add_child(UiKit.label("%s · Hệ %s" % [sk["cls"], sk["element"]], 20, UiKit.GOLD))
