@@ -1,5 +1,5 @@
 {
-  "frames": 55,
+  "frames": 54,
   "frame_size": [
     64,
     64
@@ -16,71 +16,71 @@
   "body": {
     "anim": "idle",
     "center": [
-      30.0,
+      34.0,
       38.0
     ],
-    "radius": 8.8
+    "radius": 12.0
   },
   "animations": [
     {
       "name": "idle",
       "start": 0,
-      "frames": 2,
+      "frames": 1,
       "fps": 3.0,
       "loop": true
     },
     {
       "name": "run",
-      "start": 2,
+      "start": 1,
       "frames": 8,
       "fps": 10.0,
       "loop": true
     },
     {
       "name": "hurt",
-      "start": 10,
+      "start": 9,
       "frames": 1,
       "fps": 10.0,
       "loop": false
     },
     {
       "name": "dash",
-      "start": 11,
+      "start": 10,
       "frames": 4,
       "fps": 14.0,
       "loop": false
     },
     {
       "name": "death",
-      "start": 15,
+      "start": 14,
       "frames": 6,
       "fps": 8.0,
       "loop": false
     },
     {
       "name": "shoot",
-      "start": 21,
+      "start": 20,
       "frames": 13,
       "fps": 16.0,
       "loop": false
     },
     {
       "name": "slash",
-      "start": 34,
+      "start": 33,
       "frames": 6,
       "fps": 12.0,
       "loop": false
     },
     {
       "name": "spellcast",
-      "start": 40,
+      "start": 39,
       "frames": 7,
       "fps": 12.0,
       "loop": false
     },
     {
       "name": "thrust",
-      "start": 47,
+      "start": 46,
       "frames": 8,
       "fps": 12.0,
       "loop": false
