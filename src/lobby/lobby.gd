@@ -164,6 +164,7 @@ func _build_ui() -> void:
 		_button("Bộ thẻ", func() -> void: get_tree().change_scene_to_file(DECK_SCENE)),
 		_button("Gacha", func() -> void: get_tree().change_scene_to_file("res://src/front/gacha.tscn")),
 		_button(_missions_label(), func() -> void: get_tree().change_scene_to_file("res://src/front/missions.tscn")),
+		_button("Album", func() -> void: get_tree().change_scene_to_file("res://src/front/album.tscn")),
 		_button("Cài đặt", func() -> void: _show_settings(root, menu)),
 		_button("Menu chính", func() -> void: get_tree().change_scene_to_file(TITLE_SCENE))]
 	top.position = Vector2(vp.x - 32 - top_buttons.size() * 140 - (top_buttons.size() - 1) * 10, 26)
@@ -173,13 +174,14 @@ func _build_ui() -> void:
 		["Bộ thẻ", "Chọn thẻ mang vào trận: 8 chiêu, 6 chỉ số, giới hạn điểm theo độ hiếm."],
 		["Gacha", "Quay trang bị bằng kim cương."],
 		[_missions_label(), "Nhiệm vụ hằng ngày và phần thưởng chờ nhận."],
+		["Album", "Bách khoa: quái, boss và kỹ năng; quái mở khi hạ lần đầu."],
 		["Cài đặt", "Âm thanh, hiển thị, phím."],
 		["Menu chính", "Về màn hình tiêu đề."]]
 	for k in top_buttons.size():
 		var b: Button = top_buttons[k]
 		var label := b.text
 		b.text = ""
-		UiKit.with_vector_icon(b, String(["nav_character", "nav_deck", "nav_gacha", "nav_missions", "nav_settings", "nav_title"][k]), 36)
+		UiKit.with_vector_icon(b, String(["nav_character", "nav_deck", "nav_gacha", "nav_missions", "nav_album", "nav_settings", "nav_title"][k]), 36)
 		b.custom_minimum_size = Vector2(64, 56)
 		b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		Tip.attach(b, String(tips[k][0]), String(tips[k][1]))
