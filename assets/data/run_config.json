@@ -94,9 +94,9 @@
     "push": 60.0
   },
   "hit_feel": {
-    "_doc": "Cảm giác đánh (2026-11-23): a hit spark at the hit point of every physical-element hit (species.json elements; skills' element), at most max_per_frame a frame, none at Hiệu ứng: Tối thiểu; sprite = the chosen option (hit-spark-a/b/c, --hit-spark=x for shots), drawn at world sprite_scale x scale. hitstop: the sim holds this many s when a hitstop_sources hit lands, at most once every hitstop_gap s.",
+    "_doc": "Cảm giác đánh (2026-11-23): a hit spark at the hit point of every physical-element hit (species.json elements; skills' element), at most max_per_frame a frame, none at Hiệu ứng: Tối thiểu; sprite = the chosen option (user 2026-11-23: A, a little smaller -> scale 1.25; b/c kept for --hit-spark=x), drawn at world sprite_scale x scale. hitstop: the sim holds this many s when a hitstop_sources hit lands, at most once every hitstop_gap s.",
     "sprite": "hit-spark-a",
-    "scale": 1.5,
+    "scale": 1.25,
     "max_per_frame": 4,
     "hitstop": 0.025,
     "hitstop_gap": 0.35,
