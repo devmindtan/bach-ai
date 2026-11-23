@@ -15,7 +15,6 @@ extends Control
 
 const TIERS := ["I", "II", "III", "IV", "V"]
 const TRAVEL := 0.45      # s a projectile takes to the dummy
-const ZOOM := 2.0          # view scale (world px -> screen px), the lab demo's close-up
 const GAP := 0.7          # s of rest between casts
 const LOOP_MAX := 1.4     # s a looping effect (whirlwind) is shown
 
@@ -23,6 +22,9 @@ var skill: Dictionary = {}
 var hero_sprite := "swordsman"
 var t := 0.0
 var _sheets := {}
+var sprite_scale := 2.0   # run_config world.sprite_scale
+var area_mul := 0.9       # run_config balance.player_area_mul
+var slime_scale := 2.0    # monsters.json slime scale
 
 
 ## Kind of preview for skill data [param sp] (see the class doc).
@@ -54,6 +56,10 @@ static func anim_of(sp: Dictionary, sheet: SpriteSheet) -> String:
 
 
 func setup(sp: Dictionary, hero: String) -> void:
+	var cfg := GameData.load_json("res://assets/data/run_config.json")
+	sprite_scale = float(cfg.get("world", {}).get("sprite_scale", 2.0))
+	area_mul = float(cfg.get("balance", {}).get("player_area_mul", 1.0))
+	slime_scale = float(GameData.load_json("res://assets/data/monsters.json").get("slime", {}).get("scale", sprite_scale))
 	skill = sp
 	hero_sprite = hero
 	t = 0.0
@@ -87,6 +93,23 @@ func cast_time(tier: int) -> float:
 	return d
 
 
+var _vis := {}
+
+
+## Height of the opaque pixels over the whole strip (frames carry empty margins), cached by sprite name.
+func _visible_h(sh: SpriteSheet) -> float:
+	if not _vis.has(sh.name):
+		var h := sh.frame_size.y
+		if sh.texture != null:
+			var img := sh.texture.get_image()
+			img.decompress()
+			var u := img.get_used_rect()
+			if u.size.y > 0:
+				h = float(u.size.y)
+		_vis[sh.name] = h
+	return float(_vis[sh.name])
+
+
 func _impact(tier: int) -> SpriteSheet:
 	var it: Array = skill.get("impact_tiers", [])
 	return _sheet(String(it[clampi(tier, 0, it.size() - 1)])) if not it.is_empty() else null
@@ -107,47 +130,71 @@ func _draw() -> void:
 		local -= p
 		tier = (tier + 1) % TIERS.size()
 	var ground := size.y - 34.0
-	var hero := Vector2(90, ground)
-	var dummy := Vector2(size.x - 110, ground)
 	var kind := kind_of(skill)
 	var sh := _sheet(tier_sprite(skill, tier))
 	var hit := false
-	var zoom := ZOOM
-	var dens := zoom
+	# sizes as the run draws them (run.gd): hero and fx at world.sprite_scale, a skill's effect x its size_mul x
+	# balance.player_area_mul, the slime at its monsters.json scale. A taller effect than the box (holy column)
+	# halves the whole view instead of shrinking only the effect.
+	var sc := sprite_scale * float(skill.get("size_mul", 1.0)) * area_mul
+	var view := 1.0
 	if sh != null:
-		# a tall effect (holy column) shrinks the whole view so it fits (sprite-lab demo rule "fitView")
-		zoom = maxf(1.0, floorf(minf(ZOOM, (ground - 8.0) / maxf(1.0, sh.frame_size.y * float(sh.meta.get("px_scale", 1.0))))))   # whole steps: pixels stay square
-		dens = zoom * float(sh.meta.get("px_scale", 1.0))
+		while _visible_h(sh) * sc * view > ground - 8.0 and view > 0.25:
+			view *= 0.5
+	draw_set_transform(Vector2(0, ground * (1.0 - view)), 0.0, Vector2(view, view))
+	var w := size.x / view
+	var gy := ground
+	var hero := Vector2(w * 0.2, gy)
+	var dummy := Vector2(w * 0.78, gy)
+	if kind == "melee" or kind == "self":   # close skills only reach a monster beside the hero, as in a run
+		dummy.x = hero.x + 56.0 * sprite_scale
+	var hs := _sheet(hero_sprite)
+	var body := Vector2(0, -16) * sprite_scale
+	if hs != null:
+		var b := SpriteHitbox.body(hs, Vector2.ZERO, sprite_scale, false)
+		if b != null:
+			body = b.center
+	var ds := _sheet("slime")
+	var target := dummy + Vector2(0, -8) * slime_scale
+	if ds != null:
+		var tb := SpriteHitbox.body(ds, Vector2.ZERO, slime_scale, true)
+		if tb != null:
+			target = dummy + tb.center
+	if sh != null:
 		var a := anim_of(skill, sh)
 		var dur := cast_time(tier)
-		var body := Vector2(0, -16) * zoom
 		match kind:
 			"projectile":
 				if local < TRAVEL:
-					sh.draw(self, a, local, (hero + body).lerp(dummy + body, local / TRAVEL), dens)
+					sh.draw(self, a, local, (hero + body).lerp(target, local / TRAVEL), sc)
 				elif local < dur:
 					var imp := _impact(tier)
 					if imp != null:
-						imp.draw(self, imp.animation_names()[0], local - TRAVEL, dummy + body, dens)
+						imp.draw(self, imp.animation_names()[0], local - TRAVEL, target, sc)
 					hit = local < TRAVEL + 0.25
 			"self":
-				if local < dur:
-					sh.draw(self, a, local, hero, dens)   # around the hero: never reaches the dummy, no flash
+				if local < dur and not skill.has("distance"):
+					sh.draw(self, a, local, hero + body, sc)
+					hit = fposmod(local, 0.25) < 0.08   # the whirlwind ticks on the monster beside it
 			"melee":
 				if local < dur:
-					sh.draw(self, a, local, hero + body + Vector2(float(skill.get("offset", 30.0)) * zoom, 0), dens)
+					var off := float(skill.get("offset", 30.0)) * sc / sprite_scale
+					sh.draw(self, a, local, hero + body + Vector2(off, 0), sc)
 					hit = local > dur * 0.3 and local < dur * 0.7
 			_:
 				if local < dur:
-					sh.draw(self, a, local, dummy, dens)
+					sh.draw(self, a, local, dummy, sc)
 					hit = local > dur * 0.35 and local < dur * 0.6
-	var hs := _sheet(hero_sprite)
-	var dashing := skill.has("distance") and local < cast_time(tier)   # the dash sprite is the hero itself
-	if hs != null and not dashing:
-		hs.draw(self, hs.animation_names()[0], t, hero, zoom)
-	var ds := _sheet("slime")   # monsters.json slime scale 2; hit tint as in the run
+	var dashing := skill.has("distance") and local < cast_time(tier)
+	if hs != null:
+		if dashing and sh != null:   # the dash: the hero sprite's own dash animation, sliding toward the dummy
+			var k := clampf(local / maxf(0.01, cast_time(tier)), 0.0, 1.0)
+			sh.draw(self, anim_of(skill, sh), local, hero + Vector2(float(skill.get("distance", 120.0)) * k, 0), sprite_scale)
+		else:
+			hs.draw(self, hs.animation_names()[0], t, hero, sprite_scale)
 	if ds != null:
-		ds.draw(self, ds.animation_names()[0], t, dummy, 2.0 * zoom, true, Color(1.0, 0.55, 0.55) if hit else Color.WHITE)
+		ds.draw(self, ds.animation_names()[0], t, dummy, slime_scale, true, Color(1.0, 0.55, 0.55) if hit else Color.WHITE)
+	draw_set_transform(Vector2.ZERO)
 	var f := get_theme_default_font()
 	draw_string(f, Vector2(12, 12 + f.get_ascent(18)), "Bậc " + TIERS[tier], HORIZONTAL_ALIGNMENT_LEFT, -1, 18,
 		Color("e8c574"))

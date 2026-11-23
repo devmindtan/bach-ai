@@ -184,13 +184,7 @@ func _build() -> void:
 	tabs.add_theme_constant_override("separation", 8)
 	root.add_child(tabs)
 	for k in TABS.size():
-		var p := UiKit.panel(UiKit.PANEL_DARK if k != _tab else UiKit.PANEL, 6, UiKit.GOLD if k == _tab else Color("3a3448"))
-		p.custom_minimum_size = Vector2(150, 44)
-		var l := UiKit.label("%s  %d" % [TABS[k], entries(k).size()], 20, UiKit.GOLD if k == _tab else UiKit.MUTED)
-		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		p.add_child(l)
-		tabs.add_child(p)
+		tabs.add_child(_tab_plate(k))
 	var keys := UiKit.label("Q / E" if not UiKit.using_pad() else "LB / RB", 16, UiKit.MUTED)
 	keys.position = Vector2(40 + 3 * 158 + 8, 116)
 	root.add_child(keys)
@@ -204,7 +198,7 @@ func _build() -> void:
 	grid.add_theme_constant_override("v_separation", 8)
 	root.add_child(grid)
 	for i in list.size():
-		grid.add_child(_cell(list[i], i == _sel))
+		grid.add_child(_cell(list[i], i == _sel, i))
 	# detail
 	var panel := UiKit.panel(UiKit.PANEL, 18)
 	panel.position = Vector2(732, 104)
@@ -219,13 +213,44 @@ func _build() -> void:
 	root.add_child(foot)
 
 
-func _cell(e: Variant, on: bool) -> Control:
+## A tab plate; a click opens tab [param k] (the mouse works as well as Q / E; user 2026-11-23).
+func _tab_plate(k: int) -> Control:
+	var p := UiKit.panel(UiKit.PANEL_DARK if k != _tab else UiKit.PANEL, 6, UiKit.GOLD if k == _tab else Color("3a3448"))
+	p.custom_minimum_size = Vector2(150, 44)
+	p.mouse_filter = Control.MOUSE_FILTER_STOP
+	p.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	var l := UiKit.label("%s  %d" % [TABS[k], entries(k).size()], 20, UiKit.GOLD if k == _tab else UiKit.MUTED)
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	p.add_child(l)
+	p.gui_input.connect(func(ev: InputEvent) -> void:
+		if _left_click(ev) and k != _tab:
+			_tab = k
+			_sel = 0
+			_rebuild.call_deferred())
+	return p
+
+
+static func _left_click(ev: InputEvent) -> bool:
+	return ev is InputEventMouseButton and (ev as InputEventMouseButton).pressed \
+		and (ev as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT
+
+
+## A grid cell; a click selects it (index [param i]).
+func _cell(e: Variant, on: bool, i := 0) -> Control:
 	var c := Control.new()
 	c.custom_minimum_size = Vector2(CELL, CELL)
 	c.clip_contents = true   # a wide sprite (Dơi) must not spill into the next cell
-	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	c.mouse_filter = Control.MOUSE_FILTER_STOP   # user 2026-11-23: the Album must work with the mouse
+	c.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	c.gui_input.connect(func(ev: InputEvent) -> void:
+		if _left_click(ev) and i != _sel:
+			_sel = i
+			_rebuild.call_deferred())
 	if _tab == 2:
 		var ic := UiKit.card_icon(String(e["id"]), 56.0)
+		ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		ic.position = Vector2(16, 16)
 		c.add_child(ic)
 	var id := "" if _tab == 2 else String(e)
