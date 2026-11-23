@@ -65,17 +65,32 @@ chỉnh sau khi chơi thử; tất cả nằm trong `run_config.json`.
 - **Config:** `events.tornado` `{telegraph: 1.5, speed: 170, radius: 70, duration: 9, player_damage: 8,
   monster_damage: 30, tick: 0.5, seeds: 3}`.
 
-### 4B. Rừng Âm U — Cây đổ (`falling_trees`)
+### 4B. Rừng Âm U — Rễ trói (`root_snare`) — thay Cây đổ (người dùng 2026-11-23)
 
-- **Vì sao hợp:** rừng đã có `obstacle-tree`; cây đổ biến vật trang trí thành hiểm họa và làm đổi không gian đi lại.
-- **Diễn biến:** 3 đợt, cách 2,5 s. Mỗi đợt chọn một cây cách người chơi ≤ 300 px; báo 1,2 s (bóng cây đổ + bụi),
-  rồi cây đổ về phía người chơi: dải dài 150, rộng 46 tính từ gốc cây.
-- **Sát thương:** người chơi 14 (một lần mỗi đợt), quái 60. Thân cây nằm lại 4 s làm vật cản tạm rồi mờ dần.
-- **Thưởng:** không thêm đồ rơi; thưởng là cơ hội dọn quái bằng cây (giống ý đồ của thiên thạch cũ).
-- **Đọc trên nền:** bóng cây tối đậm + bụi sáng trên nền `223a2c`; dải báo trước có viền sáng để không lẫn với bóng
-  trang trí sẵn có.
-- **Config:** `events.falling_trees` `{waves: 3, interval: 2.5, warn: 1.2, range: 300, length: 150, width: 46,
-  player_damage: 14, monster_damage: 60, linger: 4}`.
+Cây đổ bị bỏ (người dùng 2026-11-23: "hiện rất tào lao và xấu… đổi sự kiện khác"). Người dùng chọn **Rễ cây trói
+chân** trong bốn ý tưởng (sương mù, ong, rễ trói, linh hồn rừng).
+
+**Tham khảo (tra 2026-11-23):**
+
+| Nguồn | Học | Tránh |
+|---|---|---|
+| League of Legends, Zyra Grasping Roots ([wiki](https://wiki.leagueoflegends.com/Zyra)) | Rễ đi theo **một đường thẳng** về phía mục tiêu, ai dính bị trói 1–2 s; né được nếu đứng lệch khỏi đường | Trói quá lâu (2 s) làm người chơi mất lượt |
+| Diablo IV, Wandering Death ([icy-veins](https://www.icy-veins.com/d4/guides/wandering-death-world-boss-guide/)) | Mặt đất **đổi màu/hằn vệt** trước đòn, "thấy đất đổi màu thì chạy" | Báo trước khó thấy |
+
+**Quyết định:** đường rễ thẳng có báo trước bằng **vết nứt đất chạy dọc đường**, trói người chơi ngắn (0,8 s, vẫn
+đánh được) và trói quái lâu hơn; Lướt né được. Không có hình chữ nhật trong mờ: báo trước là vết nứt + đất trồi.
+
+- **Diễn biến:** 4 đợt, cách 2,2 s. Mỗi đợt, rễ mọc từ một gốc cây gần người chơi (≤ 320 px; không có cây thì từ
+  một điểm cách 200 px) theo đường thẳng về phía người chơi, dài 220, rộng 28.
+  1. Báo 1,0 s: vết nứt đất có ánh xanh lục chạy từ gốc ra hết đường, đất trồi lên từng cục.
+  2. Rễ trồi: các rễ gai cong trồi lên dọc đường (6 frame), rồi đứng 1,2 s, rồi rút xuống.
+- **Hiệu ứng:** người chơi trong đường lúc rễ trồi bị **trói 0,8 s** (không di chuyển, vẫn đánh, bất tử/Lướt né
+  được) và mất 8 máu; quái trong đường bị trói 2 s và mất 40.
+- **Thưởng:** không có đồ rơi; thưởng là cơ hội: quái bị trói thành mục tiêu đứng yên.
+- **Đọc trên nền:** vết nứt tối viền xanh lục sáng `9fe07a`, rễ nâu sẫm có gai, trên nền rừng `223a2c`.
+- **Hình:** vẽ trong Sprite Lab (2–3 phương án để chọn) trước khi làm code hình.
+- **Config:** `events.root_snare` `{waves: 4, interval: 2.2, warn: 1.0, range: 320, length: 220, width: 28,
+  root_player: 0.8, root_monster: 2.0, player_damage: 8, monster_damage: 40, linger: 1.2}`.
 
 ### 4C. Đầm Lầy Độc — Nước độc dâng (`poison_tide`)
 

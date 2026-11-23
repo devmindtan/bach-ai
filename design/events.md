@@ -45,7 +45,7 @@ thử thách. Cờ chụp `--event=<kind>@<giây>`. Số liệu `run_config.json
 | Vùng | Sự kiện | Cách chơi | Số liệu | Test |
 |---|---|---|---|---|
 | Đồng cỏ | Lốc cỏ (`tornado`) | Né đường thẳng: vòng báo 1,5 s + vạch hướng, lốc chạy qua chỗ người chơi 170 px/s trong 9 s | người 8 / chạm (hit_invuln), quái 30 / 0,5 s; 3 hạt (vàng) dọc đường | `tornado_test.gd` |
-| Rừng Âm U | Cây đổ (`falling_trees`) | Đổi không gian: 3 cây gần nhất (≤ 300 px) đổ về phía người chơi, báo 1,2 s bằng dải sáng | người 14 / cây, quái 60; thân cây chặn đường 4 s, chỗ cây cũ còn gốc cụt | `falling_trees_test.gd` |
+| Rừng Âm U | Rễ trói (`root_snare`, thay Cây đổ 2026-11-23) | 4 đường rễ thẳng từ gốc cây về phía người chơi, báo 1 s bằng vết nứt đất | người: trói 0,8 s + 8 máu; quái: trói 2 s + 40 | `root_snare_test.gd` |
 | Đầm Lầy Độc | Nước độc dâng (`poison_tide`) | Đọc vùng nguy hiểm: 3 vũng (ưu tiên vũng có sẵn) sôi 1,5 s, nở tới 110 px, giữ 7 s, rút | 6 máu/s, không trừ giáp (như vũng đầm); vũng cách nhau, luôn có lối ra; 2 vàng khi rút | `poison_tide_test.gd` |
 
 Cổng màn: `region_event_gate_test.gd`. Ảnh: `production/qa/evidence/region-events/`.
