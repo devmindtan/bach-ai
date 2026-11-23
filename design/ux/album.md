@@ -12,7 +12,7 @@ khi hạ lần đầu** (lưu trong slot), chưa mở thì hiện bóng đen "?"
 | Vampire Survivors, Bestiary / Collection ([danh sách bestiary](https://primagames.com/tips/all-bestiary-members-in-vampire-survivors-listed), [wiki Enemies](https://vampire-survivors.fandom.com/wiki/Enemies)) | Hạ quái lần đầu thì mở mục; lưới ô vuông, ô chưa mở là bóng tối | Không có trang chi tiết đủ chỉ số |
 | Brotato, Encyclopedia ([Switch 2 Edition](https://www.wikiwand.com/en/articles/Brotato_%E2%80%93_Nintendo_Switch_2_Edition)) | Bách khoa tách theo mục (vũ khí, vật phẩm, quái) | — |
 
-**Quyết định:** 3 mục dạng thẻ (Quái, Boss, Kỹ năng; mục Vật phẩm chờ người dùng chốt) đổi bằng Q/E (LB/RB); lưới 7 cột bên trái, khung chi
+**Quyết định:** 3 mục dạng thẻ (Quái, Boss, Kỹ năng; người dùng bỏ mục Vật phẩm 2026-11-23: trong trận không còn vật phẩm) đổi bằng Q/E (LB/RB); lưới 7 cột bên trái, khung chi
 tiết bên phải; quái ghi loài, hệ yếu (đỏ), hệ kháng (xám), chỉ số ở ải 1, số lần hạ; kỹ năng có ô **mô phỏng** (làm
 sau, dùng sân demo của dashboard).
 
@@ -29,6 +29,3 @@ sau, dùng sân demo của dashboard).
 
 Lưu: `slot.bestiary` (id quái → số lần hạ), cộng ở cuối mỗi trận từ `Enemies.kills_kind`.
 
-## Câu hỏi mở
-
-- Mục Vật phẩm: game hiện không còn vật phẩm trong trận (đã chuyển sang thẻ đặc biệt) — bỏ mục này hay hiện trang bị?
