@@ -1,5 +1,5 @@
 {
-  "_doc": "Statuses a hit can put on a monster (Enemies.apply_status). A skill lists them in skills.<id>.on_hit (upgrades_<class>.json) with from = the skill level that adds it and the numbers: time (s), mul (slow: speed x; shock: x hit damage per jump), dps_mul (bleed / burn: x hit damage per second, ticks every 0.5 s, credited to the skill), time (shock: how long the mark lasts; a later shock hit arcs to every marked monster for mul x hit, capped under 0.5; chain / radius = item Lôi xích arcs to the nearest instead). sprite = Sprite Lab status sprite drawn on the monster, scaled to its body radius (made for radius 8 px): at body (body centre) or head (on top of the body). freeze also stops the monster animation. tint = colour laid over the monster while it lasts. tile: drawn as several sprites at the game's whole sprite scale spread over a big body instead of one sprite blown up (user 2026-11-20: burn blurry on big monsters). alpha: opacity the status is drawn with, so the monster under it stays visible (user 2026-11-20). Non-tiled statuses scale by a whole number only. priority / max_shown: at most max_shown statuses are drawn on one monster, highest priority first; the rest still act (review 2026-11-21: stacked layers cluttered big fights).",
+  "_doc": "Statuses a hit can put on a monster (Enemies.apply_status). A skill lists them in skills.<id>.on_hit (upgrades_<class>.json) with from = the skill level that adds it and the numbers: time (s), mul (slow: speed x; shock: x hit damage per jump), dps_mul (bleed / burn: x hit damage per second, ticks every 0.5 s, credited to the skill), time (shock: how long the mark lasts; a later shock hit arcs to every marked monster for mul x hit, capped under 0.5; chain / radius = item Lôi xích arcs to the nearest instead). sprite = Sprite Lab status sprite drawn on the monster, scaled to its body radius (made for radius 8 px): at body (body centre) or head (on top of the body). freeze also stops the monster animation. tint = colour laid over the monster while it lasts. tile: drawn as several sprites at the game's whole sprite scale spread over a big body instead of one sprite blown up (user 2026-11-20: burn blurry on big monsters). alpha: opacity the status is drawn with, so the monster under it stays visible (user 2026-11-20). Non-tiled statuses scale by a whole number only. priority / max_shown: at most max_shown statuses are drawn on one monster, highest priority first; the rest still act (review 2026-11-21: stacked layers cluttered big fights). holy_mark (Ánh sáng, design/species.md): contact damage x contact_mul, Linh hồn speed x spirit_speed_mul; when it ends a burst of burst_mul x the marking hit within burst_radius (burst_sprite). corrode (Bóng tối): each stack (up to max_stacks, re-applying adds one and refreshes time) makes the monster take +per_stack damage; dying with burst_at stacks or more bursts within burst_radius and gives one stack to each monster there. at: body | head | feet.",
   "statuses": {
     "slow": {
       "name": "Làm chậm",
@@ -55,6 +55,34 @@
       "alpha": 0.8,
       "tile": true,
       "priority": 3
+    },
+    "holy_mark": {
+      "name": "Thánh ấn",
+      "sprite": "light-mark",
+      "at": "head",
+      "desc": "Quái bị chói: sát thương chạm giảm, Linh hồn bị làm chậm; hết ấn thì nổ sáng.",
+      "alpha": 0.8,
+      "priority": 6,
+      "time": 2.5,
+      "contact_mul": 0.7,
+      "spirit_speed_mul": 0.7,
+      "burst_mul": 0.1,
+      "burst_radius": 40.0,
+      "burst_sprite": "light-burst"
+    },
+    "corrode": {
+      "name": "Ăn mòn",
+      "sprite": "corrode-mark",
+      "at": "feet",
+      "desc": "Mỗi tầng quái nhận thêm sát thương; chết khi đủ tầng thì nổ bóng, lan Ăn mòn sang quái gần.",
+      "alpha": 0.8,
+      "priority": 6,
+      "time": 3.0,
+      "per_stack": 0.08,
+      "max_stacks": 3,
+      "burst_at": 2,
+      "burst_radius": 56.0,
+      "burst_sprite": "shadow-burst"
     }
   },
   "max_shown": 2

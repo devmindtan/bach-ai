@@ -64,8 +64,11 @@ func draw_on_monsters(canvas: CanvasItem, enemies: Enemies, sheets: Dictionary, 
 			var p := enemies.center_of(i)
 			if String(d.get("at", "body")) == "head":
 				p.y -= r
+			elif String(d.get("at", "body")) == "feet":   # Ăn mòn: the crack sigil under the monster
+				p.y += r * 0.8
+			var dens := float(sh.meta.get("px_scale", 1.0))   # double-density sprites (light-mark, corrode-mark)
 			var k := 0
 			for spot: Array in spots(r, bool(d.get("tile", false))):
-				sh.draw(canvas, "loop", clock + i * 0.17 + k * 0.29, p + (spot[0] as Vector2), float(spot[1]),
+				sh.draw(canvas, "loop", clock + i * 0.17 + k * 0.29, p + (spot[0] as Vector2), float(spot[1]) * dens,
 					false, Color(1, 1, 1, float(d.get("alpha", 1.0)) * vfx_alpha))
 				k += 1

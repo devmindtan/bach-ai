@@ -639,10 +639,8 @@
       ],
       "on_hit": [
         {
-          "from": 2,
-          "status": "burn",
-          "dps_mul": 0.25,
-          "time": 2.0
+          "from": 1,
+          "status": "holy_mark"
         }
       ]
     },

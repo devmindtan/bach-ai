@@ -356,6 +356,8 @@ func _ready() -> void:
 	_status_max_shown = int(status_file.get("max_shown", 2))
 	for st: String in status_defs:
 		names.append(String(status_defs[st].get("sprite", "")))
+		if status_defs[st].has("burst_sprite"):   # Thánh ấn / Ăn mòn bursts
+			names.append(String(status_defs[st]["burst_sprite"]))
 	names.append_array(special_fx_sprites())
 	for b: String in _buff_defs:
 		if not bool(_buff_defs[b].get("special_only", false)):
@@ -408,6 +410,7 @@ func _ready() -> void:
 	for u: Dictionary in pool.get("upgrades", []):
 		if u.has("element"):
 			elems[String(u["id"])] = String(u["element"])
+	enemies.status_defs = status_defs
 	enemies.set_species(GameData.load_json("res://assets/data/species.json"), elems)   # design/species.md
 	if challenge_id == "" and bench == 0:   # the region's props, seeded by the stage (same map every time)
 		obstacles = Obstacles.new(stages.region(stage_number).get("obstacles", {}), _arena_half, stage_number * 7919 + 13)
@@ -2739,6 +2742,9 @@ func _step_damage_numbers(dt: float) -> void:
 		_num_t[_num_next] = 0.0
 		_num_next = (_num_next + 1) % _num_t.size()
 	enemies.drain_hits()
+	for b: Array in enemies.status_fx:   # Thánh ấn / Ăn mòn bursts
+		_add_fx(String(b[0]), "burst", _sprite_scale, 0.0, -1.0, b[1])
+	enemies.status_fx.clear()
 
 
 ## A flying projectile: hits when its fly hitbox (from the sprite) touches a

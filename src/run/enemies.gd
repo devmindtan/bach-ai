@@ -55,6 +55,15 @@ var flee_t := PackedFloat32Array()    # Yêu tinh vàng: seconds spent fleeing (
 var burn_dps := PackedFloat32Array()
 var dot_wait := PackedFloat32Array()   # time to the next damage-over-time tick
 var bleed_src := PackedStringArray()
+## Ánh sáng / Bóng tối statuses (statuses.json holy_mark / corrode, design/species.md E5/E6)
+var holy_t := PackedFloat32Array()
+var holy_dmg := PackedFloat32Array()   # the marking hit: the burst deals burst_mul of it
+var holy_src := PackedStringArray()
+var corrode_t := PackedFloat32Array()
+var corrode_n := PackedByteArray()     # stacks
+var corrode_src := PackedStringArray()
+var status_defs := {}                  # statuses.json "statuses" (set by the run): numbers of holy_mark / corrode
+var status_fx: Array = []              # [sprite, world pos] bursts this step; the run draws and clears them
 var burn_src := PackedStringArray()
 const DOT_TICK := 0.5
 ## Shock arcs since the last drain (pairs of points, for the run to draw).
@@ -232,6 +241,12 @@ func _init(monsters: Dictionary, cfg: Dictionary, sheets: Dictionary, seed_value
 	for a: Variant in [slow_t, slow_mul, stun_t, freeze_t, bleed_t, bleed_dps, burn_t, burn_dps, shock_t, flee_t, dot_wait, phase_t, summon_t, tongue_t, tongue_len]:
 		a.resize(capacity)
 	bleed_src.resize(capacity)
+	holy_t.resize(capacity)
+	holy_dmg.resize(capacity)
+	holy_src.resize(capacity)
+	corrode_t.resize(capacity)
+	corrode_n.resize(capacity)
+	corrode_src.resize(capacity)
 	burn_src.resize(capacity)
 	hp_bar_time = float(cfg.get("ui", {}).get("hp_bar_time", 2.0))
 	var world_scale := float(world.get("sprite_scale", 2))
@@ -292,6 +307,38 @@ func set_species(table: Dictionary, elements_by_source: Dictionary) -> void:
 	k_phase.resize(k_extra.size())
 	for k in k_extra.size():
 		k_phase[k] = 1 if has_trait(k, "phase") else 0
+
+
+## Thánh ấn runs out -> a light burst; Ăn mòn runs out -> its stacks go (design/species.md E5/E6).
+func _step_light_dark(i: int, delta: float) -> void:
+	if corrode_t[i] > 0.0:
+		corrode_t[i] -= delta
+		if corrode_t[i] <= 0.0:
+			corrode_n[i] = 0
+	if holy_t[i] > 0.0:
+		holy_t[i] -= delta
+		if holy_t[i] <= 0.0:
+			var hd: Dictionary = status_defs.get("holy_mark", {})
+			var c := center_of(i)
+			status_fx.append([String(hd.get("burst_sprite", "light-burst")), c])
+			hit_circle(c, float(hd.get("burst_radius", 40.0)), holy_dmg[i] * float(hd.get("burst_mul", 0.1)), 0.0, holy_src[i])
+			holy_dmg[i] = 0.0
+
+
+## A monster dying with burst_at Ăn mòn stacks or more bursts: one stack to every monster within burst_radius.
+func _corrode_burst(i: int) -> void:
+	var cd: Dictionary = status_defs.get("corrode", {})
+	if corrode_n[i] < int(cd.get("burst_at", 2)):
+		return
+	var c := center_of(i)
+	status_fx.append([String(cd.get("burst_sprite", "shadow-burst")), c])
+	var near := PackedInt32Array()
+	var rad := float(cd.get("burst_radius", 56.0))
+	_hash.query(c, rad, near)
+	for j in near:
+		if j != i and state[j] != DYING and center_of(j).distance_to(c) <= rad + k_radius[kind[j]]:
+			apply_status(j, "corrode", {}, 0.0, corrode_src[i])
+	corrode_n[i] = 0
 
 
 ## The species entry of kind [param k] (species.json), {} without one.
@@ -402,6 +449,9 @@ func spawn(id: String, p: Vector2) -> bool:
 	state[i] = MOVE
 	hp[i] = k_hp[k] * (1.0 if k_boss[k] == 1 else spawn_hp_mul)   # bosses keep their designed hp
 	hp_cap[i] = hp[i]
+	holy_t[i] = 0.0
+	corrode_t[i] = 0.0
+	corrode_n[i] = 0
 	shell_on[i] = 1 if has_trait(k, "shell") else 0
 	calm_t[i] = 0.0
 	timer[i] = 0.0
@@ -541,6 +591,8 @@ func step(delta: float, player_pos: Vector2, player_center: Vector2) -> float:
 		vel *= float(_affix_def(n).get("speed_mul", 1.0))   # Nhanh
 		vel *= enrage_mul(n)   # Thú: faster when nearly dead
 		vel *= swarm_mul(n)   # Côn trùng: faster in a swarm
+		if holy_t[n] > 0.0 and k_phase.size() > k and k_phase[k] == 1:   # Thánh ấn slows Linh hồn
+			vel *= float(status_defs.get("holy_mark", {}).get("spirit_speed_mul", 0.7))
 		vel += push * _push
 		knock[n] = knock[n] * maxf(0.0, 1.0 - KNOCKBACK_DECAY * delta)
 		pos[n] += (vel + knock[n]) * delta
@@ -1141,6 +1193,8 @@ func contact_damage(i: int) -> float:
 	var d := k_damage[kind[i]]
 	if buffed[i] == 1:   # the boss's aura
 		d *= 1.0 + float(boss_aura.get("damage_mul", 0.0))
+	if holy_t[i] > 0.0:   # Thánh ấn: blinded, it hits softer
+		d *= float(status_defs.get("holy_mark", {}).get("contact_mul", 0.7))
 	return d * float(_phase2(i).get("contact_mul", 1.0)) if phase_on[i] == 1 else d
 
 
@@ -1277,6 +1331,8 @@ func _damage(i: int, amount: float, kb: Vector2, source := "") -> void:
 		shell_on[i] = 0
 		amount *= float(_species_of(kind[i]).get("shell", {}).get("first_hit_mul", 0.5))
 	amount *= smul
+	if corrode_n[i] > 0:   # Ăn mòn: each stack, more damage taken from every source
+		amount *= 1.0 + float(status_defs.get("corrode", {}).get("per_stack", 0.08)) * corrode_n[i]
 	damage_by[source] = float(damage_by.get(source, 0.0)) + minf(amount, maxf(0.0, hp[i]))
 	hits_by[source] = int(hits_by.get(source, 0)) + 1
 	hp[i] -= amount
@@ -1298,6 +1354,7 @@ func _damage(i: int, amount: float, kb: Vector2, source := "") -> void:
 		total_kills += 1
 		kills_by[source] = int(kills_by.get(source, 0)) + 1
 		kill_elite.append(k_elite[kind[i]])
+		_corrode_burst(i)
 		kill_boss.append(k_boss[kind[i]])
 		kill_pos.append(pos[i])
 		kill_xp.append(k_xp[kind[i]])
@@ -1337,6 +1394,15 @@ func apply_status(i: int, status: String, p: Dictionary, hit_damage: float, sour
 			bleed_t[i] = maxf(bleed_t[i], t)
 			bleed_dps[i] = maxf(bleed_dps[i], hit_damage * float(p.get("dps_mul", 0.2)))
 			bleed_src[i] = source
+		"holy_mark":
+			holy_t[i] = maxf(holy_t[i], float(p.get("time", status_defs.get("holy_mark", {}).get("time", 2.5))))
+			holy_dmg[i] = maxf(holy_dmg[i], hit_damage)
+			holy_src[i] = source
+		"corrode":
+			var cd: Dictionary = status_defs.get("corrode", {})
+			corrode_t[i] = float(p.get("time", cd.get("time", 3.0)))
+			corrode_n[i] = mini(int(cd.get("max_stacks", 3)), corrode_n[i] + 1)
+			corrode_src[i] = source
 		"burn":
 			if has_trait(kind[i], "wet"):   # Lưỡng cư: wet skin, the burn dies down sooner
 				t *= float(_species_of(kind[i]).get("wet", {}).get("burn_time_mul", 0.5))
@@ -1354,6 +1420,7 @@ func apply_status(i: int, status: String, p: Dictionary, hit_damage: float, sour
 ## Status timers and damage over time for one living monster.
 func _step_status(i: int, delta: float) -> void:
 	_step_regen(i, delta)
+	_step_light_dark(i, delta)
 	slow_t[i] = maxf(0.0, slow_t[i] - delta)
 	if slow_t[i] <= 0.0:
 		slow_mul[i] = 1.0
@@ -1417,6 +1484,8 @@ func statuses_of(i: int) -> Array[String]:
 	if bleed_t[i] > 0.0: out.append("bleed")
 	if burn_t[i] > 0.0: out.append("burn")
 	if shock_t[i] > 0.0: out.append("shock")
+	if holy_t[i] > 0.0: out.append("holy_mark")
+	if corrode_n[i] > 0: out.append("corrode")
 	return out
 
 

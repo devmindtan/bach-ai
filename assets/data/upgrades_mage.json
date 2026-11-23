@@ -718,6 +718,10 @@
           "status": "slow",
           "mul": 0.5,
           "time": 1.5
+        },
+        {
+          "from": 1,
+          "status": "corrode"
         }
       ],
       "impact_tiers": [
