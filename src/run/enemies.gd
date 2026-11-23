@@ -190,6 +190,9 @@ var player_in_pool := false   # the player stands in a monster's poison pool (dr
 var pool_purple := PackedByteArray()   # 1 = a Cóc Độc Bào Tử spore pool (drawn purple)
 var pool_dmg := PackedFloat32Array()   # roots that erupted this step (the run draws them)
 var bonus_by := {}   # extra damage added by passives ("vs_status": Cộng hưởng nguyên tố), end report
+var far_mul := 0.0             # class passive Mắt ưng: extra damage on monsters farther than far_px from the hero
+var far_px := 0.0
+var hero_at := Vector2.ZERO      # the hero's position this step (Mắt ưng distance)
 var vs_status_mul := 0.0        # class passive: extra damage taken by monsters with a status   # set by the run from the class sprite's body
 
 var _hash: SpatialHash
@@ -510,6 +513,7 @@ func center_of(i: int) -> Vector2:
 ## Moves every monster one step towards the player. Returns the largest
 ## contact damage a living monster deals this frame (0 when none touches).
 func step(delta: float, player_pos: Vector2, player_center: Vector2) -> float:
+	hero_at = player_pos
 	contact_bleed = {}
 	var regen := float(boss_aura.get("regen", 0.0))
 	if regen > 0.0:   # the aura heals its monsters over time (up to their buffed max)
@@ -1327,6 +1331,9 @@ func _damage(i: int, amount: float, kb: Vector2, source := "") -> void:
 	if vs_status_mul > 0.0 and (slow_t[i] > 0.0 or stun_t[i] > 0.0 or freeze_t[i] > 0.0 or bleed_t[i] > 0.0 or burn_t[i] > 0.0 or shock_t[i] > 0.0):
 		bonus_by["vs_status"] = float(bonus_by.get("vs_status", 0.0)) + amount * vs_status_mul   # end report: indirect damage
 		amount *= 1.0 + vs_status_mul
+	if far_mul > 0.0 and _hero_source(source) and pos[i].distance_to(hero_at) > far_px:   # Mắt ưng: a far hit
+		bonus_by["far"] = float(bonus_by.get("far", 0.0)) + amount * far_mul
+		amount *= 1.0 + far_mul
 	amount *= float(_affix_def(i).get("damage_taken_mul", 1.0))   # Giáp
 	var smul := species_mul(kind[i], String(element_of.get(source, "")))   # loài: weak / resisted element
 	if shell_on[i] == 1:   # Côn trùng: the shell takes the first hit
@@ -1531,6 +1538,11 @@ func nearest_n(p: Vector2, n: int) -> Array[int]:
 
 
 ## Clears the hit buffers (call after turning them into damage numbers).
+## True for damage the hero deals (skills, cards), not the map's (events, poison pools).
+static func _hero_source(source: String) -> bool:
+	return source != "" and not source.begins_with("event.") and source != "pool"
+
+
 func drain_hits() -> void:
 	hit_pos.clear()
 	hit_val.clear()

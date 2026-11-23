@@ -220,6 +220,7 @@ var healed := 0.0
 var end_tab := "dealt"   # --end-tab=dealt|taken|heal (shots): the end report view shown first
 var escape_sprite := ""   # monsters.json escape_sprite: drawn where a fleeing monster got away
 var taken_by := {}     # end report (roadmap B, 2026-11-22): hp lost by source ("monster", "pool", "event.*")
+var still_t := 0.0   # seconds the hero has not walked (Mắt ưng)
 var reduced_by := {}   # damage prevented by source ("armor", "passive", "ward")
 var heal_by := {}      # hp healed by source ("regen", a card id, "milestone", ...)
 
@@ -233,7 +234,7 @@ func ledger_rows(d: Dictionary) -> Array:
 		total += float(d[k])
 	var names := {"monster": "Quái", "pool": "Vũng độc", "bleed": "Chảy máu (Thú cắn)", "armor": "Giáp", "ward": "Vỏ đá (Bàn thạch)",
 		"regen": "Hồi máu theo thời gian", "bloodthirst": "Khát máu", "heal": "Khác",
-		"passive": String(passive().get("name", "Nội tại")), "vs_status": String(passive().get("name", "Nội tại"))}
+		"passive": String(passive().get("name", "Nội tại")), "vs_status": String(passive().get("name", "Nội tại")), "far": String(passive().get("name", "Nội tại"))}
 	var ev: Dictionary = cfg.get("events", {}).get("source_names", {})
 	var out := []
 	for k: String in d:
@@ -447,6 +448,8 @@ func _ready() -> void:
 	for k in enemies.k_hp.size():
 		enemies.k_hp[k] *= monster_hp_mul
 	enemies.vs_status_mul = passive_vs_status()
+	enemies.far_mul = float(passive().get("far_mul", 0.0))   # Mắt ưng (archer)
+	enemies.far_px = float(passive().get("far_px", 200.0))
 	_update_body()
 	pickups = Pickups.new(cfg.get("pickups", {}), 400)
 	if _shot_gold_chest:
@@ -824,6 +827,7 @@ func _move_player(dt: float) -> void:
 		root_t = maxf(0.0, root_t - dt)
 		dir = Vector2.ZERO
 	_moving = dir.length_squared() > 0.01
+	still_t = 0.0 if _moving else still_t + dt   # Mắt ưng counts how long the hero has stood still
 	if _moving:
 		facing = dir.normalized()
 		if absf(facing.x) > 0.1:
@@ -1236,7 +1240,7 @@ func _cast(sid: String, ts: Dictionary, how: String) -> void:
 				var dv := to_target.rotated(deg_to_rad(12.0 * (k - (n - 1) * 0.5)))
 				var anim := _fly_anim(sprite, String(ts.get("anim_prefix", "fly_")), dv)
 				# leaves from in front of the hero, not from its face (user 2026-11-18)
-				var fx := _add_fx(sprite, anim, sc, 0.0, float(ts.get("duration", 1.2)), center + dv * 18.0, sid, kb)
+				var fx := _add_fx(sprite, anim, sc, 0.0, float(ts.get("duration", 1.2)) * range_mul(), center + dv * 18.0, sid, kb)
 				if fx.is_empty():
 					continue
 				fx["vel"] = dv * speed
@@ -1381,9 +1385,16 @@ func passive() -> Dictionary:
 	return class_data.get("passive", {})
 
 
+## Range multiplier of projectiles: Mắt ưng's still_range_mul while the hero has stood still (1 otherwise).
+func range_mul() -> float:
+	return 1.0 + float(passive().get("still_range_mul", 0.0)) if passive().has("still_s") and passive_active() else 1.0
+
+
 ## True while a low-hp passive is on (hp under passive.hp_below of max).
 func passive_active() -> bool:
 	var p := passive()
+	if p.has("still_s"):   # Mắt ưng: standing still long enough
+		return still_t >= float(p["still_s"])
 	if not p.has("hp_below") or stats.is_empty():
 		return false
 	return hp > 0.0 and hp < float(stats.get("max_hp", 1.0)) * float(p["hp_below"])

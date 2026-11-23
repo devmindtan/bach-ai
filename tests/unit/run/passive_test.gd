@@ -56,3 +56,39 @@ func test_enemies_take_more_damage_while_they_have_a_status() -> void:
 	e.hit_circle(Vector2.ZERO, 60.0, 10.0, 0.0, "bolt")
 	_check(is_equal_approx(e.hp[0], 88.0), "slowed one takes 12, hp %s" % e.hp[0])
 	_check(is_equal_approx(e.hp[1], 90.0), "plain one takes 10, hp %s" % e.hp[1])
+
+
+func test_archer_hawk_eye_still_and_far() -> void:
+	var r := _run("archer", {"quick_arrow": 1})
+	_check(not r.passive_active(), "Mắt ưng is on before standing still")
+	r.still_t = 1.2
+	_check(r.passive_active(), "Mắt ưng is off after 1.2 s still")
+	_check(is_equal_approx(r.range_mul(), 1.2), "standing still: range x1.2, got %s" % r.range_mul())
+	r.still_t = 0.0
+	_check(is_equal_approx(r.range_mul(), 1.0), "moving: range changed")
+	var k := _run("knight", {"blade_arc": 1})
+	_check(is_equal_approx(k.range_mul(), 1.0), "knight range changed by Mắt ưng")
+	r.free()
+	k.free()
+
+
+func test_archer_far_hit_deals_more() -> void:
+	var monsters := {"blob": {"sprite": "blob", "behaviour": "chase", "hp": 1000.0, "damage": 1.0, "speed": 0.0, "xp": 1.0, "scale": 2}}
+	var cfg := {"world": {"spawn_ring": [700.0, 800.0], "despawn_distance": 1300.0, "arena_half": 1400.0},
+		"separation": {"cell": 48.0, "push": 60.0}, "max_enemies": 50}
+	var sheet := SpriteSheet.from_meta("blob", {"frames": 1, "frame_size": [24, 24], "fps": 8.0, "anchor": [12.0, 12.0],
+		"body": {"anim": "default", "center": [12.0, 12.0], "radius": 5.0}})
+	var e := Enemies.new(monsters, cfg, {"blob": sheet}, 1)
+	e.far_mul = 0.3
+	e.far_px = 200.0
+	e.spawn("blob", Vector2(300, 0))   # far
+	e.spawn("blob", Vector2(50, 0))    # near
+	e.step(0.0001, Vector2.ZERO, Vector2.ZERO)
+	e.hit_circle(Vector2(300, 0), 20.0, 10.0, 0.0, "quick_arrow")
+	e.hit_circle(Vector2(50, 0), 20.0, 10.0, 0.0, "quick_arrow")
+	var far_dmg := 1000.0 - e.hp[0]
+	var near_dmg := 1000.0 - e.hp[1]
+	_check(is_equal_approx(far_dmg, near_dmg * 1.3), "far hit %s should be 1.3x the near hit %s" % [far_dmg, near_dmg])
+	var before := e.hp[0]
+	e.hit_circle(Vector2(300, 0), 20.0, 10.0, 0.0, "event.root_snare")   # the map's damage: no Mắt ưng bonus
+	_check(is_equal_approx(before - e.hp[0], near_dmg), "an event hit got the far bonus: %s vs %s" % [before - e.hp[0], near_dmg])

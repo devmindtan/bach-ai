@@ -276,7 +276,7 @@ func _draw_passive(c: Vector2) -> void:
 	var tex := UiIcons.texture(String(pv.get("id", "")))
 	if tex == null:
 		return
-	var on: bool = run.passive_active() or not pv.has("hp_below")
+	var on: bool = run.passive_active() or not (pv.has("hp_below") or pv.has("still_s"))   # lit while it is on
 	var r := Rect2(c - Vector2(13, 13), Vector2(26, 26))
 	if on:
 		var col := Color(String(run.class_data.get("color", "ffd36b")))
