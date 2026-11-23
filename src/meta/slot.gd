@@ -27,6 +27,7 @@ var shards := 0               # Mảnh thẻ: buys card-tree nodes (design/skill
 var card_trees := {}          # card id -> {node id -> rank} (CardTree)
 var decks: Array = []         # up to 3 decks: {name, cards: [ids]} (design/skill-tree-v2.md §2)
 var deck_active := 0
+var endless_best := 0.0       # longest Vô tận run, seconds (design/endless.md)
 var bestiary := {}            # monster id -> times killed (Album: a monster unlocks at its first kill)
 var gacha_log := {}           # gacha banner id -> [{t, id, rarity, dup, gold}], oldest first (Lịch sử quay)
 var profile: Profile
@@ -63,11 +64,19 @@ func record_kills(kills: Dictionary) -> void:
 		bestiary[m] = int(bestiary.get(m, 0)) + int(kills[m])
 
 
+## Keeps the longest Vô tận time ([param seconds]); true when it is a new record.
+func record_endless(seconds: float) -> bool:
+	if seconds <= endless_best:
+		return false
+	endless_best = seconds
+	return true
+
+
 func to_dict() -> Dictionary:
 	return {"version": VERSION, "id": id, "name": name, "class": cls, "best": best, "wins": wins,
 		"gold": gold, "gems": gems, "essence": essence, "pills": pills, "tree": tree,
 		"challenge_wins": challenge_wins, "pity": pity, "gacha_log": gacha_log, "daily": daily,
-		"shards": shards, "card_trees": card_trees, "bestiary": bestiary, "decks": decks, "deck_active": deck_active,
+		"shards": shards, "card_trees": card_trees, "bestiary": bestiary, "endless_best": endless_best, "decks": decks, "deck_active": deck_active,
 		"profile": profile.to_dict()}
 
 
@@ -95,6 +104,7 @@ func from_dict(d: Dictionary) -> String:
 	shards = int(d.get("shards", 0))
 	card_trees = d.get("card_trees", {})
 	bestiary = d.get("bestiary", {})
+	endless_best = float(d.get("endless_best", 0.0))
 	decks = Array(d.get("decks", []))
 	deck_active = int(d.get("deck_active", 0))
 	profile.from_dict(d.get("profile", {}), cls)

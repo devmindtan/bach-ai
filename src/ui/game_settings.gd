@@ -41,6 +41,7 @@ var hero := "knight"                # the class chosen in the lobby (classes.jso
 var slot_id := ""                   # the selected character slot ("" = legacy profile)
 var stage_target := 1               # the stage the lobby will start
 var card_target := ""               # the card the card-tree screen opens (design/ux/card-tree.md)
+var endless_target := false        # the stage screen chose Vô tận (design/endless.md)
 var challenge_target := ""          # a challenge chosen on the stage screen (design/challenge.md); "" = a stage
 var _fixed := false
 var _profile: Profile                 # screenshots / tests: defaults, never touch the window

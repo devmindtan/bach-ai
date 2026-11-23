@@ -106,7 +106,8 @@ func _draw() -> void:
 	var cx := w * 0.5 - cw * 0.5
 	UiIcons.draw(self, "clock", Vector2(cx - 22, ROW), 2.0)
 	_text(font, Vector2(cx, _baseline(ROW, 28)), clock, 28)
-	_text(font, Vector2(cx + cw + 8, _baseline(ROW, 28)), "/ %02d:%02d" % [total / 60, total % 60], 16, MUTED)
+	var tail := ("· Vòng %d" % (run.endless_cycle() + 1)) if run.endless else "/ %02d:%02d" % [total / 60, total % 60]
+	_text(font, Vector2(cx + cw + 8, _baseline(ROW, 28)), tail, 16, MUTED)
 	# kills and gold: icon + number pairs, right-aligned
 	var gold := str(run.gold)
 	var kills := str(run.enemies.total_kills)

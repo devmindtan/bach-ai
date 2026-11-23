@@ -950,6 +950,9 @@ func show_end(won: bool) -> void:
 		if String(rr.get("challenge", "")) != "":   # a challenge: its name, not the base stage
 			var cname := String(Challenges.load_default().get_def(String(rr["challenge"])).get("name", ""))
 			title = ("Vượt thử thách: %s!" % cname) if won else ("Thất bại · %s" % cname)
+		if bool(rr.get("endless", false)):   # Vô tận: how long and how many Vòng (design/endless.md)
+			var et := int(rr.get("endless_time", 0.0))
+			title = "Vô tận · %02d:%02d · Vòng %d" % [et / 60, et % 60, int(rr.get("endless_cycle", 1))]
 	var root := _open(title)
 	var t := int(run.clock)
 	var row := HBoxContainer.new()
@@ -970,6 +973,8 @@ func show_end(won: bool) -> void:
 			parts.append("Đá +%d%s" % [int(rr.get("gems", 0)), " (lần đầu)" if bool(rr.get("first", false)) else ""])
 		else:
 			parts.append("Giữ lại vàng nhặt: +%d" % int(rr.get("collected", 0)))
+		if bool(rr.get("endless_record", false)):
+			parts.insert(0, "Kỷ lục mới!")
 		if int(rr.get("essence", 0)) > 0:
 			parts.append("Tinh hoa +%d" % int(rr["essence"]))
 		if int(rr.get("shards", 0)) > 0:   # design/skill-tree-v2.md §4

@@ -49,6 +49,8 @@ var run_result: Dictionary = {}
 var _boss_dead := false
 var _boss_music := false                # the boss song is on (a boss is alive)
 var _boss_check_t := 0.0
+var endless := false         # Chế độ Vô tận (design/endless.md); --endless for shots
+var _endless: Endless
 var challenge_id := ""        # playing a challenge (design/challenge.md); --challenge=ID for shots
 var _win_on_boss := true
 var boss_stage := false
@@ -293,8 +295,14 @@ func _ready() -> void:
 		if not _stage_arg_set:
 			stage_number = clampi(prefs.stage_target, 1, stages.count())
 	stage_number = clampi(stage_number, 1, stages.count())
-	if challenge_id == "":
+	if challenge_id == "" and not endless:
 		challenge_id = prefs.challenge_target
+	endless = endless or prefs.endless_target
+	if endless:   # Vô tận (design/endless.md): the highest won non-boss stage, looping in Vòng
+		_endless = Endless.load_default()
+		challenge_id = ""
+		if not _stage_arg_set:
+			stage_number = _endless.base_stage(playing_slot.best if playing_slot != null else prefs.preview_best, stages)
 	if challenge_id != "" and not Challenges.load_default().get_def(challenge_id).is_empty():
 		stage = Challenges.load_default().build(challenge_id)   # a stage with the challenge's rules
 		stage_number = int(Challenges.load_default().get_def(challenge_id).get("base", stage_number))
@@ -638,7 +646,10 @@ func _tick(dt: float) -> void:
 			_panels.show_character()
 		return
 	_move_player(dt)
-	if _outro_t < 0.0:   # no new monster once the boss has fallen
+	if _outro_t < 0.0 and endless:   # Vô tận: the waves start again at each Vòng
+		for span: Array in Endless.spans(clock - dt, clock, duration):
+			_spawn(float(span[0]), float(span[1]))
+	elif _outro_t < 0.0:   # no new monster once the boss has fallen
 		_spawn(clock - dt, clock)
 	challenges.step(dt)
 	region_ev.step(dt)
@@ -649,8 +660,8 @@ func _tick(dt: float) -> void:
 			_absorb_fx.remove_at(i)
 	_step_pools_hazard(dt)
 	_step_bleed(dt)
-	enemies.spawn_hp_mul = time_mul(clock, "hp")   # monsters grow stronger each minute, silently (time_scale)
-	var contact := enemies.step(dt, player_pos, player_pos + _hit_center) * time_mul(clock, "damage")
+	enemies.spawn_hp_mul = time_mul(wave_clock(), "hp") * endless_mul("hp")   # stronger each minute (time_scale) / Vòng
+	var contact := enemies.step(dt, player_pos, player_pos + _hit_center) * time_mul(wave_clock(), "damage") * endless_mul("damage")
 	if god and contact > 0.0 and invuln <= 0.0:   # balance runs: count what would have been taken, keep the hp
 		damage_taken += _account_hit(contact)   # god (balance runs): counted by source too
 		invuln = float(cfg.get("player", {}).get("hit_invuln", 0.6))
@@ -2103,6 +2114,23 @@ func _after_pick() -> void:
 
 ## Monster multiplier [param what] ("hp" | "damage") at run time [param t] s: 1 + step * full minute marks
 ## passed (run_config time_scale, user 2026-11-20).
+## The clock the waves and the per-minute growth read: the run clock, or in Vô tận its time inside this Vòng.
+func wave_clock() -> float:
+	return fposmod(clock, maxf(1.0, duration)) if endless else clock
+
+
+## Vòng (0-based) of a Vô tận run; 0 otherwise.
+func endless_cycle() -> int:
+	return Endless.cycle(clock, duration) if endless else 0
+
+
+## Vô tận's per-Vòng monster growth ([param what]: "hp" or "damage"); 1 outside it.
+func endless_mul(what: String) -> float:
+	if not endless or _endless == null:
+		return 1.0
+	return _endless.hp_mul(endless_cycle()) if what == "hp" else _endless.damage_mul(endless_cycle())
+
+
 func time_mul(t: float, what: String) -> float:
 	return time_scale_mul(cfg.get("time_scale", {}), stages.region(stage_number).get("time_scale", {}) if stages != null else {},
 		stage_number, t, what)
@@ -2170,6 +2198,8 @@ func outro_left() -> float:
 ## True when the stage is won: a boss stage only by killing its boss (user 2026-11-21: the boss arrives
 ## after minute 5 and the timer alone no longer wins), any other stage at its duration.
 func stage_won() -> bool:
+	if endless:   # Vô tận never ends by the clock: only by dying
+		return false
 	if boss_stage:
 		return _boss_dead
 	return clock >= duration or (_boss_dead and _win_on_boss)
@@ -2432,12 +2462,19 @@ func _finish(won: bool) -> void:
 			run_result["first"] = bool(r.get("first", false))
 		else:
 			playing_slot.gold += gold   # Thua: chỉ giữ vàng đã nhặt
+			if endless:
+				run_result["endless_record"] = playing_slot.record_endless(clock)
 		record_daily(playing_slot, won)
 		if enemies != null:
 			playing_slot.record_kills(enemies.kills_kind)   # Album (bách khoa): first kill unlocks a monster
 		prefs.slot_store().save(playing_slot)
 	run_result["next"] = won and challenge_id == "" and stage_number < (stages.count() if stages != null else 30)
 	run_result["challenge"] = challenge_id
+	run_result["endless"] = endless
+	run_result["endless_time"] = clock if endless else 0.0
+	run_result["endless_cycle"] = endless_cycle() + 1
+	if endless:
+		run_result["next"] = false
 	run_result["best"] = playing_slot.best if playing_slot != null else 0
 
 

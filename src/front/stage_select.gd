@@ -47,12 +47,19 @@ func _ready() -> void:
 	_species = GameData.load_json("res://assets/data/species.json")
 	_n = clampi(prefs.stage_target, 1, _slot.unlocked(_stages.count()))
 	_challenges = Challenges.load_default()
+	_endless = Endless.load_default()
+	if prefs.endless_target and _endless.is_open(_slot):
+		_mode = "endless"
 	if prefs.challenge_target != "" and _challenges.mode_open(_slot):
 		_mode = "trials"
 		_ch = prefs.challenge_target
 	for a in OS.get_cmdline_user_args():
 		if a == "--trials":   # shots of the challenge mode
 			_mode = "trials"
+		elif a == "--endless-mode":   # shots of Vô tận
+			_mode = "endless"
+	if _mode == "endless" and not _endless.is_open(_slot):   # locked: never open it, even from a flag
+		_mode = "campaign"
 	if _ch == "":
 		_ch = _challenges.ids()[0]
 	for a in OS.get_cmdline_user_args():
@@ -94,7 +101,7 @@ func _build() -> void:
 	root.size = get_viewport_rect().size
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_layer.add_child(root)
-	var title := UiKit.label("Chọn ải" if _mode == "campaign" else "Thử thách", 34, UiKit.GOLD)
+	var title := UiKit.label({"campaign": "Chọn ải", "trials": "Thử thách", "endless": "Vô tận"}.get(_mode, "Chọn ải"), 34, UiKit.GOLD)
 	title.position = Vector2(40, 24)
 	root.add_child(title)
 	var who := UiKit.label("%s  ·  đã vượt ải %d" % [_slot.name, _slot.best], 15, UiKit.MUTED)
@@ -118,9 +125,16 @@ func _build() -> void:
 		t_open, _mode == "trials", func() -> void:
 		_mode = "trials"
 		_rebuild()))
-	modes.add_child(_mode_button("Vô tận", "Sắp có", false, false, func() -> void: pass))
+	var e_open := _endless.is_open(_slot)
+	modes.add_child(_mode_button("Vô tận", (("Kỷ lục %s" % _mmss(_slot.endless_best)) if _slot.endless_best > 0.0 else "Chưa có kỷ lục") if e_open else "Mở khi vượt ải %d" % _endless.unlock(),
+		e_open, _mode == "endless", func() -> void:
+		_mode = "endless"
+		_rebuild()))
 	if _mode == "trials":
 		_build_trials(root)
+		return
+	if _mode == "endless":
+		_build_endless(root)
 		return
 
 	# middle: the stage grid, a row per region
@@ -391,9 +405,67 @@ func _start() -> void:
 	if _n > _slot.unlocked(_stages.count()):
 		return
 	Prefs.current().challenge_target = ""
+	Prefs.current().endless_target = false
 	Prefs.current().set_value("stage_target", _n)
 	Sfx.play("ui_start")
 	get_tree().change_scene_to_file(RUN_SCENE)
+
+
+# --- Vô tận (design/endless.md) -------------------------------------------------------
+
+var _endless: Endless
+
+
+static func _mmss(sec: float) -> String:
+	var t := int(sec)
+	return "%02d:%02d" % [t / 60, t % 60]
+
+
+## The rules in the middle, the stage it plays and the record on the right, then Bắt đầu (the Thử thách layout).
+func _build_endless(root: Control) -> void:
+	var col := VBoxContainer.new()
+	col.position = Vector2(284, 104)
+	col.custom_minimum_size = Vector2(614, 0)
+	col.add_theme_constant_override("separation", 12)
+	root.add_child(col)
+	var base := _endless.base_stage(_slot.best, _stages)
+	var rules := UiKit.panel(Color(0.09, 0.08, 0.13, 0.9), 18)
+	rules.custom_minimum_size = Vector2(614, 0)
+	col.add_child(rules)
+	var rv := VBoxContainer.new()
+	rv.add_theme_constant_override("separation", 8)
+	rules.add_child(rv)
+	rv.add_child(UiKit.label("Sống càng lâu càng tốt", 24, UiKit.GOLD))
+	for line in ["Chơi lại ải %d (%s) không giới hạn thời gian." % [base, String(_stages.region(base).get("name", ""))],
+			"Hết %s là sang Vòng mới: quái quay lại từ đầu, máu +%d%%, sát thương +%d%% mỗi vòng." % [
+				_mmss(float(_stages.load_stage(base).get("duration", 300.0))), roundi(float(_endless.data.get("cycle_hp", 1.0)) * 100),
+				roundi(float(_endless.data.get("cycle_damage", 0.25)) * 100)],
+			"Không có boss, không tính vượt ải. Giữ vàng, Tinh hoa và Mảnh thẻ đã nhặt."]:
+		var l := UiKit.label("· " + line, 17, UiKit.TEXT)
+		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		l.custom_minimum_size = Vector2(578, 0)
+		rv.add_child(l)
+	var panel := UiKit.panel(Color(0.09, 0.08, 0.13, 0.96), 18)
+	panel.position = Vector2(root.size.x - 40 - 330, 104)
+	panel.custom_minimum_size = Vector2(330, 500)
+	panel.size = Vector2(330, 500)
+	root.add_child(panel)
+	var pv := VBoxContainer.new()
+	pv.add_theme_constant_override("separation", 10)
+	panel.add_child(pv)
+	pv.add_child(UiKit.label("Vô tận", 30, UiKit.TEXT))
+	pv.add_child(UiKit.label("Ải %d · %s" % [base, String(_stages.region(base).get("name", ""))], 18, UiKit.GOLD))
+	pv.add_child(UiKit.label("Kỷ lục", 16, UiKit.MUTED))
+	pv.add_child(UiKit.label(_mmss(_slot.endless_best) if _slot.endless_best > 0.0 else "Chưa có", 40, UiKit.TEXT))
+	var start := UiKit.button("Bắt đầu  ▶", func() -> void:
+		Prefs.current().challenge_target = ""
+		Prefs.current().endless_target = true
+		Sfx.play("ui_start")
+		get_tree().change_scene_to_file(RUN_SCENE), Vector2(330, 64), 26, UiKit.PRIMARY)
+	start.set_meta("sfx", "")
+	start.position = Vector2(root.size.x - 40 - 330, 616)
+	root.add_child(start)
+	start.call_deferred("grab_focus")
 
 
 # --- challenge mode (design/challenge.md) ------------------------------------------
@@ -434,6 +506,7 @@ func _build_trials(root: Control) -> void:
 	_challenge_detail(panel)
 	var start := UiKit.button("Bắt đầu  ▶", func() -> void:
 		Prefs.current().challenge_target = _ch
+		Prefs.current().endless_target = false
 		Sfx.play("ui_start")
 		get_tree().change_scene_to_file(RUN_SCENE), Vector2(330, 64), 26, UiKit.PRIMARY)
 	start.set_meta("sfx", "")   # ui_start instead of a click

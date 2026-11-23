@@ -336,7 +336,7 @@ Trước mỗi nhóm: tham khảo ≥ 2 game cùng thể loại, ghi nguồn và
   cho phép, ghi lại để nâng template không vỡ.
 
 ## Sau đó
-- Chế độ endgame (ải vô tận, thử thách tuần, boss rush), thêm class, mùa sự kiện.
+- Chế độ endgame (ải vô tận ✅ 2026-11-23 design/endless.md; thử thách tuần, boss rush), thêm class, mùa sự kiện.
 
 ---
 

@@ -1,0 +1,6 @@
+{
+  "_doc": "Chế độ Vô tận (design/endless.md, 2026-11-23; like Vampire Survivors' endless cycles): plays the slot's highest won non-boss stage (its region and waves) with no end. When the clock passes the stage's duration the waves start again from 0 as a new Vòng; each Vòng adds cycle_hp to monster hp and cycle_damage to their damage (x(1 + rate x vòng)). No boss, no stage progress; ends on death; keeps the gold, Tinh hoa and Mảnh thẻ picked up; the slot keeps its longest time. Opens when the slot has won stage `unlock`.",
+  "unlock": 10,
+  "cycle_hp": 1.0,
+  "cycle_damage": 0.25
+}
