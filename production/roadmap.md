@@ -332,7 +332,7 @@ Trước mỗi nhóm: tham khảo ≥ 2 game cùng thể loại, ghi nguồn và
 **K. Tinh gọn quy trình phát triển (DX)**
 - K1. ✅ 2026-11-23 (đóng gói còn 1,59 MB ≈ 400k token; ước theo byte/4, chưa chạy repomix) `.repomixignore` ở game (và repo gốc nếu dùng): bỏ `.claude/docs/`, `production/qa/evidence/`, `builds/`,
   `graphify-out/`, ảnh/strip sprite; đo số token trước/sau khi đóng gói.
-- K2. Soát `.claude/` (agents, skills của template) mà dự án solo không dùng; chỉ bỏ những gì `gamekit tidy` / UPGRADING
+- K2. ✅ 2026-11-23 soát: `.claude/` ~6,4 MB (skills 2,6 MB / 78, docs 1,2 MB, scripts 0,9 MB, agents 39); `gamekit tidy` đã bỏ phần engine khác; phần còn lại đã bị `.repomixignore` loại khi đóng gói cho AI → không xoá thêm (giữ nâng template an toàn). Ý cũ: Soát `.claude/` (agents, skills của template) mà dự án solo không dùng; chỉ bỏ những gì `gamekit tidy` / UPGRADING
   cho phép, ghi lại để nâng template không vỡ.
 
 ## Sau đó
