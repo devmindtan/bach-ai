@@ -93,6 +93,12 @@ func cast_time(tier: int) -> float:
 	return d
 
 
+## Draw scale of [param sh] at world scale [param sc]: x its px_scale, as Run._add_fx does (double-density
+## effects are drawn at half: same size on screen).
+static func _dens(sh: SpriteSheet, sc: float) -> float:
+	return sc * float(sh.meta.get("px_scale", 1.0))
+
+
 var _vis := {}
 
 
@@ -139,7 +145,7 @@ func _draw() -> void:
 	var sc := sprite_scale * float(skill.get("size_mul", 1.0)) * area_mul
 	var view := 1.0
 	if sh != null:
-		while _visible_h(sh) * sc * view > ground - 8.0 and view > 0.25:
+		while _visible_h(sh) * _dens(sh, sc) * view > ground - 8.0 and view > 0.25:
 			view *= 0.5
 	draw_set_transform(Vector2(0, ground * (1.0 - view)), 0.0, Vector2(view, view))
 	var w := size.x / view
@@ -166,30 +172,30 @@ func _draw() -> void:
 		match kind:
 			"projectile":
 				if local < TRAVEL:
-					sh.draw(self, a, local, (hero + body).lerp(target, local / TRAVEL), sc)
+					sh.draw(self, a, local, (hero + body).lerp(target, local / TRAVEL), _dens(sh, sc))
 				elif local < dur:
 					var imp := _impact(tier)
 					if imp != null:
-						imp.draw(self, imp.animation_names()[0], local - TRAVEL, target, sc)
+						imp.draw(self, imp.animation_names()[0], local - TRAVEL, target, _dens(imp, sc))
 					hit = local < TRAVEL + 0.25
 			"self":
 				if local < dur and not skill.has("distance"):
-					sh.draw(self, a, local, hero + body, sc)
+					sh.draw(self, a, local, hero + body, _dens(sh, sc))
 					hit = fposmod(local, 0.25) < 0.08   # the whirlwind ticks on the monster beside it
 			"melee":
 				if local < dur:
 					var off := float(skill.get("offset", 30.0)) * sc / sprite_scale
-					sh.draw(self, a, local, hero + body + Vector2(off, 0), sc)
+					sh.draw(self, a, local, hero + body + Vector2(off, 0), _dens(sh, sc))
 					hit = local > dur * 0.3 and local < dur * 0.7
 			_:
 				if local < dur:
-					sh.draw(self, a, local, dummy, sc)
+					sh.draw(self, a, local, dummy, _dens(sh, sc))
 					hit = local > dur * 0.35 and local < dur * 0.6
 	var dashing := skill.has("distance") and local < cast_time(tier)
 	if hs != null:
 		if dashing and sh != null:   # the dash: the hero sprite's own dash animation, sliding toward the dummy
 			var k := clampf(local / maxf(0.01, cast_time(tier)), 0.0, 1.0)
-			sh.draw(self, anim_of(skill, sh), local, hero + Vector2(float(skill.get("distance", 120.0)) * k, 0), sprite_scale)
+			sh.draw(self, anim_of(skill, sh), local, hero + Vector2(float(skill.get("distance", 120.0)) * k, 0), _dens(sh, sprite_scale))
 		else:
 			hs.draw(self, hs.animation_names()[0], t, hero, sprite_scale)
 	if ds != null:
