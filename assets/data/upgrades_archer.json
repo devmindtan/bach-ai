@@ -1,0 +1,308 @@
+{
+  "_doc": "Cung thủ's in-run cards and skills (design/archer.md, user chose option C and the kit 2026-11-23). Same format as upgrades_mage.json. Step 2: Tên nhanh + Lướt; the other skills come one by one.",
+  "upgrades": [
+    {
+      "id": "quick_arrow",
+      "kind": "skill",
+      "name": "Tên nhanh",
+      "desc": "Bắn mũi tên về phía quái gần nhất. Mỗi cấp: +20% sát thương; cấp 3: 2 mũi; cấp 5: 3 mũi.",
+      "max_level": 5,
+      "weight": 3,
+      "effects": {
+        "skill_damage.quick_arrow": {
+          "mul": 0.2
+        }
+      },
+      "rarity": "common",
+      "element": "physical"
+    },
+    {
+      "id": "dash",
+      "kind": "skill",
+      "name": "Lướt",
+      "desc": "Bấm Space / Shift (tay cầm RB) để lướt theo hướng đang đi: không bị trúng đòn khi lướt, chém quái trên đường. Mỗi cấp: -12% hồi lướt, +20% sát thương. Cấp 3: gây choáng.",
+      "max_level": 5,
+      "weight": 2,
+      "effects": {
+        "skill_damage.dash": {
+          "mul": 0.2
+        },
+        "skill_cd.dash": {
+          "mul": -0.12
+        }
+      },
+      "rarity": "common",
+      "element": "physical"
+    },
+    {
+      "id": "steady_hand",
+      "kind": "stat",
+      "name": "Tay vững",
+      "desc": "-10% hồi chiêu (tổng giảm tối đa 40%).",
+      "max_level": 0,
+      "weight": 4,
+      "effects": {
+        "cooldown": {
+          "mul": -0.1
+        }
+      },
+      "rarity": "common"
+    },
+    {
+      "id": "sharp_arrows",
+      "kind": "stat",
+      "name": "Tên sắc",
+      "desc": "+15% sát thương mọi chiêu.",
+      "max_level": 0,
+      "weight": 4,
+      "effects": {
+        "damage": {
+          "mul": 0.15
+        }
+      },
+      "rarity": "rare"
+    },
+    {
+      "id": "vitality",
+      "kind": "stat",
+      "name": "Sinh lực",
+      "desc": "+20 máu tối đa và hồi đầy phần thêm.",
+      "max_level": 0,
+      "weight": 3,
+      "effects": {
+        "max_hp": {
+          "add": 20.0
+        }
+      },
+      "rarity": "common"
+    },
+    {
+      "id": "swift",
+      "kind": "stat",
+      "name": "Nhẹ chân",
+      "desc": "+10% tốc độ chạy.",
+      "max_level": 0,
+      "weight": 3,
+      "effects": {
+        "move_speed": {
+          "mul": 0.1
+        }
+      },
+      "rarity": "common"
+    },
+    {
+      "id": "magnet",
+      "kind": "stat",
+      "name": "Nam châm",
+      "desc": "+40% tầm hút vật phẩm.",
+      "max_level": 0,
+      "weight": 2,
+      "effects": {
+        "magnet": {
+          "mul": 0.4
+        }
+      },
+      "rarity": "common"
+    },
+    {
+      "id": "regen",
+      "kind": "stat",
+      "name": "Hồi phục",
+      "desc": "Hồi 0.5 máu mỗi giây.",
+      "max_level": 0,
+      "weight": 2,
+      "effects": {
+        "regen": {
+          "add": 0.5
+        }
+      },
+      "rarity": "common"
+    },
+    {
+      "id": "extra_arrow",
+      "kind": "stat",
+      "name": "Thêm tên",
+      "desc": "Chọn một chiêu: chiêu đó +1 số lượng (thêm mũi tên). Cộng dồn được vào cùng chiêu.",
+      "max_level": 3,
+      "weight": 2,
+      "effects": {},
+      "pick_skill": 1,
+      "rarity": "epic"
+    },
+    {
+      "id": "sp_ranger_boots",
+      "name": "Gió đuổi",
+      "kind": "stat",
+      "rarity": "epic",
+      "max_level": 1,
+      "weight": 4,
+      "desc": "Khi bị đánh: Rune tốc độ 3 giây (6 giây một lần).",
+      "special": {
+        "kind": "hit_buff",
+        "name": "Gió đuổi",
+        "fx": "ward-wind",
+        "buff": "haste_rune",
+        "time": 3.0,
+        "cooldown": 6.08,
+        "desc": "Khi bị đánh: Rune tốc độ 3 giây (6 giây một lần)."
+      },
+      "effects": {},
+      "unique": true
+    },
+    {
+      "id": "sp_ranger_gloves",
+      "name": "Nhịp săn",
+      "kind": "stat",
+      "rarity": "epic",
+      "max_level": 1,
+      "weight": 4,
+      "desc": "Mỗi 21 quái hạ được: hồi 10% máu tối đa.",
+      "special": {
+        "kind": "kill_proc",
+        "name": "Nhịp săn",
+        "fx": "ward-heal",
+        "every_kills": 21,
+        "heal_frac": 0.1,
+        "desc": "Mỗi 21 quái hạ được: hồi 10% máu tối đa."
+      },
+      "effects": {},
+      "unique": true
+    },
+    {
+      "id": "sp_ranger_cloak",
+      "name": "Áo lá",
+      "kind": "stat",
+      "rarity": "epic",
+      "max_level": 1,
+      "weight": 4,
+      "desc": "Mỗi 11,4 giây: giáp ảo +12 trong 3 giây (giảm 44% sát thương mỗi đòn).",
+      "special": {
+        "kind": "shield",
+        "name": "Áo lá",
+        "every": 11.4,
+        "buff": "phantom_ward",
+        "time": 3.0,
+        "desc": "Mỗi 11,4 giây: giáp ảo +12 trong 3 giây (giảm 44% sát thương mỗi đòn)."
+      },
+      "effects": {},
+      "unique": true
+    },
+    {
+      "id": "sp_ranger_ring",
+      "name": "Vòng tên",
+      "kind": "stat",
+      "rarity": "legendary",
+      "max_level": 1,
+      "weight": 4,
+      "desc": "Mỗi 4,6 giây: một vòng tên bắn tung quanh người gây 300% sát thương.",
+      "special": {
+        "kind": "pulse",
+        "name": "Vòng tên",
+        "fx": "ward-pulse",
+        "every": 4.56,
+        "radius": 150.0,
+        "damage_mul": 3.0,
+        "knockback": 160.0,
+        "desc": "Mỗi 4,6 giây: một vòng tên bắn tung quanh người gây 300% sát thương."
+      },
+      "effects": {},
+      "unique": true
+    },
+    {
+      "id": "sp_ranger_hood",
+      "name": "Tên sấm",
+      "kind": "stat",
+      "rarity": "legendary",
+      "max_level": 1,
+      "weight": 4,
+      "desc": "Mỗi 6 giây: sét đánh 6 quái gần nhất (170% sát thương), lan sang 2 quái bên cạnh.",
+      "special": {
+        "kind": "chain_shock",
+        "name": "Tên sấm",
+        "fx": "ward-shock",
+        "strike_fx": "ward-shock-strike",
+        "every": 6.08,
+        "count": 6,
+        "damage_mul": 1.7,
+        "chain": 2,
+        "radius": 120.0,
+        "desc": "Mỗi 6 giây: sét đánh 6 quái gần nhất (170% sát thương), lan sang 2 quái bên cạnh."
+      },
+      "effects": {},
+      "unique": true
+    },
+    {
+      "id": "sp_ranger_bow",
+      "name": "Mắt thần",
+      "kind": "stat",
+      "rarity": "legendary",
+      "max_level": 1,
+      "weight": 4,
+      "desc": "Mỗi 9 giây: mọi chiêu hồi chiêu xong ngay.",
+      "special": {
+        "kind": "reset_cd",
+        "name": "Mắt thần",
+        "fx": "ward-reset",
+        "every": 9.12,
+        "desc": "Mỗi 9 giây: mọi chiêu hồi chiêu xong ngay."
+      },
+      "effects": {},
+      "unique": true
+    }
+  ],
+  "skills": {
+    "quick_arrow": {
+      "sprite": "arrow-a",
+      "cast": "projectile",
+      "anim_prefix": "fly_",
+      "damage_mul": 0.9,
+      "size_mul": 1.0,
+      "cooldown": 0.8,
+      "speed": 520.0,
+      "pierce": 0,
+      "count": [
+        1,
+        1,
+        2,
+        2,
+        3
+      ],
+      "duration": 1.0
+    },
+    "dash": {
+      "sprite": "ranger",
+      "anim": "dash",
+      "cast": "active",
+      "damage_mul": 0.6,
+      "cooldown": 3.0,
+      "distance": 130.0,
+      "time": 0.18,
+      "hit_radius": 26.0,
+      "trail_tiers": [
+        {
+          "count": 3,
+          "color": "#a6d9ff"
+        },
+        {
+          "count": 4,
+          "color": "#a6d9ff"
+        },
+        {
+          "count": 4,
+          "color": "#7fe8ff",
+          "streaks": true
+        },
+        {
+          "count": 5,
+          "color": "#ffe07a",
+          "streaks": true
+        },
+        {
+          "count": 6,
+          "color": "#fff6c8",
+          "streaks": true
+        }
+      ]
+    }
+  }
+}

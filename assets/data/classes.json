@@ -17,9 +17,12 @@
     "role": "Cận chiến · Lì đòn",
     "color": "#d94a4a",
     "passive": {
-      "id": "unyielding", "name": "Bất khuất",
+      "id": "unyielding",
+      "name": "Bất khuất",
       "desc": "Khi máu dưới 30%: +25% sát thương, nhận ít hơn 30% sát thương.",
-      "hp_below": 0.3, "damage_mul": 0.25, "taken_mul": -0.3
+      "hp_below": 0.3,
+      "damage_mul": 0.25,
+      "taken_mul": -0.3
     },
     "start_skills": {
       "blade_arc": 1
@@ -43,7 +46,8 @@
     "role": "Tầm xa · Phép thuật",
     "color": "#8b5cf6",
     "passive": {
-      "id": "elemental_resonance", "name": "Cộng hưởng nguyên tố",
+      "id": "elemental_resonance",
+      "name": "Cộng hưởng nguyên tố",
       "desc": "Quái đang bị làm chậm, choáng, đóng băng, chảy máu hoặc bỏng nhận thêm 20% sát thương.",
       "vs_status_mul": 0.2
     },
@@ -51,5 +55,35 @@
       "arcane_bolt": 1
     },
     "upgrades": "upgrades_mage.json"
+  },
+  "archer": {
+    "name": "Cung thủ",
+    "sprite": "ranger",
+    "stats": {
+      "max_hp": 85.0,
+      "move_speed": 155.0,
+      "damage": 19.0,
+      "cooldown": 1.0,
+      "area": 1.0,
+      "regen": 0.0,
+      "armor": 0.0,
+      "magnet": 1.1,
+      "amount": 0.0
+    },
+    "role": "Tầm xa · Cơ động",
+    "color": "#2f8f6e",
+    "passive": {
+      "id": "hawk_eye",
+      "name": "Mắt ưng",
+      "desc": "Đòn trúng quái ở xa hơn 200 px: +30% sát thương. Đứng yên 1 giây: tầm bắn +20%.",
+      "far_px": 200.0,
+      "far_mul": 0.3,
+      "still_s": 1.0,
+      "still_range_mul": 0.2
+    },
+    "start_skills": {
+      "quick_arrow": 1
+    },
+    "upgrades": "upgrades_archer.json"
   }
 }

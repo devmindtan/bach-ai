@@ -9,7 +9,9 @@
       "sp_star_pants",
       "sp_star_shoes",
       "bloodthirst",
-      "twin_cast"
+      "twin_cast",
+      "sp_ranger_boots",
+      "sp_ranger_gloves"
     ],
     "20": [
       "sp_aegis_helm",
@@ -17,7 +19,9 @@
       "sp_star_bracer",
       "sp_star_robe",
       "guardian",
-      "wide_choice"
+      "wide_choice",
+      "sp_ranger_cloak",
+      "sp_ranger_ring"
     ],
     "30": [
       "sp_aegis_chest",
@@ -25,7 +29,9 @@
       "sp_star_staff",
       "sp_star_hat",
       "undying",
-      "head_start"
+      "head_start",
+      "sp_ranger_hood",
+      "sp_ranger_bow"
     ]
   },
   "rewards": {
@@ -127,6 +133,36 @@
       "kind": "card",
       "class": "mage",
       "card": "sp_star_hat"
+    },
+    "sp_ranger_boots": {
+      "kind": "card",
+      "class": "archer",
+      "card": "sp_ranger_boots"
+    },
+    "sp_ranger_gloves": {
+      "kind": "card",
+      "class": "archer",
+      "card": "sp_ranger_gloves"
+    },
+    "sp_ranger_cloak": {
+      "kind": "card",
+      "class": "archer",
+      "card": "sp_ranger_cloak"
+    },
+    "sp_ranger_ring": {
+      "kind": "card",
+      "class": "archer",
+      "card": "sp_ranger_ring"
+    },
+    "sp_ranger_hood": {
+      "kind": "card",
+      "class": "archer",
+      "card": "sp_ranger_hood"
+    },
+    "sp_ranger_bow": {
+      "kind": "card",
+      "class": "archer",
+      "card": "sp_ranger_bow"
     }
   }
 }
