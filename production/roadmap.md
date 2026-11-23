@@ -335,6 +335,11 @@ Trước mỗi nhóm: tham khảo ≥ 2 game cùng thể loại, ghi nguồn và
 - K2. ✅ 2026-11-23 soát: `.claude/` ~6,4 MB (skills 2,6 MB / 78, docs 1,2 MB, scripts 0,9 MB, agents 39); `gamekit tidy` đã bỏ phần engine khác; phần còn lại đã bị `.repomixignore` loại khi đóng gói cho AI → không xoá thêm (giữ nâng template an toàn). Ý cũ: Soát `.claude/` (agents, skills của template) mà dự án solo không dùng; chỉ bỏ những gì `gamekit tidy` / UPGRADING
   cho phép, ghi lại để nâng template không vỡ.
 
+## Yêu cầu người dùng 2026-11-23: nhân vật ghép phần tĩnh, chuyển động bằng code
+
+- Kế hoạch: `../../sprite-lab/CUTOUT_PLAN.md` (đầu, thân, tay, chân là ảnh tĩnh; idle/run/hurt/dash/death viết bằng code).
+- Cung thủ (`design/archer.md`) **tạm dừng** sau bước 3 (nội tại Mắt ưng); làm tiếp khi cutout xong bước 5.
+
 ## Sau đó
 - Chế độ endgame (ải vô tận ✅ 2026-11-23 design/endless.md; thử thách tuần, boss rush), thêm class, mùa sự kiện.
 

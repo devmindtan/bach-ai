@@ -1,6 +1,6 @@
 # Cung thủ (class thứ 3) — bản đề xuất, chờ người dùng duyệt
 
-Trạng thái: **đề xuất** (2026-11-23). Chưa code. Duyệt xong mới làm theo các bước ở cuối.
+Trạng thái: bước 1–3 xong (nhân vật C, Tên nhanh, Mắt ưng); **tạm dừng** (người dùng 2026-11-23) chờ kế hoạch nhân vật ghép phần (sprite-lab/CUTOUT_PLAN.md).
 
 ## Tham khảo
 
