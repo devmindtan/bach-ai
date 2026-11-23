@@ -456,11 +456,16 @@ func _create_panel(panel: PanelContainer) -> void:
 	row.add_child(make)
 
 
+const CARDS_W := 780.0
+
+
 func _class_card(cid: String) -> Button:
 	var cd: Dictionary = _classes[cid]
 	var on := cid == _create_class
 	var b := Button.new()
-	b.custom_minimum_size = Vector2(383, 372)
+	var n := maxi(1, _class_ids.size())   # the cards share the panel's 780 px (3 classes: 250 each; 2: 383)
+	var w := floorf((CARDS_W - 14.0 * (n - 1)) / n)
+	b.custom_minimum_size = Vector2(w, 372)
 	b.focus_mode = Control.FOCUS_ALL
 	var acc := _accent(cid)
 	b.add_theme_stylebox_override("normal", UiKit.style(acc.darkened(0.72) if on else UiKit.PANEL, 12, Color.WHITE if on else UiKit.GOLD, 3 if on else 2))
@@ -475,14 +480,15 @@ func _class_card(cid: String) -> Button:
 	v.offset_right = -14
 	v.offset_top = 10
 	v.offset_bottom = -10
-	v.add_theme_constant_override("separation", 6)
+	v.add_theme_constant_override("separation", 6 if n < 3 else 3)
 	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	b.add_child(v)
-	var hero := _hero_box(cid, Vector2(355, 176), 4.0, 0.6)
+	var hero := _hero_box(cid, Vector2(w - 28.0, 176 if n < 3 else 140), 4.0 if n < 3 else 3.0, 0.6)
 	v.add_child(hero)
-	var head := HBoxContainer.new()
+	var head: BoxContainer = HBoxContainer.new() if n < 3 else VBoxContainer.new()   # narrow: role under the name
 	head.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	v.add_child(head)
+	head.add_theme_constant_override("separation", 0)
 	var nm := UiKit.label(String(cd.get("name", cid)), 24, UiKit.TEXT)
 	nm.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(nm)
@@ -491,15 +497,17 @@ func _class_card(cid: String) -> Button:
 	head.add_child(role)
 	var stats: Dictionary = cd.get("stats", {})
 	var sr := HBoxContainer.new()
-	sr.add_theme_constant_override("separation", 16)
+	sr.add_theme_constant_override("separation", 16 if n < 3 else 8)
 	sr.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	v.add_child(sr)
 	sr.add_child(UiKit.stat("heart", str(roundi(float(stats.get("max_hp", 0)))), "Máu", 16))
 	sr.add_child(UiKit.stat("sword", str(roundi(float(stats.get("damage", 0)))), "Sát thương", 16))
 	sr.add_child(UiKit.stat("boot", str(roundi(float(stats.get("move_speed", 0)))), "Tốc độ", 16))
 	var pv: Dictionary = cd.get("passive", {})
-	v.add_child(UiKit.label("Nội tại: " + String(pv.get("name", "")), 16, UiKit.GOLD))
-	var pd := UiKit.label(String(pv.get("desc", "")), 14, UiKit.MUTED)
+	var pn := UiKit.label("Nội tại: " + String(pv.get("name", "")), 16 if n < 3 else 14, UiKit.GOLD)
+	pn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	v.add_child(pn)
+	var pd := UiKit.label(String(pv.get("desc", "")), 14 if n < 3 else 12, UiKit.MUTED)
 	pd.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	v.add_child(pd)
 	var pool := GameData.load_json(DATA + String(cd.get("upgrades", "")))
@@ -508,7 +516,9 @@ func _class_card(cid: String) -> Button:
 		for u: Dictionary in pool.get("upgrades", []):
 			if String(u.get("id", "")) == sk:
 				start_names.append(String(u.get("name", sk)))
-	v.add_child(UiKit.label("Chiêu khởi đầu: " + ", ".join(start_names), 15, UiKit.TEXT))
+	var sl := UiKit.label("Chiêu khởi đầu: " + ", ".join(start_names), 15 if n < 3 else 13, UiKit.TEXT)
+	sl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	v.add_child(sl)
 	for c in v.get_children():
 		if c is Control:
 			(c as Control).mouse_filter = Control.MOUSE_FILTER_IGNORE
