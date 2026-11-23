@@ -282,6 +282,7 @@ func _ready() -> void:
 	RunInput.register()
 	cfg = GameData.load_json(DATA + "run_config.json")
 	_armor_k = float(cfg.get("player", {}).get("armor_k", 15.0))
+	_cd_floor = float(cfg.get("player", {}).get("cooldown_floor", 0.0))
 	stages = Stages.load_default()
 	milestones = Milestones.load_default()
 	var prefs := Prefs.current()
@@ -2027,9 +2028,20 @@ func skills_in_run() -> Dictionary:
 ## The cards a level-up may offer: the active deck's cards and the non-deck cards (Deck.filter).
 func deck_pool() -> Array:
 	var cards: Array = pool.get("upgrades", []) if deck_cards.is_empty() else Deck.filter(pool.get("upgrades", []), deck_cards)
+	cards = cards.filter(func(u: Dictionary) -> bool: return not stat_capped(u))   # user 2026-11-23
 	if banished.is_empty():
 		return cards
 	return cards.filter(func(u: Dictionary) -> bool: return not banished.has(String(u.get("id", ""))))   # Loại (6C.3)
+
+
+## True for a card whose only effect is the cooldown stat once every reduction together has reached
+## run_config player.cooldown_floor: one more level would change nothing (user 2026-11-23: do not offer it).
+func stat_capped(u: Dictionary) -> bool:
+	var fx: Dictionary = u.get("effects", {})
+	if fx.size() != 1 or not fx.has("cooldown"):
+		return false
+	var floor_mul := float(cfg.get("player", {}).get("cooldown_floor", 0.0))
+	return floor_mul > 0.0 and float(stats.get("cooldown", 1.0)) <= floor_mul + 0.0001
 
 
 ## A new level-up hand from the deck (banished cards left out); the panel shows it.
@@ -2227,15 +2239,17 @@ static func armor_mul(armor: float, k: float) -> float:
 
 
 static var _armor_k := 15.0   # run_config player.armor_k (set in _ready; static so _fmt_stat can show the %)
+static var _cd_floor := 0.0   # run_config player.cooldown_floor (set in _ready): the cooldown shown never goes past it
 
 
 static func _fmt_stat(key: String, v: float) -> String:
 	match key:
 		"armor":   # the points and what they take off a hit
 			return "%d (−%d%%)" % [roundi(v), roundi((1.0 - armor_mul(v, _armor_k)) * 100.0)] if v > 0.0 else str(roundi(v))
-		"cooldown":   # a multiplier on every skill's cooldown: shown as a change in percent
-			var pct := roundi((v - 1.0) * 100.0)
-			return "0%" if pct == 0 else "%+d%%" % pct
+		"cooldown":   # a multiplier on every skill's cooldown: shown as a change in percent, capped like the cast
+			var capped := _cd_floor > 0.0 and v < _cd_floor   # user 2026-11-23: the card showed -80% past the -40% cap
+			var pct := roundi((maxf(v, _cd_floor) - 1.0) * 100.0)
+			return ("0%" if pct == 0 else "%+d%%" % pct) + (" (tối đa)" if capped or (_cd_floor > 0.0 and is_equal_approx(v, _cd_floor)) else "")
 		"area", "magnet":
 			return "×%.2f" % v
 		"regen":

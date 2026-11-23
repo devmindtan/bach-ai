@@ -187,7 +187,7 @@
       "id": "quick_cast",
       "kind": "stat",
       "name": "Niệm nhanh",
-      "desc": "-10% thời gian hồi của mọi chiêu.",
+      "desc": "-10% thời gian hồi của mọi chiêu (tổng giảm tối đa 40%; đạt rồi thì thẻ không hiện nữa).",
       "max_level": 0,
       "weight": 4,
       "effects": {

@@ -386,7 +386,8 @@ func _upgrade_card(i: int, id: String) -> Button:
 	var pips := Control.new()
 	pips.custom_minimum_size = Vector2(0, 18)
 	pips.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	pips.draw.connect(func() -> void: _draw_pips(pips, lv, int(pv["max"]), pv["milestones"], accent))
+	var note := cap_note(u)
+	pips.draw.connect(func() -> void: _draw_pips(pips, lv, int(pv["max"]), pv["milestones"], accent, true, note))
 	v.add_child(pips)
 	if String(pv["milestone"]) != "":
 		v.add_child(_label("★ " + String(pv["milestone"]), 14, MILESTONE))
@@ -440,11 +441,21 @@ static func _lv_text(lv: int, mx: int) -> String:
 	return "Cấp %d · không giới hạn" % lv if mx > 20 else "Cấp %d/%d" % [lv, mx]
 
 
+## "không giới hạn" for a stat card without a level cap, "giới hạn −40%" for the cooldown cards (every
+## reduction together stops at run_config player.cooldown_floor; user 2026-11-23).
+func cap_note(u: Dictionary) -> String:
+	var fx: Dictionary = u.get("effects", {})
+	var fl := float(run.cfg.get("player", {}).get("cooldown_floor", 0.0)) if run != null else 0.0
+	if fx.size() == 1 and fx.has("cooldown") and fl > 0.0:
+		return "giới hạn −%d%%" % roundi((1.0 - fl) * 100.0)
+	return "không giới hạn"
+
+
 ## One pip per level: owned = filled, the level this pick gives = bright with a
 ## ring, locked = dark; milestone levels (new tier look, last level) are diamonds.
-func _draw_pips(c: Control, owned: int, max_level: int, milestones: Array, accent: Color, show_next := true) -> void:
+func _draw_pips(c: Control, owned: int, max_level: int, milestones: Array, accent: Color, show_next := true, cap_note := "không giới hạn") -> void:
 	if max_level > 20:   # a card without a level cap (stat cards, user 2026-11-21): text, not 2^30 pips
-		var t := ("Cấp %d → %d · không giới hạn" % [owned, owned + 1]) if show_next else ("Cấp %d · không giới hạn" % owned)
+		var t := ("Cấp %d → %d · %s" % [owned, owned + 1, cap_note]) if show_next else ("Cấp %d · %s" % [owned, cap_note])
 		c.draw_string(ThemeDB.fallback_font, Vector2(0, 14), t, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, accent)
 		return
 	var x := 0.0
