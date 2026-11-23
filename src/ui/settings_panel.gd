@@ -40,6 +40,9 @@ static func build(on_back: Callable) -> VBoxContainer:
 		func() -> void: Prefs.current().set_value("screen_shake", not Prefs.current().screen_shake))
 	_row(col, "Hiệu ứng", func() -> String: return String(Prefs.VFX_NAMES[Prefs.current().vfx]),
 		func() -> void: Prefs.current().set_value("vfx", (Prefs.current().vfx + 1) % 3))   # fewer effects in busy late game
+	if DisplayServer.is_touchscreen_available() or "--touch" in OS.get_cmdline_user_args():   # phones only (J4)
+		_row(col, "Cần điều khiển", func() -> String: return String(Prefs.TOUCH_NAMES[Prefs.current().touch_stick]),
+			func() -> void: Prefs.current().set_value("touch_stick", (Prefs.current().touch_stick + 1) % 3))
 	_row(col, "Nhạc", func() -> String: return "%d%%" % Prefs.current().music_volume,
 		func() -> void: Prefs.current().set_value("music_volume", next_volume(Prefs.current().music_volume)))
 	_row(col, "Hiệu ứng âm thanh", func() -> String: return "%d%%" % Prefs.current().sfx_volume,

@@ -15,6 +15,7 @@ extends Node
 signal changed
 
 const PATH := "user://settings.cfg"
+const TOUCH_NAMES := ["Nổi", "Cố định", "Tắt"]   # Cần điều khiển (J4)
 const BASE := Vector2i(1280, 720)   # the design size; auto scale = how many whole times it fits
 
 static func _volume_default(bus: String, fallback: int) -> int:
@@ -29,6 +30,7 @@ var scale := 0                      # 0 = auto, else 1..3
 var damage_numbers := true
 var monster_hp := true
 var screen_shake := true   # Rung màn hình (6C.2)
+var touch_stick := 0       # Cần điều khiển (J4): 0 Nổi, 1 Cố định, 2 Tắt
 var vfx := 0               # Hiệu ứng: 0 Đầy đủ, 1 Giảm, 2 Tối thiểu (review 2026-11-21: visual clutter late game)
 const VFX_NAMES := ["Đầy đủ", "Giảm", "Tối thiểu"]
 const VFX_ALPHA := [1.0, 0.7, 0.4]
@@ -71,6 +73,8 @@ func _ready() -> void:
 			_force_slots = true
 		elif a.begins_with("--class="):   # shots / tests: play this class
 			forced_hero = a.get_slice("=", 1)
+		elif a.begins_with("--touch-stick="):   # shots: Cần điều khiển mode (J4)
+			touch_stick = clampi(int(a.get_slice("=", 1)), 0, 2)
 		elif a == "--pad-hints":   # shots: button hints as with a gamepad connected (J5)
 			UiKit.pad_override = 1
 	if DisplayServer.get_name() == "headless":
@@ -300,6 +304,7 @@ func _load() -> void:
 	monster_hp = bool(cfg.get_value("hud", "monster_hp", monster_hp))
 	screen_shake = bool(cfg.get_value("hud", "screen_shake", screen_shake))
 	vfx = clampi(int(cfg.get_value("hud", "vfx", vfx)), 0, 2)
+	touch_stick = clampi(int(cfg.get_value("hud", "touch_stick", touch_stick)), 0, 2)
 	music_volume = clampi(int(cfg.get_value("audio", "music", music_volume)), 0, 100)
 	sfx_volume = clampi(int(cfg.get_value("audio", "sfx", sfx_volume)), 0, 100)
 	hero = String(cfg.get_value("game", "hero", hero))
@@ -315,6 +320,7 @@ func _save() -> void:
 	cfg.set_value("hud", "monster_hp", monster_hp)
 	cfg.set_value("hud", "screen_shake", screen_shake)
 	cfg.set_value("hud", "vfx", vfx)
+	cfg.set_value("hud", "touch_stick", touch_stick)
 	cfg.set_value("audio", "music", music_volume)
 	cfg.set_value("audio", "sfx", sfx_volume)
 	cfg.set_value("game", "hero", hero)

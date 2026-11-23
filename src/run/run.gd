@@ -511,6 +511,11 @@ func _ready() -> void:
 	_panels = RunPanels.new()
 	_panels.run = self
 	layer.add_child(_panels)
+	if VirtualStick.wanted(Prefs.current().touch_stick):   # phones (J4)
+		var stick := VirtualStick.new()
+		stick.run = self
+		layer.add_child(stick)
+		layer.move_child(stick, _panels.get_index())   # under the panels, over the HUD
 
 	# --milestone=N (shots): the level milestone pick opens at the start
 	if not _ms_queue.is_empty():

@@ -324,7 +324,7 @@ Trước mỗi nhóm: tham khảo ≥ 2 game cùng thể loại, ghi nguồn và
   `remove_at` mảng. Chỉ làm pooling ở chỗ bench chỉ ra.
 - J3. ⏸ Chưa cần (J2: mô phỏng ≤ 6,3 ms p95 trong ngân sách 16,6 ms); đo lại trên Android thật khi có bản Android. Ý cũ: Pooling theo kết quả J2: tái dùng Dictionary hiệu ứng / đạn (free-list), swap-remove thay `remove_at` giữa mảng,
   mảng packed cho số sát thương nếu chưa; đo lại cùng bench, ghi số vào commit.
-- J4. Cần điều khiển ảo (Virtual Joystick) cho Android: kéo để di chuyển, vị trí tuỳ chỉnh trong Cài đặt, nút Lướt;
+- J4. ✅ 2026-11-23 (cần nổi/cố định + nút Lướt, design/ux/touch-controls.md; chưa thử trên máy thật) Cần điều khiển ảo (Virtual Joystick) cho Android: kéo để di chuyển, vị trí tuỳ chỉnh trong Cài đặt, nút Lướt;
   tham khảo game survivors trên di động trước (quy tắc UI); ảnh màn hình dọc/ngang.
 - J5. ✅ 2026-11-23 (focus mọi màn, D-pad di chuyển, gợi ý nút theo thiết bị; chưa thử trên tay cầm thật) Tay cầm / Steam Deck đầy đủ: soát `run_input.gd` (đã có cần trái di chuyển) và mọi menu/bảng (lên cấp, tạm dừng,
   sảnh, bộ thẻ) đi được bằng D-pad/nút; biểu tượng nút theo thiết bị; test nhập liệu.
