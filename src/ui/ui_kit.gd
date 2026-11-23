@@ -303,3 +303,13 @@ static func stat(icon_id: String, value: String, tip: String, font := 17) -> HBo
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(l)
 	return row
+
+
+## The first visible, enabled Button under [param root] in tree order, or null: the control a screen focuses
+## when it opens, so a gamepad (D-pad + A) can use it (roadmap J5, 2026-11-23).
+static func first_enabled_button(root: Node) -> Button:
+	for c in root.find_children("*", "Button", true, false):
+		var b := c as Button
+		if b.visible and not b.disabled:
+			return b
+	return null

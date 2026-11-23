@@ -84,6 +84,8 @@ func _build() -> void:
 	for id: String in _slot.daily["ids"]:
 		list.add_child(_card(id))
 	list.add_child(_bonus_card())
+	var first := UiKit.first_enabled_button(list)   # gamepad: a claim button if any, else Quay lại (J5)
+	(first if first != null else back).call_deferred("grab_focus")
 
 
 func _card(id: String) -> PanelContainer:

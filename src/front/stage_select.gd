@@ -641,7 +641,9 @@ func _open_detail() -> void:
 	var title := UiKit.label("Ải %d · %s" % [_n, String(st.get("name", ""))], 26, UiKit.GOLD)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(title)
-	head.add_child(UiKit.button("Đóng (Esc)", _close_detail, Vector2(120, 36), 16))
+	var close := UiKit.button("Đóng (Esc)", _close_detail, Vector2(120, 36), 16)
+	head.add_child(close)
+	close.call_deferred("grab_focus")   # gamepad: A closes it (J5)
 	v.add_child(head)
 	var cols := HBoxContainer.new()
 	cols.add_theme_constant_override("separation", 24)
