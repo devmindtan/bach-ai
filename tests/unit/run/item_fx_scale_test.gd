@@ -22,3 +22,16 @@ func test_hero_effects_use_the_sprite_scale() -> void:
 		# _add_fx folds px_scale (0.5) in: world scale = sprite_scale x px_scale
 		_check(is_equal_approx(float(r._fx[0]["scale"]), 2.0 * 0.5), "scale %s, want 1.0 (2 x 0.5)" % r._fx[0]["scale"])
 	r.free()
+
+
+## User 2026-11-23: effects on the hero (Vĩnh cửu…) stayed where they were cast while the hero ran on.
+func test_hero_effects_follow_the_hero() -> void:
+	var r: Node = Run.new()
+	r._sprite_scale = 2.0
+	r.sheets["ward-reset"] = SpriteSheet.load_dir("res://assets/sprites/custom/ward-reset", "ward-reset")
+	r._item_fx({"fx": "ward-reset"})
+	_check(r._fx.size() == 1, "one effect")
+	if r._fx.size() == 1:
+		r.player_pos = Vector2(300, 200)
+		_check(r._fx_pos(r._fx[0]) == Vector2(300, 200) + r._hit_center, "effect at %s, hero moved to %s" % [r._fx_pos(r._fx[0]), Vector2(300, 200) + r._hit_center])
+	r.free()

@@ -1851,7 +1851,7 @@ func _ring_fx(reach: float, sprite := "stomp-i", anim := "burst") -> void:
 func _item_fx(sp: Dictionary) -> void:
 	var sprite := String(sp.get("fx", ""))
 	if sprite != "":
-		_add_fx(sprite, "cast", _sprite_scale, 0.0, -1.0, player_pos + _hit_center)   # the hero's scale (2026-11-22: was 1)
+		_add_fx(sprite, "cast", _sprite_scale, 0.0, -1.0)   # the hero's scale (2026-11-22: was 1); follows the hero (2026-11-23: Vĩnh cửu stayed behind)
 
 
 ## Bàn thạch spends its single charge: the stone shell cracks and flies apart.
@@ -1862,7 +1862,7 @@ func _spend_ward() -> bool:
 	buffs.active.erase(_ward_buff)
 	var brk := String(_buff_defs.get(_ward_buff, {}).get("break_sprite", ""))
 	if brk != "":
-		_add_fx(brk, "break", 1.0, 0.0, -1.0, player_pos + _hit_center)
+		_add_fx(brk, "break", 1.0, 0.0, -1.0)   # on the hero: follows it
 	invuln = maxf(invuln, 0.5)
 	Sfx.play("holy")
 	return true
