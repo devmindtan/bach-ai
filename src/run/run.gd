@@ -155,6 +155,9 @@ var _end_t := 0.0
 # floating damage numbers (ring buffer, sizes from run_config "ui")
 var _num_pos := PackedVector2Array()
 var _num_val := PackedFloat32Array()
+var mark_style := "ring"   # run_config marks.style (roadmap F); --mark-style= in shots
+var _marks_cfg := {}
+var _sil_cache := {}       # sprite name -> white silhouette SpriteSheet (outline mark)
 var _num_tag := PackedByteArray()    # 1 = weak element (red), 2 = resisted (grey): design/species.md
 var _num_crit := PackedByteArray()   # 1 = that number is a crit (bigger, orange, "!")
 var shake := ScreenShake.new()       # camera shake (6C.2); Cài đặt can turn it off
@@ -359,6 +362,7 @@ func _ready() -> void:
 		if status_defs[st].has("burst_sprite"):   # Thánh ấn / Ăn mòn bursts
 			names.append(String(status_defs[st]["burst_sprite"]))
 	names.append_array(special_fx_sprites())
+	names.append_array(["elite-crest", "elite-wisps"])   # roadmap F marks
 	for b: String in _buff_defs:
 		if not bool(_buff_defs[b].get("special_only", false)):
 			names.append(String(_buff_defs[b].get("sprite", b)))
@@ -411,6 +415,9 @@ func _ready() -> void:
 		if u.has("element"):
 			elems[String(u["id"])] = String(u["element"])
 	enemies.status_defs = status_defs
+	_marks_cfg = cfg.get("marks", {})
+	if mark_style == "ring":
+		mark_style = String(_marks_cfg.get("style", "ring"))
 	enemies.set_species(GameData.load_json("res://assets/data/species.json"), elems)   # design/species.md
 	if challenge_id == "" and bench == 0:   # the region's props, seeded by the stage (same map every time)
 		obstacles = Obstacles.new(stages.region(stage_number).get("obstacles", {}), _arena_half, stage_number * 7919 + 13)
@@ -2564,7 +2571,7 @@ func _draw() -> void:
 			draw_rect(Rect2(c - Vector2(4, 1), Vector2(8, 2)), Color(0.7, 1.0, 0.7, 1.0 - k))
 	# the boss's aura: a glow under every buffed monster, all drawn BEFORE any monster so no glow covers the
 	# boss or another monster (2026-11-21: the split slimes' glows hid the king)
-	if not enemies.boss_aura.is_empty():
+	if not enemies.boss_aura.is_empty() and mark_style == "ring":
 		var gc := Color(String(enemies.boss_aura.get("color", "#ffffff")))
 		for i in enemies.count:
 			if enemies.buffed[i] == 1 and enemies.state[i] != Enemies.DYING and view.has_point(enemies.pos[i]):
@@ -2593,13 +2600,19 @@ func _draw() -> void:
 						Color(0.7, 0.35, 1.0, 0.9 - 0.25 * q), 3.0 - q)
 			if enemies.k_boss[k] == 1 and enemies.enraged(i) and enemies.flash[i] <= 0.0 and enemies.k_rage_sheet[k] == null:
 				tint = Color(1.0, 0.62, 0.55)   # enraged: flushed red (bosses without a red rage sheet)
+			var mark_col := Color(0, 0, 0, 0)   # roadmap F: the elite / boss-buff mark drawn with the sprite
+			if enemies.buffed[i] == 1 and not enemies.boss_aura.is_empty() and mark_style != "ring":
+				mark_col = Color(String(enemies.boss_aura.get("color", "#ffffff")))
 			if enemies.k_elite[k] == 1:   # elite: a gold halo under it
 				var hr := enemies.k_radius[k]
 				var hc := enemies.center_of(i)
 				var lab := enemies.affix_label(i)   # the affix colours the halo and names itself (6A)
 				var hcol: Color = lab[1] if lab[0] != "" else Color(1.0, 0.82, 0.3)
-				hcol.a = 0.5 + 0.3 * sin(clock * 5.0)
-				draw_arc(hc + Vector2(0, hr * 0.6), hr * 1.1, 0.0, TAU, 32, hcol, 3.0)
+				if mark_style == "ring":
+					hcol.a = 0.5 + 0.3 * sin(clock * 5.0)
+					draw_arc(hc + Vector2(0, hr * 0.6), hr * 1.1, 0.0, TAU, 32, hcol, 3.0)
+				else:
+					mark_col = hcol
 				if lab[0] != "":
 					_affix_tags.append([hc - Vector2(0, hr * 1.6 + 14.0), lab[0], lab[1]])
 				if tint == Color.WHITE:
@@ -2615,7 +2628,14 @@ func _draw() -> void:
 				at += Vector2(sin(clock * 90.0) * 2.0, 0.0).round()
 				if not enemies.sheet_of(i).has_animation("transform"):
 					tint = Color(2.0, 2.0, 2.0) if int(clock * 12.0) % 2 == 0 else Color(1.6, 0.5, 0.45)
+			if mark_col.a > 0.0 and enemies.state[i] != Enemies.DYING:
+				_draw_mark(i, a, at, mark_col)
 			enemies.sheet_of(i).draw(self, a[0], a[1], at, enemies.k_scale[k], enemies.flip[i] == 1, tint)
+			if mark_col.a > 0.0 and mark_style == "crest" and enemies.state[i] != Enemies.DYING:   # over the sprite
+				var cs: SpriteSheet = sheets.get("elite-crest")
+				if cs != null:
+					cs.draw(self, "loop", clock + i * 0.13, enemies.center_of(i) - Vector2(0, enemies.k_radius[k] + 10.0),
+						_sprite_scale * float(cs.meta.get("px_scale", 1.0)), false, mark_col)
 	_boss_view.draw_bolts()
 	var hero: SpriteSheet = sheets.get(String(class_data.get("sprite", "swordsman")))
 	if hero != null:
@@ -2711,6 +2731,46 @@ func camera_center() -> Vector2:
 
 ## Elite affix names, collected while drawing the monsters and drawn last so the
 ## hero and effects never cover them.
+## Roadmap F: the elite / boss-buff mark behind monster [param i] (drawn before its sprite) in [param col]:
+## outline = its silhouette 1 source pixel out on 4 sides; wisps = energy rising from its feet.
+func _draw_mark(i: int, a: Array, at: Vector2, col: Color) -> void:
+	var k := enemies.kind[i]
+	var pulse := float(_marks_cfg.get("alpha", 0.85)) * (0.75 + 0.25 * sin(clock * 5.0 + i))
+	match mark_style:
+		"outline":
+			var sil := _silhouette(enemies.sheet_of(i))
+			if sil == null:
+				return
+			var px := enemies.k_scale[k]
+			for off: Vector2 in [Vector2(px, 0), Vector2(-px, 0), Vector2(0, px), Vector2(0, -px)]:
+				sil.draw(self, a[0], a[1], at + off, enemies.k_scale[k], enemies.flip[i] == 1, Color(col, pulse))
+		"wisps":
+			var ws: SpriteSheet = sheets.get("elite-wisps")
+			if ws != null:
+				var sc := maxf(1.0, roundf(enemies.k_radius[k] / 12.0)) * float(ws.meta.get("px_scale", 1.0)) * 1.5
+				ws.draw(self, "loop", clock + i * 0.21, enemies.pos[i] + Vector2(0, 2), sc, false, Color(col, pulse * 0.8))
+
+
+## A white copy of [param sheet] (same frames, alpha kept) for the outline mark; made once per sprite.
+func _silhouette(sheet: SpriteSheet) -> SpriteSheet:
+	if sheet == null or sheet.texture == null:
+		return null
+	if _sil_cache.has(sheet.name):
+		return _sil_cache[sheet.name]
+	var img := sheet.texture.get_image()
+	img.decompress()
+	img.convert(Image.FORMAT_RGBA8)
+	for y in img.get_height():
+		for x in img.get_width():
+			var c := img.get_pixel(x, y)
+			if c.a > 0.0:
+				img.set_pixel(x, y, Color(1, 1, 1, c.a))
+	var sil := SpriteSheet.from_meta(sheet.name + "#sil", sheet.meta)
+	sil.texture = ImageTexture.create_from_image(img)
+	_sil_cache[sheet.name] = sil
+	return sil
+
+
 func _draw_affix_tags() -> void:
 	var font := ThemeDB.fallback_font
 	for t: Array in _affix_tags:
