@@ -71,6 +71,8 @@ func _ready() -> void:
 			_force_slots = true
 		elif a.begins_with("--class="):   # shots / tests: play this class
 			forced_hero = a.get_slice("=", 1)
+		elif a == "--pad-hints":   # shots: button hints as with a gamepad connected (J5)
+			UiKit.pad_override = 1
 	if DisplayServer.get_name() == "headless":
 		_fixed = true
 	if not _fixed:

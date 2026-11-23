@@ -73,7 +73,7 @@ func _build() -> void:
 	var wallet := UiKit.stat("gem", "%d đá" % _slot.gems, "Đá: quay gacha.", 16)
 	wallet.position = Vector2(root.size.x - 40 - 180 - 140, 36)
 	root.add_child(wallet)
-	var back := UiKit.button("Quay lại  (Esc)", func() -> void: get_tree().change_scene_to_file(LOBBY_SCENE), Vector2(180, 42), 17)
+	var back := UiKit.button("Quay lại " + UiKit.hint("Esc"), func() -> void: get_tree().change_scene_to_file(LOBBY_SCENE), Vector2(180, 42), 17)
 	back.position = Vector2(root.size.x - 40 - 180, 28)
 	root.add_child(back)
 	var list := VBoxContainer.new()

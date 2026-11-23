@@ -97,7 +97,7 @@ func _build() -> void:
 	bar.add_child(_shard_stat("%d Mảnh thẻ" % _slot.shards, "Mảnh thẻ: thắng ải, hạ boss, mở rương, gacha trùng.", 16))
 	var mp := int(_trees.tree(_card).get("max_points", 0))
 	bar.add_child(UiKit.label("Điểm đã dùng %d / %d" % [_trees.points(_slot, _card), mp], 16, UiKit.TEXT))
-	var back := UiKit.button("Quay lại  (Esc)", func() -> void: get_tree().change_scene_to_file(DECK_SCENE), Vector2(180, 42), 17)
+	var back := UiKit.button("Quay lại " + UiKit.hint("Esc"), func() -> void: get_tree().change_scene_to_file(DECK_SCENE), Vector2(180, 42), 17)
 	back.position = Vector2(root.size.x - 40 - 180, 28)
 	root.add_child(back)
 	# edges under the nodes

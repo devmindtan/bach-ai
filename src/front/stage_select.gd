@@ -100,7 +100,7 @@ func _build() -> void:
 	var who := UiKit.label("%s  ·  đã vượt ải %d" % [_slot.name, _slot.best], 15, UiKit.MUTED)
 	who.position = Vector2(42, 70)
 	root.add_child(who)
-	var back := UiKit.button("Quay lại  (Esc)", func() -> void: get_tree().change_scene_to_file(LOBBY_SCENE), Vector2(180, 42), 17)
+	var back := UiKit.button("Quay lại " + UiKit.hint("Esc"), func() -> void: get_tree().change_scene_to_file(LOBBY_SCENE), Vector2(180, 42), 17)
 	back.position = Vector2(root.size.x - 40 - 180, 28)
 	root.add_child(back)
 
@@ -641,7 +641,7 @@ func _open_detail() -> void:
 	var title := UiKit.label("Ải %d · %s" % [_n, String(st.get("name", ""))], 26, UiKit.GOLD)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(title)
-	var close := UiKit.button("Đóng (Esc)", _close_detail, Vector2(120, 36), 16)
+	var close := UiKit.button("Đóng" + UiKit.hint("Esc"), _close_detail, Vector2(120, 36), 16)
 	head.add_child(close)
 	close.call_deferred("grab_focus")   # gamepad: A closes it (J5)
 	v.add_child(head)

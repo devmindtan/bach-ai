@@ -326,7 +326,7 @@ Trước mỗi nhóm: tham khảo ≥ 2 game cùng thể loại, ghi nguồn và
   mảng packed cho số sát thương nếu chưa; đo lại cùng bench, ghi số vào commit.
 - J4. Cần điều khiển ảo (Virtual Joystick) cho Android: kéo để di chuyển, vị trí tuỳ chỉnh trong Cài đặt, nút Lướt;
   tham khảo game survivors trên di động trước (quy tắc UI); ảnh màn hình dọc/ngang.
-- J5. Tay cầm / Steam Deck đầy đủ: soát `run_input.gd` (đã có cần trái di chuyển) và mọi menu/bảng (lên cấp, tạm dừng,
+- J5. ✅ 2026-11-23 (focus mọi màn, D-pad di chuyển, gợi ý nút theo thiết bị; chưa thử trên tay cầm thật) Tay cầm / Steam Deck đầy đủ: soát `run_input.gd` (đã có cần trái di chuyển) và mọi menu/bảng (lên cấp, tạm dừng,
   sảnh, bộ thẻ) đi được bằng D-pad/nút; biểu tượng nút theo thiết bị; test nhập liệu.
 
 **K. Tinh gọn quy trình phát triển (DX)**

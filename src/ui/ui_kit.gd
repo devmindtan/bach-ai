@@ -313,3 +313,24 @@ static func first_enabled_button(root: Node) -> Button:
 		if b.visible and not b.disabled:
 			return b
 	return null
+
+
+## Gamepad name of each keyboard hint shown on buttons (roadmap J5): Esc -> B (ui_cancel), Tab -> Select
+## (character), H -> LB (peek), the run's Esc -> Start (pause), R (restart) -> A. "" = no pad button: the hint is
+## dropped and the button is reached with the D-pad + A.
+const PAD_HINTS := {"Esc": "B", "Tab": "Select", "H": "LB", "Start": "Start", "R": "A", "R-reroll": "", "X": ""}
+static var pad_override := -1   # tests: 1 = act as if a gamepad is connected, 0 = as if none
+
+
+## True when a gamepad is connected (or [member pad_override] says so).
+static func using_pad() -> bool:
+	return pad_override == 1 if pad_override >= 0 else not Input.get_connected_joypads().is_empty()
+
+
+## " (Esc)" with a keyboard, " (B)" with a gamepad, "" when the pad has no button for it ([param key] as in
+## PAD_HINTS; [param pad_key] picks another pad name for the same key, e.g. the run's Esc is Start).
+static func hint(key: String, pad_key := "") -> String:
+	if not using_pad():
+		return " (%s)" % key.get_slice("-", 0)
+	var pad := String(PAD_HINTS.get(pad_key if pad_key != "" else key, key))
+	return "" if pad == "" else " (%s)" % pad

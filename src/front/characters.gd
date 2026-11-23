@@ -97,7 +97,7 @@ func _build() -> void:
 	var sub := UiKit.label("Mỗi nhân vật có class, túi đồ, tiến độ ải và vàng, đá riêng (tối đa %d)." % SlotStore.MAX, 15, UiKit.MUTED)
 	sub.position = Vector2(42, 70)
 	root.add_child(sub)
-	var back := UiKit.button("Quay lại  (Esc)", func() -> void: get_tree().change_scene_to_file(TITLE_SCENE), Vector2(180, 42), 17)
+	var back := UiKit.button("Quay lại " + UiKit.hint("Esc"), func() -> void: get_tree().change_scene_to_file(TITLE_SCENE), Vector2(180, 42), 17)
 	back.position = Vector2(root.size.x - 40 - 180, 28)
 	root.add_child(back)
 

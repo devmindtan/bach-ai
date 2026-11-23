@@ -105,7 +105,7 @@ func _build() -> void:
 	wallet.add_child(UiKit.stat("pill", "%d Tẩy Tủy Đan" % _slot.pills, "Tẩy Tủy Đan: thắng thử thách; đặt lại cây.", 16))
 	wallet.add_child(UiKit.stat("coin", "%d vàng" % _slot.gold, "Vàng", 16))
 	wallet.add_child(UiKit.label("Điểm đã dùng %d" % _tree.points(_slot), 16, UiKit.TEXT))
-	var back := UiKit.button("Quay lại  (Esc)", func() -> void: get_tree().change_scene_to_file(LOBBY_SCENE), Vector2(180, 42), 17)
+	var back := UiKit.button("Quay lại " + UiKit.hint("Esc"), func() -> void: get_tree().change_scene_to_file(LOBBY_SCENE), Vector2(180, 42), 17)
 	back.position = Vector2(root.size.x - 40 - 180, 28)
 	root.add_child(back)
 	var edges := Control.new()

@@ -107,7 +107,7 @@ func _build() -> void:
 	root.add_child(wallet)
 	wallet.add_child(UiKit.stat("gem", "%d đá" % _slot.gems, "Đá: thắng ải (lần đầu nhiều hơn).", 16))
 	wallet.add_child(UiKit.stat("coin", "%d vàng" % _slot.gold, "Vàng", 16))
-	var back := UiKit.button("Quay lại  (Esc)", func() -> void: get_tree().change_scene_to_file(LOBBY_SCENE), Vector2(180, 42), 17)
+	var back := UiKit.button("Quay lại " + UiKit.hint("Esc"), func() -> void: get_tree().change_scene_to_file(LOBBY_SCENE), Vector2(180, 42), 17)
 	back.position = Vector2(root.size.x - 40 - 180, 28)
 	root.add_child(back)
 	# left: banners with their own pity

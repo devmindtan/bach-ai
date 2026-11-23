@@ -58,7 +58,7 @@ func _view_buttons(root: VBoxContainer) -> void:
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 16)
 	root.add_child(row)
-	for b: Array in [["Ẩn bảng (H)", "hidden"], ["Nhân vật (Tab)", "character"]]:
+	for b: Array in [["Ẩn bảng" + UiKit.hint("H"), "hidden"], ["Nhân vật" + UiKit.hint("Tab"), "character"]]:
 		var view: String = b[1]
 		var btn := _button(String(b[0]), func() -> void: run.toggle_level_view(view))
 		btn.custom_minimum_size = Vector2(190, 40)
@@ -86,10 +86,10 @@ func show_peek() -> void:
 	var l := _label("Đang xem chiến trường", 18, TEXT)
 	l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(l)
-	var back_btn := _button("Hiện thẻ (H)", func() -> void: run.toggle_level_view("hidden"))
+	var back_btn := _button("Hiện thẻ" + UiKit.hint("H"), func() -> void: run.toggle_level_view("hidden"))
 	back_btn.custom_minimum_size = Vector2(160, 36)
 	row.add_child(back_btn)
-	var sheet := _button("Nhân vật (Tab)", func() -> void: run.toggle_level_view("character"))
+	var sheet := _button("Nhân vật" + UiKit.hint("Tab"), func() -> void: run.toggle_level_view("character"))
 	sheet.custom_minimum_size = Vector2(170, 36)
 	sheet.focus_mode = Control.FOCUS_NONE
 	row.add_child(sheet)
@@ -137,8 +137,8 @@ func _action_buttons(root: VBoxContainer) -> void:
 	root.add_child(row)
 	var gold := int(run.cfg.get("level_actions", {}).get("skip_gold", 0))
 	var acts := [
-		["Đổi (R)  ×%d" % run.rerolls, run.rerolls, func() -> void: run.reroll(), "Đổi cả 3 thẻ lấy 3 thẻ khác."],
-		[("Chọn thẻ để loại…" if banish_mode else "Loại (X)  ×%d" % run.banishes), run.banishes, func() -> void: toggle_banish(), "Bỏ hẳn một thẻ khỏi bộ thẻ đến hết trận, rồi đổi thẻ."],
+		["Đổi%s  ×%d" % [UiKit.hint("R", "R-reroll"), run.rerolls], run.rerolls, func() -> void: run.reroll(), "Đổi cả 3 thẻ lấy 3 thẻ khác."],
+		[("Chọn thẻ để loại…" if banish_mode else "Loại%s  ×%d" % [UiKit.hint("X"), run.banishes]), run.banishes, func() -> void: toggle_banish(), "Bỏ hẳn một thẻ khỏi bộ thẻ đến hết trận, rồi đổi thẻ."],
 		["Bỏ qua  ×%d  · +%d vàng" % [run.skips, gold], run.skips, func() -> void: run.skip_level(), "Không lấy thẻ lần này, nhận vàng."]]
 	for a: Array in acts:
 		var btn := _button(String(a[0]), a[2])
@@ -476,10 +476,10 @@ func show_pause() -> void:
 	actions.add_theme_constant_override("separation", 12)
 	actions.custom_minimum_size = Vector2(240, 0)
 	body.add_child(actions)
-	var go_on := _button("Tiếp tục (Esc)", func() -> void: run.resume())
+	var go_on := _button("Tiếp tục" + UiKit.hint("Esc", "Start"), func() -> void: run.resume())
 	actions.add_child(go_on)
 	go_on.call_deferred("grab_focus")
-	actions.add_child(_button("Nhân vật (Tab)", func() -> void: show_character()))
+	actions.add_child(_button("Nhân vật" + UiKit.hint("Tab"), func() -> void: show_character()))
 	actions.add_child(_button("Cài đặt", func() -> void: show_settings()))
 	actions.add_child(_button("Chơi lại", func() -> void: run.restart()))
 	actions.add_child(_button("Về sảnh", func() -> void: run.to_lobby()))
@@ -629,7 +629,7 @@ func show_character() -> void:
 	sub.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(sub)
 	var choosing: bool = run.state == run.State.LEVEL_UP
-	var back := _button("Quay lại chọn thẻ (Tab)" if choosing else "Quay lại (Esc)",
+	var back := _button("Quay lại chọn thẻ" + UiKit.hint("Tab") if choosing else "Quay lại" + UiKit.hint("Esc"),
 		func() -> void: run.toggle_level_view("character") if choosing else show_pause())
 	back.custom_minimum_size = Vector2(260 if choosing else 200, 40)
 	head.add_child(back)
@@ -989,7 +989,7 @@ func show_end(won: bool) -> void:
 	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
 	buttons.add_theme_constant_override("separation", 16)
 	root.add_child(buttons)
-	var again := _button("Chơi lại (R)", func() -> void: run.restart())
+	var again := _button("Chơi lại" + UiKit.hint("R"), func() -> void: run.restart())
 	var lobby_b := _button("Về sảnh", func() -> void: run.to_lobby())
 	var next_b: Button = null
 	if won and bool(rr.get("next", false)):

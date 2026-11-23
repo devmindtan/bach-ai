@@ -30,3 +30,15 @@ func test_dpad_moves_the_hero() -> void:
 		e.pressed = true
 		if not InputMap.event_is_action(e, pair[0]):
 			failures.append("%s has no D-pad button" % pair[0])
+
+
+func test_button_hints_follow_the_device() -> void:
+	UiKit.pad_override = 0
+	var kb := [UiKit.hint("Esc"), UiKit.hint("R", "R-reroll"), UiKit.hint("Esc", "Start")]
+	UiKit.pad_override = 1
+	var pad := [UiKit.hint("Esc"), UiKit.hint("R", "R-reroll"), UiKit.hint("Esc", "Start"), UiKit.hint("Tab"), UiKit.hint("H")]
+	UiKit.pad_override = -1
+	if kb != [" (Esc)", " (R)", " (Esc)"]:
+		failures.append("keyboard hints %s" % [kb])
+	if pad != [" (B)", "", " (Start)", " (Select)", " (LB)"]:
+		failures.append("pad hints %s" % [pad])
