@@ -208,6 +208,7 @@ var _dash_cd := 0.0
 var _dash_hit_half := false
 var _dash_from := Vector2.ZERO
 var _dash_trail := 0.0      # afterimages stay this long after the dash
+var hit_spark_sprite := ""   # --hit-spark=a|b|c (shots: compare the spark options)
 var dash_at := -1.0          # --dash-at=T (shots)
 var monster_hp_mul := 1.0    # --monster-hp=N (shots: monsters live long enough to show statuses)
 var _status_all: Array[String] = []   # --status-all=a,b (shots: every monster gets these statuses)
@@ -403,6 +404,9 @@ func _ready() -> void:
 			names.append(String(sd["zone"].get("sprite", "scorch")))
 		for tn in sd.get("tier_sprites", []):
 			names.append(String(tn))
+	var hf: Dictionary = cfg.get("hit_feel", {})   # cảm giác đánh: the hit spark
+	if not hf.is_empty():
+		names.append(hit_spark_sprite if hit_spark_sprite != "" else String(hf.get("sprite", "hit-spark-a")))
 	for n in names:
 		if not sheets.has(n):
 			sheets[n] = SpriteSheet.load_dir(SPRITES + n, n)
@@ -2808,6 +2812,33 @@ func _draw_affix_tags() -> void:
 
 # --- damage numbers and monster hp bars ------------------------------------------
 
+var _last_stop := -10.0   # clock of the last hit-feel hitstop
+
+
+## Cảm giác đánh (run_config hit_feel): a spark on this frame's physical hits and a short hitstop when a
+## melee strike connects (at most once every hitstop_gap s, so a crowd does not freeze the run).
+func _hit_feel() -> void:
+	var hf: Dictionary = cfg.get("hit_feel", {})
+	if hf.is_empty() or enemies.hit_src.is_empty():
+		return
+	var stops: Array = hf.get("hitstop_sources", [])
+	var sparks := 0
+	var cap := int(hf.get("max_per_frame", 4)) if Prefs.current().vfx < 2 else 0
+	var stop := false
+	for k in enemies.hit_src.size():
+		var src := enemies.hit_src[k]
+		if String(enemies.element_of.get(src, "")) != "physical":
+			continue
+		if sparks < cap:
+			sparks += 1
+			_add_fx(hit_spark_sprite if hit_spark_sprite != "" else String(hf.get("sprite", "hit-spark-a")), "spark",
+				_sprite_scale * float(hf.get("scale", 1.0)), 0.0, -1.0, enemies.hit_pos[k] + Vector2(0, 6))
+		stop = stop or src in stops
+	if stop and clock - _last_stop >= float(hf.get("hitstop_gap", 0.35)):
+		_last_stop = clock
+		_hitstop = maxf(_hitstop, float(hf.get("hitstop", 0.025)))
+
+
 ## Turns this frame's hits into floating numbers (a fixed ring: the oldest is
 ## reused when full) and ages them.
 func _step_damage_numbers(dt: float) -> void:
@@ -2816,6 +2847,7 @@ func _step_damage_numbers(dt: float) -> void:
 			_num_t[i] += dt
 			if _num_t[i] > _num_life:
 				_num_t[i] = -1.0
+	_hit_feel()
 	if enemies.crit_heavy > 0:   # a crit landed on an elite / boss: hitstop and a small shake
 		_hitstop = float(_crit_cfg.get("hitstop", 0.035))
 		shake.add(float(_crit_cfg.get("shake_crit", 2.0)))

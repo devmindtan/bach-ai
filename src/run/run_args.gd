@@ -33,6 +33,8 @@ static func apply(run) -> void:
 				run._status_all.append(st)
 		elif a.begins_with("--show-special-fx="):   # shots: every special card's effect drawn once at T s (look only)
 			run.show_special_fx_at = float(a.get_slice("=", 1))
+		elif a.begins_with("--hit-spark="):   # shots: hit-spark-a / b / c (cảm giác đánh options)
+			run.hit_spark_sprite = "hit-spark-" + a.get_slice("=", 1)
 		elif a.begins_with("--mark-style="):   # shots: compare the elite / boss-buff marks (roadmap F)
 			run.mark_style = a.get_slice("=", 1)
 		elif a.begins_with("--end-tab="):   # shots: the end report view shown first

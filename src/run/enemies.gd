@@ -97,6 +97,7 @@ signal split_done(pos: Vector2)
 var hit_pos := PackedVector2Array()
 var hit_val := PackedFloat32Array()
 var hit_crit := PackedByteArray()        # 1 = that hit was a crit (its number draws as one)
+var hit_src := PackedStringArray()       # damage source of that hit (hit sparks: physical melee)
 var hit_tag := PackedByteArray()         # species x element of that hit: 0 plain, 1 weak, 2 resisted (number colour)
 ## Species (species.json, design/species.md): weak / resist by element; set by set_species.
 var species := {}
@@ -1343,6 +1344,7 @@ func _damage(i: int, amount: float, kb: Vector2, source := "") -> void:
 	hit_val.append(amount)
 	hit_crit.append(1 if _crit_next else 0)
 	hit_tag.append(1 if smul > 1.0 else (2 if smul < 1.0 else 0))
+	hit_src.append(source)
 	_crit_next = false
 	if state[i] != DASH and k_boss[kind[i]] == 0 and not has_trait(kind[i], "rooted"):   # bosses / Thực vật hold their ground
 		knock[i] += kb
@@ -1534,6 +1536,7 @@ func drain_hits() -> void:
 	hit_val.clear()
 	hit_crit.clear()
 	hit_tag.clear()
+	hit_src.clear()
 	crit_heavy = 0
 
 
