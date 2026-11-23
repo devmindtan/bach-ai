@@ -49,7 +49,7 @@ func _draw() -> void:
 		var sheet: SpriteSheet = _heroes[i][0]
 		FrontArt.pedestal(self, spots[i], _heroes[i][1], _t + i * 1.7, 0.9)
 		if sheet != null:
-			sheet.draw(self, "idle", _t + i * 0.4, spots[i], HERO_SCALE, i == 1)
+			sheet.draw(self, "idle", _t + i * 0.4, spots[i], FrontArt.scale_of(sheet, HERO_SCALE), i == 1)
 
 
 func _build() -> void:

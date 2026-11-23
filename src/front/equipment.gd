@@ -159,7 +159,7 @@ func _doll(root: Control) -> void:
 	hero.draw.connect(func() -> void:
 		FrontArt.pedestal(hero, Vector2(110, 250), col, _t, 0.62)
 		if _hero != null:
-			_hero.draw(hero, "idle", _t, Vector2(110, 250), 5.0))
+			_hero.draw(hero, "idle", _t, Vector2(110, 250), FrontArt.scale_of(_hero, 5.0)))
 	var tick := Timer.new()   # the hero idles and the ring turns
 	tick.wait_time = 1.0 / 15.0
 	tick.autostart = true

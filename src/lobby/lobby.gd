@@ -74,7 +74,7 @@ func _load_class(id: String) -> void:
 	if not _classes.has(id):
 		id = _class_ids[0]
 	_class = _classes[id]
-	var sprite := String(_class.get("sprite", "swordsman"))
+	var sprite := FrontArt.hero_sprite(_class)
 	_hero = SpriteSheet.load_dir(SPRITES + sprite, sprite)
 	if _hero != null and not _hero.layer_names().is_empty():
 		var slot := Prefs.current().active_slot
@@ -119,7 +119,7 @@ func _draw() -> void:
 		draw_rect(Rect2(p - Vector2(3, 2), Vector2(6, 4)), Color(col, lit))
 	_ellipse(feet + Vector2(0, -2), Vector2(70, 14), Color(col, 0.18 + 0.08 * sin(_t * 2.0)))
 	if _hero != null:
-		_hero.draw(self, "idle", _t, feet, HERO_SCALE)
+		_hero.draw(self, "idle", _t, feet, FrontArt.scale_of(_hero, HERO_SCALE))
 
 
 func _ellipse(c: Vector2, r: Vector2, col: Color) -> void:

@@ -137,7 +137,7 @@ func _draw() -> void:
 		tier = (tier + 1) % TIERS.size()
 	var ground := size.y - 34.0
 	var kind := kind_of(skill)
-	var sh := _sheet(tier_sprite(skill, tier))
+	var sh := _sheet(hero_sprite if skill.has("distance") else tier_sprite(skill, tier))   # the dash: the hero's own sheet
 	var hit := false
 	# sizes as the run draws them (run.gd): hero and fx at world.sprite_scale, a skill's effect x its size_mul x
 	# balance.player_area_mul, the slime at its monsters.json scale. A taller effect than the box (holy column)
@@ -157,7 +157,7 @@ func _draw() -> void:
 	var hs := _sheet(hero_sprite)
 	var body := Vector2(0, -16) * sprite_scale
 	if hs != null:
-		var b := SpriteHitbox.body(hs, Vector2.ZERO, sprite_scale, false)
+		var b := SpriteHitbox.body(hs, Vector2.ZERO, _dens(hs, sprite_scale), false)
 		if b != null:
 			body = b.center
 	var ds := _sheet("slime")
@@ -197,7 +197,7 @@ func _draw() -> void:
 			var k := clampf(local / maxf(0.01, cast_time(tier)), 0.0, 1.0)
 			sh.draw(self, anim_of(skill, sh), local, hero + Vector2(float(skill.get("distance", 120.0)) * k, 0), _dens(sh, sprite_scale))
 		else:
-			hs.draw(self, hs.animation_names()[0], t, hero, sprite_scale)
+			hs.draw(self, hs.animation_names()[0], t, hero, _dens(hs, sprite_scale))
 	if ds != null:
 		ds.draw(self, ds.animation_names()[0], t, dummy, slime_scale, true, Color(1.0, 0.55, 0.55) if hit else Color.WHITE)
 	draw_set_transform(Vector2.ZERO)

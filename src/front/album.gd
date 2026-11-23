@@ -92,7 +92,7 @@ static func skill_entries() -> Array:
 			var sp: Dictionary = pool.get("skills", {}).get(u["id"], {})
 			out.append({"id": u["id"], "name": u.get("name", u["id"]), "element": String(elems.get(u.get("element", ""), "")),
 				"cls": String(classes.get(cls, {}).get("name", cls)), "cooldown": float(sp.get("cooldown", 0.0)),
-				"desc": String(u.get("desc", "")), "sp": sp, "hero": String(classes.get(cls, {}).get("sprite", cls))})
+				"desc": String(u.get("desc", "")), "sp": sp, "hero": FrontArt.hero_sprite(classes.get(cls, {}))})
 	return out
 
 

@@ -42,10 +42,24 @@ static func ellipse(canvas: CanvasItem, c: Vector2, r: Vector2, col: Color) -> v
 	canvas.draw_colored_polygon(pts, col)
 
 
+## The class's hero sprite name: its lpc_sprite when run_config hero_art is "lpc" (user 2026-11-23: LPC heroes on
+## every screen, as in the run), else the old layered sprite.
+static func hero_sprite(class_data: Dictionary) -> String:
+	var art := String(GameData.load_json("res://assets/data/run_config.json").get("hero_art", ""))
+	if art == "lpc" and class_data.has("lpc_sprite"):
+		return String(class_data["lpc_sprite"])
+	return String(class_data.get("sprite", "swordsman"))
+
+
+## Draw scale for [param sheet] where the old 48 px heroes used [param k]: x the sheet's px_scale (LPC: 0.5).
+static func scale_of(sheet: SpriteSheet, k: float) -> float:
+	return k * (float(sheet.meta.get("px_scale", 1.0)) if sheet != null else 1.0)
+
+
 ## The class's hero sheet with its layers composed (null when missing), wearing
 ## [param worn] (item ids: their gear layers replace the hero's, sprite-lab hero-gear).
 static func hero_sheet(class_data: Dictionary, worn: Array = []) -> SpriteSheet:
-	var sprite := String(class_data.get("sprite", "swordsman"))
+	var sprite := hero_sprite(class_data)
 	var sh := SpriteSheet.load_dir("res://assets/sprites/custom/" + sprite, sprite)
 	if sh != null and not sh.layer_names().is_empty():
 		sh.compose_layers(sh.gear_overrides(worn))

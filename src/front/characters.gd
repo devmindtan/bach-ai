@@ -225,7 +225,7 @@ func _hero_box(cls: String, box: Vector2, scale: float, k := 0.0, worn: Array = 
 			c.draw_rect(Rect2(Vector2.ZERO, box), UiKit.PANEL_DARK)
 			c.draw_rect(Rect2(Vector2(10, box.y - 9), Vector2(box.x - 20, 4)), Color(0, 0, 0, 0.4))
 		if sheet != null:
-			sheet.draw(c, "idle", _t if pedestal else 0.0, feet, scale))
+			sheet.draw(c, "idle", _t if pedestal else 0.0, feet, FrontArt.scale_of(sheet, scale)))
 	if pedestal:
 		c.set_process(true)
 		var tick := Timer.new()   # the hero idles and the rune ring turns
