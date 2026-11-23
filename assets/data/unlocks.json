@@ -1,0 +1,6 @@
+{
+  "_doc": "Progressive unlocks of the lobby screens (design/ux/progressive-unlocks.md, user 2026-11-23): a screen opens once the slot has won stage N (slot.best >= N). 0 = open from the start. Bộ thẻ also holds Cây thẻ. Thử thách has its own gate in challenges.json (unlock 10).",
+  "deck": 3,
+  "gacha": 5,
+  "tree": 5
+}

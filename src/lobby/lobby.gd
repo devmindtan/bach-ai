@@ -177,6 +177,7 @@ func _build_ui() -> void:
 		["Album", "Bách khoa: quái, boss và kỹ năng; quái mở khi hạ lần đầu."],
 		["Cài đặt", "Âm thanh, hiển thị, phím."],
 		["Menu chính", "Về màn hình tiêu đề."]]
+	var feats := ["", "deck", "gacha", "", "", "", ""]   # progressive unlocks (assets/data/unlocks.json)
 	for k in top_buttons.size():
 		var b: Button = top_buttons[k]
 		var label := b.text
@@ -184,7 +185,8 @@ func _build_ui() -> void:
 		UiKit.with_vector_icon(b, String(["nav_character", "nav_deck", "nav_gacha", "nav_missions", "nav_album", "nav_settings", "nav_title"][k]), 36)
 		b.custom_minimum_size = Vector2(64, 56)
 		b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		Tip.attach(b, String(tips[k][0]), String(tips[k][1]))
+		Tip.attach(b, String(tips[k][0]), String(tips[k][1]) if _open(feats[k]) else _lock_text(feats[k]))
+		_lock(b, feats[k], Vector2(40, -6))
 		var count := label.get_slice("(", 1).trim_suffix(")") if label.contains("(") else ""
 		if count != "":   # rewards waiting: a red badge on the icon
 			var badge := UiKit.label(count, 13, Color.WHITE)
@@ -305,6 +307,9 @@ func _build_ui() -> void:
 	tree.add_theme_font_size_override("font_size", 22)
 	tree.position = Vector2(start_x - 32 - 400, vp.y - BOTTOM_ROW)
 	menu.add_child(tree)
+	_lock(tree, "tree", Vector2(150, -8))
+	if not _open("tree"):
+		Tip.attach(tree, "Cây kỹ năng", _lock_text("tree"))
 	var start := UiKit.with_vector_icon(_button("Chọn ải  ▶", func() -> void: get_tree().change_scene_to_file(STAGE_SCENE)), "nav_stages", 40)
 	start.custom_minimum_size = Vector2(300, ROW_H)
 	start.add_theme_font_size_override("font_size", 26)
@@ -454,6 +459,43 @@ func _card() -> PanelContainer:
 	var p := PanelContainer.new()
 	p.add_theme_stylebox_override("panel", _style(PANEL, 16))
 	return p
+
+
+var _unlocks: Unlocks
+
+
+## True when the active slot has opened lobby screen [param feature] ("" = always open).
+func _open(feature: String) -> bool:
+	if feature == "":
+		return true
+	if _unlocks == null:
+		_unlocks = Unlocks.load_default()
+	return _unlocks.is_open(Prefs.current().active_slot, feature)
+
+
+func _lock_text(feature: String) -> String:
+	return "Mở khi qua ải %d." % _unlocks.need(feature)
+
+
+## A locked screen (design/ux/progressive-unlocks.md): the button is greyed and disabled, with a small
+## "ải N" tag at [param tag_at] saying when it opens.
+func _lock(b: Button, feature: String, tag_at: Vector2) -> void:
+	if _open(feature):
+		return
+	b.disabled = true
+	b.focus_mode = Control.FOCUS_NONE
+	var dim := (b.get_theme_stylebox("normal") as StyleBoxFlat).duplicate() as StyleBoxFlat
+	dim.border_color = Color("4a4458")   # keeps its frame, greyed (a bare disabled button lost the frame)
+	b.add_theme_stylebox_override("disabled", dim)
+	b.self_modulate = Color(1, 1, 1, 0.6)
+	var tag := UiKit.label("ải %d" % _unlocks.need(feature), 13, UiKit.TEXT)
+	var ts := UiKit.style(Color("3a3448"), 0, UiKit.GOLD, 2)
+	ts.set_corner_radius_all(4)
+	ts.content_margin_left = 4
+	ts.content_margin_right = 4
+	tag.add_theme_stylebox_override("normal", ts)
+	tag.position = tag_at
+	b.add_child(tag)
 
 
 func _button(text: String, cb: Callable) -> Button:

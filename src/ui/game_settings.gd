@@ -30,6 +30,7 @@ var scale := 0                      # 0 = auto, else 1..3
 var damage_numbers := true
 var monster_hp := true
 var screen_shake := true   # Rung màn hình (6C.2)
+var preview_best := 10             # --preview-best=N: stages the preview slot has won
 var touch_stick := 0       # Cần điều khiển (J4): 0 Nổi, 1 Cố định, 2 Tắt
 var vfx := 0               # Hiệu ứng: 0 Đầy đủ, 1 Giảm, 2 Tối thiểu (review 2026-11-21: visual clutter late game)
 const VFX_NAMES := ["Đầy đủ", "Giảm", "Tối thiểu"]
@@ -73,6 +74,8 @@ func _ready() -> void:
 			_force_slots = true
 		elif a.begins_with("--class="):   # shots / tests: play this class
 			forced_hero = a.get_slice("=", 1)
+		elif a.begins_with("--preview-best="):   # shots: the preview slot has won stages 1..N (0 = new player)
+			preview_best = maxi(0, int(a.get_slice("=", 1)))
 		elif a.begins_with("--touch-stick="):   # shots: Cần điều khiển mode (J4)
 			touch_stick = clampi(int(a.get_slice("=", 1)), 0, 2)
 		elif a == "--pad-hints":   # shots: button hints as with a gamepad connected (J5)
@@ -101,9 +104,10 @@ func _make_preview_slot() -> void:
 	s.id = "slot1"
 	# progress as record_win leaves it after winning stages 1-10 (stage 10 twice)
 	var st := Stages.load_default()
-	for n in range(1, 11):
+	for n in range(1, preview_best + 1):
 		s.record_win(n, st)
-	s.record_win(10, st)
+	if preview_best >= 10:
+		s.record_win(10, st)
 	# a little of the skill-tree wallet for shots: Tinh hoa, one node bought, one Tẩy Tủy Đan
 	var tree := SkillTree.load_default()
 	s.essence = 30
