@@ -362,7 +362,6 @@ func _ready() -> void:
 		if status_defs[st].has("burst_sprite"):   # Thánh ấn / Ăn mòn bursts
 			names.append(String(status_defs[st]["burst_sprite"]))
 	names.append_array(special_fx_sprites())
-	names.append_array(["elite-crest", "elite-wisps"])   # roadmap F marks
 	for b: String in _buff_defs:
 		if not bool(_buff_defs[b].get("special_only", false)):
 			names.append(String(_buff_defs[b].get("sprite", b)))
@@ -2631,11 +2630,6 @@ func _draw() -> void:
 			if mark_col.a > 0.0 and enemies.state[i] != Enemies.DYING:
 				_draw_mark(i, a, at, mark_col)
 			enemies.sheet_of(i).draw(self, a[0], a[1], at, enemies.k_scale[k], enemies.flip[i] == 1, tint)
-			if mark_col.a > 0.0 and mark_style == "crest" and enemies.state[i] != Enemies.DYING:   # over the sprite
-				var cs: SpriteSheet = sheets.get("elite-crest")
-				if cs != null:
-					cs.draw(self, "loop", clock + i * 0.13, enemies.center_of(i) - Vector2(0, enemies.k_radius[k] + 10.0),
-						_sprite_scale * float(cs.meta.get("px_scale", 1.0)), false, mark_col)
 	_boss_view.draw_bolts()
 	var hero: SpriteSheet = sheets.get(String(class_data.get("sprite", "swordsman")))
 	if hero != null:
@@ -2732,7 +2726,7 @@ func camera_center() -> Vector2:
 ## Elite affix names, collected while drawing the monsters and drawn last so the
 ## hero and effects never cover them.
 ## Roadmap F: the elite / boss-buff mark behind monster [param i] (drawn before its sprite) in [param col]:
-## outline = its silhouette 1 source pixel out on 4 sides; wisps = energy rising from its feet.
+## outline = its silhouette 1 source pixel out on 4 sides (user chose it 2026-11-23 over a crest and wisps).
 func _draw_mark(i: int, a: Array, at: Vector2, col: Color) -> void:
 	var k := enemies.kind[i]
 	var pulse := float(_marks_cfg.get("alpha", 0.85)) * (0.75 + 0.25 * sin(clock * 5.0 + i))
@@ -2744,11 +2738,6 @@ func _draw_mark(i: int, a: Array, at: Vector2, col: Color) -> void:
 			var px := enemies.k_scale[k]
 			for off: Vector2 in [Vector2(px, 0), Vector2(-px, 0), Vector2(0, px), Vector2(0, -px)]:
 				sil.draw(self, a[0], a[1], at + off, enemies.k_scale[k], enemies.flip[i] == 1, Color(col, pulse))
-		"wisps":
-			var ws: SpriteSheet = sheets.get("elite-wisps")
-			if ws != null:
-				var sc := maxf(1.0, roundf(enemies.k_radius[k] / 12.0)) * float(ws.meta.get("px_scale", 1.0)) * 1.5
-				ws.draw(self, "loop", clock + i * 0.21, enemies.pos[i] + Vector2(0, 2), sc, false, Color(col, pulse * 0.8))
 
 
 ## A white copy of [param sheet] (same frames, alpha kept) for the outline mark; made once per sprite.

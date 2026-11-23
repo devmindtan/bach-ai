@@ -293,7 +293,7 @@ Trước mỗi nhóm: tham khảo ≥ 2 game cùng thể loại, ghi nguồn và
 - E5. ✅ Ánh sáng: trạng thái Thánh ấn; 2–3 phương án hiệu ứng trong Sprite Lab để chọn; áp vào Cột thánh quang.
 - E6. ✅ Bóng tối: trạng thái Ăn mòn; 2–3 phương án hiệu ứng để chọn; áp vào Cầu hư không.
 
-**F. Đánh dấu tinh anh / quái được boss buff đẹp hơn**
+**F. Đánh dấu tinh anh / quái được boss buff đẹp hơn** — ✅ 2026-11-23 viền sáng theo hình (người dùng chọn A)
 - F1. Tham khảo (viền sáng theo hình, hào quang dưới chân, biểu tượng nhỏ trên đầu); bỏ vòng tròn đỏ/màu khoanh quanh.
 - F2. Vẽ trong Sprite Lab (2–3 phương án để chọn), áp vào game, ảnh nhiều loại quái.
 

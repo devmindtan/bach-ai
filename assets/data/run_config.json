@@ -211,8 +211,8 @@
     "call": "Chiến thắng! Đã hạ %s"
   },
   "marks": {
-    "_doc": "How elites and boss-buffed monsters are marked (roadmap F, 2026-11-23): style outline (a 1-pixel glow round the sprite, Darktide rim light) | crest (a gem over the head, elite-crest) | wisps (energy rising round the body, elite-wisps) | ring (the old circle under it). Colour: the elite's affix colour (gold without one), the boss aura colour for buffed monsters. --mark-style= overrides (shots).",
-    "style": "ring",
+    "_doc": "How elites and boss-buffed monsters are marked (roadmap F, user chose 2026-11-23): style outline = a 1-source-pixel glow round the sprite (Darktide-like rim), in the elite's affix colour (gold without one) or the boss aura colour for buffed monsters, pulsing at alpha; ring = the old circle under it. --mark-style= overrides (shots).",
+    "style": "outline",
     "alpha": 0.85
   }
 }
