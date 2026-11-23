@@ -1,0 +1,90 @@
+{
+  "frames": 55,
+  "frame_size": [
+    64,
+    64
+  ],
+  "fps": 3.0,
+  "loop": true,
+  "anchor": [
+    32.0,
+    62.0
+  ],
+  "anchor_source": "lpc_strip: lowest opaque row of idle",
+  "ground": true,
+  "px_scale": 0.5,
+  "body": {
+    "anim": "idle",
+    "center": [
+      30.0,
+      38.0
+    ],
+    "radius": 8.8
+  },
+  "animations": [
+    {
+      "name": "idle",
+      "start": 0,
+      "frames": 2,
+      "fps": 3.0,
+      "loop": true
+    },
+    {
+      "name": "run",
+      "start": 2,
+      "frames": 8,
+      "fps": 10.0,
+      "loop": true
+    },
+    {
+      "name": "hurt",
+      "start": 10,
+      "frames": 1,
+      "fps": 10.0,
+      "loop": false
+    },
+    {
+      "name": "dash",
+      "start": 11,
+      "frames": 4,
+      "fps": 14.0,
+      "loop": false
+    },
+    {
+      "name": "death",
+      "start": 15,
+      "frames": 6,
+      "fps": 8.0,
+      "loop": false
+    },
+    {
+      "name": "shoot",
+      "start": 21,
+      "frames": 13,
+      "fps": 16.0,
+      "loop": false
+    },
+    {
+      "name": "slash",
+      "start": 34,
+      "frames": 6,
+      "fps": 12.0,
+      "loop": false
+    },
+    {
+      "name": "spellcast",
+      "start": 40,
+      "frames": 7,
+      "fps": 12.0,
+      "loop": false
+    },
+    {
+      "name": "thrust",
+      "start": 47,
+      "frames": 8,
+      "fps": 12.0,
+      "loop": false
+    }
+  ],
+  "source": "assets/sprites/characters/archer (LPC; credits in assets/credits)"
+}

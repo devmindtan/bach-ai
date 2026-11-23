@@ -93,6 +93,8 @@
     "cell": 48.0,
     "push": 60.0
   },
+  "hero_art": "lpc",
+  "_hero_art_doc": "Hero look in the run (user 2026-11-23 trial): lpc = the class's lpc_sprite (LPC adult, assets/sprites/custom/lpc-<class>, made by gamekit sprites), minifig = the old layered 48 px sprite. Equipment pictures are drawn only on minifig heroes for now; stats apply either way.",
   "hit_feel": {
     "_doc": "Cảm giác đánh (2026-11-23): a hit spark at the hit point of every physical-element hit (species.json elements; skills' element), at most max_per_frame a frame, none at Hiệu ứng: Tối thiểu; sprite = the chosen option (user 2026-11-23: A, a little smaller -> scale 1.25; b/c kept for --hit-spark=x), drawn at world sprite_scale x scale. hitstop: the sim holds this many s when a hitstop_sources hit lands, at most once every hitstop_gap s.",
     "sprite": "hit-spark-a",

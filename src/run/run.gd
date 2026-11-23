@@ -364,7 +364,7 @@ func _ready() -> void:
 	_chest_sprite = String(items.get("pickups", {}).get("chest", {}).get("sprite", "chest"))
 	_gold_chest_sprite = String(items.get("pickups", {}).get("gold_chest", {}).get("sprite", "chest-gold"))
 	_essence_sprite = String(items.get("pickups", {}).get("essence", {}).get("sprite", "essence-pickup"))
-	var names: Array[String] = [String(class_data.get("sprite", "swordsman")), _gem_sprite, _coin_sprite, _chest_sprite, _gold_chest_sprite, _essence_sprite, "stomp-i"]
+	var names: Array[String] = [hero_sprite_name(), _gem_sprite, _coin_sprite, _chest_sprite, _gold_chest_sprite, _essence_sprite, "stomp-i"]
 	_buff_defs = items.get("buffs", {})
 	var status_file := GameData.load_json(DATA + "statuses.json")
 	status_defs = status_file.get("statuses", {})
@@ -2584,7 +2584,7 @@ func to_lobby() -> void:
 
 
 func _play_action(anim: String) -> void:
-	var sheet: SpriteSheet = sheets.get(String(class_data.get("sprite", "swordsman")))
+	var sheet: SpriteSheet = sheets.get(hero_sprite_name())
 	if sheet == null or not sheet.has_animation(anim):
 		return
 	if anim == "attack" and _anim == "hurt" and _action_left > 0.0:
@@ -2597,14 +2597,27 @@ func _play_action(anim: String) -> void:
 ## Player body circle from the class sprite's json "body" (mirrored with the
 ## sprite): centre offset for contact / pickups / attack pivot, and radius.
 func _update_body() -> void:
-	var hero: SpriteSheet = sheets.get(String(class_data.get("sprite", "swordsman")))
-	var b := SpriteHitbox.body(hero, Vector2.ZERO, _sprite_scale, face_left)
+	var hero: SpriteSheet = sheets.get(hero_sprite_name())
+	var b := SpriteHitbox.body(hero, Vector2.ZERO, hero_scale(hero), face_left)
 	if b == null:
 		push_error("class sprite has no body circle; regenerate it in Sprite Lab")
 		return
 	_hit_center = b.center
 	if enemies != null:
 		enemies.player_hit_radius = b.radius
+
+
+## Name of the hero sheet the run draws: the class's lpc_sprite when run_config hero_art is "lpc", else its sprite.
+func hero_sprite_name() -> String:
+	if String(cfg.get("hero_art", "")) == "lpc" and class_data.has("lpc_sprite"):
+		return String(class_data["lpc_sprite"])
+	return String(class_data.get("sprite", "swordsman"))
+
+
+## Draw scale of the hero sheet: the world scale x its px_scale (an LPC hero, 64 px frames, is drawn at its own
+## pixel size: px_scale 0.5; the old 48 px heroes have none).
+func hero_scale(sheet: SpriteSheet) -> float:
+	return _sprite_scale * (float(sheet.meta.get("px_scale", 1.0)) if sheet != null else 1.0)
 
 
 func _set_anim(anim: String) -> void:
@@ -2719,7 +2732,7 @@ func _draw() -> void:
 				_draw_mark(i, a, at, mark_col)
 			enemies.sheet_of(i).draw(self, a[0], a[1], at, enemies.k_scale[k], enemies.flip[i] == 1, tint)
 	_boss_view.draw_bolts()
-	var hero: SpriteSheet = sheets.get(String(class_data.get("sprite", "swordsman")))
+	var hero: SpriteSheet = sheets.get(hero_sprite_name())
 	if hero != null:
 		var blink := invuln > 0.0 and state == State.PLAYING and int(invuln * 20.0) % 2 == 0
 		var tint := Color(1, 1, 1, 0.45) if blink else Color.WHITE
@@ -2729,7 +2742,7 @@ func _draw() -> void:
 		if poison_t > 0.0:   # standing in poison (user 2026-11-21): a pulsing green tint and rising bubbles
 			var pz := 0.5 + 0.5 * sin(clock * 10.0)
 			tint = Color(tint.r * (0.55 + 0.15 * pz), tint.g, tint.b * (0.45 + 0.15 * pz), tint.a)
-		hero.draw(self, _anim, _anim_t, player_pos, _sprite_scale, face_left, tint)
+		hero.draw(self, _anim, _anim_t, player_pos, hero_scale(hero), face_left, tint)
 		if poison_t > 0.0:
 			for q in 5:
 				var life := fmod(clock * 1.4 + q * 0.37, 1.0)
@@ -3095,7 +3108,7 @@ func _draw_dash_trail(hero: SpriteSheet) -> void:
 			draw_line(a.round(), b.round(), Color(col, 0.55 * fade), 2.0)
 	for k in range(1, n + 1):
 		var p := _dash_from.lerp(player_pos, float(k) / float(n + 1))
-		hero.draw(self, _anim, _anim_t, p, _sprite_scale, face_left, Color(col, 0.6 * float(k) / float(n) * fade))
+		hero.draw(self, _anim, _anim_t, p, hero_scale(hero), face_left, Color(col, 0.6 * float(k) / float(n) * fade))
 
 
 ## Buffs lying on the ground: the badge bobbing; blinking in the last seconds.
