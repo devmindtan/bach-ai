@@ -2424,6 +2424,8 @@ func _finish(won: bool) -> void:
 		else:
 			playing_slot.gold += gold   # Thua: chỉ giữ vàng đã nhặt
 		record_daily(playing_slot, won)
+		if enemies != null:
+			playing_slot.record_kills(enemies.kills_kind)   # Album (bách khoa): first kill unlocks a monster
 		prefs.slot_store().save(playing_slot)
 	run_result["next"] = won and challenge_id == "" and stage_number < (stages.count() if stages != null else 30)
 	run_result["challenge"] = challenge_id

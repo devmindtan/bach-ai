@@ -27,6 +27,7 @@ var shards := 0               # Mảnh thẻ: buys card-tree nodes (design/skill
 var card_trees := {}          # card id -> {node id -> rank} (CardTree)
 var decks: Array = []         # up to 3 decks: {name, cards: [ids]} (design/skill-tree-v2.md §2)
 var deck_active := 0
+var bestiary := {}            # monster id -> times killed (Album: a monster unlocks at its first kill)
 var gacha_log := {}           # gacha banner id -> [{t, id, rarity, dup, gold}], oldest first (Lịch sử quay)
 var profile: Profile
 
@@ -56,11 +57,17 @@ func record_win(n: int, stages: Stages) -> Dictionary:
 	return r
 
 
+## Adds a run's kills by monster id ([param kills]: Enemies.kills_kind) to the Album record.
+func record_kills(kills: Dictionary) -> void:
+	for m: String in kills:
+		bestiary[m] = int(bestiary.get(m, 0)) + int(kills[m])
+
+
 func to_dict() -> Dictionary:
 	return {"version": VERSION, "id": id, "name": name, "class": cls, "best": best, "wins": wins,
 		"gold": gold, "gems": gems, "essence": essence, "pills": pills, "tree": tree,
 		"challenge_wins": challenge_wins, "pity": pity, "gacha_log": gacha_log, "daily": daily,
-		"shards": shards, "card_trees": card_trees, "decks": decks, "deck_active": deck_active,
+		"shards": shards, "card_trees": card_trees, "bestiary": bestiary, "decks": decks, "deck_active": deck_active,
 		"profile": profile.to_dict()}
 
 
@@ -87,6 +94,7 @@ func from_dict(d: Dictionary) -> String:
 	daily = d.get("daily", {})
 	shards = int(d.get("shards", 0))
 	card_trees = d.get("card_trees", {})
+	bestiary = d.get("bestiary", {})
 	decks = Array(d.get("decks", []))
 	deck_active = int(d.get("deck_active", 0))
 	profile.from_dict(d.get("profile", {}), cls)

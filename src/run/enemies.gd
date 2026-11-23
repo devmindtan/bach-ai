@@ -127,6 +127,7 @@ var total_kills := 0
 var damage_by := {}
 var hits_by := {}
 var kills_by := {}
+var kills_kind := {}   # monster id (no "@elite") -> kills this run: the Album unlocks a monster at its first kill
 
 var spawn_ring := Vector2(760, 860)
 var despawn_distance := 1300.0
@@ -1353,6 +1354,8 @@ func _damage(i: int, amount: float, kb: Vector2, source := "") -> void:
 		anim_t[i] = 0.0
 		total_kills += 1
 		kills_by[source] = int(kills_by.get(source, 0)) + 1
+		var mid := kind_ids[kind[i]].get_slice("@", 0)
+		kills_kind[mid] = int(kills_kind.get(mid, 0)) + 1
 		kill_elite.append(k_elite[kind[i]])
 		_corrode_burst(i)
 		kill_boss.append(k_boss[kind[i]])
