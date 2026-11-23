@@ -1,0 +1,24 @@
+# Packing the game for an AI (repomix): code, data and design only (roadmap K1, 2026-11-23)
+.claude/docs/
+.claude/agents/
+.claude/skills/
+.claude/scripts/
+.claude/genres/
+.claude/hooks/
+.claude/engines/
+assets/fonts/
+assets/icons/
+addons/
+.godot/
+builds/
+graphify-out/
+production/qa/evidence/
+production/ui/*.png
+docs/engine-reference/
+assets/sprites/
+assets/audio/
+assets/source/
+**/*.png
+**/*.wav
+**/*.import
+**/*.uid

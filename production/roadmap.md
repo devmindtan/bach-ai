@@ -314,15 +314,15 @@ Trước mỗi nhóm: tham khảo ≥ 2 game cùng thể loại, ghi nguồn và
 ## Yêu cầu người dùng 2026-11-22 (đợt 2): tối ưu đa nền tảng và quy trình
 
 **J. Tối ưu kỹ thuật & hiệu năng (Steam, CH Play)**
-- J1. Nhạc nền sang `.ogg`: `boss`, `menu`, `run_forest`, `run_marsh`, `run`, `challenge` (.wav hiện 3,9 MB); giữ `.wav`
+- J1. ⏸ Đo 2026-11-23: nhạc trong bản build đã nén QOA (`compress/mode=2`), chỉ ~820 KB / gói web 30 MB; OGG bớt ~300 KB (~1%) mà cần cài bộ mã hoá ngoài (máy chưa có ffmpeg/oggenc) → hoãn. Ý cũ: Nhạc nền sang `.ogg`: `boss`, `menu`, `run_forest`, `run_marsh`, `run`, `challenge` (.wav hiện 3,9 MB); giữ `.wav`
   cho `sfx/` (trễ thấp). Sửa `gamekit audio` xuất `.ogg` cho nhạc + đường dẫn trong `audio.json`; đo kích thước bản web
   trước/sau; nghe thử loop không vấp.
-- J2. Đo trước khi tối ưu: bench 200 / 500 quái với chiêu bậc V (fireball-v, lightning-storm-v, whirlwind-v) ở late
+- J2. ✅ Đo 2026-11-23 (`godot … --bench=N` dưới Xvfb, pháp sư có Cầu lửa/Bão sét/Sét đánh/Băng nổ bậc V): 200 quái sim_ms avg 1,88 / p95 5,99; 500 (trần 200 quái sống) sim_ms avg 2,89 / p95 6,31. Khung hình 60–80 ms là do vẽ bằng CPU trên Xvfb, không phải mô phỏng. Ý cũ: Đo trước khi tối ưu: bench 200 / 500 quái với chiêu bậc V (fireball-v, lightning-storm-v, whirlwind-v) ở late
   game (`--bench`, `sim_ms` / `frame_ms`), trên desktop và một máy Android thật hoặc export Android.
   Ghi chú hiện trạng (kiểm 2026-11-22): đạn, hiệu ứng, số sát thương, ngọc trong `src/run/` **không phải node** (dict
   trong mảng / mảng packed), không `queue_free` trong trận; điểm nóng có thể là cấp phát Dictionary mỗi hiệu ứng và
   `remove_at` mảng. Chỉ làm pooling ở chỗ bench chỉ ra.
-- J3. Pooling theo kết quả J2: tái dùng Dictionary hiệu ứng / đạn (free-list), swap-remove thay `remove_at` giữa mảng,
+- J3. ⏸ Chưa cần (J2: mô phỏng ≤ 6,3 ms p95 trong ngân sách 16,6 ms); đo lại trên Android thật khi có bản Android. Ý cũ: Pooling theo kết quả J2: tái dùng Dictionary hiệu ứng / đạn (free-list), swap-remove thay `remove_at` giữa mảng,
   mảng packed cho số sát thương nếu chưa; đo lại cùng bench, ghi số vào commit.
 - J4. Cần điều khiển ảo (Virtual Joystick) cho Android: kéo để di chuyển, vị trí tuỳ chỉnh trong Cài đặt, nút Lướt;
   tham khảo game survivors trên di động trước (quy tắc UI); ảnh màn hình dọc/ngang.
@@ -330,7 +330,7 @@ Trước mỗi nhóm: tham khảo ≥ 2 game cùng thể loại, ghi nguồn và
   sảnh, bộ thẻ) đi được bằng D-pad/nút; biểu tượng nút theo thiết bị; test nhập liệu.
 
 **K. Tinh gọn quy trình phát triển (DX)**
-- K1. `.repomixignore` ở game (và repo gốc nếu dùng): bỏ `.claude/docs/`, `production/qa/evidence/`, `builds/`,
+- K1. ✅ 2026-11-23 (đóng gói còn 1,59 MB ≈ 400k token; ước theo byte/4, chưa chạy repomix) `.repomixignore` ở game (và repo gốc nếu dùng): bỏ `.claude/docs/`, `production/qa/evidence/`, `builds/`,
   `graphify-out/`, ảnh/strip sprite; đo số token trước/sau khi đóng gói.
 - K2. Soát `.claude/` (agents, skills của template) mà dự án solo không dùng; chỉ bỏ những gì `gamekit tidy` / UPGRADING
   cho phép, ghi lại để nâng template không vỡ.
