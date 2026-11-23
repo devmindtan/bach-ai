@@ -1,6 +1,6 @@
 class_name ObstacleView
 extends RefCounted
-## Draws the stage's solid props (rocks, trees; felled trees as stumps) on the run's canvas: their foot
+## Draws the stage's solid props (rocks, trees) on the run's canvas: their foot
 ## shadow and sprite, and again see-through over the hero when it walks behind one. Split out of run.gd
 ## (roadmap tech debt 6, 2026-11-22), like BossView.
 ##
@@ -21,12 +21,6 @@ func draw(view: Rect2, front: bool) -> void:
 			continue
 		var sh: SpriteSheet = run.sheets.get(String(s["sprite"]))
 		if sh == null:
-			continue
-		if p in run.region_ev.trees.felled:   # Cây đổ: a stump where the tree stood (its trunk lies on the floor)
-			if not front:
-				run.draw_circle(p + Vector2(0, -4), 11.0, Color(0.22, 0.13, 0.07))
-				run.draw_circle(p + Vector2(0, -6), 8.0, Color(0.55, 0.38, 0.2))
-				run.draw_arc(p + Vector2(0, -6), 4.0, 0.0, TAU, 12, Color(0.4, 0.26, 0.12), 1.5)
 			continue
 		if front:
 			var size: Vector2 = sh.frame_size * run._sprite_scale

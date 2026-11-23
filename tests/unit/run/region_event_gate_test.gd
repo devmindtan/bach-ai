@@ -3,7 +3,7 @@ extends RefCounted
 ## each region has one own event with config, a source name and an icon.
 
 const Run := preload("res://src/run/run.gd")
-const OWN := ["tornado", "falling_trees", "poison_tide"]
+const OWN := ["tornado", "root_snare", "poison_tide"]
 
 var failures: Array[String] = []
 

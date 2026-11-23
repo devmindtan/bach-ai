@@ -102,7 +102,7 @@
     "hp_bar_time": 2.0
   },
   "events": {
-    "_doc": "6B events (design/events.md). ring = Vòng thử thách: opens `distance` px from the player at the region's event times (stages.json regions[].events), radius px, need = seconds inside to complete, limit = seconds before it fails, gold = coins dropped with the chest. meteor = Mưa thiên thạch: for duration s a mark every interval s within spread px of the player, lands warn s later (radius px), at most max_marks at once; hits the player for player_damage (armor applies) and monsters for monster_damage. gold_chest = Rương vàng: chance a dropped chest is gold; opening gives picks card picks in a row, gold coins, a sure item, and counts_as chests for Mảnh thẻ. source_names / source_icons: name (starting \"Sự kiện:\", so it is not mistaken for a skill) and icon of each event damage source in the end-of-run table. collect = Thu thập sao: count stars within spread px, pick each within pick px, all before limit s. hunt = Săn tinh anh: the region's elite (marked) appears distance px away, kill it before limit s. min_stage: region events (every kind) start at this stage, earlier stages are quiet (user 2026-11-21; --event still forces one). tornado / falling_trees / poison_tide: each region's own event, numbers in design/region-events-plan.md §4. enabled: false switches an event off (its region times are skipped; --event still forces it). (Mưa thiên thạch was removed 2026-11-21: every region has its own event.) Rewards: a chest + gold coins (user 2026-11-21: challenges easier and more varied; ring radius 110 / need 5 / limit 40).",
+    "_doc": "6B events (design/events.md). ring = Vòng thử thách: opens `distance` px from the player at the region's event times (stages.json regions[].events), radius px, need = seconds inside to complete, limit = seconds before it fails, gold = coins dropped with the chest. meteor = Mưa thiên thạch: for duration s a mark every interval s within spread px of the player, lands warn s later (radius px), at most max_marks at once; hits the player for player_damage (armor applies) and monsters for monster_damage. gold_chest = Rương vàng: chance a dropped chest is gold; opening gives picks card picks in a row, gold coins, a sure item, and counts_as chests for Mảnh thẻ. source_names / source_icons: name (starting \"Sự kiện:\", so it is not mistaken for a skill) and icon of each event damage source in the end-of-run table. collect = Thu thập sao: count stars within spread px, pick each within pick px, all before limit s. hunt = Săn tinh anh: the region's elite (marked) appears distance px away, kill it before limit s. min_stage: region events (every kind) start at this stage, earlier stages are quiet (user 2026-11-21; --event still forces one). tornado / root_snare (replaced falling_trees 2026-11-23) / poison_tide: each region's own event, numbers in design/region-events-plan.md §4. enabled: false switches an event off (its region times are skipped; --event still forces it). (Mưa thiên thạch was removed 2026-11-21: every region has its own event.) Rewards: a chest + gold coins (user 2026-11-21: challenges easier and more varied; ring radius 110 / need 5 / limit 40).",
     "ring": {
       "distance": 220.0,
       "radius": 110.0,
@@ -122,17 +122,6 @@
       "tick": 0.5,
       "seeds": 3
     },
-    "falling_trees": {
-      "waves": 3,
-      "interval": 2.5,
-      "warn": 1.2,
-      "range": 300.0,
-      "length": 150.0,
-      "width": 46.0,
-      "player_damage": 14.0,
-      "monster_damage": 60.0,
-      "linger": 4.0
-    },
     "poison_tide": {
       "pools": 3,
       "range": 280.0,
@@ -150,13 +139,13 @@
     },
     "source_names": {
       "event.tornado": "Sự kiện: Lốc cỏ",
-      "event.falling_trees": "Sự kiện: Cây đổ",
-      "event.poison_tide": "Sự kiện: Nước độc dâng"
+      "event.poison_tide": "Sự kiện: Nước độc dâng",
+      "event.root_snare": "Sự kiện: Rễ trói"
     },
     "source_icons": {
       "event.tornado": "ev_tornado",
-      "event.falling_trees": "ev_falling_tree",
-      "event.poison_tide": "ev_poison_tide"
+      "event.poison_tide": "ev_poison_tide",
+      "event.root_snare": "ev_falling_tree"
     },
     "collect": {
       "count": 5,
@@ -169,6 +158,19 @@
       "distance": 320.0,
       "limit": 25.0,
       "gold": 15
+    },
+    "root_snare": {
+      "waves": 4,
+      "interval": 2.2,
+      "warn": 1.0,
+      "range": 320.0,
+      "length": 220.0,
+      "width": 28.0,
+      "root_player": 0.8,
+      "root_monster": 2.0,
+      "player_damage": 8.0,
+      "monster_damage": 40.0,
+      "linger": 1.2
     }
   },
   "crit": {

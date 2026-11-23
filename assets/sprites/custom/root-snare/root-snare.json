@@ -1,0 +1,25 @@
+{
+  "frames": 11,
+  "frame_size": [
+    64,
+    64
+  ],
+  "fps": 10.0,
+  "loop": false,
+  "anchor": [
+    32,
+    46
+  ],
+  "anchor_source": "explicit",
+  "animations": [
+    {
+      "name": "snare",
+      "start": 0,
+      "frames": 11,
+      "fps": 10.0,
+      "loop": false
+    }
+  ],
+  "px_scale": 0.5,
+  "source": "sprite-lab/sprites/root-snare"
+}

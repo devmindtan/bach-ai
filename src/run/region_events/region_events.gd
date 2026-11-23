@@ -1,7 +1,7 @@
 class_name RegionEvents
 extends RefCounted
-## Each region's own event (design/region-events-plan.md, design/events.md): Lốc cỏ, Cây đổ, Nước độc
-## dâng. Holds the three events and the run's schedule; steps them (damage, drops, calls) and draws them
+## Each region's own event (design/region-events-plan.md, design/events.md): Lốc cỏ, Rễ trói (thay Cây đổ
+## 2026-11-23), Nước độc dâng. Holds the three events and the run's schedule; steps them (damage, drops, calls) and draws them
 ## on the run's canvas. Split out of run.gd (roadmap tech debt 6, 2026-11-21), like BossView.
 ##
 ## Example:
@@ -11,10 +11,10 @@ extends RefCounted
 var run   # the Run node (untyped: run.gd's private helpers are reached by name, as BossView does)
 var times: Array = []   # [time, kind] this run's own event
 var tornado := Tornado.new()     # Lốc cỏ (Đồng cỏ)
-var trees := FallingTrees.new()  # Cây đổ (Rừng Âm U)
+var snare := RootSnare.new()     # Rễ trói (Rừng Âm U; replaced Cây đổ, user 2026-11-23)
 var tide := PoisonTide.new()     # Nước độc dâng (Đầm Lầy Độc)
 
-const OWN_EVENTS := ["tornado", "falling_trees", "poison_tide"]
+const OWN_EVENTS := ["tornado", "root_snare", "poison_tide"]
 
 
 func step(dt: float) -> void:
@@ -25,9 +25,9 @@ func step(dt: float) -> void:
 			run.wave_call = "Sự kiện vùng: Lốc cỏ! Né khỏi đường lốc, dụ quái vào"
 			run.wave_call_t = 3.0
 			Sfx.play("boss_spawn")
-		if run.clock - dt < float(oe[0]) and float(oe[0]) <= run.clock and String(oe[1]) == "falling_trees" and not trees.busy():
-			trees.start(ev.get("falling_trees", {}))
-			run.wave_call = "Sự kiện vùng: Cây đổ! Tránh dải sáng dưới gốc cây"
+		if run.clock - dt < float(oe[0]) and float(oe[0]) <= run.clock and String(oe[1]) == "root_snare" and not snare.busy():
+			snare.start(ev.get("root_snare", {}))
+			run.wave_call = "Sự kiện vùng: Rễ trói! Tránh vết nứt sáng xanh"
 			run.wave_call_t = 3.0
 			Sfx.play("boss_spawn")
 		if run.clock - dt < float(oe[0]) and float(oe[0]) <= run.clock and String(oe[1]) == "poison_tide" and not tide.busy():
@@ -46,22 +46,23 @@ func step(dt: float) -> void:
 		if not tide.busy():   # sunk: the gems where the pools were
 			for q: Vector2 in tide.dropped:
 				run.pickups.drop(Pickups.COIN, q, 1.0)
-	if trees.busy():
-		var fc: Dictionary = ev.get("falling_trees", {})
+	if snare.busy():
+		var rc: Dictionary = ev.get("root_snare", {})
 		var feet := []
 		if run.obstacles != null:
 			for so: Dictionary in run.obstacles.solids:
 				if String(so.get("sprite", "")).contains("tree"):
 					feet.append(so["p"])
-		for f: Dictionary in trees.step(dt, run.player_pos, feet, run.rng):
+		for ln: Dictionary in snare.step(dt, run.player_pos, feet, run.rng):
 			Sfx.play("quake")
-			run.shake.add(5.0)
-			for k in 3:   # three touching circles along the strip (one hit per monster in practice)
-				var q: Vector2 = f["a"] + (f["d"] as Vector2) * trees.length * (k * 2 + 1) / 6.0
-				run.enemies.hit_circle(q, maxf(trees.width * 0.5, trees.length / 6.0), float(fc.get("monster_damage", 60.0)) / 3.0, 60.0, FallingTrees.SOURCE)
-			if trees.hits(f, run.player_pos, run.PLAYER_BODY) and not run.god and not run.buffs.invulnerable() and run._dash_left <= 0.0:
+			run.shake.add(3.0)
+			for q: Vector2 in snare.cluster_points(ln):   # monsters on the line: hurt and rooted
+				run.enemies.hit_circle(q, snare.width * 0.5, float(rc.get("monster_damage", 40.0)) / 4.0, 0.0, RootSnare.SOURCE,
+					[{"status": "stun", "time": float(rc.get("root_monster", 2.0))}])
+			if snare.hits(ln, run.player_pos, run.PLAYER_BODY) and not run.god and not run.buffs.invulnerable() and run._dash_left <= 0.0:
 				if not run._spend_ward():
-					run._take_hit(float(fc.get("player_damage", 14.0)), FallingTrees.SOURCE)
+					run._take_hit(float(rc.get("player_damage", 8.0)), RootSnare.SOURCE)
+					run.root_t = float(rc.get("root_player", 0.8))   # rooted: cannot walk, still attacks
 	if not tornado.busy():
 		return
 	var tc: Dictionary = ev.get("tornado", {})
@@ -78,5 +79,5 @@ func step(dt: float) -> void:
 ## The region's own event, drawn on the floor under the monsters.
 func draw() -> void:
 	tornado.draw(run, run.clock)
-	trees.draw(run)
+	snare.draw(run, run.sheets, run._sprite_scale)
 	tide.draw(run, run.clock)

@@ -553,7 +553,7 @@ func _challenge_detail(panel: PanelContainer) -> void:
 # --- Chi tiết: the stage's monsters, time marks and rewards (design/ux/stage-detail.md, roadmap D2) ---
 
 const EVENT_NAMES := {"ring": "Vòng thử thách", "collect": "Thu thập sao", "hunt": "Săn tinh anh",
-	"tornado": "Lốc xoáy", "falling_trees": "Cây đổ", "poison_tide": "Triều độc"}
+	"tornado": "Lốc xoáy", "root_snare": "Rễ trói", "poison_tide": "Triều độc"}
 
 
 ## The stage's monsters for the detail table: [{id, name, hp, damage, speed, elite, boss}], hp and damage

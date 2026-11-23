@@ -21,7 +21,7 @@ extends Node2D
 ##   --pick-card=ID  take count card ID at the start and open its skill pick (shots)
 ##   --no-auto-pick  the demo stops at the first level-up panel (for shots)
 ##   --spawn-only=ID[,ID] only the waves of these monsters spawn, from the start (shots)
-##   --event=K@T     run event K (ring | collect | hunt | tornado | falling_trees | poison_tide) at T seconds (shots)
+##   --event=K@T     run event K (ring | collect | hunt | tornado | root_snare | poison_tide) at T seconds (shots)
 ##   --show-special-fx=T  every special card's effect drawn once at T seconds, look only (shots)
 ##   --pool-here     a poison pool under the hero's start (shots of the poison look)
 ##   --vfx=N         Cài đặt "Hiệu ứng" level for shots (0 Đầy đủ, 1 Giảm, 2 Tối thiểu)
@@ -54,6 +54,7 @@ var _win_on_boss := true
 var boss_stage := false
 const POISON_LOOK := 0.2   # s the poison look stays after leaving a pool
 var poison_t := 0.0
+var root_t := 0.0     # the hero is rooted (Rễ trói): seconds left
 var bleed_t := 0.0     # the hero bleeds (a Thú bite, design/species.md): seconds left
 var bleed_dps := 0.0
 var _pool_here := false      # --pool-here          # > 0: the hero stands in poison (pool look)
@@ -315,7 +316,7 @@ func _ready() -> void:
 	for fe: Array in _forced_events:   # --event (shots)
 		match String(fe[1]):
 			"ring": challenges.ring_times = [fe[0]]
-			"tornado", "falling_trees", "poison_tide": region_ev.times = [fe]
+			"tornado", "root_snare", "poison_tide": region_ev.times = [fe]
 			_: challenges.field_times = [fe]
 	# each region and the challenges have their own song (design/regions.md)
 	run_music = String(Challenges.load_default().data.get("music", "run")) if challenge_id != "" \
@@ -363,6 +364,7 @@ func _ready() -> void:
 		if status_defs[st].has("burst_sprite"):   # Thánh ấn / Ăn mòn bursts
 			names.append(String(status_defs[st]["burst_sprite"]))
 	names.append_array(special_fx_sprites())
+	names.append(RootSnare.SPRITE)   # Rễ trói (Rừng Âm U's event)
 	for b: String in _buff_defs:
 		if not bool(_buff_defs[b].get("special_only", false)):
 			names.append(String(_buff_defs[b].get("sprite", b)))
@@ -773,7 +775,6 @@ func _move_player(dt: float) -> void:
 		if obstacles != null:
 			player_pos = obstacles.push_out(player_pos, PLAYER_BODY)
 		player_pos = enemies.push_out_walls(player_pos, PLAYER_BODY)
-		player_pos = region_ev.trees.push_out(player_pos, PLAYER_BODY)   # Cây đổ: fallen trunks
 	for pp: Array in enemies.phase_push:   # a boss starts phase 2: the hero is pushed away and the screen shakes
 		var away: Vector2 = player_pos - pp[0]
 		_knock += (away.normalized() if away.length() > 1.0 else Vector2.RIGHT) * float(pp[1])
@@ -799,6 +800,9 @@ func _move_player(dt: float) -> void:
 	var dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	if demo:
 		dir = forced_walk if forced_walk != Vector2.ZERO else _autopilot()
+	if root_t > 0.0:   # Rễ trói: rooted, cannot walk (attacks go on; the dash still breaks free)
+		root_t = maxf(0.0, root_t - dt)
+		dir = Vector2.ZERO
 	_moving = dir.length_squared() > 0.01
 	if _moving:
 		facing = dir.normalized()
@@ -810,7 +814,6 @@ func _move_player(dt: float) -> void:
 		if obstacles != null:
 			player_pos = obstacles.push_out(player_pos, PLAYER_BODY)
 		player_pos = enemies.push_out_walls(player_pos, PLAYER_BODY)
-		player_pos = region_ev.trees.push_out(player_pos, PLAYER_BODY)   # Cây đổ: fallen trunks
 	_action_left = maxf(0.0, _action_left - dt)
 	if _action_left <= 0.0:
 		_set_anim("run" if _moving else "idle")
@@ -851,7 +854,6 @@ func _dash_step(dt: float) -> void:
 	if obstacles != null:
 		player_pos = obstacles.push_out(player_pos, PLAYER_BODY)
 	player_pos = enemies.push_out_walls(player_pos, PLAYER_BODY)   # a root wall is solid: no dashing through
-	player_pos = region_ev.trees.push_out(player_pos, PLAYER_BODY)   # Cây đổ: fallen trunks
 	_dash_left -= step
 	# two cuts along the path: covering the half just travelled each time
 	var r := dist * 0.25 + float(sp.get("hit_radius", 26.0))
