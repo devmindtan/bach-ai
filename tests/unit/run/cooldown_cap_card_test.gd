@@ -49,3 +49,20 @@ func test_cooldown_shown_never_passes_the_cap() -> void:
 	Run._cd_floor = 0.0
 	if shown != "-40% (tối đa)" or at_cap != "-40% (tối đa)" or under != "-10%":
 		failures.append("shown %s / %s / %s" % [shown, at_cap, under])
+
+
+## User 2026-11-23: the cap does not touch timed buffs: at the cap, Rune tốc độ (-25% for 8 s) still shortens casts.
+func test_timed_buff_goes_past_the_cap() -> void:
+	var r := _run("knight", "haste", 4)   # permanent -40%: at the cap
+	r.buffs = Buffs.new(GameData.load_json("res://assets/data/items.json")["buffs"], r.cfg.get("buffs", {}), 1)
+	r._recompute_stats()
+	var capped: float = r.skill_cooldown("blade_arc")
+	r.buffs.active["haste_rune"] = 8.0
+	r._recompute_stats()
+	var with_buff: float = r.skill_cooldown("blade_arc")
+	if not is_equal_approx(with_buff, capped * 0.75):
+		failures.append("with the rune %s, want %s (capped %s x 0.75)" % [with_buff, capped * 0.75, capped])
+	var ids: Array = r.deck_pool().map(func(u: Dictionary) -> String: return String(u["id"]))
+	if ids.has("haste"):
+		failures.append("the rune made the capped card come back... it should stay gone")
+	r.free()

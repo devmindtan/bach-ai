@@ -144,8 +144,9 @@ func stat_breakdown() -> Dictionary:
 			bd[pair[0]]["parts"].append({"id": "skull", "name": "Độ khó", "level": 0, "mul": m - 1.0})
 	# every cast is capped at player.cooldown_floor (skill_cooldown): the sheet shows the same number
 	var cd_floor = float(run.cfg.get("player", {}).get("cooldown_floor", 0.0))
-	if bd.has("cooldown") and float(bd["cooldown"]["final"]) < cd_floor:
-		bd["cooldown"]["final"] = cd_floor
+	var bsum: float = run.buff_cooldown_sum()   # timed buffs come on top of the cap (user 2026-11-23)
+	if bd.has("cooldown") and float(bd["cooldown"]["final"]) - bsum < cd_floor:
+		bd["cooldown"]["final"] = cd_floor * maxf(0.2, 1.0 + bsum)
 		bd["cooldown"]["capped"] = true
 	return bd
 	if run.enemies != null:   # Chí mạng: run_config.json crit + any crit_chance / crit_mul effects (6C.2)

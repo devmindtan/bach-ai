@@ -1395,9 +1395,22 @@ func skill_cooldown(id: String, st: Dictionary = {}) -> float:
 		st = stats
 	var sp: Dictionary = pool.get("skills", {}).get(id, {})
 	var own := PlayerStats.skill_mul(st, "skill_cd." + id)   # e.g. the dash card's -12% per level
-	# every reduction together stops at -40% (run_config player.cooldown_floor, user 2026-11-20)
+	# every lasting reduction together stops at -40% (run_config player.cooldown_floor, user 2026-11-20);
+	# timed buffs (Rune tốc độ) come on top of the cap (user 2026-11-23)
 	var floor_mul := float(cfg.get("player", {}).get("cooldown_floor", 0.0))
-	return float(sp.get("cooldown", 1.0)) * maxf(floor_mul, float(st.get("cooldown", 1.0)) * own)
+	var bsum := buff_cooldown_sum()
+	var lasting := float(st.get("cooldown", 1.0)) - bsum
+	return float(sp.get("cooldown", 1.0)) * maxf(floor_mul, lasting * own) * maxf(0.2, 1.0 + bsum)
+
+
+## The cooldown "mul" of every active timed buff added up (e.g. Rune tốc độ -0.25): kept out of the cap.
+func buff_cooldown_sum() -> float:
+	if buffs == null:
+		return 0.0
+	var out := 0.0
+	for u: Dictionary in buffs.as_upgrades():
+		out += float(u.get("effects", {}).get("cooldown", {}).get("mul", 0.0))
+	return out
 
 
 ## Cooldown shown on the HUD: [seconds left, cooldown, active]. active = the skill
@@ -2043,7 +2056,7 @@ func stat_capped(u: Dictionary) -> bool:
 	if fx.size() != 1 or not fx.has("cooldown"):
 		return false
 	var floor_mul := float(cfg.get("player", {}).get("cooldown_floor", 0.0))
-	return floor_mul > 0.0 and float(stats.get("cooldown", 1.0)) <= floor_mul + 0.0001
+	return floor_mul > 0.0 and float(stats.get("cooldown", 1.0)) - buff_cooldown_sum() <= floor_mul + 0.0001   # buffs pass the cap
 
 
 ## A new level-up hand from the deck (banished cards left out); the panel shows it.
