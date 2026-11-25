@@ -41,17 +41,17 @@ static func gear() -> SpriteSheet:
 	return _gear
 
 
-## The icon's frame as a texture (cached), for Controls: card-icons first, then ui-icons, then
-## gear-icons (item ids), then card-glyphs (card tree symbols, "shard").
+## The icon's frame as a texture (cached), for Controls: card-icons first, then gear-icons (item ids),
+## then ui-icons, then card-glyphs (card tree symbols, "shard").
 static func texture(icon: String) -> Texture2D:
 	if not _textures.has(icon):
 		if _cards == null:
 			_cards = SpriteSheet.load_dir(CARD_DIR, "card-icons")
 		var s := _cards
 		if s == null or not s.has_animation(icon):
-			s = sheet()
+			s = gear()   # before ui-icons: six old 16 px frames there share item ids (2026-11-25)
 		if s == null or not s.has_animation(icon):
-			s = gear()
+			s = sheet()
 		if s == null or not s.has_animation(icon):
 			if _glyphs == null:
 				_glyphs = SpriteSheet.load_dir(GLYPH_DIR, "card-glyphs")
