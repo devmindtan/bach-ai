@@ -40,7 +40,7 @@
   },
   "mage": {
     "name": "Pháp sư",
-    "sprite": "mage",
+    "sprite": "wizard",
     "stats": {
       "max_hp": 80.0,
       "move_speed": 145.0,
