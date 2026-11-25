@@ -9,7 +9,7 @@ extends Node2D
 ## Command line (after `--`), for shots: --equip-slot=<slot>, --equip-view=<item id>, --equip-plus=<0..5>.
 
 const LOBBY_SCENE := "res://src/lobby/lobby.tscn"
-const SLOT_NAME := {"head": "Mũ", "chest": "Áo", "legs": "Quần", "arms": "Tay", "feet": "Giày", "weapon": "Vũ khí", "shield": "Khiên"}
+const SLOT_NAME := {"head": "Mũ", "chest": "Áo", "legs": "Quần", "arms": "Tay", "feet": "Giày", "weapon": "Vũ khí", "shield": "Khiên", "quiver": "Bao tên"}
 const RARITY_NAME := {"common": "Thường", "rare": "Hiếm", "epic": "Sử thi", "legendary": "Huyền thoại"}
 const RARITY := {"common": Color("e8e2d0"), "rare": Color("6fb7ff"), "epic": Color("c38df5"), "legendary": Color("f2b64a")}
 const UP := Color("8fe08a")

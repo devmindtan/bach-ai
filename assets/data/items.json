@@ -1221,6 +1221,598 @@
           "desc": "Tầm hút +16%."
         }
       ]
+    },
+    "leather_quiver": {
+      "name": "Bao tên da",
+      "slot": "quiver",
+      "class": "archer",
+      "rarity": "common",
+      "icon": "leather_quiver",
+      "effects": {
+        "cooldown": {
+          "mul": -0.03
+        },
+        "max_hp": {
+          "add": 5
+        }
+      },
+      "desc": "Hồi chiêu −3%, Máu tối đa +5.",
+      "starter": true
+    },
+    "forest_quiver": {
+      "name": "Bao tên rừng",
+      "slot": "quiver",
+      "class": "archer",
+      "rarity": "rare",
+      "icon": "forest_quiver",
+      "effects": {
+        "cooldown": {
+          "mul": -0.048
+        },
+        "max_hp": {
+          "add": 8
+        }
+      },
+      "desc": "Hồi chiêu −5%, Máu tối đa +8.",
+      "subs": [
+        {
+          "effects": {
+            "magnet": {
+              "mul": 0.1
+            }
+          },
+          "desc": "Tầm hút +10%."
+        }
+      ]
+    },
+    "shadow_quiver": {
+      "name": "Bao tên bóng đêm",
+      "slot": "quiver",
+      "class": "archer",
+      "rarity": "epic",
+      "icon": "shadow_quiver",
+      "effects": {
+        "cooldown": {
+          "mul": -0.069
+        },
+        "max_hp": {
+          "add": 12
+        }
+      },
+      "desc": "Hồi chiêu −7%, Máu tối đa +12.",
+      "subs": [
+        {
+          "effects": {
+            "magnet": {
+              "mul": 0.15
+            }
+          },
+          "desc": "Tầm hút +15%."
+        },
+        {
+          "effects": {
+            "regen": {
+              "add": 0.52
+            }
+          },
+          "desc": "Hồi máu +0,5/giây."
+        }
+      ]
+    },
+    "sun_quiver": {
+      "name": "Bao tên Mặt Trời",
+      "slot": "quiver",
+      "class": "archer",
+      "rarity": "legendary",
+      "icon": "sun_quiver",
+      "effects": {
+        "cooldown": {
+          "mul": -0.096
+        },
+        "max_hp": {
+          "add": 16
+        }
+      },
+      "desc": "Hồi chiêu −10%, Máu tối đa +16.",
+      "subs": [
+        {
+          "effects": {
+            "magnet": {
+              "mul": 0.225
+            }
+          },
+          "desc": "Tầm hút +22%."
+        },
+        {
+          "effects": {
+            "regen": {
+              "add": 0.64
+            }
+          },
+          "desc": "Hồi máu +0,6/giây."
+        },
+        {
+          "effects": {
+            "move_speed": {
+              "mul": 0.08
+            }
+          },
+          "desc": "Tốc độ chạy +8%."
+        }
+      ]
+    },
+    "leather_armor": {
+      "name": "Giáp da",
+      "slot": "chest",
+      "class": "archer",
+      "rarity": "common",
+      "icon": "leather_armor",
+      "effects": {
+        "armor": {
+          "add": 2
+        },
+        "max_hp": {
+          "add": 15
+        }
+      },
+      "desc": "Giáp +2, Máu tối đa +15."
+    },
+    "forest_armor": {
+      "name": "Giáp rừng",
+      "slot": "chest",
+      "class": "archer",
+      "rarity": "rare",
+      "icon": "forest_armor",
+      "effects": {
+        "armor": {
+          "add": 3
+        },
+        "max_hp": {
+          "add": 24
+        }
+      },
+      "desc": "Giáp +3, Máu tối đa +24.",
+      "subs": [
+        {
+          "effects": {
+            "move_speed": {
+              "mul": 0.05
+            }
+          },
+          "desc": "Tốc độ chạy +5%."
+        }
+      ]
+    },
+    "shadow_armor": {
+      "name": "Giáp bóng đêm",
+      "slot": "chest",
+      "class": "archer",
+      "rarity": "epic",
+      "icon": "shadow_armor",
+      "effects": {
+        "armor": {
+          "add": 5
+        },
+        "max_hp": {
+          "add": 34
+        }
+      },
+      "desc": "Giáp +5, Máu tối đa +34.",
+      "subs": [
+        {
+          "effects": {
+            "regen": {
+              "add": 0.5
+            }
+          },
+          "desc": "Hồi máu +0,5/giây."
+        },
+        {
+          "effects": {
+            "move_speed": {
+              "mul": 0.065
+            }
+          },
+          "desc": "Tốc độ chạy +6%."
+        }
+      ]
+    },
+    "sun_armor": {
+      "name": "Giáp Mặt Trời",
+      "slot": "chest",
+      "class": "archer",
+      "rarity": "legendary",
+      "icon": "sun_armor",
+      "effects": {
+        "armor": {
+          "add": 6
+        },
+        "max_hp": {
+          "add": 48
+        }
+      },
+      "desc": "Giáp +6, Máu tối đa +48.",
+      "subs": [
+        {
+          "effects": {
+            "regen": {
+              "add": 1.0
+            }
+          },
+          "desc": "Hồi máu +1/giây."
+        },
+        {
+          "effects": {
+            "move_speed": {
+              "mul": 0.08
+            }
+          },
+          "desc": "Tốc độ chạy +8%."
+        },
+        {
+          "effects": {
+            "cooldown": {
+              "mul": -0.064
+            }
+          },
+          "desc": "Hồi chiêu −6%."
+        }
+      ]
+    },
+    "hunting_bow": {
+      "name": "Cung săn",
+      "slot": "weapon",
+      "class": "archer",
+      "rarity": "common",
+      "icon": "hunting_bow",
+      "effects": {
+        "damage": {
+          "mul": 0.08
+        },
+        "area": {
+          "mul": 0.04
+        }
+      },
+      "desc": "Sát thương +8%, Vùng đánh +4%."
+    },
+    "forest_bow": {
+      "name": "Cung rừng",
+      "slot": "weapon",
+      "class": "archer",
+      "rarity": "rare",
+      "icon": "forest_bow",
+      "effects": {
+        "damage": {
+          "mul": 0.128
+        },
+        "area": {
+          "mul": 0.064
+        }
+      },
+      "desc": "Sát thương +13%, Vùng đánh +6%.",
+      "subs": [
+        {
+          "effects": {
+            "cooldown": {
+              "mul": -0.04
+            }
+          },
+          "desc": "Hồi chiêu −4%."
+        }
+      ]
+    },
+    "shadow_bow": {
+      "name": "Cung bóng đêm",
+      "slot": "weapon",
+      "class": "archer",
+      "rarity": "epic",
+      "icon": "shadow_bow",
+      "effects": {
+        "damage": {
+          "mul": 0.184
+        },
+        "area": {
+          "mul": 0.092
+        }
+      },
+      "desc": "Sát thương +18%, Vùng đánh +9%.",
+      "subs": [
+        {
+          "effects": {
+            "max_hp": {
+              "add": 10
+            }
+          },
+          "desc": "Máu tối đa +10."
+        },
+        {
+          "effects": {
+            "cooldown": {
+              "mul": -0.052
+            }
+          },
+          "desc": "Hồi chiêu −5%."
+        }
+      ]
+    },
+    "sun_bow": {
+      "name": "Cung Mặt Trời",
+      "slot": "weapon",
+      "class": "archer",
+      "rarity": "legendary",
+      "icon": "sun_bow",
+      "effects": {
+        "damage": {
+          "mul": 0.256
+        },
+        "area": {
+          "mul": 0.128
+        }
+      },
+      "desc": "Sát thương +26%, Vùng đánh +13%.",
+      "subs": [
+        {
+          "effects": {
+            "max_hp": {
+              "add": 15
+            }
+          },
+          "desc": "Máu tối đa +15."
+        },
+        {
+          "effects": {
+            "cooldown": {
+              "mul": -0.064
+            }
+          },
+          "desc": "Hồi chiêu −6%."
+        },
+        {
+          "effects": {
+            "magnet": {
+              "mul": 0.16
+            }
+          },
+          "desc": "Tầm hút +16%."
+        }
+      ]
+    },
+    "leather_boots": {
+      "name": "Giày da",
+      "slot": "feet",
+      "class": "archer",
+      "rarity": "common",
+      "icon": "leather_boots",
+      "effects": {
+        "move_speed": {
+          "mul": 0.05
+        },
+        "magnet": {
+          "mul": 0.1
+        }
+      },
+      "desc": "Tốc độ chạy +5%, Tầm hút +10%.",
+      "starter": true
+    },
+    "forest_boots": {
+      "name": "Giày rừng",
+      "slot": "feet",
+      "class": "archer",
+      "rarity": "rare",
+      "icon": "forest_boots",
+      "effects": {
+        "move_speed": {
+          "mul": 0.08
+        },
+        "magnet": {
+          "mul": 0.16
+        }
+      },
+      "desc": "Tốc độ chạy +8%, Tầm hút +16%.",
+      "subs": [
+        {
+          "effects": {
+            "regen": {
+              "add": 0.4
+            }
+          },
+          "desc": "Hồi máu +0,4/giây."
+        }
+      ]
+    },
+    "shadow_boots": {
+      "name": "Giày bóng đêm",
+      "slot": "feet",
+      "class": "archer",
+      "rarity": "epic",
+      "icon": "shadow_boots",
+      "effects": {
+        "move_speed": {
+          "mul": 0.115
+        },
+        "magnet": {
+          "mul": 0.23
+        }
+      },
+      "desc": "Tốc độ chạy +12%, Tầm hút +23%.",
+      "subs": [
+        {
+          "effects": {
+            "regen": {
+              "add": 0.5
+            }
+          },
+          "desc": "Hồi máu +0,5/giây."
+        },
+        {
+          "effects": {
+            "cooldown": {
+              "mul": -0.052
+            }
+          },
+          "desc": "Hồi chiêu −5%."
+        }
+      ]
+    },
+    "sun_boots": {
+      "name": "Giày Mặt Trời",
+      "slot": "feet",
+      "class": "archer",
+      "rarity": "legendary",
+      "icon": "sun_boots",
+      "effects": {
+        "move_speed": {
+          "mul": 0.16
+        },
+        "magnet": {
+          "mul": 0.32
+        }
+      },
+      "desc": "Tốc độ chạy +16%, Tầm hút +32%.",
+      "subs": [
+        {
+          "effects": {
+            "regen": {
+              "add": 1.0
+            }
+          },
+          "desc": "Hồi máu +1/giây."
+        },
+        {
+          "effects": {
+            "cooldown": {
+              "mul": -0.064
+            }
+          },
+          "desc": "Hồi chiêu −6%."
+        },
+        {
+          "effects": {
+            "area": {
+              "mul": 0.08
+            }
+          },
+          "desc": "Vùng đánh +8%."
+        }
+      ]
+    },
+    "leather_gloves": {
+      "name": "Bao tay thuộc da",
+      "slot": "arms",
+      "class": "archer",
+      "rarity": "common",
+      "icon": "leather_gloves",
+      "effects": {
+        "damage": {
+          "mul": 0.05
+        },
+        "area": {
+          "mul": 0.03
+        }
+      },
+      "desc": "Sát thương +5%, Vùng đánh +3%."
+    },
+    "forest_gloves": {
+      "name": "Bao tay rừng",
+      "slot": "arms",
+      "class": "archer",
+      "rarity": "rare",
+      "icon": "forest_gloves",
+      "effects": {
+        "damage": {
+          "mul": 0.08
+        },
+        "area": {
+          "mul": 0.048
+        }
+      },
+      "desc": "Sát thương +8%, Vùng đánh +5%.",
+      "subs": [
+        {
+          "effects": {
+            "max_hp": {
+              "mul": 0.05
+            }
+          },
+          "desc": "Máu tối đa +5%."
+        }
+      ]
+    },
+    "shadow_gloves": {
+      "name": "Bao tay bóng đêm",
+      "slot": "arms",
+      "class": "archer",
+      "rarity": "epic",
+      "icon": "shadow_gloves",
+      "effects": {
+        "damage": {
+          "mul": 0.115
+        },
+        "area": {
+          "mul": 0.069
+        }
+      },
+      "desc": "Sát thương +12%, Vùng đánh +7%.",
+      "subs": [
+        {
+          "effects": {
+            "cooldown": {
+              "mul": -0.04
+            }
+          },
+          "desc": "Hồi chiêu −4%."
+        },
+        {
+          "effects": {
+            "max_hp": {
+              "mul": 0.065
+            }
+          },
+          "desc": "Máu tối đa +6%."
+        }
+      ]
+    },
+    "sun_gloves": {
+      "name": "Bao tay Mặt Trời",
+      "slot": "arms",
+      "class": "archer",
+      "rarity": "legendary",
+      "icon": "sun_gloves",
+      "effects": {
+        "damage": {
+          "mul": 0.16
+        },
+        "area": {
+          "mul": 0.096
+        }
+      },
+      "desc": "Sát thương +16%, Vùng đánh +10%.",
+      "subs": [
+        {
+          "effects": {
+            "cooldown": {
+              "mul": -0.06
+            }
+          },
+          "desc": "Hồi chiêu −6%."
+        },
+        {
+          "effects": {
+            "max_hp": {
+              "mul": 0.08
+            }
+          },
+          "desc": "Máu tối đa +8%."
+        },
+        {
+          "effects": {
+            "magnet": {
+              "mul": 0.16
+            }
+          },
+          "desc": "Tầm hút +16%."
+        }
+      ]
     }
   },
   "equipment_renamed": {

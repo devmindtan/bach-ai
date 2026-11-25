@@ -26,12 +26,14 @@
     {
       "id": "armor",
       "name": "Giáp",
-      "desc": "Mũ, áo, giày, khiên.",
+      "desc": "Mũ, áo, giày, khiên, bao tay, bao tên.",
       "slots": [
         "head",
         "chest",
         "feet",
-        "shield"
+        "shield",
+        "arms",
+        "quiver"
       ]
     }
   ],

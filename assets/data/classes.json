@@ -74,7 +74,7 @@
   },
   "archer": {
     "name": "Cung thủ",
-    "sprite": "ranger",
+    "sprite": "bowman",
     "stats": {
       "max_hp": 85.0,
       "move_speed": 155.0,
@@ -101,6 +101,13 @@
       "quick_arrow": 1
     },
     "upgrades": "upgrades_archer.json",
-    "lpc_sprite": "lpc-archer"
+    "lpc_sprite": "lpc-archer",
+    "equip_slots": [
+      "quiver",
+      "chest",
+      "weapon",
+      "feet",
+      "arms"
+    ]
   }
 }

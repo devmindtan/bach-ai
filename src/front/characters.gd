@@ -314,7 +314,7 @@ func _slot_panel(panel: PanelContainer, s: Slot) -> void:
 	gear.add_theme_constant_override("separation", 8)
 	v.add_child(gear)
 	var worn := s.profile.equipped(s.cls)
-	const SLOT_NAMES := {"head": "Mũ", "chest": "Áo", "legs": "Quần", "arms": "Tay", "feet": "Giày", "weapon": "Vũ khí", "shield": "Khiên"}
+	const SLOT_NAMES := {"head": "Mũ", "chest": "Áo", "legs": "Quần", "arms": "Tay", "feet": "Giày", "weapon": "Vũ khí", "shield": "Khiên", "quiver": "Bao tên"}
 	for slot: String in Profile.slots_for(s.cls):
 		var cell := UiKit.panel(UiKit.PANEL_DARK, 6, UiKit.GOLD if worn.has(slot) else Color("4a4458"))
 		cell.custom_minimum_size = Vector2(52, 52)

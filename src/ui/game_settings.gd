@@ -171,8 +171,7 @@ func profile() -> Profile:
 			for id: String in defs:
 				if bool(defs[id].get("starter", false)):
 					_profile.add(id)
-					for cls in ["knight", "mage"]:
-						_profile.equip(cls, id)
+					_profile.equip(String(defs[id].get("class", "")), id)   # starters go on their own class
 			save_profile()
 	return _profile
 
