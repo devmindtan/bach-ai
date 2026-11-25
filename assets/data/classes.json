@@ -2,7 +2,7 @@
   "_doc": "Character classes. role = a short tag for the lobby; color = the class colour (lobby rune ring, accents); passive = the class's own trait (design/classes.md): hp_below + damage_mul + taken_mul (when hp is low), vs_status_mul (more damage to monsters with a status). stats are the level-1 base (cooldown is a x multiplier on every skill's own cooldown); upgrades list the pool rolled on level-up (upgrades_<class>.json). The body circle comes from the sprite json 'body'.",
   "knight": {
     "name": "Kiếm sĩ",
-    "sprite": "swordsman",
+    "sprite": "knight",
     "stats": {
       "max_hp": 100.0,
       "move_speed": 150.0,
@@ -28,7 +28,9 @@
       "blade_arc": 1
     },
     "upgrades": "upgrades_knight.json",
-    "lpc_sprite": "lpc-knight"
+    "lpc_sprite": "lpc-knight",
+    "gear_art": "pending",
+    "_gear_art_doc": "pending: the user's new knight (2026-11-25) has no equipment pictures yet; the user draws them, then remove this. Gear stats still apply; tests skip only the gear-picture checks for pending classes."
   },
   "mage": {
     "name": "Pháp sư",
