@@ -28,7 +28,15 @@
       "blade_arc": 1
     },
     "upgrades": "upgrades_knight.json",
-    "lpc_sprite": "lpc-knight"
+    "lpc_sprite": "lpc-knight",
+    "equip_slots": [
+      "head",
+      "chest",
+      "feet",
+      "weapon",
+      "shield"
+    ],
+    "_equip_slots_doc": "user 2026-11-25: the knight wears helmet, chest, boots, sword and shield (no gauntlets, no greaves). Other classes: Profile.SLOTS."
   },
   "mage": {
     "name": "Pháp sư",

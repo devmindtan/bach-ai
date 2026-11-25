@@ -94,7 +94,7 @@ func test_items_reference_existing_sprites() -> void:
 			continue
 		var d: Dictionary = eq[id]
 		_check(String(d.get("name", "")) != "", "equipment %s has no name" % id)
-		_check(Profile.SLOTS.has(String(d.get("slot", ""))), "equipment %s: unknown slot %s" % [id, d.get("slot")])
+		_check(Profile.slots_for(String(d.get("class", ""))).has(String(d.get("slot", ""))), "equipment %s: slot %s is not one its class wears" % [id, d.get("slot")])
 		_check(icons.has_animation(String(d.get("icon", id))), "equipment %s: icon %s not in gear-icons" % [id, d.get("icon", id)])
 		_check(not Dictionary(d.get("effects", {})).is_empty(), "equipment %s has no effects" % id)
 		_check(["knight", "mage"].has(String(d.get("class", ""))), "equipment %s: no class (every item fits one class)" % id)
@@ -102,7 +102,7 @@ func test_items_reference_existing_sprites() -> void:
 		_check(not grid.has(key), "two items for %s: %s and %s" % [key, grid.get(key), id])
 		grid[key] = id
 	for cls in ["knight", "mage"]:
-		for slot: String in Profile.SLOTS:
+		for slot: String in Profile.slots_for(cls):
 			for r in ["common", "rare", "epic", "legendary"]:
 				_check(grid.has("%s/%s/%s" % [cls, slot, r]), "no %s %s %s item" % [cls, slot, r])
 

@@ -9,7 +9,7 @@ extends Node2D
 ## Command line (after `--`), for shots: --equip-slot=<slot>, --equip-view=<item id>, --equip-plus=<0..5>.
 
 const LOBBY_SCENE := "res://src/lobby/lobby.tscn"
-const SLOT_NAME := {"head": "Mũ", "chest": "Áo", "legs": "Quần", "arms": "Tay", "feet": "Giày", "weapon": "Vũ khí"}
+const SLOT_NAME := {"head": "Mũ", "chest": "Áo", "legs": "Quần", "arms": "Tay", "feet": "Giày", "weapon": "Vũ khí", "shield": "Khiên"}
 const RARITY_NAME := {"common": "Thường", "rare": "Hiếm", "epic": "Sử thi", "legendary": "Huyền thoại"}
 const RARITY := {"common": Color("e8e2d0"), "rare": Color("6fb7ff"), "epic": Color("c38df5"), "legendary": Color("f2b64a")}
 const UP := Color("8fe08a")
@@ -21,8 +21,6 @@ const STATS := [["max_hp", "Máu tối đa", "%d", false], ["damage", "Sát thư
 	["magnet", "Tầm hút", "×%.2f", false], ["regen", "Hồi máu", "%.1f/giây", false]]
 # where each slot sits round the hero (left column, local to the doll)
 const DOLL := Vector2(380, 380)
-const SLOT_POS := {"head": Vector2(0, 20), "chest": Vector2(0, 130), "legs": Vector2(0, 240),
-	"arms": Vector2(300, 20), "feet": Vector2(300, 130), "weapon": Vector2(300, 240)}   # body top-down on the left
 const CELL := Vector2(76, 76)
 
 var _equip_plus := -1   # --equip-plus (shots)
@@ -166,9 +164,12 @@ func _doll(root: Control) -> void:
 	tick.timeout.connect(hero.queue_redraw)
 	hero.add_child(tick)
 	var worn := _prof.equipped(_cls)
-	for slot: String in Profile.SLOTS:
+	var slots := Profile.slots_for(_cls)
+	for i in slots.size():   # the class's own slots: the first half down the left, the rest down the right
+		var slot := String(slots[i])
 		var cell := _slot_cell(slot, String(worn.get(slot, "")))
-		cell.position = SLOT_POS[slot]
+		var half := ceili(slots.size() / 2.0)
+		cell.position = Vector2(0 if i < half else 300, 20 + 110 * (i if i < half else i - half))
 		doll.add_child(cell)
 	# stats with the worn gear
 	var base: Dictionary = _class.get("stats", {})
@@ -266,6 +267,14 @@ const BAG_CELL := Vector2(64, 64)
 const DROP_OK := Color("8fe08a")
 
 
+## The bag's type tabs for this class: "Tất cả" then one per slot it wears.
+func _tabs() -> Array:
+	var out := [["all", "Tất cả"]]
+	for slot: Variant in Profile.slots_for(_cls):
+		out.append([String(slot), String(SLOT_NAME.get(String(slot), slot))])
+	return out
+
+
 func _bag(root: Control) -> void:
 	var panel := UiKit.panel(Color(0.09, 0.08, 0.13, 0.94), 16)
 	panel.position = Vector2(456, 104)   # 16 px gaps between the three columns
@@ -290,7 +299,7 @@ func _bag(root: Control) -> void:
 	var tabs := HBoxContainer.new()
 	tabs.add_theme_constant_override("separation", 4)
 	v.add_child(tabs)
-	for t in TABS:
+	for t in _tabs():
 		tabs.add_child(_pill(t[1], _filter == t[0], func() -> void:
 			_filter = t[0]
 			if t[0] != "all":
@@ -336,7 +345,7 @@ func _bag(root: Control) -> void:
 ## (the same item owned twice is one row with ×2).
 func _bag_ids() -> Array:
 	var ids := []
-	for slot: String in Profile.SLOTS:
+	for slot: String in Profile.slots_for(_cls):
 		if _filter == "all" or _filter == slot:
 			for id: Variant in _prof.choices(_cls, slot):
 				ids.append(String(id))

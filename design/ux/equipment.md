@@ -14,6 +14,12 @@ Người dùng 2026-11-17: bảng trang bị cần thiết kế lại chuẩn h�
 | Lưới túi đồ kéo thả ([Abratabia: inventory UI](https://www.abratabia.com/game-ui-design/inventory-ui.php), [Bugnet: drag and drop in a game UI](https://bugnet.io/blog/how-to-implement-drag-and-drop-in-a-game-ui), [D4 forum: item visual clarity](https://us.forums.blizzard.com/en/d4/t/inventory-item-visual-clarity-is-a-growing-issue/177655)) | Kéo: icon theo con trỏ, **ô thả được sáng lên**; số/huy hiệu ở **góc ô**; quá nhiều huy hiệu trên icon nhỏ thì khó đọc, nên chỉ giữ một. |
 | [UI của Destiny 2: màn nhân vật](https://medium.com/@saoliveri95/ui-of-destiny-2-the-character-screen-3463f8fc0e3a) | Nhân vật ở giữa, các ô trang bị xếp hai bên; chọn ô thì danh sách món của ô đó mở ra cạnh ô. |
 
+## Ô theo class (người dùng 2026-11-25)
+
+- Kiếm sĩ: **Mũ, Áo, Giày, Vũ khí (kiếm), Khiên**: không có găng tay, quần (`classes.json` `equip_slots`). Găng và
+  quần cũ trong save đổi thành khiên cùng bậc (`items.json` `equipment_renamed`). Pháp sư giữ 6 ô.
+- Búp bê: nửa đầu các ô cột trái, phần còn lại cột phải; tab túi đồ = "Tất cả" + các ô của class.
+
 ## Bố cục (`src/front/equipment.tscn`, mở từ sảnh)
 
 - Trên: "Trang bị · <tên nhân vật>"; "Quay lại (Esc)" bên phải.

@@ -357,37 +357,49 @@
         }
       ]
     },
-    "iron_greaves": {
-      "name": "Quần giáp sắt",
-      "slot": "legs",
+    "iron_shield": {
+      "name": "Khiên sắt",
+      "slot": "shield",
       "class": "knight",
       "rarity": "common",
-      "icon": "iron_greaves",
+      "icon": "iron_shield",
       "effects": {
         "max_hp": {
           "add": 12
         },
         "regen": {
           "add": 0.5
+        },
+        "damage": {
+          "mul": 0.05
+        },
+        "area": {
+          "mul": 0.03
         }
       },
-      "desc": "Máu tối đa +12, Hồi máu +0.5/giây."
+      "desc": "Máu tối đa +12, Hồi máu +0.5/giây, Sát thương +5%, Vùng đánh +3%."
     },
-    "steel_greaves": {
-      "name": "Quần giáp thép",
-      "slot": "legs",
+    "steel_shield": {
+      "name": "Khiên thép",
+      "slot": "shield",
       "class": "knight",
       "rarity": "rare",
-      "icon": "steel_greaves",
+      "icon": "steel_shield",
       "effects": {
         "max_hp": {
           "add": 19
         },
         "regen": {
           "add": 0.5
+        },
+        "damage": {
+          "mul": 0.08
+        },
+        "area": {
+          "mul": 0.048
         }
       },
-      "desc": "Máu tối đa +19, Hồi máu +0.5/giây.",
+      "desc": "Máu tối đa +19, Hồi máu +0.5/giây, Sát thương +8%, Vùng đánh +5%.",
       "subs": [
         {
           "effects": {
@@ -399,21 +411,27 @@
         }
       ]
     },
-    "dragon_greaves": {
-      "name": "Quần giáp rồng",
-      "slot": "legs",
+    "dragon_shield": {
+      "name": "Khiên rồng",
+      "slot": "shield",
       "class": "knight",
       "rarity": "epic",
-      "icon": "dragon_greaves",
+      "icon": "dragon_shield",
       "effects": {
         "max_hp": {
           "add": 28
         },
         "regen": {
           "add": 0.5
+        },
+        "damage": {
+          "mul": 0.115
+        },
+        "area": {
+          "mul": 0.069
         }
       },
-      "desc": "Máu tối đa +28, Hồi máu +0.5/giây.",
+      "desc": "Máu tối đa +28, Hồi máu +0.5/giây, Sát thương +12%, Vùng đánh +7%.",
       "subs": [
         {
           "effects": {
@@ -433,21 +451,27 @@
         }
       ]
     },
-    "aegis_greaves": {
-      "name": "Quần giáp Thần Hộ",
-      "slot": "legs",
+    "aegis_shield": {
+      "name": "Khiên Thần Hộ",
+      "slot": "shield",
       "class": "knight",
       "rarity": "legendary",
-      "icon": "aegis_greaves",
+      "icon": "aegis_shield",
       "effects": {
         "max_hp": {
           "add": 38
         },
         "regen": {
           "add": 1.0
+        },
+        "damage": {
+          "mul": 0.16
+        },
+        "area": {
+          "mul": 0.096
         }
       },
-      "desc": "Máu tối đa +38, Hồi máu +1/giây.",
+      "desc": "Máu tối đa +38, Hồi máu +1/giây, Sát thương +16%, Vùng đánh +10%.",
       "subs": [
         {
           "effects": {
@@ -472,124 +496,6 @@
             }
           },
           "desc": "Sát thương +8%."
-        }
-      ]
-    },
-    "iron_gauntlets": {
-      "name": "Găng sắt",
-      "slot": "arms",
-      "class": "knight",
-      "rarity": "common",
-      "icon": "iron_gauntlets",
-      "effects": {
-        "damage": {
-          "mul": 0.05
-        },
-        "area": {
-          "mul": 0.03
-        }
-      },
-      "desc": "Sát thương +5%, Vùng đánh +3%."
-    },
-    "steel_gauntlets": {
-      "name": "Găng thép",
-      "slot": "arms",
-      "class": "knight",
-      "rarity": "rare",
-      "icon": "steel_gauntlets",
-      "effects": {
-        "damage": {
-          "mul": 0.08
-        },
-        "area": {
-          "mul": 0.048
-        }
-      },
-      "desc": "Sát thương +8%, Vùng đánh +5%.",
-      "subs": [
-        {
-          "effects": {
-            "max_hp": {
-              "mul": 0.05
-            }
-          },
-          "desc": "Máu tối đa +5%."
-        }
-      ]
-    },
-    "dragon_gauntlets": {
-      "name": "Găng rồng",
-      "slot": "arms",
-      "class": "knight",
-      "rarity": "epic",
-      "icon": "dragon_gauntlets",
-      "effects": {
-        "damage": {
-          "mul": 0.115
-        },
-        "area": {
-          "mul": 0.069
-        }
-      },
-      "desc": "Sát thương +12%, Vùng đánh +7%.",
-      "subs": [
-        {
-          "effects": {
-            "cooldown": {
-              "mul": -0.04
-            }
-          },
-          "desc": "Hồi chiêu −4%."
-        },
-        {
-          "effects": {
-            "max_hp": {
-              "mul": 0.065
-            }
-          },
-          "desc": "Máu tối đa +6%."
-        }
-      ]
-    },
-    "aegis_gauntlets": {
-      "name": "Găng Thần Hộ",
-      "slot": "arms",
-      "class": "knight",
-      "rarity": "legendary",
-      "icon": "aegis_gauntlets",
-      "effects": {
-        "damage": {
-          "mul": 0.16
-        },
-        "area": {
-          "mul": 0.096
-        }
-      },
-      "desc": "Sát thương +16%, Vùng đánh +10%.",
-      "subs": [
-        {
-          "effects": {
-            "cooldown": {
-              "mul": -0.06
-            }
-          },
-          "desc": "Hồi chiêu −6%."
-        },
-        {
-          "effects": {
-            "max_hp": {
-              "mul": 0.08
-            }
-          },
-          "desc": "Máu tối đa +8%."
-        },
-        {
-          "effects": {
-            "magnet": {
-              "mul": 0.16
-            }
-          },
-          "desc": "Tầm hút +16%."
         }
       ]
     },
@@ -1542,13 +1448,13 @@
     }
   },
   "equipment_renamed": {
-    "_doc": "Old item ids (before 2026-11-18) -> the new item: an id or {class: id} for shared items. Profile.migrate uses it for old saves; Cường hoá levels carry over.",
+    "_doc": "Old item ids (before 2026-11-18) -> the new item: an id or {class: id} for shared items. Profile.migrate uses it for old saves; Cường hoá levels carry over. 2026-11-25: the knight's gauntlets and greaves became shields of the same tier (user: the knight wears helmet, chest, boots, sword, shield).",
     "iron_helm": {
       "knight": "iron_cap",
       "mage": "cloth_hat"
     },
     "war_gloves": {
-      "knight": "iron_gauntlets",
+      "knight": "iron_shield",
       "mage": "cloth_wraps"
     },
     "swift_boots": {
@@ -1559,11 +1465,19 @@
       "knight": "iron_boots",
       "mage": "cloth_shoes"
     },
-    "dragon_hands": "dragon_gauntlets",
+    "dragon_hands": "dragon_shield",
     "void_hands": "void_bracer",
     "void_boots": "void_shoes",
     "void_crown": "star_hat",
     "void_heart": "star_robe",
-    "void_eternal": "star_staff"
+    "void_eternal": "star_staff",
+    "iron_gauntlets": "iron_shield",
+    "iron_greaves": "iron_shield",
+    "steel_gauntlets": "steel_shield",
+    "steel_greaves": "steel_shield",
+    "dragon_gauntlets": "dragon_shield",
+    "dragon_greaves": "dragon_shield",
+    "aegis_gauntlets": "aegis_shield",
+    "aegis_greaves": "aegis_shield"
   }
 }

@@ -46,7 +46,7 @@ func _spawn(r: Node, points: Array) -> void:
 func _special(id: String) -> Dictionary:
 	for cls in ["knight", "mage"]:
 		for u: Dictionary in GameData.load_json("res://assets/data/upgrades_%s.json" % cls)["upgrades"]:
-			if String(u.get("from_item", "")) == id:
+			if String(u.get("from_item", "")) == id or String(u.get("id", "")) == id:   # item id, or the card id
 				var sp: Dictionary = u["special"].duplicate()
 				sp["item"] = String(u["id"])
 				return sp
@@ -135,7 +135,7 @@ func test_item_revive_once_per_run() -> void:
 
 func test_low_hp_shield_once_per_cooldown() -> void:
 	var r := _run()
-	r.set_specials([_special("aegis_greaves")])
+	r.set_specials([_special("sp_aegis_greaves")])
 	r.step_specials(0.1)
 	_check(not r.buffs.is_active("stone_ward"), "full hp: nothing")
 	r.hp = float(r.stats["max_hp"]) * 0.2
@@ -146,7 +146,7 @@ func test_low_hp_shield_once_per_cooldown() -> void:
 
 func test_ward_breaks_after_one_hit() -> void:
 	var r := _run()
-	r.set_specials([_special("aegis_greaves")])
+	r.set_specials([_special("sp_aegis_greaves")])
 	r.hp = float(r.stats["max_hp"]) * 0.2
 	r.step_specials(0.1)
 	_check(r._ward_charges == 1, "ward ready")
@@ -159,7 +159,7 @@ func test_ward_breaks_after_one_hit() -> void:
 
 func test_kill_proc_heals_every_n_kills() -> void:
 	var r := _run()
-	var sp := _special("aegis_gauntlets")
+	var sp := _special("sp_aegis_gauntlets")
 	r.set_specials([sp])
 	r.hp = 10.0
 	r.count_special_kills(int(sp["every_kills"]) - 1)

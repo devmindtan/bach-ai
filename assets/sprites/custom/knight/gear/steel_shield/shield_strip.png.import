@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b7j21po0a8vig"
-path="res://.godot/imported/legs_back_strip.png-d9543a6d4983051f41a8f8126afd0aeb.ctex"
+uid="uid://b2xjryag1rhor"
+path="res://.godot/imported/shield_strip.png-ef81b500e792013f832ec4c59dc06e2e.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/custom/knight/gear/iron_greaves/legs_back_strip.png"
-dest_files=["res://.godot/imported/legs_back_strip.png-d9543a6d4983051f41a8f8126afd0aeb.ctex"]
+source_file="res://assets/sprites/custom/knight/gear/steel_shield/shield_strip.png"
+dest_files=["res://.godot/imported/shield_strip.png-ef81b500e792013f832ec4c59dc06e2e.ctex"]
 
 [params]
 

@@ -355,7 +355,7 @@
       "rarity": "legendary",
       "max_level": 1,
       "weight": 4,
-      "from_item": "aegis_greaves",
+      "from_item": "aegis_shield",
       "desc": "Máu dưới 30%: vỏ đá chặn trọn một đòn trong 8 giây (23 giây một lần).",
       "special": {
         "kind": "low_hp_buff",
@@ -377,7 +377,7 @@
       "rarity": "epic",
       "max_level": 1,
       "weight": 4,
-      "from_item": "aegis_gauntlets",
+      "from_item": "aegis_shield",
       "desc": "Mỗi 21 quái hạ được: hồi 10% máu tối đa.",
       "special": {
         "kind": "kill_proc",

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://h7o7we64oni2"
-path="res://.godot/imported/arms_front_strip.png-b52d1dcdfa3493c1fffaf9ce4e692fb6.ctex"
+uid="uid://ccb8xgskiigxs"
+path="res://.godot/imported/shield_strip.png-104f89a815a4c57055b0cb885ba80d4f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/custom/knight/gear/iron_gauntlets/arms_front_strip.png"
-dest_files=["res://.godot/imported/arms_front_strip.png-b52d1dcdfa3493c1fffaf9ce4e692fb6.ctex"]
+source_file="res://assets/sprites/custom/knight/layers/shield_strip.png"
+dest_files=["res://.godot/imported/shield_strip.png-104f89a815a4c57055b0cb885ba80d4f.ctex"]
 
 [params]
 

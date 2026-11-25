@@ -11,6 +11,13 @@ extends RefCounted
 
 const PATH := "user://profile.json"
 const SLOTS := ["head", "chest", "legs", "arms", "feet", "weapon"]   # Mũ, Áo, Quần, Tay, Giày, Vũ khí
+
+
+## Equipment slots of class [param cls]: classes.json equip_slots, else SLOTS (user 2026-11-25: the knight wears
+## head, chest, feet, weapon and shield).
+static func slots_for(cls: String) -> Array:
+	var c: Dictionary = GameData.load_json("res://assets/data/classes.json").get(cls, {})
+	return c.get("equip_slots", SLOTS)
 const MAX_PLUS := 10         # the highest Cường hoá of any tier (legendary); max_plus(id) is the item's own
 # user 2026-11-20: items carry no skills; a higher tier only reaches a higher level and opens more sub lines
 const TIER_MAX_PLUS := {"common": 3, "rare": 5, "epic": 7, "legendary": 10}
