@@ -56,6 +56,18 @@ static func scale_of(sheet: SpriteSheet, k: float) -> float:
 	return k * (float(sheet.meta.get("px_scale", 1.0)) if sheet != null else 1.0)
 
 
+## Item ids of the class's common (first tier) set: menus show heroes dressed in it (user 2026-11-25: the creation
+## screen must not show them stripped).
+static func showcase_gear(cls: String) -> Array:
+	var out := []
+	var eq: Dictionary = GameData.load_json("res://assets/data/items.json").get("equipment", {})
+	for id: String in eq:
+		var d: Variant = eq[id]
+		if d is Dictionary and String(d.get("class", "")) == cls and String(d.get("rarity", "")) == "common":
+			out.append(id)
+	return out
+
+
 ## The class's hero sheet with its layers composed (null when missing), wearing
 ## [param worn] (item ids: their gear layers replace the hero's, sprite-lab hero-gear).
 static func hero_sheet(class_data: Dictionary, worn: Array = []) -> SpriteSheet:

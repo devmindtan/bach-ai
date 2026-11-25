@@ -25,7 +25,7 @@ func _ready() -> void:
 	var classes := GameData.load_json("res://assets/data/classes.json")
 	for id: String in classes:
 		if not id.begins_with("_"):
-			_heroes.append([FrontArt.hero_sheet(classes[id]), Color(String(classes[id].get("color", "c9a65a")))])
+			_heroes.append([FrontArt.hero_sheet(classes[id], FrontArt.showcase_gear(id)), Color(String(classes[id].get("color", "c9a65a")))])
 	var prefs := Prefs.current()
 	if not prefs.is_fixed():
 		prefs.ensure_slots()

@@ -483,7 +483,7 @@ func _class_card(cid: String) -> Button:
 	v.add_theme_constant_override("separation", 6 if n < 3 else 3)
 	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	b.add_child(v)
-	var hero := _hero_box(cid, Vector2(w - 28.0, 176 if n < 3 else 140), 4.0 if n < 3 else 3.0, 0.6)
+	var hero := _hero_box(cid, Vector2(w - 28.0, 176 if n < 3 else 140), 4.0 if n < 3 else 3.0, 0.6, FrontArt.showcase_gear(cid))
 	v.add_child(hero)
 	var head: BoxContainer = HBoxContainer.new() if n < 3 else VBoxContainer.new()   # narrow: role under the name
 	head.mouse_filter = Control.MOUSE_FILTER_IGNORE
