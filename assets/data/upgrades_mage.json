@@ -344,16 +344,15 @@
       "max_level": 1,
       "weight": 4,
       "from_item": "star_robe",
-      "desc": "Liên tục đốt cháy quái quanh người (80% sát thương mỗi giây).",
+      "desc": "Quái quanh người liên tục bị cháy (80% sát thương mỗi giây).",
       "special": {
         "kind": "burn_aura",
         "name": "Hoả y",
-        "fx": "ward-burn",
         "every": 0.76,
         "radius": 100.0,
         "damage_mul": 0.8,
         "time": 2.0,
-        "desc": "Liên tục đốt cháy quái quanh người (80% sát thương mỗi giây)."
+        "desc": "Quái quanh người liên tục bị cháy (80% sát thương mỗi giây)."
       },
       "effects": {},
       "unique": true
