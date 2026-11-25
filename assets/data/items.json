@@ -863,13 +863,16 @@
       "icon": "cloth_robe",
       "effects": {
         "max_hp": {
-          "add": 10
+          "add": 16
         },
         "area": {
           "mul": 0.04
+        },
+        "regen": {
+          "add": 0.5
         }
       },
-      "desc": "Máu tối đa +10, Vùng đánh +4%."
+      "desc": "Máu tối đa +16, Vùng đánh +4%, Hồi máu +0.5/giây."
     },
     "mage_robe": {
       "name": "Áo choàng phép",
@@ -879,13 +882,16 @@
       "icon": "mage_robe",
       "effects": {
         "max_hp": {
-          "add": 16
+          "add": 26
         },
         "area": {
           "mul": 0.064
+        },
+        "regen": {
+          "add": 0.5
         }
       },
-      "desc": "Máu tối đa +16, Vùng đánh +6%.",
+      "desc": "Máu tối đa +26, Vùng đánh +6%, Hồi máu +0.5/giây.",
       "subs": [
         {
           "effects": {
@@ -905,13 +911,16 @@
       "icon": "void_robe",
       "effects": {
         "max_hp": {
-          "add": 23
+          "add": 37
         },
         "area": {
           "mul": 0.092
+        },
+        "regen": {
+          "add": 1.0
         }
       },
-      "desc": "Máu tối đa +23, Vùng đánh +9%.",
+      "desc": "Máu tối đa +37, Vùng đánh +9%, Hồi máu +1/giây.",
       "subs": [
         {
           "effects": {
@@ -939,13 +948,16 @@
       "icon": "star_robe",
       "effects": {
         "max_hp": {
-          "add": 32
+          "add": 51
         },
         "area": {
           "mul": 0.128
+        },
+        "regen": {
+          "add": 1.5
         }
       },
-      "desc": "Máu tối đa +32, Vùng đánh +13%.",
+      "desc": "Máu tối đa +51, Vùng đánh +13%, Hồi máu +1.5/giây.",
       "subs": [
         {
           "effects": {
@@ -970,242 +982,6 @@
             }
           },
           "desc": "Hồi chiêu −6%."
-        }
-      ]
-    },
-    "cloth_pants": {
-      "name": "Quần vải",
-      "slot": "legs",
-      "class": "mage",
-      "rarity": "common",
-      "icon": "cloth_pants",
-      "effects": {
-        "regen": {
-          "add": 0.5
-        },
-        "max_hp": {
-          "add": 6
-        }
-      },
-      "desc": "Hồi máu +0.5/giây, Máu tối đa +6."
-    },
-    "mage_pants": {
-      "name": "Quần phép",
-      "slot": "legs",
-      "class": "mage",
-      "rarity": "rare",
-      "icon": "mage_pants",
-      "effects": {
-        "regen": {
-          "add": 0.5
-        },
-        "max_hp": {
-          "add": 10
-        }
-      },
-      "desc": "Hồi máu +0.5/giây, Máu tối đa +10.",
-      "subs": [
-        {
-          "effects": {
-            "area": {
-              "mul": 0.05
-            }
-          },
-          "desc": "Vùng đánh +5%."
-        }
-      ]
-    },
-    "void_pants": {
-      "name": "Quần hư không",
-      "slot": "legs",
-      "class": "mage",
-      "rarity": "epic",
-      "icon": "void_pants",
-      "effects": {
-        "regen": {
-          "add": 1.0
-        },
-        "max_hp": {
-          "add": 14
-        }
-      },
-      "desc": "Hồi máu +1/giây, Máu tối đa +14.",
-      "subs": [
-        {
-          "effects": {
-            "move_speed": {
-              "mul": 0.05
-            }
-          },
-          "desc": "Tốc độ chạy +5%."
-        },
-        {
-          "effects": {
-            "area": {
-              "mul": 0.065
-            }
-          },
-          "desc": "Vùng đánh +6%."
-        }
-      ]
-    },
-    "star_pants": {
-      "name": "Quần Tinh Tú",
-      "slot": "legs",
-      "class": "mage",
-      "rarity": "legendary",
-      "icon": "star_pants",
-      "effects": {
-        "regen": {
-          "add": 1.5
-        },
-        "max_hp": {
-          "add": 19
-        }
-      },
-      "desc": "Hồi máu +1.5/giây, Máu tối đa +19.",
-      "subs": [
-        {
-          "effects": {
-            "move_speed": {
-              "mul": 0.075
-            }
-          },
-          "desc": "Tốc độ chạy +8%."
-        },
-        {
-          "effects": {
-            "area": {
-              "mul": 0.08
-            }
-          },
-          "desc": "Vùng đánh +8%."
-        },
-        {
-          "effects": {
-            "damage": {
-              "mul": 0.08
-            }
-          },
-          "desc": "Sát thương +8%."
-        }
-      ]
-    },
-    "cloth_wraps": {
-      "name": "Băng tay vải",
-      "slot": "arms",
-      "class": "mage",
-      "rarity": "common",
-      "icon": "cloth_wraps",
-      "effects": {
-        "cooldown": {
-          "mul": -0.03
-        },
-        "damage": {
-          "mul": 0.03
-        }
-      },
-      "desc": "Hồi chiêu −3%, Sát thương +3%."
-    },
-    "arcane_bracer": {
-      "name": "Vòng tay phép",
-      "slot": "arms",
-      "class": "mage",
-      "rarity": "rare",
-      "icon": "arcane_bracer",
-      "effects": {
-        "cooldown": {
-          "mul": -0.048
-        },
-        "damage": {
-          "mul": 0.048
-        }
-      },
-      "desc": "Hồi chiêu −5%, Sát thương +5%.",
-      "subs": [
-        {
-          "effects": {
-            "max_hp": {
-              "mul": 0.05
-            }
-          },
-          "desc": "Máu tối đa +5%."
-        }
-      ]
-    },
-    "void_bracer": {
-      "name": "Vòng tay hư không",
-      "slot": "arms",
-      "class": "mage",
-      "rarity": "epic",
-      "icon": "void_bracer",
-      "effects": {
-        "cooldown": {
-          "mul": -0.069
-        },
-        "damage": {
-          "mul": 0.069
-        }
-      },
-      "desc": "Hồi chiêu −7%, Sát thương +7%.",
-      "subs": [
-        {
-          "effects": {
-            "area": {
-              "mul": 0.05
-            }
-          },
-          "desc": "Vùng đánh +5%."
-        },
-        {
-          "effects": {
-            "max_hp": {
-              "mul": 0.065
-            }
-          },
-          "desc": "Máu tối đa +6%."
-        }
-      ]
-    },
-    "star_bracer": {
-      "name": "Vòng tay Tinh Tú",
-      "slot": "arms",
-      "class": "mage",
-      "rarity": "legendary",
-      "icon": "star_bracer",
-      "effects": {
-        "cooldown": {
-          "mul": -0.096
-        },
-        "damage": {
-          "mul": 0.096
-        }
-      },
-      "desc": "Hồi chiêu −10%, Sát thương +10%.",
-      "subs": [
-        {
-          "effects": {
-            "area": {
-              "mul": 0.075
-            }
-          },
-          "desc": "Vùng đánh +8%."
-        },
-        {
-          "effects": {
-            "max_hp": {
-              "mul": 0.08
-            }
-          },
-          "desc": "Máu tối đa +8%."
-        },
-        {
-          "effects": {
-            "magnet": {
-              "mul": 0.16
-            }
-          },
-          "desc": "Tầm hút +16%."
         }
       ]
     },
@@ -1336,13 +1112,13 @@
       "icon": "wood_staff",
       "effects": {
         "damage": {
-          "mul": 0.08
+          "mul": 0.11
         },
         "cooldown": {
-          "mul": -0.02
+          "mul": -0.05
         }
       },
-      "desc": "Sát thương +8%, Hồi chiêu −2%."
+      "desc": "Sát thương +11%, Hồi chiêu −5%."
     },
     "crystal_staff": {
       "name": "Gậy pha lê",
@@ -1352,13 +1128,13 @@
       "icon": "crystal_staff",
       "effects": {
         "damage": {
-          "mul": 0.128
+          "mul": 0.176
         },
         "cooldown": {
-          "mul": -0.032
+          "mul": -0.08
         }
       },
-      "desc": "Sát thương +13%, Hồi chiêu −3%.",
+      "desc": "Sát thương +18%, Hồi chiêu −8%.",
       "subs": [
         {
           "effects": {
@@ -1378,13 +1154,13 @@
       "icon": "void_staff",
       "effects": {
         "damage": {
-          "mul": 0.184
+          "mul": 0.253
         },
         "cooldown": {
-          "mul": -0.046
+          "mul": -0.115
         }
       },
-      "desc": "Sát thương +18%, Hồi chiêu −5%.",
+      "desc": "Sát thương +25%, Hồi chiêu −12%.",
       "subs": [
         {
           "effects": {
@@ -1412,13 +1188,13 @@
       "icon": "star_staff",
       "effects": {
         "damage": {
-          "mul": 0.256
+          "mul": 0.352
         },
         "cooldown": {
-          "mul": -0.064
+          "mul": -0.16
         }
       },
-      "desc": "Sát thương +26%, Hồi chiêu −6%.",
+      "desc": "Sát thương +35%, Hồi chiêu −16%.",
       "subs": [
         {
           "effects": {
@@ -1448,14 +1224,14 @@
     }
   },
   "equipment_renamed": {
-    "_doc": "Old item ids (before 2026-11-18) -> the new item: an id or {class: id} for shared items. Profile.migrate uses it for old saves; Cường hoá levels carry over. 2026-11-25: the knight's gauntlets and greaves became shields of the same tier (user: the knight wears helmet, chest, boots, sword, shield).",
+    "_doc": "Old item ids (before 2026-11-18) -> the new item: an id or {class: id} for shared items. Profile.migrate uses it for old saves; Cường hoá levels carry over. 2026-11-25: the knight's gauntlets and greaves became shields of the same tier (user: the knight wears helmet, chest, boots, sword, shield). 2026-11-25: the mage's trousers merged into the robe and its wraps/bracers into the staff of the same tier (user: the mage wears hat, robe, shoes and staff).",
     "iron_helm": {
       "knight": "iron_cap",
       "mage": "cloth_hat"
     },
     "war_gloves": {
       "knight": "iron_shield",
-      "mage": "cloth_wraps"
+      "mage": "wood_staff"
     },
     "swift_boots": {
       "knight": "iron_boots",
@@ -1466,7 +1242,7 @@
       "mage": "cloth_shoes"
     },
     "dragon_hands": "dragon_shield",
-    "void_hands": "void_bracer",
+    "void_hands": "void_staff",
     "void_boots": "void_shoes",
     "void_crown": "star_hat",
     "void_heart": "star_robe",
@@ -1478,6 +1254,14 @@
     "dragon_gauntlets": "dragon_shield",
     "dragon_greaves": "dragon_shield",
     "aegis_gauntlets": "aegis_shield",
-    "aegis_greaves": "aegis_shield"
+    "aegis_greaves": "aegis_shield",
+    "cloth_pants": "cloth_robe",
+    "cloth_wraps": "wood_staff",
+    "mage_pants": "mage_robe",
+    "arcane_bracer": "crystal_staff",
+    "void_pants": "void_robe",
+    "void_bracer": "void_staff",
+    "star_pants": "star_robe",
+    "star_bracer": "star_staff"
   }
 }

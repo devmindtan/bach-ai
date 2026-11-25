@@ -343,7 +343,7 @@
       "rarity": "epic",
       "max_level": 1,
       "weight": 4,
-      "from_item": "star_pants",
+      "from_item": "star_robe",
       "desc": "Liên tục đốt cháy quái quanh người (80% sát thương mỗi giây).",
       "special": {
         "kind": "burn_aura",
@@ -365,7 +365,7 @@
       "rarity": "legendary",
       "max_level": 1,
       "weight": 4,
-      "from_item": "star_bracer",
+      "from_item": "star_staff",
       "desc": "Mỗi 7,6 giây: đóng băng quái quanh người 1,5 giây.",
       "special": {
         "kind": "freeze_nova",

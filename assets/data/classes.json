@@ -36,7 +36,7 @@
       "weapon",
       "shield"
     ],
-    "_equip_slots_doc": "user 2026-11-25: the knight wears helmet, chest, boots, sword and shield (no gauntlets, no greaves). Other classes: Profile.SLOTS."
+    "_equip_slots_doc": "user 2026-11-25: the knight wears helmet, chest, boots, sword and shield; the mage hat, robe, shoes and staff (no gauntlets, no trousers). Classes without it: Profile.SLOTS."
   },
   "mage": {
     "name": "Pháp sư",
@@ -64,7 +64,13 @@
       "arcane_bolt": 1
     },
     "upgrades": "upgrades_mage.json",
-    "lpc_sprite": "lpc-mage"
+    "lpc_sprite": "lpc-mage",
+    "equip_slots": [
+      "head",
+      "chest",
+      "feet",
+      "weapon"
+    ]
   },
   "archer": {
     "name": "Cung thủ",
