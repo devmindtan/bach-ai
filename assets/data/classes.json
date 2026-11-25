@@ -28,9 +28,7 @@
       "blade_arc": 1
     },
     "upgrades": "upgrades_knight.json",
-    "lpc_sprite": "lpc-knight",
-    "gear_art": "pending",
-    "_gear_art_doc": "pending: the user's new knight (2026-11-25) has no equipment pictures yet; the user draws them, then remove this. Gear stats still apply; tests skip only the gear-picture checks for pending classes."
+    "lpc_sprite": "lpc-knight"
   },
   "mage": {
     "name": "Pháp sư",
