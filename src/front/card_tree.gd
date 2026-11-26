@@ -16,6 +16,7 @@ var _trees: CardTree
 var _card := ""
 var _card_def := {}
 var _view := ""
+var _reset_armed := false   # Đặt lại thẻ asks once more
 var _layer: CanvasLayer
 
 
@@ -54,6 +55,8 @@ func _draw() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		get_tree().change_scene_to_file(DECK_SCENE)
+	elif event is InputEventKey and event.pressed and not event.echo and (event as InputEventKey).physical_keycode == KEY_R:
+		_reset()
 
 
 func _save() -> void:
@@ -115,7 +118,7 @@ func _build() -> void:
 	v.add_child(h2)
 	v.add_child(Journal.ink("Điểm đã dùng %d/%d · Mảnh thẻ %d" % [_trees.points(_slot, _card), int(t.get("max_points", 0)), _slot.shards], 20, Journal.INK_RED))
 	var area := Control.new()
-	area.custom_minimum_size = Vector2(RIGHT_PAGE.size.x, 350)
+	area.custom_minimum_size = Vector2(RIGHT_PAGE.size.x, 318)   # rows 0..3 (86 px each) + the reset line above the seal
 	v.add_child(area)
 	var nodes: Array = t.get("nodes", [])
 	var at := func(n: Dictionary) -> Vector2: return Vector2(10 + int(n.get("col", 0)) * 160, 4 + int(n.get("row", 0)) * 86)
@@ -137,6 +140,11 @@ func _build() -> void:
 	v.add_child(d)
 	var mx := int(n.get("max_rank", 1))
 	v.add_child(Journal.ledger("", "Giá cấp kế", ("%d Mảnh thẻ" % _trees.cost(_slot, _card)) if r < mx else "Đã tối đa", 20))
+	var refund := _trees.spent(_slot, _card)   # web proposal approved 2026-11-26: Đặt lại thẻ (R), pressed twice
+	var rs := Journal.link(("Chắc chắn đặt lại? Bấm lần nữa (R)" if _reset_armed else "Đặt lại thẻ ▸ (R) · hoàn %d Mảnh thẻ" % refund), 18)
+	rs.disabled = refund <= 0
+	rs.pressed.connect(_reset)
+	v.add_child(rs)
 	var why := _trees.why_not(_slot, _card, _view)
 	var up := Journal.seal("Nâng ▶", Vector2(200, 60), 26)
 	up.position = RIGHT_PAGE.end - Vector2(200, 60)
@@ -145,6 +153,19 @@ func _build() -> void:
 	up.tooltip_text = why
 	up.pressed.connect(_learn)
 	root.add_child(up)
+
+
+func _reset() -> void:
+	if _trees.spent(_slot, _card) <= 0:
+		return
+	if not _reset_armed:
+		_reset_armed = true
+		_rebuild()
+		return
+	_reset_armed = false
+	_trees.reset(_slot, _card)
+	_save()
+	_rebuild()
 
 
 func _learn() -> void:

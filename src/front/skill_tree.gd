@@ -19,6 +19,7 @@ var _slot: Slot
 var _tree: SkillTree
 var _class := {}
 var _view := ""
+var _reset_armed := false   # Tẩy tuỷ asks once more
 var _layer: CanvasLayer
 
 
@@ -61,6 +62,8 @@ func _draw() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		get_tree().change_scene_to_file(LOBBY_SCENE)
+	elif event is InputEventKey and event.pressed and not event.echo and (event as InputEventKey).physical_keycode == KEY_R:
+		_reset()
 
 
 func _rebuild() -> void:
@@ -213,6 +216,12 @@ func _detail(root: Control) -> void:
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	note.custom_minimum_size = Vector2(RIGHT_PAGE.size.x, 0)
 	v.add_child(note)
+	var cost := _tree.reset_cost(_slot)   # web proposal approved 2026-11-26: Tẩy tuỷ (R), pressed twice
+	var rs := Journal.link(("Chắc chắn tẩy tuỷ? Bấm lần nữa (R)" if _reset_armed else "Tẩy tuỷ ▸ (R) · 1 Tẩy Tủy Đan + %d vàng" % int(cost["gold"])), 18)
+	rs.disabled = _tree.why_not_reset(_slot) != ""
+	rs.tooltip_text = _tree.why_not_reset(_slot)
+	rs.pressed.connect(_reset)
+	v.add_child(rs)
 	var why := _tree.why_not(_slot, _view) if r < mx else "Đã tối đa."
 	var buy := Journal.seal("Học ▶", Vector2(220, 62), 26)
 	buy.position = RIGHT_PAGE.end - Vector2(220, 62)
@@ -221,6 +230,20 @@ func _detail(root: Control) -> void:
 	buy.tooltip_text = why
 	buy.pressed.connect(_learn)
 	root.add_child(buy)
+
+
+## Tẩy tuỷ: the first press asks, the second resets (1 Tẩy Tủy Đan + gold, every Tinh hoa back).
+func _reset() -> void:
+	if _tree.why_not_reset(_slot) != "":
+		return
+	if not _reset_armed:
+		_reset_armed = true
+		_rebuild()
+		return
+	_reset_armed = false
+	if _tree.reset(_slot):
+		_save()
+	_rebuild()
 
 
 func _learn() -> void:

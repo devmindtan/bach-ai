@@ -105,6 +105,8 @@ func _draw() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		get_tree().change_scene_to_file(LOBBY_SCENE)
+	elif event is InputEventKey and event.pressed and not event.echo and (event as InputEventKey).physical_keycode == KEY_C:
+		_enhance()
 	elif event is InputEventKey and event.pressed and not event.echo and (event as InputEventKey).physical_keycode in [KEY_Q, KEY_E]:
 		var slots := Profile.slots_for(_cls)   # Q / E: the previous / next slot (web hint)
 		var i := slots.find(_sel)
@@ -634,36 +636,19 @@ func _detail(root: Control) -> void:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 10)
 	v.add_child(row)
-	var cost := _prof.enhance_cost(_view)
-	var eb := Button.new()
-	eb.text = ("Cường hoá +%d/%d · %d vàng" % [lv, _prof.max_plus(_view), cost]) if cost > 0 else "Cường hoá tối đa"
-	eb.tooltip_text = "Mỗi bậc +%d%% hiệu ứng" % roundi(Profile.PLUS_STEP * 100)
-	eb.focus_mode = Control.FOCUS_ALL
-	eb.add_theme_font_size_override("font_size", 17)
-	eb.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	eb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	for st in ["normal", "hover", "focus", "pressed", "disabled"]:
-		var sb := StyleBoxFlat.new()
-		sb.bg_color = Color(0, 0, 0, 0)
-		sb.border_color = Journal.INK_RED if st in ["hover", "focus"] else Journal.INK
-		sb.set_border_width_all(2)
-		eb.add_theme_stylebox_override(st, sb)
-	eb.add_theme_color_override("font_color", Journal.INK)
-	eb.add_theme_color_override("font_disabled_color", Journal.DOTS)
-	eb.add_theme_color_override("font_focus_color", Journal.INK_RED)
-	eb.add_theme_color_override("font_hover_color", Journal.INK_RED)
-	eb.pressed.connect(func() -> void:
-		var wallet := {"v": _slot_data.gold}
-		if _prof.enhance(_view, wallet):
-			Sfx.play("enhance")
-			Daily.load_default().add(_slot_data, "enhances", 1)
-			_slot_data.gold = int(wallet["v"])
-			prefs.save_profile()
-			_rebuild())
+	var cost := _prof.enhance_cost(_view)   # web proposal approved 2026-11-26: a ledger line and "Cường hoá ▸ (C)"
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 2)
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(col)
+	col.add_child(Journal.ledger("", "Cường hoá +%d/%d (mỗi bậc +%d%%)" % [lv, _prof.max_plus(_view), roundi(Profile.PLUS_STEP * 100)],
+		("%d vàng" % cost) if cost > 0 else "tối đa", 16))
+	var eb := Journal.link("Cường hoá ▸ (C)", 18)
 	eb.disabled = cost <= 0 or _slot_data.gold < cost
 	if cost > 0 and _slot_data.gold < cost:
-		Tip.attach(eb, "Thiếu vàng", "Cần %d vàng, đang có %d." % [cost, _slot_data.gold])
-	row.add_child(eb)
+		eb.tooltip_text = "Thiếu vàng: cần %d, đang có %d." % [cost, _slot_data.gold]
+	eb.pressed.connect(_enhance)
+	col.add_child(eb)
 	var act := Journal.seal("Bỏ ra" if is_worn else "Mặc ▶", Vector2(200, 60), 26)
 	act.pressed.connect(func() -> void:
 		if is_worn:
@@ -674,6 +659,19 @@ func _detail(root: Control) -> void:
 		prefs.save_profile()
 		_rebuild())
 	row.add_child(act)
+
+
+## Cường hoá the viewed item once (+20% of its effects a level, gold).
+func _enhance() -> void:
+	if _view == "":
+		return
+	var wallet := {"v": _slot_data.gold}
+	if _prof.enhance(_view, wallet):
+		Sfx.play("enhance")
+		Daily.load_default().add(_slot_data, "enhances", 1)
+		_slot_data.gold = int(wallet["v"])
+		Prefs.current().save_profile()
+		_rebuild()
 
 
 func _fmt(f: String, x: float) -> String:

@@ -79,6 +79,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			_set_kind(1 - _kind)
 		elif k == KEY_T:
 			_open_tree(_view)
+		elif k == KEY_R:
+			_default_deck()
+		elif k == KEY_O:
+			_show_odds()
 
 
 func _save() -> void:
@@ -309,6 +313,15 @@ func _deck_page(root: Control) -> void:
 				link.add_theme_color_override(k, Journal.INK if k == "font_color" else Journal.INK_RED)
 			link.pressed.connect(func() -> void: _open_tree(card))
 			v.add_child(link)
+	var links := HBoxContainer.new()   # web proposal approved 2026-11-26: Bộ mặc định (R), Tỉ lệ thẻ (O)
+	links.add_theme_constant_override("separation", 18)
+	v.add_child(links)
+	var dflt := Journal.link("Bộ mặc định ▸ (R)", 18)
+	dflt.pressed.connect(_default_deck)
+	links.add_child(dflt)
+	var odds := Journal.link("Tỉ lệ thẻ ▸ (O)", 18)
+	odds.pressed.connect(_show_odds)
+	links.add_child(odds)
 	var use := Journal.seal("Dùng bộ này ▶", Vector2(260, 62), 26)
 	use.position = RIGHT_PAGE.end - Vector2(260, 62)
 	use.focus_mode = Control.FOCUS_NONE   # the cards own the arrows; Enter on the seal is the mouse's
@@ -316,6 +329,11 @@ func _deck_page(root: Control) -> void:
 		_save()   # the open deck is the one the runs use (deck_active); back to the journal
 		get_tree().change_scene_to_file(LOBBY_SCENE))
 	root.add_child(use)
+
+
+func _default_deck() -> void:
+	_set_cards(Deck.default_cards(_ups, _start, _cfg))
+	_rebuild()
 
 
 func _open_tree(card: String) -> void:
