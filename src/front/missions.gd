@@ -65,114 +65,141 @@ func _build() -> void:
 	var hint := Journal.ink("↑ ↓ chọn · Enter nhận · Esc về sổ", 15, Journal.PAPER)
 	hint.position = Vector2(Journal.BOOK.position.x, Journal.BOOK.end.y + 14)
 	root.add_child(hint)
-	var list := VBoxContainer.new()   # left page: today's tasks
+	# left page (web screen-missions-journal): today's tasks as rows: a tick box, name, task, a thin bar, progress · gems
+	var list := VBoxContainer.new()
 	list.position = LEFT_PAGE.position + Vector2(0, -8)
 	list.custom_minimum_size = Vector2(LEFT_PAGE.size.x, 0)
-	list.add_theme_constant_override("separation", 8)
+	list.add_theme_constant_override("separation", 0)
 	root.add_child(list)
 	list.add_child(Journal.ink("Nhiệm vụ", 44))
-	list.add_child(Journal.ink("Việc trong ngày · làm mới lúc 0 giờ", 18, Journal.INK_RED))
+	var sub := Journal.ink("Việc trong ngày · đổi lúc nửa đêm", 20, Journal.INK_RED)
+	list.add_child(sub)
+	var gap := Control.new()
+	gap.custom_minimum_size = Vector2(0, 8)
+	list.add_child(gap)
+	var first: Button = null
 	for id: String in _slot.daily["ids"]:
-		list.add_child(_card(id))
-	Journal.restyle(list)
-	# right page: the rewards: gems, how many claimed, the completion bonus (the seal)
+		var row := _row(id)
+		list.add_child(row)
+		if first == null:
+			first = row
+	# right page "Phần thưởng": each task's gems once done, the completion bonus, what waits to be claimed
 	var right := VBoxContainer.new()
 	right.position = RIGHT_PAGE.position + Vector2(0, -8)
 	right.custom_minimum_size = Vector2(RIGHT_PAGE.size.x, 0)
-	right.add_theme_constant_override("separation", 6)
+	right.add_theme_constant_override("separation", 0)
 	root.add_child(right)
-	right.add_child(Journal.ink("Phần thưởng", 40))
+	var h2 := Journal.ink("Phần thưởng", 32)
+	var under := StyleBoxFlat.new()
+	under.bg_color = Color(0, 0, 0, 0)
+	under.border_color = Journal.INK
+	under.border_width_bottom = 3
+	h2.add_theme_stylebox_override("normal", under)
+	right.add_child(h2)
 	var ids: Array = _slot.daily["ids"]
-	var claimed := ids.filter(func(id: String) -> bool: return _d.claimed(_slot, id)).size()
-	var total := 0
+	var waiting := 0
 	for id: String in ids:
-		total += int(_d.mission(id).get("gems", 0))
-	right.add_child(Journal.ledger("gem", "Đá đang có", str(_slot.gems), 22))
-	right.add_child(Journal.ledger("", "Đã nhận", "%d / %d nhiệm vụ" % [claimed, ids.size()], 22))
-	right.add_child(Journal.ledger("", "Đá từ nhiệm vụ hôm nay", "%d" % total, 22))
-	right.add_child(Journal.ledger("", "Thưởng hoàn thành", "+%d đá" % int(_d.data.get("bonus_gems", 0)), 22, Journal.INK_RED))
-	var note := Journal.ink("Nhận đủ mọi nhiệm vụ hôm nay thì được thêm đá.", 18, Journal.INK_SOFT)
-	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	note.custom_minimum_size = Vector2(RIGHT_PAGE.size.x, 0)
-	right.add_child(note)
-	var ready := _d.bonus_ready(_slot)
-	var got := bool(_slot.daily.get("bonus", false))
-	var bonus := Journal.seal("Đã nhận" if got else "Nhận thưởng ▶", Vector2(260, 62), 24)
-	bonus.position = RIGHT_PAGE.end - Vector2(260, 62)
-	bonus.disabled = not ready
-	bonus.set_meta("sfx", "")
-	bonus.pressed.connect(func() -> void:
+		var m := _d.mission(id)
+		var done := _d.done(_slot, id)
+		right.add_child(Journal.ledger("", String(m.get("name", id)), ("+%d đá" % int(m.get("gems", 0))) if done else "—", 20))
+		if done and not _d.claimed(_slot, id):
+			waiting += int(m.get("gems", 0))
+	var bonus_got := bool(_slot.daily.get("bonus", false))
+	right.add_child(Journal.ledger("", "Xong cả %d việc" % ids.size(), "+%d đá" % int(_d.data.get("bonus_gems", 0)), 20))
+	if _d.bonus_ready(_slot) and not bonus_got:
+		waiting += int(_d.data.get("bonus_gems", 0))
+	var wl := Journal.ink("Đang chờ nhận: %d đá" % waiting, 20, Journal.INK_SOFT)
+	right.add_child(wl)
+	var seal := Journal.seal("Nhận thưởng ▶", Vector2(260, 62), 26)
+	seal.position = RIGHT_PAGE.end - Vector2(260, 62)
+	seal.focus_mode = Control.FOCUS_NONE
+	seal.disabled = waiting == 0
+	seal.set_meta("sfx", "")
+	seal.pressed.connect(func() -> void:   # claims every finished task and, once all are claimed, the bonus
+		var any := false
+		for id: String in ids:
+			any = _d.claim(_slot, id) or any
 		if _d.claim_bonus(_slot):
+			any = true
+		if any:
 			Sfx.play("chest")
 			_rebuild())
-	root.add_child(bonus)
-	var first := UiKit.first_enabled_button(list)   # gamepad: a claim button if any, else the bonus (J5)
-	(first if first != null else bonus).call_deferred("grab_focus")
+	root.add_child(seal)
+	if first != null:
+		first.call_deferred("grab_focus")
 
 
-func _card(id: String) -> PanelContainer:
+## A task row (web .task): ink when focused; Enter / a click claims it once finished.
+func _row(id: String) -> Button:
 	var m := _d.mission(id)
 	var done := _d.done(_slot, id)
-	var got := _d.claimed(_slot, id)
-	var p := UiKit.panel(UiKit.PANEL_DARK if not done else Color(0.12, 0.16, 0.12), 10, DONE if done and not got else UiKit.GOLD)
-	p.custom_minimum_size = Vector2(LEFT_PAGE.size.x, 0)
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 18)
-	p.add_child(row)
+	var b := Button.new()
+	b.focus_mode = Control.FOCUS_ALL
+	b.custom_minimum_size = Vector2(LEFT_PAGE.size.x, 84)
+	var flat := StyleBoxFlat.new()
+	flat.bg_color = Color(0, 0, 0, 0)
+	flat.border_color = Journal.DOTS
+	flat.border_width_bottom = 2
+	var inked := StyleBoxFlat.new()
+	inked.bg_color = Journal.INK
+	b.add_theme_stylebox_override("normal", flat)
+	for st in ["hover", "focus", "pressed"]:
+		b.add_theme_stylebox_override(st, inked)
+	var h := HBoxContainer.new()
+	h.set_anchors_preset(Control.PRESET_FULL_RECT)
+	h.offset_left = 10
+	h.offset_right = -10
+	h.offset_top = 8
+	h.add_theme_constant_override("separation", 14)
+	h.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.add_child(h)
+	var box := Control.new()   # the tick box (green tick once done)
+	box.custom_minimum_size = Vector2(28, 28)
+	box.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	h.add_child(box)
 	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 0)
 	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	v.add_theme_constant_override("separation", 4)
-	row.add_child(v)
-	v.add_child(UiKit.label(String(m.get("name", id)), 20, UiKit.TEXT))
-	var dl := UiKit.label("%s  ·  %d / %d" % [String(m.get("desc", "")), _d.progress(_slot, id), int(m.get("target", 1))], 15, UiKit.MUTED)
-	dl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	v.add_child(dl)
-	var bar := ProgressBar.new()
-	bar.max_value = float(m.get("target", 1))
-	bar.value = float(_d.progress(_slot, id))
-	bar.show_percentage = false
-	bar.custom_minimum_size = Vector2(0, 12)
-	bar.add_theme_stylebox_override("background", UiKit.style(Journal.PAPER, 0, Journal.INK, 2))   # an ink bar on paper
-	bar.add_theme_stylebox_override("fill", UiKit.style(DONE if done else Journal.INK_RED, 0))
+	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	h.add_child(v)
+	var name := Journal.ink(String(m.get("name", id)), 26)
+	v.add_child(name)
+	var desc := Journal.ink(String(m.get("desc", "")), 18, Journal.INK_SOFT)
+	v.add_child(desc)
+	var bar := Control.new()
+	bar.custom_minimum_size = Vector2(220, 12)
+	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	v.add_child(bar)
-	row.add_child(_reward(int(m.get("gems", 0))))
-	var b := UiKit.button("Đã nhận" if got else ("Nhận" if done else "Chưa xong"), func() -> void:
+	var target := int(m.get("target", 1))
+	var prog := mini(_d.progress(_slot, id), target)
+	var gems := Journal.ink("%d/%d · %d đá" % [prog, target, int(m.get("gems", 0))], 22)
+	gems.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	h.add_child(gems)
+	var paint := func() -> void:
+		var on := b.has_focus()
+		var ink := Journal.PAPER if on else Journal.INK
+		name.add_theme_color_override("font_color", ink)
+		gems.add_theme_color_override("font_color", ink)
+		desc.add_theme_color_override("font_color", Journal.GOLD if on else Journal.INK_SOFT)
+		box.queue_redraw()
+		bar.queue_redraw()
+	box.draw.connect(func() -> void:
+		box.draw_rect(Rect2(1.5, 1.5, 25, 25), Journal.GOLD if b.has_focus() else Journal.INK, false, 3.0)
+		if done:
+			box.draw_string(ThemeDB.fallback_font, Vector2(1, 26), "✓", HORIZONTAL_ALIGNMENT_LEFT, -1, 30, Color("2a7a3a")))
+	bar.draw.connect(func() -> void:
+		var c := Journal.PAPER if b.has_focus() else Journal.INK
+		bar.draw_rect(Rect2(1, 1, 218, 10), c, false, 2.0)
+		bar.draw_rect(Rect2(2, 2, 216.0 * float(prog) / maxf(1.0, target), 8), Journal.INK_RED))
+	b.focus_entered.connect(paint)
+	b.focus_exited.connect(paint)
+	b.mouse_entered.connect(func() -> void: b.grab_focus())
+	b.pressed.connect(func() -> void:
 		if _d.claim(_slot, id):
 			Sfx.play("coin")
-			_rebuild(), Vector2(104, 44), 17, UiKit.PRIMARY if done and not got else UiKit.PANEL)
-	b.disabled = got or not done
-	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	if done and not got:
-		b.set_meta("sfx", "")
-	row.add_child(b)
-	return p
+			_rebuild())
+	paint.call()
+	return b
 
 
-func _bonus_card() -> PanelContainer:
-	var ready := _d.bonus_ready(_slot)
-	var got := bool(_slot.daily.get("bonus", false))
-	var p := UiKit.panel(Color(0.16, 0.12, 0.06) if ready else UiKit.PANEL_DARK, 14, UiKit.RARITY["legendary"])
-	p.custom_minimum_size = Vector2(800, 64)
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 18)
-	p.add_child(row)
-	var l := UiKit.label("Thưởng hoàn thành: nhận đủ mọi nhiệm vụ hôm nay", 18, UiKit.RARITY["legendary"])
-	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	row.add_child(l)
-	row.add_child(_reward(int(_d.data.get("bonus_gems", 0))))
-	var b := UiKit.button("Đã nhận" if got else "Nhận thưởng", func() -> void:
-		if _d.claim_bonus(_slot):
-			Sfx.play("chest")
-			_rebuild(), Vector2(140, 48), 17, UiKit.PRIMARY if ready else UiKit.PANEL)
-	b.disabled = not ready
-	b.set_meta("sfx", "")
-	row.add_child(b)
-	return p
-
-
-func _reward(gems: int) -> HBoxContainer:
-	var r := UiKit.stat("gem", "+%d" % gems, "Đá thưởng", 18)
-	r.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	r.custom_minimum_size = Vector2(64, 0)
-	return r
