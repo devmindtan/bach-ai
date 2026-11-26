@@ -33,6 +33,15 @@ Bước ảnh, Săn mồi, Màn đêm, Vòng dao, Dao sấm, Ảnh tốc (cùng 
 `unlocks.json` `class_<id>`: tạo được class khi có nhân vật bất kỳ đã qua ải N. Kiếm sĩ mở sẵn, Pháp sư ải 2,
 Cung thủ ải 4, Sát thủ ải 6 (agent chọn, người dùng chỉnh được). Nhân vật đã tạo không bị khóa lại.
 
-## Bước sau (tuỳ chọn, chỉ làm khi người dùng muốn)
+## Chiêu (bước 2, người dùng 2026-11-26: "hoàn thành cho tất cả nhân vật")
 
-Chiêu riêng thêm cho Sát thủ (ví dụ dao nảy, bom khói, dao độc), mỗi chiêu một commit.
+| id | Tên | Hệ | Kiểu |
+|---|---|---|---|
+| fan_knives | Quạt dao | Vật lý | 3–6 dao xoè hình quạt, tầm gần |
+| piercing_knife | Dao xuyên | Vật lý | dao rất nhanh xuyên mọi quái |
+| bleed_knife | Dao rạch | Vật lý | chảy máu |
+| venom_knife | Dao độc | Bóng tối | ăn mòn + làm chậm |
+| fire_knife | Dao lửa | Lửa | nổ khi trúng, bỏng |
+
+Còn lại để đủ 10 như Kiếm sĩ / Pháp sư: 3 chiêu cần sprite hiệu ứng mới (ví dụ bom khói, vòng dao xoay, ám kích
+sau lưng), làm ở bước sau.

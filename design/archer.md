@@ -1,6 +1,6 @@
 # Cung thủ (class thứ 3) — bản đề xuất, chờ người dùng duyệt
 
-Trạng thái: bước 1–3 xong (nhân vật C, Tên nhanh, Mắt ưng); **tạm dừng** (người dùng 2026-11-23) chờ hệ cơ thể kiểu LPC 64×64 chibi (sprite-lab/BODY_PLAN.md).
+Trạng thái (2026-11-26): đã có Tên nhanh, Lướt, Tên xuyên, Quạt tên, Tên lửa, Tên băng, Tên sét (bằng dữ liệu, dùng sprite arrow-a/b/c); còn Mưa tên, Bẫy gai, Chim ưng (cần sprite hiệu ứng mới). Trước đó: bước 1–3 xong (nhân vật C, Tên nhanh, Mắt ưng); **tạm dừng** (người dùng 2026-11-23) chờ hệ cơ thể kiểu LPC 64×64 chibi (sprite-lab/BODY_PLAN.md).
 
 ## Tham khảo
 
