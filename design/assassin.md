@@ -43,5 +43,12 @@ Cung thủ ải 4, Sát thủ ải 6 (agent chọn, người dùng chỉnh đư�
 | venom_knife | Dao độc | Bóng tối | ăn mòn + làm chậm |
 | fire_knife | Dao lửa | Lửa | nổ khi trúng, bỏng |
 
-Còn lại để đủ 10 như Kiếm sĩ / Pháp sư: 3 chiêu cần sprite hiệu ứng mới (ví dụ bom khói, vòng dao xoay, ám kích
-sau lưng), làm ở bước sau.
+## Chiêu (bước 3, 2026-11-26): hiệu ứng riêng (sprite-lab/lib/roguefx.py)
+
+| id | Tên | Kiểu |
+|---|---|---|
+| smoke_bomb | Bom khói | quanh người: chậm, cấp 3 choáng |
+| blade_ring | Vòng dao | quanh người: 6 dao xoay rồi bay ra |
+| shadow_strike | Ám kích | chém chéo quái gần nhất, sát thương cao, cấp 3 chảy máu |
+
+Đủ 10 chiêu (kể cả Lướt) như Kiếm sĩ và Pháp sư.

@@ -1,5 +1,5 @@
 {
-  "_doc": "Cung thủ's in-run cards and skills (design/archer.md, user chose option C and the kit 2026-11-23). Same format as upgrades_mage.json. Step 2: Tên nhanh + Lướt; skills added by data (projectile kinds, 2026-11-26); the rest need new effect sprites.",
+  "_doc": "Cung thủ's in-run cards and skills (design/archer.md, user chose option C and the kit 2026-11-23). Same format as upgrades_mage.json. Step 2: Tên nhanh + Lướt; skills added by data (projectile kinds, 2026-11-26); the last three draw their own bursts (sprite-lab/lib/roguefx.py).",
   "upgrades": [
     {
       "id": "quick_arrow",
@@ -108,6 +108,51 @@
       },
       "rarity": "legendary",
       "element": "lightning"
+    },
+    {
+      "id": "arrow_rain",
+      "kind": "skill",
+      "name": "Mưa tên",
+      "desc": "Tên rơi dày xuống chỗ quái đông nhất. Mỗi cấp: +20% sát thương. Cấp 3: 2 vùng; cấp 5: 3 vùng.",
+      "max_level": 5,
+      "weight": 2,
+      "effects": {
+        "skill_damage.arrow_rain": {
+          "mul": 0.2
+        }
+      },
+      "rarity": "epic",
+      "element": "physical"
+    },
+    {
+      "id": "thorn_trap",
+      "kind": "skill",
+      "name": "Bẫy gai",
+      "desc": "Gai mọc dưới chân quái gần nhất: trói chân (choáng) và chảy máu. Mỗi cấp: +20% sát thương. Cấp 2: 2 bẫy; cấp 4: 3 bẫy.",
+      "max_level": 5,
+      "weight": 2,
+      "effects": {
+        "skill_damage.thorn_trap": {
+          "mul": 0.2
+        }
+      },
+      "rarity": "rare",
+      "element": "physical"
+    },
+    {
+      "id": "hawk",
+      "kind": "skill",
+      "name": "Chim ưng",
+      "desc": "Chim ưng lao xuống quái gần nhất, cú mổ rất mạnh. Mỗi cấp: +20% sát thương. Cấp 3: 2 lần lao; cấp 5: 3 lần.",
+      "max_level": 5,
+      "weight": 2,
+      "effects": {
+        "skill_damage.hawk": {
+          "mul": 0.2
+        }
+      },
+      "rarity": "legendary",
+      "element": "physical"
     },
     {
       "id": "steady_hand",
@@ -516,6 +561,68 @@
           "mul": 0.4,
           "time": 3.0
         }
+      ]
+    },
+    "arrow_rain": {
+      "sprite": "arrow-rain",
+      "cast": "crowd",
+      "crowd_radius": 60.0,
+      "anim": "burst",
+      "damage_mul": 1.0,
+      "size_mul": 1.0,
+      "cooldown": 5.0,
+      "cast_range": 320.0,
+      "count": [
+        1,
+        1,
+        2,
+        2,
+        3
+      ]
+    },
+    "thorn_trap": {
+      "sprite": "thorn-trap",
+      "cast": "nearest",
+      "anim": "burst",
+      "damage_mul": 0.8,
+      "size_mul": 1.0,
+      "cooldown": 5.5,
+      "cast_range": 200.0,
+      "count": [
+        1,
+        2,
+        2,
+        3,
+        3
+      ],
+      "on_hit": [
+        {
+          "from": 1,
+          "status": "stun",
+          "time": 0.8
+        },
+        {
+          "from": 1,
+          "status": "bleed",
+          "dps_mul": 0.2,
+          "time": 2.0
+        }
+      ]
+    },
+    "hawk": {
+      "sprite": "hawk-dive",
+      "cast": "nearest",
+      "anim": "burst",
+      "damage_mul": 1.8,
+      "size_mul": 1.0,
+      "cooldown": 4.0,
+      "cast_range": 360.0,
+      "count": [
+        1,
+        1,
+        2,
+        2,
+        3
       ]
     }
   }

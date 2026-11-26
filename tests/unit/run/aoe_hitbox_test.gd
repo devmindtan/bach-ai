@@ -191,3 +191,23 @@ func test_god_hammer_falls_on_the_nearest_monster() -> void:
 	_run_fx(r)
 	_check(e.hp[0] < 100.0, "the hammer must hit the monster it falls on, hp=%s" % e.hp[0])
 	r.free()
+
+
+## User 2026-11-26: the archer and assassin burst skills (lib/roguefx.py) must create their effect and damage a
+## monster where they land.
+func test_archer_and_assassin_bursts_damage_the_monster() -> void:
+	for pair: Array in [["archer", "arrow_rain", "crowd"], ["archer", "thorn_trap", "nearest"], ["archer", "hawk", "nearest"],
+			["assassin", "smoke_bomb", "self"], ["assassin", "blade_ring", "self"], ["assassin", "shadow_strike", "nearest"]]:
+		var sid := String(pair[1])
+		var r := _run(String(pair[0]), {sid: 1})
+		var e: Enemies = r.enemies
+		e.spawn("blob", Vector2(30, 0) if String(pair[2]) == "self" else Vector2(120, 0))
+		_settle(e)
+		r._cast(sid, r.pool["skills"][sid], String(pair[2]))
+		for dc: Dictionary in r._delayed:   # "self" pulses wait in _delayed; the run's skill step adds them at the hero
+			r._add_fx(dc["sprite"], dc["anim"], dc["sc"], dc["dmg"], -1.0, r.player_pos + r._hit_center, dc["sid"], dc["kb"])
+		r._delayed.clear()
+		_check(not r._fx.is_empty(), "%s: the cast must create its effect" % sid)
+		_run_fx(r)
+		_check(e.hp[0] < 100.0, "%s: the monster must take damage, hp=%s" % [sid, e.hp[0]])
+		r.free()

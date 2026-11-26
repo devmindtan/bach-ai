@@ -1,5 +1,5 @@
 {
-  "_doc": "Sát thủ's in-run cards and skills (design/assassin.md, user 2026-11-26: ném dao tầm gần, kỹ năng tự do phát triển). Same format as upgrades_archer.json. Step 1: Phi dao + Lướt; skills added by data (projectile kinds, 2026-11-26); the rest need new effect sprites.",
+  "_doc": "Sát thủ's in-run cards and skills (design/assassin.md, user 2026-11-26: ném dao tầm gần, kỹ năng tự do phát triển). Same format as upgrades_archer.json. Step 1: Phi dao + Lướt; skills added by data (projectile kinds, 2026-11-26); the last three draw their own bursts (sprite-lab/lib/roguefx.py).",
   "upgrades": [
     {
       "id": "throw_knife",
@@ -108,6 +108,51 @@
       },
       "rarity": "legendary",
       "element": "fire"
+    },
+    {
+      "id": "smoke_bomb",
+      "kind": "skill",
+      "name": "Bom khói",
+      "desc": "Ném bom khói quanh người: quái trong khói bị làm chậm; cấp 3: choáng ngắn. Mỗi cấp: +20% sát thương.",
+      "max_level": 5,
+      "weight": 2,
+      "effects": {
+        "skill_damage.smoke_bomb": {
+          "mul": 0.2
+        }
+      },
+      "rarity": "rare",
+      "element": "dark"
+    },
+    {
+      "id": "blade_ring",
+      "kind": "skill",
+      "name": "Vòng dao",
+      "desc": "Sáu con dao xoay vòng quanh người rồi bay ra. Mỗi cấp: +20% sát thương. Cấp 3: 2 vòng; cấp 5: 3 vòng.",
+      "max_level": 5,
+      "weight": 2,
+      "effects": {
+        "skill_damage.blade_ring": {
+          "mul": 0.2
+        }
+      },
+      "rarity": "epic",
+      "element": "physical"
+    },
+    {
+      "id": "shadow_strike",
+      "kind": "skill",
+      "name": "Ám kích",
+      "desc": "Bóng tối hiện ra chém chéo quái gần nhất, sát thương rất cao; cấp 3: chảy máu. Mỗi cấp: +20% sát thương. Cấp 4: 2 nhát; cấp 5: 3 nhát.",
+      "max_level": 5,
+      "weight": 2,
+      "effects": {
+        "skill_damage.shadow_strike": {
+          "mul": 0.2
+        }
+      },
+      "rarity": "legendary",
+      "element": "dark"
     },
     {
       "id": "quick_hands",
@@ -507,6 +552,77 @@
           "status": "burn",
           "dps_mul": 0.3,
           "time": 2.0
+        }
+      ]
+    },
+    "smoke_bomb": {
+      "sprite": "smoke-bomb",
+      "cast": "self",
+      "anim": "burst",
+      "damage_mul": 0.6,
+      "size_mul": 1.0,
+      "cooldown": 6.0,
+      "under_hero": true,
+      "knockback": 60.0,
+      "count": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "on_hit": [
+        {
+          "from": 1,
+          "status": "slow",
+          "mul": 0.5,
+          "time": 2.0
+        },
+        {
+          "from": 3,
+          "status": "stun",
+          "time": 0.6
+        }
+      ]
+    },
+    "blade_ring": {
+      "sprite": "blade-ring",
+      "cast": "self",
+      "anim": "burst",
+      "damage_mul": 1.1,
+      "size_mul": 1.0,
+      "cooldown": 5.0,
+      "under_hero": true,
+      "knockback": 120.0,
+      "count": [
+        1,
+        1,
+        2,
+        2,
+        3
+      ]
+    },
+    "shadow_strike": {
+      "sprite": "shadow-strike",
+      "cast": "nearest",
+      "anim": "burst",
+      "damage_mul": 2.2,
+      "size_mul": 1.0,
+      "cooldown": 4.5,
+      "cast_range": 260.0,
+      "count": [
+        1,
+        1,
+        1,
+        2,
+        3
+      ],
+      "on_hit": [
+        {
+          "from": 3,
+          "status": "bleed",
+          "dps_mul": 0.3,
+          "time": 3.0
         }
       ]
     }
