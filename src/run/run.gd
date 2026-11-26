@@ -3178,7 +3178,7 @@ func _draw_monster_hp(view: Rect2) -> void:
 		var r := enemies.k_radius[k]
 		var w := maxf(16.0, r * 2.0)
 		var top := (enemies.center_of(i) - Vector2(w * 0.5, r + 8.0)).round()
-		var frac := clampf(enemies.hp[i] / enemies.k_hp[k], 0.0, 1.0)
+		var frac := enemies.hp_frac(i)
 		draw_rect(Rect2(top - Vector2(1, 1), Vector2(w + 2.0, 5.0)), Color(0.1, 0.05, 0.08))
 		draw_rect(Rect2(top, Vector2(roundf(w * frac), 3.0)), Color(0.9, 0.25, 0.3))
 

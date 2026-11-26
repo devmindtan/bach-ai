@@ -737,7 +737,7 @@ func _tree_phase2(i: int, e: Dictionary, dir: Vector2, dist: float, delta: float
 			absorb_lines.append([center_of(j), center_of(i)])
 			healed += float(ab.get("heal_each", 0.02))
 	if healed > 0.0:
-		hp[i] = minf(k_hp[kind[i]], hp[i] + k_hp[kind[i]] * minf(healed, float(ab.get("heal_max", 0.1))))
+		hp[i] = minf(hp_cap[i], hp[i] + hp_cap[i] * minf(healed, float(ab.get("heal_max", 0.1))))   # its own spawn hp
 
 
 ## A poison pool at [param p] for [param time] s: a player within [param r] takes
@@ -817,7 +817,7 @@ func _support(i: int, k: int, dir: Vector2, dist: float, speed: float, delta: fl
 			if j == i or state[j] == DYING or k_boss[kind[j]] == 1:
 				continue
 			if center_of(j).distance_to(c) <= r:
-				hp[j] = minf(k_hp[kind[j]], hp[j] + k_hp[kind[j]] * pct)
+				hp[j] = minf(hp_cap[j], hp[j] + hp_cap[j] * pct)   # its own spawn hp (later monsters have more)
 		heal_pulses.append([c, r])
 		anim_t[i] = 0.0
 	var keep := float(e.get("keep_range", 220.0))
@@ -1313,6 +1313,12 @@ func hit_arc(center: Vector2, facing: Vector2, radius: float, half_angle: float,
 	hb.dir = facing.normalized()
 	hb.half_angle = half_angle
 	return hit_box(hb, damage, knockback, source, effects)
+
+
+## Fraction of monster [param i]'s hp left, for its hp bar: of the hp it spawned with (hp_cap), which grows with the
+## run's time (spawn_hp_mul), not of its kind's base hp.
+func hp_frac(i: int) -> float:
+	return clampf(hp[i] / maxf(1.0, hp_cap[i]), 0.0, 1.0)
 
 
 ## Damages every living monster within [param radius] of [param center].

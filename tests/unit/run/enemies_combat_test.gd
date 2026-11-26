@@ -149,3 +149,16 @@ func test_damage_is_recorded_per_source_capped_at_hp() -> void:
 	_check(is_equal_approx(float(e.damage_by.get("frost_nova", 0.0)), 26.0), "frost: 8 + 18 dealt, got %s" % e.damage_by.get("frost_nova"))
 	_check(int(e.hits_by.get("frost_nova", 0)) == 2, "frost hit twice")
 	_check(int(e.kills_by.get("frost_nova", 0)) == 2 and int(e.kills_by.get("blade_arc", 0)) == 0, "both kills go to frost")
+
+
+## User 2026-11-26: mid and late in a run, shots hit but the hp bar did not drop. Monsters spawned later have more hp
+## (spawn_hp_mul from the run's time) and the bar was measured against the kind's base hp, so it stayed full until the
+## extra hp was gone. The bar is a fraction of the hp the monster spawned with.
+func test_hp_bar_drops_on_a_late_monster_with_more_hp() -> void:
+	var e := _enemies()
+	e.spawn_hp_mul = 3.0                          # 18 base hp -> 54
+	e.spawn("blob", Vector2(30, 0))
+	_settle(e)
+	e.hit_circle(Vector2.ZERO, 60.0, 9.0, 0.0)    # 54 -> 45
+	_check(e.hp[0] < 54.0, "the hit took hp, hp %s" % e.hp[0])
+	_check(e.hp_frac(0) < 0.9, "the bar shows the loss (45 of 54 = 0.83), got %s" % e.hp_frac(0))
