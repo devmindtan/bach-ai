@@ -1,6 +1,9 @@
 {
-  "_doc": "Progressive unlocks of the lobby screens (design/ux/progressive-unlocks.md, user 2026-11-23): a screen opens once the slot has won stage N (slot.best >= N). 0 = open from the start. Bộ thẻ also holds Cây thẻ. Thử thách has its own gate in challenges.json (unlock 10).",
+  "_doc": "Progressive unlocks of the lobby screens (design/ux/progressive-unlocks.md, user 2026-11-23): a screen opens once the slot has won stage N (slot.best >= N). 0 = open from the start. Bộ thẻ also holds Cây thẻ. Thử thách has its own gate in challenges.json (unlock 10). class_<id> (user 2026-11-26: every class unlocks step by step): that class can be created once any character has won stage N; Kiếm sĩ has none (open).",
   "deck": 3,
   "gacha": 5,
-  "tree": 5
+  "tree": 5,
+  "class_mage": 2,
+  "class_archer": 4,
+  "class_assassin": 6
 }

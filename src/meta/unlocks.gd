@@ -28,3 +28,14 @@ func need(feature: String) -> int:
 ## True when [param slot] has opened [param feature]; no slot (title preview) counts as open.
 func is_open(slot: Slot, feature: String) -> bool:
 	return slot == null or slot.best >= need(feature)
+
+
+## True when class [param cls] may be created (user 2026-11-26: every class unlocks step by step): any character
+## in [param entries] ([{slot}], SlotStore.list()) has won stage need("class_<cls>"). Broken files are skipped.
+func class_open(entries: Array, cls: String) -> bool:
+	var best := 0
+	for e: Dictionary in entries:
+		var s: Variant = e.get("slot")
+		if s is Slot:
+			best = maxi(best, (s as Slot).best)
+	return best >= need("class_" + cls)
