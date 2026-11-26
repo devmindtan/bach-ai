@@ -164,6 +164,7 @@ func _build() -> void:
 	root.size = get_viewport_rect().size
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_layer.add_child(root)
+	Journal.back_tab(root, func() -> void: get_tree().change_scene_to_file(LOBBY_SCENE))   # "Trở lại" (web .back-tab)
 	var title := Journal.ink("Album", 44)
 	title.position = LEFT_PAGE.position + Vector2(0, -8)
 	root.add_child(title)

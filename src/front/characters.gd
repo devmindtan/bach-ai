@@ -91,6 +91,7 @@ func _build() -> void:
 	root.size = get_viewport_rect().size
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_layer.add_child(root)
+	Journal.back_tab(root, func() -> void: get_tree().change_scene_to_file(TITLE_SCENE))   # "Trở lại" (web .back-tab)
 	var half := Journal.BOOK.size.x * 0.5
 	var left := _page(root, Rect2(Journal.BOOK.position + Vector2(40, 34), Vector2(half - 80, Journal.BOOK.size.y - 68)))
 	var right_rect := Rect2(Journal.BOOK.position + Vector2(half + 40, 34), Vector2(half - 80, Journal.BOOK.size.y - 68))

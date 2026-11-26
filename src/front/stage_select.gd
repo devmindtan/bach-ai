@@ -126,6 +126,7 @@ func _build() -> void:
 	root.size = get_viewport_rect().size
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_layer.add_child(root)
+	Journal.back_tab(root, func() -> void: get_tree().change_scene_to_file(LOBBY_SCENE))   # "Trở lại" (web .back-tab)
 	var hint := Journal.ink({"campaign": "← → chọn ải · Q / E đổi vùng · ↑ ↓ chế độ · Enter vào trận · Esc về sổ",
 		"trials": "↑ ↓ chọn thử thách · Enter vào trận · Esc về sổ", "endless": "Enter vào trận · Esc về sổ"}.get(_mode, ""), 15, Journal.PAPER)
 	hint.position = Vector2(Journal.BOOK.position.x, Journal.BOOK.end.y + 14)

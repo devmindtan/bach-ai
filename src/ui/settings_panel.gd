@@ -176,6 +176,7 @@ static func build_journal(on_back: Callable) -> Control:
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	note.custom_minimum_size = Vector2(470, 0)
 	right.add_child(note)
+	Journal.back_tab(root, on_back)   # "Trở lại" (web .back-tab)
 	var hint := Journal.ink("↑ ↓ chọn · ← → đổi · Esc về sổ", 15, Journal.PAPER)
 	hint.position = Vector2(Journal.BOOK.position.x, Journal.BOOK.end.y + 14)
 	root.add_child(hint)

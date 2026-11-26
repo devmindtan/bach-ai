@@ -300,7 +300,7 @@ static func text_ribbon(text: String, col: Color, on: bool) -> Button:
 ## A column of text ribbons on the book's right edge (top 90); [param pick] is called with the pressed index.
 static func ribbons(root: Control, names: Array, cols: Array, open: int, pick: Callable) -> VBoxContainer:
 	var v := VBoxContainer.new()
-	v.position = Vector2(BOOK.end.x, BOOK.position.y + 50)
+	v.position = Vector2(BOOK.end.x + 14, BOOK.position.y + 118)   # out of the cover, under the back tab
 	v.add_theme_constant_override("separation", 10)
 	root.add_child(v)
 	for i in names.size():
@@ -309,3 +309,14 @@ static func ribbons(root: Control, names: Array, cols: Array, open: int, pick: C
 		r.pressed.connect(func() -> void: pick.call(i))
 		v.add_child(r)
 	return v
+
+
+## "Trở lại" (design-web journal.css .back-tab, user 2026-11-26): an icon tab like the lobby's corner tabs, at the top
+## of the book's right edge; pressing it does what Esc does ([param back]). Text ribbons start under it.
+static func back_tab(root: Control, back: Callable) -> Button:
+	var b := ribbon("nav_back", Color("7a5a3a"), "Trở lại (Esc)")
+	b.position = Vector2(1184, 96)
+	b.focus_mode = Control.FOCUS_NONE   # the page owns the arrows; Esc and the mouse use it
+	b.pressed.connect(back)
+	root.add_child(b)
+	return b
