@@ -21,7 +21,6 @@ var _g: Gacha
 var _bid := "weapon"
 var _last: Array = []
 var _rng := RandomNumberGenerator.new()
-var _scroll := Vector2.ZERO
 var _layer: CanvasLayer
 var _tab := "result"                  # "result" | "history"
 
@@ -51,13 +50,9 @@ func _ready() -> void:
 	_build()
 
 
-func _process(delta: float) -> void:
-	_scroll += Vector2(18.0, 6.0) * delta
-	queue_redraw()
-
-
 func _draw() -> void:
-	FrontArt.backdrop(self, _scroll, get_viewport_rect().size)
+	Journal.draw_desk(self, get_viewport_rect().size)
+	Journal.draw_book(self, Journal.BOOK)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -91,6 +86,11 @@ func _pull(n: int) -> void:
 	_rebuild()
 
 
+const LEFT_PAGE := Rect2(110, 74, 470, 572)
+const RIGHT_PAGE := Rect2(660, 74, 470, 572)
+const RAR_INK := {"common": Color("6a6a6a"), "rare": Color("3a6aaa"), "epic": Color("7a3ab8"), "legendary": Color("c0801a")}
+
+
 func _build() -> void:
 	_layer = CanvasLayer.new()
 	add_child(_layer)
@@ -98,52 +98,68 @@ func _build() -> void:
 	root.size = get_viewport_rect().size
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_layer.add_child(root)
-	var title := UiKit.label("Gacha · %s" % _slot.name, 34, UiKit.GOLD)
-	title.position = Vector2(40, 24)
-	root.add_child(title)
-	var wallet := HBoxContainer.new()
-	wallet.add_theme_constant_override("separation", 22)
-	wallet.position = Vector2(42, 70)
-	root.add_child(wallet)
-	wallet.add_child(UiKit.stat("gem", "%d đá" % _slot.gems, "Đá: thắng ải (lần đầu nhiều hơn).", 16))
-	wallet.add_child(UiKit.stat("coin", "%d vàng" % _slot.gold, "Vàng", 16))
-	var back := UiKit.button("Quay lại " + UiKit.hint("Esc"), func() -> void: get_tree().change_scene_to_file(LOBBY_SCENE), Vector2(180, 42), 17)
-	back.position = Vector2(root.size.x - 40 - 180, 28)
-	root.add_child(back)
-	# left: banners with their own pity
+	var hint := Journal.ink("Chọn kệ · Enter quay · Esc về sổ", 15, Journal.PAPER)
+	hint.position = Vector2(Journal.BOOK.position.x, Journal.BOOK.end.y + 14)
+	root.add_child(hint)
+	# left page: the shelves (banners, each with its own pity), the odds and the rule
 	var left := VBoxContainer.new()
-	left.position = Vector2(40, 112)
-	left.add_theme_constant_override("separation", 10)
+	left.position = LEFT_PAGE.position + Vector2(0, -8)
+	left.size = LEFT_PAGE.size
+	left.add_theme_constant_override("separation", 6)
 	root.add_child(left)
+	left.add_child(Journal.ink("Quay đồ", 44))
+	var cur := _g.banner(_bid)
+	var sub := Journal.ink("Kệ %s: %s" % [String(cur.get("name", _bid)), String(cur.get("desc", ""))], 18, Journal.INK_RED)
+	sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	sub.custom_minimum_size = Vector2(LEFT_PAGE.size.x, 0)
+	left.add_child(sub)
+	var shelves := HBoxContainer.new()
+	shelves.add_theme_constant_override("separation", 8)
+	left.add_child(shelves)
 	for b: Dictionary in _g.banners():
-		left.add_child(_banner_button(b))
-	# middle: last results
-	var mid := UiKit.panel(Color(0.09, 0.08, 0.13, 0.94), 16)
-	mid.position = Vector2(316, 112)
-	mid.custom_minimum_size = Vector2(584, 568)
-	mid.size = mid.custom_minimum_size
-	root.add_child(mid)
+		shelves.add_child(_banner_button(b))
+	Journal.restyle(shelves)
+	var gap := Control.new()
+	gap.custom_minimum_size = Vector2(0, 4)
+	left.add_child(gap)
+	var rates: Dictionary = _g.data.get("rates", {})
+	for r in Gacha.ORDER:
+		if rates.has(r):
+			left.add_child(Journal.ledger("", String(RNAME.get(r, r)), "%.0f%%" % (float(rates[r]) * 100.0), 20, RAR_INK.get(r, Journal.INK)))
+	left.add_child(Journal.ledger("", "Bảo đảm Huyền thoại", "còn %d / %d lần" % [_g.pity_at() - int(_slot.pity.get(_bid, 0)), _g.pity_at()], 20))
+	left.add_child(Journal.ledger("gem", "Đá đang có", str(_slot.gems), 20))
+	var rule := Journal.ink("Lượt thứ %d kể từ món huyền thoại gần nhất chắc chắn ra huyền thoại; mỗi kệ đếm riêng. Quay 1 và quay 10 cùng tỉ lệ. Chỉ ra đồ lớp này mặc được; món trùng đổi thành vàng." % _g.pity_at(), 16, Journal.INK_SOFT)
+	rule.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	rule.custom_minimum_size = Vector2(LEFT_PAGE.size.x, 0)
+	left.add_child(rule)
+	# right page: Kết quả / Lịch sử, then the two pulls at the bottom (×10 is the seal)
 	var mv := VBoxContainer.new()
+	mv.position = RIGHT_PAGE.position
+	mv.size = Vector2(RIGHT_PAGE.size.x, RIGHT_PAGE.size.y - 76)
 	mv.add_theme_constant_override("separation", 10)
-	mid.add_child(mv)
+	root.add_child(mv)
 	var tabs := HBoxContainer.new()
 	tabs.add_theme_constant_override("separation", 8)
 	mv.add_child(tabs)
-	for t: Array in [["result", "Kết quả"], ["history", "Lịch sử"]]:
+	for t: Array in [["result", "Lần quay trước"], ["history", "Lịch sử"]]:
 		var on: bool = _tab == t[0]
 		var tb := UiKit.button(t[1], func() -> void:
 			_tab = t[0]
-			_rebuild(), Vector2(130, 38), 17, UiKit.PANEL_HOVER if on else UiKit.PANEL)
+			_rebuild(), Vector2(170, 34), 17)
 		if on:
 			tb.add_theme_stylebox_override("normal", UiKit.style(UiKit.PANEL_HOVER, 8, Color.WHITE, 2))
 		tabs.add_child(tb)
+	Journal.restyle(tabs)
 	if _tab == "history":
 		_history(mv)
+		for c in mv.get_children():
+			if c != tabs:
+				Journal.restyle(c)
 	elif _last.is_empty():
-		var hint := UiKit.label("Chọn banner rồi bấm Quay 1 hoặc Quay 10. Món mới vào túi đồ; món trùng đổi thành vàng.", 15, UiKit.MUTED)
-		hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		hint.custom_minimum_size = Vector2(540, 0)
-		mv.add_child(hint)
+		var none := Journal.ink("Chọn kệ rồi quay 1 hoặc 10 lần. Món mới vào túi đồ; món trùng đổi thành vàng.", 19, Journal.INK_SOFT)
+		none.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		none.custom_minimum_size = Vector2(RIGHT_PAGE.size.x, 0)
+		mv.add_child(none)
 	else:
 		var grid := GridContainer.new()
 		grid.columns = 5
@@ -160,59 +176,41 @@ func _build() -> void:
 		if _reveal:   # the pull just made flips in; rebuilding the same result later does not
 			_reveal = false
 			_reveal_cards.call_deferred(grid, _last)
-	# right: rates, pity rule, price, buttons
-	var right := UiKit.panel(Color(0.09, 0.08, 0.13, 0.94), 16)
-	right.position = Vector2(916, 112)
-	right.custom_minimum_size = Vector2(324, 568)
-	right.size = right.custom_minimum_size
-	root.add_child(right)
-	var rv := VBoxContainer.new()
-	rv.add_theme_constant_override("separation", 8)
-	right.add_child(rv)
-	rv.add_child(UiKit.label("Tỉ lệ mỗi lượt", 20, UiKit.TEXT))
-	var rates: Dictionary = _g.data.get("rates", {})
-	for r in Gacha.ORDER:
-		if rates.has(r):
-			var row := HBoxContainer.new()
-			rv.add_child(row)
-			var nl := UiKit.label(String(RNAME.get(r, r)), 16, UiKit.RARITY.get(r, UiKit.TEXT))
-			nl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			row.add_child(nl)
-			row.add_child(UiKit.label("%.0f%%" % (float(rates[r]) * 100.0), 16, UiKit.TEXT))
-	var rule := UiKit.label("Lượt thứ %d kể từ món huyền thoại gần nhất chắc chắn ra huyền thoại; ra huyền thoại thì đếm lại. Mỗi banner đếm riêng. Quay 1 và quay 10 cùng tỉ lệ. Chỉ ra đồ class này mặc được; món trùng đổi thành vàng." % _g.pity_at(), 14, UiKit.MUTED)
-	rule.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	rv.add_child(rule)
-	var spacer := Control.new()
-	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	rv.add_child(spacer)
-	for n in [1, 10]:
-		var b := UiKit.button("Quay %d  ·  %d đá" % [n, _g.cost(n)], func() -> void: _pull(n),
-			Vector2(0, 56 if n == 10 else 48), 20 if n == 10 else 17, UiKit.PRIMARY if n == 10 else UiKit.PANEL)
-		b.disabled = _slot.gems < _g.cost(n)
-		rv.add_child(b)
-		if n == 10 and not b.disabled:
-			b.call_deferred("grab_focus")
+	var pulls := HBoxContainer.new()
+	pulls.position = Vector2(RIGHT_PAGE.position.x, RIGHT_PAGE.end.y - 62)
+	pulls.size = Vector2(RIGHT_PAGE.size.x, 62)
+	pulls.add_theme_constant_override("separation", 12)
+	root.add_child(pulls)
+	var one := UiKit.button("Quay ×1 · %d đá" % _g.cost(1), func() -> void: _pull(1), Vector2(0, 62), 19)
+	one.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	one.disabled = _slot.gems < _g.cost(1)
+	pulls.add_child(one)
+	Journal.restyle(one)
+	var ten := Journal.seal("Quay ×10 · %d đá" % _g.cost(10), Vector2(0, 62), 22)
+	ten.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	ten.disabled = _slot.gems < _g.cost(10)
+	ten.pressed.connect(func() -> void: _pull(10))
+	pulls.add_child(ten)
+	if not ten.disabled:
+		ten.call_deferred("grab_focus")
 
 
 func _banner_button(b: Dictionary) -> Button:
 	var id := String(b["id"])
 	var on := id == _bid
 	var btn := Button.new()
-	btn.custom_minimum_size = Vector2(260, 104)
+	btn.custom_minimum_size = Vector2(231, 62)
 	btn.focus_mode = Control.FOCUS_ALL
 	btn.add_theme_stylebox_override("normal", UiKit.style(UiKit.PANEL_HOVER if on else UiKit.PANEL, 12, Color.WHITE if on else UiKit.GOLD, 3 if on else 2))
-	for st in ["hover", "focus", "pressed"]:
-		btn.add_theme_stylebox_override(st, UiKit.style(UiKit.PANEL_HOVER, 12, Color.WHITE, 3))
 	var v := VBoxContainer.new()
 	v.set_anchors_preset(Control.PRESET_FULL_RECT)
-	v.offset_left = 14
-	v.offset_top = 10
-	v.offset_right = -14
-	v.add_theme_constant_override("separation", 2)
+	v.offset_left = 12
+	v.offset_top = 6
+	v.add_theme_constant_override("separation", 0)
 	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	btn.add_child(v)
-	for l in [UiKit.label("Banner " + String(b.get("name", id)), 20, UiKit.TEXT), UiKit.label(String(b.get("desc", "")), 13, UiKit.MUTED),
-			UiKit.label("%d/%d lượt tới huyền thoại chắc chắn" % [int(_slot.pity.get(id, 0)), _g.pity_at()], 13, UiKit.RARITY["legendary"])]:
+	for l in [UiKit.label("Kệ " + String(b.get("name", id)), 20, UiKit.TEXT),
+			UiKit.label("%d/%d lượt tới huyền thoại" % [int(_slot.pity.get(id, 0)), _g.pity_at()], 14, UiKit.MUTED)]:
 		l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		v.add_child(l)
 	btn.pressed.connect(func() -> void:
@@ -247,24 +245,30 @@ func _input(event: InputEvent) -> void:
 
 func _result_card(r: Dictionary) -> PanelContainer:
 	var d: Dictionary = _slot.profile.defs.get(String(r["id"]), {})
-	var col: Color = UiKit.RARITY.get(String(r["rarity"]), UiKit.TEXT)
-	var p := UiKit.panel(Color(col, 0.12).blend(UiKit.PANEL_DARK), 6, col)
-	p.custom_minimum_size = Vector2(102, 150)
+	var col: Color = RAR_INK.get(String(r["rarity"]), Journal.INK)   # a sketch card on the page, framed in the tier's ink
+	var p := PanelContainer.new()
+	var ps := StyleBoxFlat.new()
+	ps.bg_color = Journal.SKETCH
+	ps.border_color = col
+	ps.set_border_width_all(4)
+	ps.set_content_margin_all(5)
+	p.add_theme_stylebox_override("panel", ps)
+	p.custom_minimum_size = Vector2(86, 132)
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 2)
 	p.add_child(v)
 	var ic := UiKit.icon(String(d.get("icon", r["id"])), 48.0)
 	ic.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	v.add_child(ic)
-	var nm := UiKit.label(String(d.get("name", r["id"])), 13, col)
+	var nm := Journal.ink(String(d.get("name", r["id"])), 14, col)
 	nm.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	nm.custom_minimum_size.x = 88
+	nm.custom_minimum_size.x = 74
 	v.add_child(nm)
-	var tag := UiKit.label(("Trùng → +%d vàng" % int(r["gold"])) if bool(r["dup"]) else "Mới", 12, UiKit.MUTED if bool(r["dup"]) else Color("8fe08a"))
+	var tag := Journal.ink(("+%d vàng" % int(r["gold"])) if bool(r["dup"]) else "Mới", 13, Journal.INK_SOFT if bool(r["dup"]) else Color("2a7a3a"))
 	tag.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	tag.custom_minimum_size.x = 88
+	tag.custom_minimum_size.x = 74
 	v.add_child(tag)
 	Tip.attach(p, String(d.get("name", r["id"])), String(d.get("desc", "")), col, String(d.get("icon", r["id"])), String(RNAME.get(String(r["rarity"]), "")))
 	return p
