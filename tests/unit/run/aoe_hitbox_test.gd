@@ -291,3 +291,15 @@ func test_blade_orbit_keeps_cutting_round_the_hero() -> void:
 		r._step_fx(1.0 / 60.0)
 	_check(r._fx.is_empty(), "the orbit ends after its duration")
 	r.free()
+
+
+## Regression 2026-11-26: crit chance / mul, Kết liễu and Liên hoàn reached the monsters only when the character
+## panel built its breakdown; Ám sát's +15% crit did nothing in a run where the panel was never opened.
+func test_hit_stats_reach_the_monsters_without_the_panel() -> void:
+	var r := _run("assassin", {"execute": 5, "combo": 1})
+	r._recompute_stats()
+	var e: Enemies = r.enemies
+	_check(e.crit_chance >= 0.15, "Ám sát crit chance reaches the monsters, got %s" % e.crit_chance)
+	_check(e.execute_below > 0.1, "Kết liễu reaches the monsters, got %s" % e.execute_below)
+	_check(e.combo_per > 0.0, "Liên hoàn reaches the monsters, got %s" % e.combo_per)
+	r.free()

@@ -170,6 +170,20 @@
       "element": "physical"
     },
     {
+      "id": "combo",
+      "kind": "stat",
+      "name": "Liên hoàn",
+      "desc": "Mỗi đòn trúng trong 2 giây cộng 1 tầng (tối đa 10), mỗi tầng tăng tỉ lệ chí mạng; đủ 10 tầng thì nhát kế tiếp chắc chắn chí mạng rồi đếm lại. Mỗi cấp: +0,8% chí mạng mỗi tầng (tối đa 4%).",
+      "max_level": 5,
+      "weight": 2,
+      "effects": {
+        "combo_per": {
+          "add": 0.008
+        }
+      },
+      "rarity": "rare"
+    },
+    {
       "id": "execute",
       "kind": "stat",
       "name": "Kết liễu",

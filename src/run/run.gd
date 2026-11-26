@@ -454,6 +454,7 @@ func _ready() -> void:
 	enemies.vs_status_mul = passive_vs_status()
 	enemies.far_mul = float(passive().get("far_mul", 0.0))   # Mắt ưng (archer)
 	enemies.far_px = float(passive().get("far_px", 200.0))
+	_apply_hit_stats()
 	_update_body()
 	pickups = Pickups.new(cfg.get("pickups", {}), 400)
 	if _shot_gold_chest:
@@ -2366,6 +2367,19 @@ static func _fmt_stat(key: String, v: float) -> String:
 
 func _recompute_stats() -> void:
 	stats = compute_stats(effect_levels())
+	_apply_hit_stats()
+
+
+## The hero's hit stats the monsters apply to each hit: Chí mạng (run_config crit + crit_chance / crit_mul effects,
+## 6C.2), Kết liễu and Liên hoàn (design/rogue-kits.md). Regression 2026-11-26: this sat after a return in
+## RunSheet.stat_breakdown and never ran, so no crit ever happened.
+func _apply_hit_stats() -> void:
+	if enemies == null:
+		return
+	enemies.crit_chance = float(cfg.get("crit", {}).get("chance", 0.0)) + float(stats.get("crit_chance", 0.0))
+	enemies.crit_mul = float(cfg.get("crit", {}).get("mul", 1.75)) + float(stats.get("crit_mul", 0.0))
+	enemies.execute_below = float(stats.get("execute_below", 0.0))
+	enemies.combo_per = float(stats.get("combo_per", 0.0))
 
 
 ## The hero's stats with [param lv] card levels, the balance multipliers applied (run_config balance:
@@ -2804,6 +2818,7 @@ func _draw() -> void:
 	_draw_statuses(view)
 	_draw_fx(false)
 	_draw_pets()
+	_draw_combo()
 	if Prefs.current().monster_hp:
 		_draw_monster_hp(view)
 	if Prefs.current().damage_numbers:
@@ -3046,6 +3061,25 @@ func _step_pets(dt: float) -> void:
 				pos = pos.lerp(perch, minf(1.0, dt * 8.0))
 		pet["face"] = signf((pos - (pet["pos"] as Vector2)).x) if absf((pos - (pet["pos"] as Vector2)).x) > 0.01 else float(pet.get("face", 1.0))
 		pet["pos"] = pos
+
+
+## Liên hoàn (design/rogue-kits.md): the stacks as pips in an arc over the hero, in the card level's colour
+## (I steel .. V gold); a full stack glows white.
+const COMBO_COLS := [Color("b8c4d8"), Color("6fb7e0"), Color("c38df5"), Color("e0364a"), Color("f2c14e")]
+
+
+func _draw_combo() -> void:
+	if enemies == null or enemies.combo_per <= 0.0 or enemies.combo <= 0:
+		return
+	var col: Color = COMBO_COLS[clampi(int(levels.get("combo", 1)) - 1, 0, 4)]
+	var full := enemies.combo >= enemies.combo_max
+	var top := player_pos + _hit_center + Vector2(0, -44)
+	for k in enemies.combo_max:
+		var a := PI + PI * (float(k) + 0.5) / float(enemies.combo_max)
+		var p := (top + Vector2(cos(a), sin(a) * 0.5) * 22.0).round()
+		draw_rect(Rect2(p - Vector2(2, 2), Vector2(4, 4)), Color(0.05, 0.03, 0.08, 0.8))
+		if k < enemies.combo:
+			draw_rect(Rect2(p - Vector2(1, 1), Vector2(2, 2)), Color.WHITE if full else col)
 
 
 func _draw_pets() -> void:

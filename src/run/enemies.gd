@@ -107,6 +107,11 @@ var contact_bleed := {}   # the last step's contact came from a bite_bleed speci
 var execute_below := 0.0   # Kết liễu (design/rogue-kits.md): a hero hit leaving a plain monster under this share dies
 var executes := 0          # executes since the run last read it (the run resets Lướt)
 var exec_pos: Array[Vector2] = []   # where they happened (the run draws the execute burst)
+var combo_per := 0.0      # Liên hoàn (design/rogue-kits.md): crit chance per stack; 0 = no combo
+var combo_max := 10
+var combo_window := 2.0   # s without a hero hit before the stacks drop
+var combo := 0            # stacks now
+var combo_t := 0.0        # s left in the window
 var crit_chance := 0.0   # Chí mạng of direct hits (the run sets it from the stats, 6C.2)
 var crit_mul := 1.75
 var _crit_next := false
@@ -518,6 +523,10 @@ func center_of(i: int) -> Vector2:
 func step(delta: float, player_pos: Vector2, player_center: Vector2) -> float:
 	hero_at = player_pos
 	contact_bleed = {}
+	if combo > 0:   # Liên hoàn: the chain breaks after combo_window s without a hit
+		combo_t -= delta
+		if combo_t <= 0.0:
+			combo = 0
 	var regen := float(boss_aura.get("regen", 0.0))
 	if regen > 0.0:   # the aura heals its monsters over time (up to their buffed max)
 		var hm := float(boss_aura.get("hp_mul", 1.0)) * spawn_hp_mul
@@ -1284,7 +1293,12 @@ func hit_box(hb: SpriteHitbox, damage: float, knockback := 140.0, source := "", 
 		hits += 1
 		var d := c - hb.center
 		var dmg := damage
-		var crit := not source.begins_with("event.") and crit_chance > 0.0 and _crit_rng.randf() < crit_chance
+		var chance := crit_chance + (combo_per * combo if combo_per > 0.0 else 0.0)
+		var sure := combo_per > 0.0 and combo >= combo_max and _hero_source(source)
+		var crit := not source.begins_with("event.") and (sure or (chance > 0.0 and _crit_rng.randf() < chance))
+		if combo_per > 0.0 and _hero_source(source):   # Liên hoàn: a full stack spends on this hit, else it grows
+			combo = 0 if sure else mini(combo_max, combo + 1)
+			combo_t = combo_window
 		if crit:   # Chí mạng: direct hits only (damage over time and events never crit)
 			dmg *= crit_mul
 			crits_by[source] = int(crits_by.get(source, 0)) + 1

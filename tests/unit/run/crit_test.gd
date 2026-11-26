@@ -85,3 +85,26 @@ func test_crit_rolls_do_not_shift_the_spawn_stream() -> void:
 		b.hit_circle(Vector2.ZERO, 60.0, 0.1)
 		a.hit_circle(Vector2.ZERO, 60.0, 0.1)
 	_check(a.ring_point(Vector2.ZERO) == b.ring_point(Vector2.ZERO), "the next spawn point is the same with or without crit rolls")
+
+
+## design/rogue-kits.md, Liên hoàn: each hero hit within combo_window s adds a stack (max combo_max); a full stack
+## makes the next hit a sure crit and starts over; a pause longer than the window drops the stacks.
+func test_combo_stacks_to_a_sure_crit_and_drops_after_a_pause() -> void:
+	var e := _enemies()
+	e.crit_chance = 0.0
+	e.combo_per = 0.03
+	e.combo_max = 3
+	e.combo_window = 2.0
+	e.spawn("blob", Vector2(30, 0))
+	e.hp[0] = 9999.0
+	_settle(e)
+	for k in 3:
+		e.hit_circle(Vector2.ZERO, 60.0, 1.0, 0.0, "throw_knife")
+	_check(e.combo == 3, "three hits, three stacks, got %d" % e.combo)
+	e.drain_hits()
+	e.hit_circle(Vector2.ZERO, 60.0, 1.0, 0.0, "throw_knife")
+	_check(e.hit_crit.size() == 1 and e.hit_crit[0] == 1, "the hit after a full stack is a crit")
+	_check(e.combo == 0, "and the chain starts over, got %d" % e.combo)
+	e.hit_circle(Vector2.ZERO, 60.0, 1.0, 0.0, "throw_knife")
+	e.step(2.5, Vector2(0, 300), Vector2(0, 300))
+	_check(e.combo == 0, "a 2.5 s pause drops the stacks, got %d" % e.combo)
