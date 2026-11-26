@@ -229,3 +229,25 @@ func test_ricochet_arrow_bounces_to_the_next_monster() -> void:
 		r._step_fx(1.0 / 60.0)
 	_check(e.hp[0] < 100.0, "the first monster is hit, hp=%s" % e.hp[0])
 	_check(e.hp[1] < 100.0, "the arrow bounces to the second monster, hp=%s" % e.hp[1])
+
+
+## design/rogue-kits.md, Dao hồi: the dagger flies out, turns back to the hero and hits the same monster again on the
+## way back, then ends at the hero.
+func test_boomerang_dagger_hits_out_and_back() -> void:
+	var r := _run("assassin", {"boomerang": 1})
+	var e: Enemies = r.enemies
+	e.spawn("blob", Vector2(70, 0))
+	_settle(e)
+	r._cast("boomerang", r.pool["skills"]["boomerang"], "projectile")
+	var turned := false
+	for i in 300:
+		if r._fx.is_empty():
+			break
+		r._step_fx(1.0 / 60.0)
+		for f: Dictionary in r._fx:
+			if f.has("vel") and Vector2(f["vel"]).x < 0.0:
+				turned = true
+	_check(turned, "the dagger turns back toward the hero")
+	_check(int(e.hits_by.get("boomerang", 0)) >= 2, "it hits on the way out and back, hits=%s" % e.hits_by.get("boomerang", 0))
+	_check(r._fx.is_empty(), "it ends when it comes back")
+	r.free()

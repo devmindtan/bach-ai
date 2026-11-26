@@ -155,6 +155,21 @@
       "element": "dark"
     },
     {
+      "id": "boomerang",
+      "kind": "skill",
+      "name": "Dao hồi",
+      "desc": "Dao bay ra rồi quay về tay như boomerang, trúng quái cả lượt đi lẫn lượt về. Mỗi cấp: +20% sát thương, bay xa hơn. Cấp 3: 2 dao; cấp 5: 3 dao.",
+      "max_level": 5,
+      "weight": 2,
+      "effects": {
+        "skill_damage.boomerang": {
+          "mul": 0.2
+        }
+      },
+      "rarity": "epic",
+      "element": "physical"
+    },
+    {
       "id": "quick_hands",
       "kind": "stat",
       "name": "Tay lẹ",
@@ -624,6 +639,40 @@
           "dps_mul": 0.3,
           "time": 3.0
         }
+      ]
+    },
+    "boomerang": {
+      "sprite": "boomerang-i",
+      "cast": "projectile",
+      "anim_prefix": "fly_",
+      "impact": "impact",
+      "damage_mul": 0.9,
+      "size_mul": 1.0,
+      "cooldown": 2.6,
+      "speed": 420.0,
+      "pierce": 99,
+      "boomerang": true,
+      "out_time": [
+        0.35,
+        0.4,
+        0.42,
+        0.45,
+        0.5
+      ],
+      "count": [
+        1,
+        1,
+        2,
+        2,
+        3
+      ],
+      "duration": 2.0,
+      "tier_sprites": [
+        "boomerang-i",
+        "boomerang-ii",
+        "boomerang-iii",
+        "boomerang-iv",
+        "boomerang-v"
       ]
     }
   }

@@ -1244,6 +1244,10 @@ func _cast(sid: String, ts: Dictionary, how: String) -> void:
 				if fx.is_empty():
 					continue
 				fx["vel"] = dv * speed
+				if bool(ts.get("boomerang", false)):   # Dao hồi (design/rogue-kits.md): out for out_time s, then home back
+					var outs: Array = ts.get("out_time", [0.4])
+					fx["boomerang"] = float(outs[clampi(int(levels.get(sid, 1)) - 1, 0, outs.size() - 1)])
+					fx["prefix"] = String(ts.get("anim_prefix", "fly_"))
 				var bounces: Array = ts.get("bounce", [0])   # Tên nảy (design/rogue-kits.md): bounces by level
 				fx["bounce"] = int(bounces[clampi(int(levels.get(sid, 1)) - 1, 0, bounces.size() - 1)])
 				fx["bounce_range"] = float(ts.get("bounce_range", 180.0))
@@ -1687,6 +1691,9 @@ func _step_fx(dt: float) -> void:
 	while i < _fx.size():
 		var fx: Dictionary = _fx[i]
 		fx["t"] = float(fx["t"]) + dt
+		if fx.has("boomerang") and float(fx["t"]) >= float(fx["boomerang"]) and _step_boomerang(fx):
+			_fx.remove_at(i)
+			continue
 		if fx.has("vel"):
 			fx["pos"] = (fx["pos"] as Vector2) + (fx["vel"] as Vector2) * dt
 		if not (fx.get("grow", {}) as Dictionary).is_empty():   # Sóng kiếm widens as it flies
@@ -2969,6 +2976,19 @@ func _step_shot(fx: Dictionary, dt: float) -> bool:
 	sh["pierce"] = int(sh["pierce"]) - 1
 	sh["wait"] = 0.15
 	return int(sh["pierce"]) < 0
+
+
+## Dao hồi (design/rogue-kits.md): on its way back the dagger steers to the hero; true when it is back in the hand.
+func _step_boomerang(fx: Dictionary) -> bool:
+	var home := player_pos + _hit_center
+	var to_home: Vector2 = home - (fx["pos"] as Vector2)
+	if to_home.length() <= 16.0:
+		return true
+	var dv := to_home.normalized()
+	fx["vel"] = dv * (fx["vel"] as Vector2).length()
+	fx["anim"] = _fly_anim(String((fx["sheet"] as SpriteSheet).name), String(fx.get("prefix", "fly_")), dv)
+	fx["life"] = maxf(float(fx["life"]), float(fx["t"]) + 0.5)   # keeps flying until it is back
+	return false
 
 
 ## Tên nảy (design/rogue-kits.md): after a hit at [param p], the shot turns to the nearest monster it has not hit yet
