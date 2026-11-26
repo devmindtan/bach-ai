@@ -105,6 +105,13 @@ func _draw() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		get_tree().change_scene_to_file(LOBBY_SCENE)
+	elif event is InputEventKey and event.pressed and not event.echo and (event as InputEventKey).physical_keycode in [KEY_Q, KEY_E]:
+		var slots := Profile.slots_for(_cls)   # Q / E: the previous / next slot (web hint)
+		var i := slots.find(_sel)
+		_sel = String(slots[posmod(i + (1 if (event as InputEventKey).physical_keycode == KEY_E else -1), slots.size())])
+		_filter = _sel
+		_view = _default_view()
+		_rebuild()
 
 
 func _rebuild() -> void:
@@ -129,7 +136,7 @@ func _build() -> void:
 	var sub := Journal.ink("%s · %s" % [_slot_data.name, String(_class.get("name", _cls))], 20, Journal.INK_RED)
 	sub.position = LEFT_PAGE.position + Vector2(2, 48)
 	root.add_child(sub)
-	var hint := Journal.ink("Chọn ô hoặc món · kéo món vào ô để mặc, kéo về túi để tháo · Enter mặc · Esc về sổ", 15, Journal.PAPER)
+	var hint := Journal.ink("←↑↓→ chọn món · Q / E đổi chỗ mặc · Enter mặc · Esc về sổ", 15, Journal.PAPER)
 	hint.position = Vector2(Journal.BOOK.position.x, Journal.BOOK.end.y + 14)
 	root.add_child(hint)
 	_doll(root)
@@ -141,7 +148,7 @@ func _build() -> void:
 
 func _doll(root: Control) -> void:
 	var doll := Control.new()
-	doll.position = LEFT_PAGE.position + Vector2(45, 92)
+	doll.position = LEFT_PAGE.position + Vector2(45, 78)
 	doll.size = DOLL
 	doll.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(doll)
@@ -171,20 +178,15 @@ func _doll(root: Control) -> void:
 	# stats with the worn gear: a two-column ledger under the doll
 	var base: Dictionary = _class.get("stats", {})
 	var st := _stats_with(worn)
-	var grid := GridContainer.new()
-	grid.columns = 2
-	grid.add_theme_constant_override("h_separation", 30)
-	grid.add_theme_constant_override("v_separation", 2)
-	grid.position = LEFT_PAGE.position + Vector2(0, 450)
+	var grid := VBoxContainer.new()   # web: one ledger column, Máu / Sát thương / Giáp / Tốc độ
+	grid.add_theme_constant_override("separation", 0)
+	grid.position = LEFT_PAGE.position + Vector2(0, 418)
+	grid.custom_minimum_size = Vector2(LEFT_PAGE.size.x, 0)
 	root.add_child(grid)
-	for t in [["heart", "Máu", "max_hp", "%d"], ["sword", "Sát thương", "damage", "%d"],
-			["boot", "Tốc độ", "move_speed", "%d"], ["magnet", "Tầm hút", "magnet", "×%.1f"]]:
-		var val := float(st.get(t[2], 0.0))
-		var txt: String = (t[3] % roundi(val)) if t[3] == "%d" else (t[3] % val)
-		var boosted := not is_equal_approx(val, float(base.get(t[2], val)))
-		var row := Journal.ledger(t[0], t[1], txt, 20, UP if boosted else Journal.INK)
-		row.custom_minimum_size = Vector2(220, 0)
-		grid.add_child(row)
+	for t in [["Máu", "max_hp"], ["Sát thương", "damage"], ["Giáp", "armor"], ["Tốc độ", "move_speed"]]:
+		var val := float(st.get(t[1], 0.0))
+		var boosted := not is_equal_approx(val, float(base.get(t[1], val)))
+		grid.add_child(Journal.ledger("", t[0], str(roundi(val)), 18, UP if boosted else Journal.INK))
 
 
 ## A slot round the hero: its item (rarity frame) or an empty dim frame, the slot
@@ -568,14 +570,26 @@ func _detail(root: Control) -> void:
 	hv.add_theme_constant_override("separation", 0)
 	hv.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(hv)
+	var nrow := HBoxContainer.new()   # the name and, beside it, the rarity as an ink stamp (web .stamp)
+	nrow.add_theme_constant_override("separation", 10)
+	hv.add_child(nrow)
 	var name := Journal.ink(String(d.get("name", _view)) + ("  +%d" % lv if lv > 0 else ""), 28)
-	name.clip_text = true
-	name.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	hv.add_child(name)
+	nrow.add_child(name)
+	var stamp := Journal.ink(String(RARITY_NAME.get(rarity, rarity)), 16, rarity_col)
+	var ssb := StyleBoxFlat.new()
+	ssb.bg_color = Color(0, 0, 0, 0)
+	ssb.border_color = rarity_col
+	ssb.set_border_width_all(2)
+	ssb.content_margin_left = 6
+	ssb.content_margin_right = 6
+	stamp.add_theme_stylebox_override("normal", ssb)
+	stamp.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	stamp.rotation = -0.05
+	nrow.add_child(stamp)
 	var who := ""
 	if d.has("class"):
 		who = " · chỉ " + String(GameData.load_json("res://assets/data/classes.json").get(String(d["class"]), {}).get("name", d["class"]))
-	hv.add_child(Journal.ink("%s · %s%s" % [RARITY_NAME.get(rarity, rarity), String(SLOT_NAME.get(String(d.get("slot", "")), "")), who], 18, rarity_col))
+	hv.add_child(Journal.ink("%s%s" % [String(SLOT_NAME.get(String(d.get("slot", "")), "")), who], 18, Journal.INK_SOFT))
 	# the text part scrolls; Cường hoá and Mặc stay pinned at the bottom
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -646,7 +660,7 @@ func _detail(root: Control) -> void:
 	if cost > 0 and _slot_data.gold < cost:
 		Tip.attach(eb, "Thiếu vàng", "Cần %d vàng, đang có %d." % [cost, _slot_data.gold])
 	row.add_child(eb)
-	var act := Journal.seal("Bỏ ra" if is_worn else "Mặc ▶", Vector2(180, 60), 26)
+	var act := Journal.seal("Bỏ ra" if is_worn else "Mặc ▶", Vector2(200, 60), 26)
 	act.pressed.connect(func() -> void:
 		if is_worn:
 			_prof.unequip(_cls, _sel)
