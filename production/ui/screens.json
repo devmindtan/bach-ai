@@ -1,43 +1,450 @@
 {
   "_doc": "The game's current screens. res = window size for that screen (default 1280x720; small sizes check the game still lays out). `gamekit ui-shots bach-ai` captures each one into production/ui/<name>.png (overwriting) and the studio dashboard shows exactly this set. Re-run after any change the player can see, then commit production/ui. scene empty = main scene (the title screen); frames = 60 per second of game time (times --sim-steps).",
   "screens": [
-    { "name": "00-title", "spec": "design/ux/front-end.md", "title": "Màn tiêu đề (có nhân vật: Tiếp tục)", "scene": "", "frames": 40, "args": ["--force-slots"] },
-    { "name": "00a-title-new", "spec": "design/ux/front-end.md", "title": "Màn tiêu đề lần đầu (Chơi)", "scene": "", "frames": 40, "args": [] },
-    { "name": "00b-characters", "spec": "design/ux/front-end.md", "title": "Chọn nhân vật", "scene": "res://src/front/characters.tscn", "frames": 40, "args": ["--force-slots"] },
-    { "name": "00c-characters-new", "spec": "design/ux/front-end.md", "title": "Chọn nhân vật: tạo mới (chọn class)", "scene": "res://src/front/characters.tscn", "frames": 40, "args": ["--force-slots", "--front-create"] },
-    { "name": "01-lobby", "spec": "design/ux/front-end.md", "title": "Sảnh chuẩn bị (kiếm sĩ)", "scene": "res://src/lobby/lobby.tscn", "frames": 90, "args": [] },
-    { "name": "01h-lobby-small", "spec": "design/ux/front-end.md", "title": "Sảnh ở cửa sổ thấp 1280×692 (co cả màn cho vừa, không đè)", "scene": "res://src/lobby/lobby.tscn", "frames": 40, "res": "1280x692", "args": ["--class=mage"] },
-    { "name": "01c-lobby-mage", "spec": "design/ux/front-end.md", "title": "Sảnh chuẩn bị (pháp sư)", "scene": "res://src/lobby/lobby.tscn", "frames": 60, "args": ["--class=mage"] },
-    { "name": "01b-lobby-settings", "spec": "design/ux/front-end.md", "title": "Cài đặt (ở sảnh)", "scene": "res://src/lobby/lobby.tscn", "frames": 30, "args": ["--lobby-settings"] },
-    { "name": "01d-equipment", "spec": "design/ux/equipment.md", "title": "Trang bị: búp bê giấy, túi đồ theo ô, so sánh với đồ đang mặc", "scene": "res://src/front/equipment.tscn", "frames": 40, "args": ["--equip-slot=chest", "--equip-view=dragon_chest"] },
-    { "name": "01d2-equipment-legendary", "spec": "design/ux/equipment.md", "title": "Trang bị huyền thoại, cột chi tiết dài nhất: dòng phụ + hiệu ứng đặc biệt + 5 dòng so sánh, nút Mặc vẫn ở đáy", "scene": "res://src/front/equipment.tscn", "frames": 40, "args": ["--class=mage", "--equip-slot=head", "--equip-view=star_hat", "--equip-plus=3"] },
-    { "name": "01j-trials", "spec": "design/ux/stage-select.md", "title": "Chế độ Thử thách (luật riêng, thưởng Tẩy Tủy Đan)", "scene": "res://src/front/stage_select.tscn", "frames": 30, "args": ["--trials"] },
-    { "name": "01k-gacha", "spec": "design/ux/gacha.md", "title": "Gacha (2 banner, tỉ lệ công khai, pity riêng, quay 10)", "scene": "res://src/front/gacha.tscn", "frames": 30, "args": ["--gacha-demo"] },
-    { "name": "01m-missions", "spec": "design/ux/missions.md", "title": "Nhiệm vụ ngày (tiến độ, nhận đá, thưởng hoàn thành)", "scene": "res://src/front/missions.tscn", "frames": 30, "args": ["--missions-demo"] },
-    { "name": "01n-album", "spec": "design/ux/album.md", "title": "Album: quái đã mở (loài, hệ yếu / kháng, chỉ số)", "scene": "res://src/front/album.tscn", "frames": 30, "args": ["--album-sel=1", "--album-all"] },
-    { "name": "01n1-album-locked", "spec": "design/ux/album.md", "title": "Album: quái chưa hạ (bóng đen, ?)", "scene": "res://src/front/album.tscn", "frames": 30, "args": ["--album-sel=1"] },
-    { "name": "01n2-album-skills", "spec": "design/ux/album.md", "title": "Album: kỹ năng (hệ, hồi chiêu, mô tả)", "scene": "res://src/front/album.tscn", "frames": 30, "args": ["--album-tab=2", "--album-sel=1"] },
-    { "name": "01k2-gacha-history", "spec": "design/ux/gacha.md", "title": "Gacha: tab Lịch sử (lượt quay của banner, mới nhất trước)", "scene": "res://src/front/gacha.tscn", "frames": 30, "args": ["--gacha-demo", "--gacha-tab=history"] },
-    { "name": "01i2-deck", "spec": "design/ux/deck.md", "title": "Bộ thẻ (bộ sưu tập, 3 bộ, 8 chiêu + 6 chỉ số)", "scene": "res://src/front/deck.tscn", "frames": 30, "args": ["--deck-view=sharpen"] },
-    { "name": "01i3-card-tree", "spec": "design/ux/card-tree.md", "title": "Cây thẻ Chém kiếm (nút có icon + ký hiệu, Mảnh thẻ)", "scene": "res://src/front/card_tree.tscn", "frames": 30, "args": ["--card=blade_arc", "--node-view=heavy"] },
-    { "name": "01i-skill-tree", "spec": "design/ux/skill-tree.md", "title": "Cây kỹ năng (3 nhánh × 3 tầng, Tinh hoa, đặt lại bằng Tẩy Tủy Đan)", "scene": "res://src/front/skill_tree.tscn", "frames": 30, "args": [] },
-    { "name": "01f-stage-select", "spec": "design/ux/stage-select.md", "title": "Chọn ải / chế độ (vùng × ải, chi tiết ải, Bắt đầu)", "scene": "res://src/front/stage_select.tscn", "frames": 40, "args": ["--stage-pick=10"] },
-    { "name": "01f2-stage-detail", "spec": "design/ux/stage-detail.md", "title": "Chi tiết ải (quái, mốc thời gian, phần thưởng)", "scene": "res://src/front/stage_select.tscn", "frames": 40, "args": ["--stage-pick=30", "--stage-detail"] },
-    { "name": "02-run-start", "title": "Vào ải (HUD, ô hồi chiêu)", "scene": "res://src/run/run.tscn", "frames": 240, "args": ["--demo", "--seed=1", "--sim-steps=2"] },
-    { "name": "03-run-crowd", "title": "Giữa trận (HUD, số sát thương, thanh máu quái)", "scene": "res://src/run/run.tscn", "frames": 600, "args": ["--demo", "--seed=1", "--sim-steps=4"] },
-    { "name": "03c-mage-run", "title": "Pháp sư giữa trận (đóng băng, cầu lửa, sét, thiên thạch)", "scene": "res://src/run/run.tscn", "frames": 1203, "args": ["--class=mage", "--demo", "--god", "--seed=1", "--sim-steps=6", "--monster-hp=8", "--skills=arcane_bolt:5,fireball:3,frost_nova:3,lightning:3,thunder_javelin:3,meteor:4"] },
-    { "name": "03b-buffs", "title": "Buff: huy hiệu dưới đất, vầng sáng quanh nhân vật, buff đang chạy trên HUD", "scene": "res://src/run/run.tscn", "frames": 150, "args": ["--demo", "--seed=1", "--sim-steps=2", "--buff=haste_rune,power_orb,heal_bloom,magnetic_shield", "--buff-ground=magnetic_shield,power_orb,haste_rune,heal_bloom"] },
-    { "name": "03d-boss", "title": "Ải 10: boss Vua Thạch Nhầy (thanh máu, vòng cảnh báo nhảy dậm)", "scene": "res://src/run/run.tscn", "frames": 1915, "args": ["--stage=10", "--demo", "--god", "--seed=1", "--sim-steps=4", "--skills=blade_arc:3,whirlwind:2"] },
-    { "name": "04-level-up", "title": "Lên cấp (chọn 1 trong 3)", "scene": "res://src/run/run.tscn", "frames": 40, "args": ["--seed=1", "--no-auto-pick", "--level-now"] },
-    { "name": "04c-level-up-character", "title": "Lên cấp: Tab xem nhân vật", "scene": "res://src/run/run.tscn", "frames": 40, "spec": "design/ux/level-up.md", "args": ["--seed=1", "--no-auto-pick", "--level-now", "--level-view=character"] },
-    { "name": "04d-level-up-hidden", "title": "Lên cấp: H ẩn thẻ xem chiến trường", "scene": "res://src/run/run.tscn", "frames": 40, "spec": "design/ux/level-up.md", "args": ["--seed=1", "--no-auto-pick", "--level-now", "--level-view=hidden"] },
-    { "name": "04b-level-up-milestones", "title": "Lên cấp: mốc bậc mới và cấp tối đa", "scene": "res://src/run/run.tscn", "frames": 40, "args": ["--seed=1", "--no-auto-pick", "--level-now", "--skills=earth_strike:1,haste:4", "--offer=earth_strike,haste,back_slash"] },
-    { "name": "05-pause", "title": "Tạm dừng (thẻ đã chọn, dạng lưới gọn)", "scene": "res://src/run/run.tscn", "frames": 300, "args": ["--demo", "--seed=1", "--sim-steps=4", "--pause-at=12", "--skills=blade_arc:5,back_slash:2,whirlwind:2,earth_strike:4,ground_slam:2,cleave_wave:3,holy_column:1,dash:2,toughness:1,sharpen:2,haste:5,reach:3,vitality:1,swift:2,magnet:1,regen:3"] },
-    { "name": "05c-character", "title": "Nhân vật (chỉ số, nguồn của từng chỉ số, số thật của từng chiêu)", "scene": "res://src/run/run.tscn", "frames": 120, "args": ["--demo", "--seed=1", "--sim-steps=2", "--pause-at=3", "--pause-view=character", "--skills=blade_arc:3,back_slash:2,whirlwind:2,earth_strike:4,ground_slam:2,cleave_wave:3,holy_column:2,dash:2,sharpen:2,haste:4,reach:3,vitality:1,swift:2,magnet:1,regen:2,toughness:1", "--buff=haste_rune,power_orb,heal_bloom,magnetic_shield"] },
-    { "name": "05b-settings", "title": "Cài đặt (trong trận)", "scene": "res://src/run/run.tscn", "frames": 300, "args": ["--demo", "--seed=1", "--sim-steps=4", "--pause-at=12", "--pause-view=settings"] },
-    { "name": "06-lose", "title": "Thua", "scene": "res://src/run/run.tscn", "frames": 2300, "args": ["--demo", "--seed=1", "--sim-steps=8"] },
-    { "name": "07-win", "title": "Vượt ải", "scene": "res://src/run/run.tscn", "frames": 2400, "args": ["--demo", "--seed=1", "--sim-steps=8", "--god"] },
-    { "name": "08-milestone", "title": "Mốc cấp 10: chọn 1 trong 4 phần thưởng (chỉ trong trận)", "scene": "res://src/run/run.tscn", "frames": 40, "args": ["--class=mage", "--seed=1", "--milestone=10"] },
-    { "name": "09-stage-20", "title": "Ải 20: nền Rừng Âm U", "scene": "res://src/run/run.tscn", "frames": 60, "args": ["--stage=20", "--demo", "--seed=1"] }
+    {
+      "name": "00-title",
+      "spec": "design/ux/front-end.md",
+      "title": "Màn tiêu đề (có nhân vật: Tiếp tục)",
+      "scene": "",
+      "frames": 40,
+      "args": [
+        "--force-slots"
+      ]
+    },
+    {
+      "name": "00a-title-new",
+      "spec": "design/ux/front-end.md",
+      "title": "Màn tiêu đề lần đầu (Chơi)",
+      "scene": "",
+      "frames": 40,
+      "args": []
+    },
+    {
+      "name": "00b-characters",
+      "spec": "design/ux/front-end.md",
+      "title": "Chọn nhân vật",
+      "scene": "res://src/front/characters.tscn",
+      "frames": 40,
+      "args": [
+        "--force-slots"
+      ]
+    },
+    {
+      "name": "00c-characters-new",
+      "spec": "design/ux/front-end.md",
+      "title": "Chọn nhân vật: tạo mới (chọn class)",
+      "scene": "res://src/front/characters.tscn",
+      "frames": 40,
+      "args": [
+        "--force-slots",
+        "--front-create"
+      ]
+    },
+    {
+      "name": "01-lobby",
+      "spec": "design/ux/front-end.md",
+      "title": "Sảnh chuẩn bị (kiếm sĩ)",
+      "scene": "res://src/lobby/lobby.tscn",
+      "frames": 90,
+      "args": []
+    },
+    {
+      "name": "01a-lobby-stats",
+      "spec": "design/ux/front-end.md",
+      "title": "Sảnh: phụ lục chỉ số (C)",
+      "scene": "res://src/lobby/lobby.tscn",
+      "frames": 90,
+      "args": [
+        "--lobby-stats"
+      ]
+    },
+    {
+      "name": "01a2-lobby-ribbon",
+      "spec": "design/ux/front-end.md",
+      "title": "Sảnh: dải đánh dấu đang chọn",
+      "scene": "res://src/lobby/lobby.tscn",
+      "frames": 90,
+      "args": [
+        "--lobby-ribbon"
+      ]
+    },
+    {
+      "name": "01h-lobby-small",
+      "spec": "design/ux/front-end.md",
+      "title": "Sảnh ở cửa sổ thấp 1280×692 (co cả màn cho vừa, không đè)",
+      "scene": "res://src/lobby/lobby.tscn",
+      "frames": 40,
+      "res": "1280x692",
+      "args": [
+        "--class=mage"
+      ]
+    },
+    {
+      "name": "01c-lobby-mage",
+      "spec": "design/ux/front-end.md",
+      "title": "Sảnh chuẩn bị (pháp sư)",
+      "scene": "res://src/lobby/lobby.tscn",
+      "frames": 60,
+      "args": [
+        "--class=mage"
+      ]
+    },
+    {
+      "name": "01b-lobby-settings",
+      "spec": "design/ux/front-end.md",
+      "title": "Cài đặt (ở sảnh)",
+      "scene": "res://src/lobby/lobby.tscn",
+      "frames": 30,
+      "args": [
+        "--lobby-settings"
+      ]
+    },
+    {
+      "name": "01d-equipment",
+      "spec": "design/ux/equipment.md",
+      "title": "Trang bị: búp bê giấy, túi đồ theo ô, so sánh với đồ đang mặc",
+      "scene": "res://src/front/equipment.tscn",
+      "frames": 40,
+      "args": [
+        "--equip-slot=chest",
+        "--equip-view=dragon_chest"
+      ]
+    },
+    {
+      "name": "01d2-equipment-legendary",
+      "spec": "design/ux/equipment.md",
+      "title": "Trang bị huyền thoại, cột chi tiết dài nhất: dòng phụ + hiệu ứng đặc biệt + 5 dòng so sánh, nút Mặc vẫn ở đáy",
+      "scene": "res://src/front/equipment.tscn",
+      "frames": 40,
+      "args": [
+        "--class=mage",
+        "--equip-slot=head",
+        "--equip-view=star_hat",
+        "--equip-plus=3"
+      ]
+    },
+    {
+      "name": "01j-trials",
+      "spec": "design/ux/stage-select.md",
+      "title": "Chế độ Thử thách (luật riêng, thưởng Tẩy Tủy Đan)",
+      "scene": "res://src/front/stage_select.tscn",
+      "frames": 30,
+      "args": [
+        "--trials"
+      ]
+    },
+    {
+      "name": "01k-gacha",
+      "spec": "design/ux/gacha.md",
+      "title": "Gacha (2 banner, tỉ lệ công khai, pity riêng, quay 10)",
+      "scene": "res://src/front/gacha.tscn",
+      "frames": 30,
+      "args": [
+        "--gacha-demo"
+      ]
+    },
+    {
+      "name": "01m-missions",
+      "spec": "design/ux/missions.md",
+      "title": "Nhiệm vụ ngày (tiến độ, nhận đá, thưởng hoàn thành)",
+      "scene": "res://src/front/missions.tscn",
+      "frames": 30,
+      "args": [
+        "--missions-demo"
+      ]
+    },
+    {
+      "name": "01n-album",
+      "spec": "design/ux/album.md",
+      "title": "Album: quái đã mở (loài, hệ yếu / kháng, chỉ số)",
+      "scene": "res://src/front/album.tscn",
+      "frames": 30,
+      "args": [
+        "--album-sel=1",
+        "--album-all"
+      ]
+    },
+    {
+      "name": "01n1-album-locked",
+      "spec": "design/ux/album.md",
+      "title": "Album: quái chưa hạ (bóng đen, ?)",
+      "scene": "res://src/front/album.tscn",
+      "frames": 30,
+      "args": [
+        "--album-sel=1"
+      ]
+    },
+    {
+      "name": "01n2-album-skills",
+      "spec": "design/ux/album.md",
+      "title": "Album: kỹ năng (hệ, hồi chiêu, mô tả)",
+      "scene": "res://src/front/album.tscn",
+      "frames": 30,
+      "args": [
+        "--album-tab=2",
+        "--album-sel=1"
+      ]
+    },
+    {
+      "name": "01k2-gacha-history",
+      "spec": "design/ux/gacha.md",
+      "title": "Gacha: tab Lịch sử (lượt quay của banner, mới nhất trước)",
+      "scene": "res://src/front/gacha.tscn",
+      "frames": 30,
+      "args": [
+        "--gacha-demo",
+        "--gacha-tab=history"
+      ]
+    },
+    {
+      "name": "01i2-deck",
+      "spec": "design/ux/deck.md",
+      "title": "Bộ thẻ (bộ sưu tập, 3 bộ, 8 chiêu + 6 chỉ số)",
+      "scene": "res://src/front/deck.tscn",
+      "frames": 30,
+      "args": [
+        "--deck-view=sharpen"
+      ]
+    },
+    {
+      "name": "01i3-card-tree",
+      "spec": "design/ux/card-tree.md",
+      "title": "Cây thẻ Chém kiếm (nút có icon + ký hiệu, Mảnh thẻ)",
+      "scene": "res://src/front/card_tree.tscn",
+      "frames": 30,
+      "args": [
+        "--card=blade_arc",
+        "--node-view=heavy"
+      ]
+    },
+    {
+      "name": "01i-skill-tree",
+      "spec": "design/ux/skill-tree.md",
+      "title": "Cây kỹ năng (3 nhánh × 3 tầng, Tinh hoa, đặt lại bằng Tẩy Tủy Đan)",
+      "scene": "res://src/front/skill_tree.tscn",
+      "frames": 30,
+      "args": []
+    },
+    {
+      "name": "01f-stage-select",
+      "spec": "design/ux/stage-select.md",
+      "title": "Chọn ải / chế độ (vùng × ải, chi tiết ải, Bắt đầu)",
+      "scene": "res://src/front/stage_select.tscn",
+      "frames": 40,
+      "args": [
+        "--stage-pick=10"
+      ]
+    },
+    {
+      "name": "01f2-stage-detail",
+      "spec": "design/ux/stage-detail.md",
+      "title": "Chi tiết ải (quái, mốc thời gian, phần thưởng)",
+      "scene": "res://src/front/stage_select.tscn",
+      "frames": 40,
+      "args": [
+        "--stage-pick=30",
+        "--stage-detail"
+      ]
+    },
+    {
+      "name": "02-run-start",
+      "title": "Vào ải (HUD, ô hồi chiêu)",
+      "scene": "res://src/run/run.tscn",
+      "frames": 240,
+      "args": [
+        "--demo",
+        "--seed=1",
+        "--sim-steps=2"
+      ]
+    },
+    {
+      "name": "03-run-crowd",
+      "title": "Giữa trận (HUD, số sát thương, thanh máu quái)",
+      "scene": "res://src/run/run.tscn",
+      "frames": 600,
+      "args": [
+        "--demo",
+        "--seed=1",
+        "--sim-steps=4"
+      ]
+    },
+    {
+      "name": "03c-mage-run",
+      "title": "Pháp sư giữa trận (đóng băng, cầu lửa, sét, thiên thạch)",
+      "scene": "res://src/run/run.tscn",
+      "frames": 1203,
+      "args": [
+        "--class=mage",
+        "--demo",
+        "--god",
+        "--seed=1",
+        "--sim-steps=6",
+        "--monster-hp=8",
+        "--skills=arcane_bolt:5,fireball:3,frost_nova:3,lightning:3,thunder_javelin:3,meteor:4"
+      ]
+    },
+    {
+      "name": "03b-buffs",
+      "title": "Buff: huy hiệu dưới đất, vầng sáng quanh nhân vật, buff đang chạy trên HUD",
+      "scene": "res://src/run/run.tscn",
+      "frames": 150,
+      "args": [
+        "--demo",
+        "--seed=1",
+        "--sim-steps=2",
+        "--buff=haste_rune,power_orb,heal_bloom,magnetic_shield",
+        "--buff-ground=magnetic_shield,power_orb,haste_rune,heal_bloom"
+      ]
+    },
+    {
+      "name": "03d-boss",
+      "title": "Ải 10: boss Vua Thạch Nhầy (thanh máu, vòng cảnh báo nhảy dậm)",
+      "scene": "res://src/run/run.tscn",
+      "frames": 1915,
+      "args": [
+        "--stage=10",
+        "--demo",
+        "--god",
+        "--seed=1",
+        "--sim-steps=4",
+        "--skills=blade_arc:3,whirlwind:2"
+      ]
+    },
+    {
+      "name": "04-level-up",
+      "title": "Lên cấp (chọn 1 trong 3)",
+      "scene": "res://src/run/run.tscn",
+      "frames": 40,
+      "args": [
+        "--seed=1",
+        "--no-auto-pick",
+        "--level-now"
+      ]
+    },
+    {
+      "name": "04c-level-up-character",
+      "title": "Lên cấp: Tab xem nhân vật",
+      "scene": "res://src/run/run.tscn",
+      "frames": 40,
+      "spec": "design/ux/level-up.md",
+      "args": [
+        "--seed=1",
+        "--no-auto-pick",
+        "--level-now",
+        "--level-view=character"
+      ]
+    },
+    {
+      "name": "04d-level-up-hidden",
+      "title": "Lên cấp: H ẩn thẻ xem chiến trường",
+      "scene": "res://src/run/run.tscn",
+      "frames": 40,
+      "spec": "design/ux/level-up.md",
+      "args": [
+        "--seed=1",
+        "--no-auto-pick",
+        "--level-now",
+        "--level-view=hidden"
+      ]
+    },
+    {
+      "name": "04b-level-up-milestones",
+      "title": "Lên cấp: mốc bậc mới và cấp tối đa",
+      "scene": "res://src/run/run.tscn",
+      "frames": 40,
+      "args": [
+        "--seed=1",
+        "--no-auto-pick",
+        "--level-now",
+        "--skills=earth_strike:1,haste:4",
+        "--offer=earth_strike,haste,back_slash"
+      ]
+    },
+    {
+      "name": "05-pause",
+      "title": "Tạm dừng (thẻ đã chọn, dạng lưới gọn)",
+      "scene": "res://src/run/run.tscn",
+      "frames": 300,
+      "args": [
+        "--demo",
+        "--seed=1",
+        "--sim-steps=4",
+        "--pause-at=12",
+        "--skills=blade_arc:5,back_slash:2,whirlwind:2,earth_strike:4,ground_slam:2,cleave_wave:3,holy_column:1,dash:2,toughness:1,sharpen:2,haste:5,reach:3,vitality:1,swift:2,magnet:1,regen:3"
+      ]
+    },
+    {
+      "name": "05c-character",
+      "title": "Nhân vật (chỉ số, nguồn của từng chỉ số, số thật của từng chiêu)",
+      "scene": "res://src/run/run.tscn",
+      "frames": 120,
+      "args": [
+        "--demo",
+        "--seed=1",
+        "--sim-steps=2",
+        "--pause-at=3",
+        "--pause-view=character",
+        "--skills=blade_arc:3,back_slash:2,whirlwind:2,earth_strike:4,ground_slam:2,cleave_wave:3,holy_column:2,dash:2,sharpen:2,haste:4,reach:3,vitality:1,swift:2,magnet:1,regen:2,toughness:1",
+        "--buff=haste_rune,power_orb,heal_bloom,magnetic_shield"
+      ]
+    },
+    {
+      "name": "05b-settings",
+      "title": "Cài đặt (trong trận)",
+      "scene": "res://src/run/run.tscn",
+      "frames": 300,
+      "args": [
+        "--demo",
+        "--seed=1",
+        "--sim-steps=4",
+        "--pause-at=12",
+        "--pause-view=settings"
+      ]
+    },
+    {
+      "name": "06-lose",
+      "title": "Thua",
+      "scene": "res://src/run/run.tscn",
+      "frames": 2300,
+      "args": [
+        "--demo",
+        "--seed=1",
+        "--sim-steps=8"
+      ]
+    },
+    {
+      "name": "07-win",
+      "title": "Vượt ải",
+      "scene": "res://src/run/run.tscn",
+      "frames": 2400,
+      "args": [
+        "--demo",
+        "--seed=1",
+        "--sim-steps=8",
+        "--god"
+      ]
+    },
+    {
+      "name": "08-milestone",
+      "title": "Mốc cấp 10: chọn 1 trong 4 phần thưởng (chỉ trong trận)",
+      "scene": "res://src/run/run.tscn",
+      "frames": 40,
+      "args": [
+        "--class=mage",
+        "--seed=1",
+        "--milestone=10"
+      ]
+    },
+    {
+      "name": "09-stage-20",
+      "title": "Ải 20: nền Rừng Âm U",
+      "scene": "res://src/run/run.tscn",
+      "frames": 60,
+      "args": [
+        "--stage=20",
+        "--demo",
+        "--seed=1"
+      ]
+    }
   ]
 }

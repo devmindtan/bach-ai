@@ -64,10 +64,13 @@ Thiết kế lại 2026-11-26: người dùng xem 3 hướng trong Design Lab (`
 `design-web/games/bach-ai/specs/lobby.md`) và chọn **B "Sổ hành trình"**. Một cuốn sổ bìa da mở trên bàn gỗ, có dải
 đánh dấu trang:
 
-- Trang trái: tên nhân vật, "class · vai trò · đã qua Ải N", chân dung (nhân vật mặc đồ đang mặc), 5 chỉ số kẻ sổ
-  (Máu, Sát thương, Tốc độ, Tầm hút, Chí mạng), nội tại và chiêu khởi đầu viết mực đỏ, vàng và đá ở chân trang.
-- Trang phải: **Mục lục** (Trang bị, Cây kỹ năng, Bộ thẻ, Quay đồ, Nhiệm vụ, Album, Cài đặt, Đổi nhân vật, Về tiêu
-  đề, đánh số trang La Mã, dòng chấm dẫn), dòng mô tả chương đang chọn (mục chưa mở ghi "Qua ải N"), con dấu sáp
+- Trang trái: tên nhân vật, "class · vai trò · đã qua Ải N", chân dung (nhân vật mặc đồ đang mặc), 6 chỉ số kẻ sổ
+  (Máu, Sát thương, Giáp, Tốc độ, Chí mạng, Hồi chiêu) + "Xem đủ chỉ số (C) ▸", nội tại và chiêu khởi đầu viết mực
+  đỏ, túi đủ 5 nguyên liệu ở chân trang (vàng, đá, Tinh hoa, Mảnh thẻ, Tẩy Tủy Đan).
+- C: trang phải thành **Phụ lục: chỉ số** (11 chỉ số, cột Gốc / Trang bị / Cây / Tổng, tính từ PlayerStats.breakdown
+  của trang bị + cây kỹ năng; chí mạng cộng nền run_config).
+- Ba dải đánh dấu (icon) ở mép sổ: Cài đặt, Đổi nhân vật, Tiêu đề; → sang dải, ↑ ↓ giữa dải, ← về Mục lục.
+- Trang phải: **Mục lục** (Trang bị, Cây kỹ năng, Bộ thẻ, Quay đồ, Nhiệm vụ, Album; số trang La Mã, dòng chấm dẫn), dòng mô tả chương đang chọn (mục chưa mở ghi "Qua ải N"), con dấu sáp
   **Lên đường ▶** (mục chính, focus sẵn, mở màn chọn ải).
 - ↑/↓ đi vòng qua các chương và con dấu, Enter mở, Esc đổi nhân vật.
 - Không có nhân vật nào (file bị xoá) → chuyển sang màn chọn nhân vật.

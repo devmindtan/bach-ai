@@ -92,64 +92,29 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 
-## Hướng B "Sổ hành trình" (design-web/games/bach-ai/specs/lobby.md, user 2026-11-26 chose it in the Design Lab): a
-## travel journal open on a wooden desk; the left page is the character, the right page the contents.
-const BOOK := Rect2(70, 40, 1100, 640)
-const INK := Color("3a2414")
-const INK_RED := Color("8a2a1a")
-const PAPER := Color("e8d8b0")
-const PAPER_DARK := Color("c8b088")
-const EDGE := Color("8a6a3a")
+## Hướng B "Sổ hành trình" (design-web/games/bach-ai/specs/lobby.md, user 2026-11-26 approved the web set): a travel
+## journal open on a wooden desk; the left page is the character, the right page the contents (or, with C, the stats
+## appendix); three ribbons on the edge are Cài đặt, Đổi nhân vật, Tiêu đề.
+const BOOK := Journal.BOOK
+const RUN := preload("res://src/run/run.gd")   # armor_mul: what armour takes off a hit
 const PORTRAIT := Rect2(130, 170, 220, 220)
 
 
 func _draw() -> void:
-	var size := get_viewport_rect().size
-	for k in int(size.y / 6.0) + 1:   # the desk: planks in two browns
-		draw_rect(Rect2(0, k * 6.0, size.x, 6.0), Color("3a2414") if k % 2 == 0 else Color("42291a"))
-	draw_rect(BOOK.grow(14).grow_individual(0, 0, 0, 0), Color("2a0c08"))   # cover edge
-	draw_rect(BOOK.grow(10), Color("5a1a14"))                                  # leather cover
-	draw_rect(Rect2(BOOK.position + Vector2(0, BOOK.size.y + 10), Vector2(BOOK.size.x, 10)), Color(0, 0, 0, 0.45))   # shadow
-	for k in 3:   # bookmark ribbons out of the right edge
-		draw_rect(Rect2(BOOK.end.x + 4, BOOK.position.y + 60 + k * 50, 44, 36), [Color("3a6a8a"), Color("6a8a3a"), Color("8a3a6a")][k])
-		draw_rect(Rect2(BOOK.end.x + 4, BOOK.position.y + 60 + k * 50, 44, 36), Color(0, 0, 0, 0.4), false, 3.0)
-	var half := BOOK.size.x * 0.5
-	for side in 2:   # the two pages: paper, a shaded gutter, a dashed inner frame
-		var pg := Rect2(BOOK.position + Vector2(half * side, 0), Vector2(half, BOOK.size.y))
-		draw_rect(pg, PAPER)
-		draw_rect(pg, EDGE, false, 4.0)
-		var gx := pg.end.x - 12.0 if side == 0 else pg.position.x
-		draw_rect(Rect2(gx, pg.position.y + 4, 12, pg.size.y - 8), PAPER_DARK)
-		var inner := pg.grow(-12)
-		var y := inner.position.y
-		while y < inner.end.y:   # dashed frame, left and right
-			draw_rect(Rect2(inner.position.x, y, 2, 6), Color("b89a6a"))
-			draw_rect(Rect2(inner.end.x - 2, y, 2, 6), Color("b89a6a"))
-			y += 12.0
-		var x := inner.position.x
-		while x < inner.end.x:   # top and bottom
-			draw_rect(Rect2(x, inner.position.y, 6, 2), Color("b89a6a"))
-			draw_rect(Rect2(x, inner.end.y - 2, 6, 2), Color("b89a6a"))
-			x += 12.0
-	draw_rect(PORTRAIT, Color("d8c498"))   # the portrait, drawn in ink
-	draw_rect(PORTRAIT, EDGE, false, 4.0)
+	Journal.draw_desk(self, get_viewport_rect().size)
+	Journal.draw_book(self, BOOK)
+	Journal.draw_sketch(self, PORTRAIT)
 	if _hero != null:
 		_hero.draw(self, "idle", _t, PORTRAIT.position + Vector2(PORTRAIT.size.x * 0.5, PORTRAIT.size.y - 26), FrontArt.scale_of(_hero, 4.0))
 
 
-func _ellipse(c: Vector2, r: Vector2, col: Color) -> void:
-	var pts := PackedVector2Array()
-	for k in 40:
-		var ang := k * TAU / 40.0
-		pts.append(c + Vector2(cos(ang) * r.x, sin(ang) * r.y))
-	draw_colored_polygon(pts, col)
-
-
 var _desc: Label
+var _contents: Control
+var _appendix: Control
 
 
 ## The contents: [icon, name, page, what it does, feature lock ("" = open), action].
-func _chapters(root: Control, menu: Control) -> Array:
+func _chapters() -> Array:
 	return [
 		["nav_equipment", "Trang bị", "I", "Mũ, áo, giày, vũ khí của nhân vật; cường hoá bằng vàng.", "",
 			func() -> void: get_tree().change_scene_to_file(EQUIPMENT_SCENE)],
@@ -161,10 +126,6 @@ func _chapters(root: Control, menu: Control) -> Array:
 			func() -> void: get_tree().change_scene_to_file("res://src/front/missions.tscn")],
 		["nav_album", "Album", "VI", "Bách khoa: quái, boss và kỹ năng.", "",
 			func() -> void: get_tree().change_scene_to_file("res://src/front/album.tscn")],
-		["nav_settings", "Cài đặt", "VII", "Âm thanh, hiển thị, phím.", "", func() -> void: _show_settings(root, menu)],
-		["nav_character", "Đổi nhân vật", "VIII", "Chọn hoặc tạo nhân vật khác (Esc).", "",
-			func() -> void: get_tree().change_scene_to_file(CHARACTERS_SCENE)],
-		["nav_title", "Về tiêu đề", "IX", "Về màn hình tiêu đề.", "", func() -> void: get_tree().change_scene_to_file(TITLE_SCENE)],
 	]
 
 
@@ -183,176 +144,249 @@ func _build_ui() -> void:
 	root.add_child(menu)
 	var lx := BOOK.position.x + 40.0
 	var rx := BOOK.position.x + BOOK.size.x * 0.5 + 36.0
+	var page_w := BOOK.size.x * 0.5 - 80.0
 
 	# left page: who is travelling
 	var slot_now: Slot = Prefs.current().active_slot if _slot_mode else null
-	var cname := _ink(slot_now.name if slot_now != null else String(_class.get("name", "")), 48, INK)
+	var cname := Journal.ink(slot_now.name if slot_now != null else String(_class.get("name", "")), 48)
 	cname.position = Vector2(lx, BOOK.position.y + 22)
 	menu.add_child(cname)
 	var sub := "%s · %s" % [String(_class.get("name", "")), String(_class.get("role", "")).to_lower()]
 	if slot_now != null:
 		sub += " · đã qua Ải %d" % slot_now.best
-	var subl := _ink(sub, 20, INK_RED)
+	var subl := Journal.ink(sub, 20, Journal.INK_RED)
 	subl.position = Vector2(lx, BOOK.position.y + 82)
 	menu.add_child(subl)
-	var base: Dictionary = _class.get("stats", {})
-	var stats := PlayerStats.compute(base, [], {})
-	if slot_now != null:   # equipment + skill tree of the character
-		var lasting := SkillTree.lasting(slot_now)
-		stats = PlayerStats.compute(base, lasting[0], lasting[1])
-	var crit := float(GameData.load_json(DATA + "run_config.json").get("crit", {}).get("chance", 0.05)) + float(stats.get("crit_chance", 0.0))
-	var rows := VBoxContainer.new()
-	rows.add_theme_constant_override("separation", 2)
-	rows.position = Vector2(PORTRAIT.end.x + 20, PORTRAIT.position.y)
+	var st := _stat_table(slot_now)
+	var rows := VBoxContainer.new()   # the six basics; the rest are in the appendix (user 2026-11-26)
+	rows.add_theme_constant_override("separation", 0)
+	rows.position = Vector2(PORTRAIT.end.x + 20, PORTRAIT.position.y - 6)
 	rows.custom_minimum_size = Vector2(BOOK.position.x + BOOK.size.x * 0.5 - 40 - PORTRAIT.end.x - 20, 0)
 	menu.add_child(rows)
-	for it in [["heart", "Máu", "%d" % roundi(float(stats.get("max_hp", 0)))], ["sword", "Sát thương", "%d" % roundi(float(stats.get("damage", 0)))],
-			["boot", "Tốc độ", "%d" % roundi(float(stats.get("move_speed", 0)))], ["magnet", "Tầm hút", "×%.1f" % float(stats.get("magnet", 1.0))],
-			["star", "Chí mạng", "%d%%" % roundi(crit * 100.0)]]:
-		rows.add_child(_ledger(it[0], it[1], it[2]))
+	for key: String in ["max_hp", "damage", "armor", "move_speed", "crit_chance", "cooldown"]:
+		var r: Dictionary = st[key]
+		rows.add_child(Journal.ledger(String(r["icon"]), String(r["short"]), String(r["total"]), 18))
+	var more := Journal.ink("Xem đủ chỉ số (C) ▸", 16, Journal.INK_RED)
+	rows.add_child(more)
 	var notes := VBoxContainer.new()
-	notes.add_theme_constant_override("separation", 14)
-	notes.position = Vector2(lx + 20, PORTRAIT.end.y + 26)
+	notes.add_theme_constant_override("separation", 12)
+	notes.position = Vector2(lx + 20, PORTRAIT.end.y + 36)
 	notes.custom_minimum_size = Vector2(BOOK.size.x * 0.5 - 100, 0)
 	menu.add_child(notes)
 	var pv: Dictionary = _class.get("passive", {})
 	if not pv.is_empty():
-		notes.add_child(_note(String(pv.get("name", "")), String(pv.get("desc", ""))))
+		notes.add_child(Journal.note(String(pv.get("name", "")), String(pv.get("desc", ""))))
 	var pool := GameData.load_json(DATA + String(_class.get("upgrades", "")))
 	for sid: String in _class.get("start_skills", {}):
 		for u: Dictionary in pool.get("upgrades", []):
 			if String(u.get("id", "")) == sid:
-				notes.add_child(_note(String(u.get("name", sid)), "Chiêu khởi đầu: " + String(u.get("desc", ""))))
-	if slot_now != null:   # the purse, at the foot of the page
-		var purse := HBoxContainer.new()
-		purse.add_theme_constant_override("separation", 26)
-		purse.position = Vector2(lx + 20, BOOK.end.y - 62)
+				notes.add_child(Journal.note(String(u.get("name", sid)), "Chiêu khởi đầu: " + String(u.get("desc", ""))))
+	if slot_now != null:   # the purse: every resource the character holds (user 2026-11-26)
+		var rule := ColorRect.new()
+		rule.color = Journal.INK
+		rule.position = Vector2(lx + 20, BOOK.end.y - 84)
+		rule.size = Vector2(BOOK.size.x * 0.5 - 100, 3)
+		menu.add_child(rule)
+		var purse := GridContainer.new()
+		purse.columns = 3
+		purse.add_theme_constant_override("h_separation", 22)
+		purse.add_theme_constant_override("v_separation", 0)
+		purse.position = Vector2(lx + 20, BOOK.end.y - 76)
 		menu.add_child(purse)
-		for it in [["coin", "%d vàng" % slot_now.gold, "Vàng"], ["gem", "%d đá" % slot_now.gems, "Đá (quay đồ)"]]:
-			purse.add_child(_small_stat(it[0], it[1], it[2]))
-			var pl := purse.get_child(-1).get_child(1) as Label   # ink on paper: no outline or shadow
-			pl.add_theme_color_override("font_color", INK)
+		for it in [["coin", "%d vàng" % slot_now.gold, "Vàng"], ["gem", "%d đá" % slot_now.gems, "Đá (quay đồ)"],
+				["essence", "%d Tinh hoa" % slot_now.essence, "Tinh hoa: học Cây kỹ năng"],
+				["nav_deck", "%d Mảnh thẻ" % slot_now.shards, "Mảnh thẻ: nâng Cây thẻ"],
+				["pill", "%d Tẩy Tủy Đan" % slot_now.pills, "Tẩy Tủy Đan: tẩy lại Cây kỹ năng"]]:
+			var cell := _small_stat(it[0], it[1], it[2])
+			var pl := cell.get_child(1) as Label   # ink on paper: no outline or shadow
+			pl.add_theme_color_override("font_color", Journal.INK)
 			pl.add_theme_constant_override("outline_size", 0)
 			pl.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0))
-			pl.add_theme_font_size_override("font_size", 22)
+			pl.add_theme_font_size_override("font_size", 18)
+			purse.add_child(cell)
 
-	# right page: the contents, then the seal that sets off
-	var head := _ink("Mục lục", 36, INK)
+	# right page: the contents and the seal; C swaps in the stats appendix
+	_contents = Control.new()
+	_contents.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	menu.add_child(_contents)
+	var head := Journal.ink("Mục lục", 36)
 	head.position = Vector2(rx, BOOK.position.y + 22)
-	menu.add_child(head)
-	var rule := ColorRect.new()
-	rule.color = INK
-	rule.position = Vector2(rx, BOOK.position.y + 72)
-	rule.size = Vector2(BOOK.size.x * 0.5 - 80, 3)
-	menu.add_child(rule)
+	_contents.add_child(head)
+	var rule2 := ColorRect.new()
+	rule2.color = Journal.INK
+	rule2.position = Vector2(rx, BOOK.position.y + 72)
+	rule2.size = Vector2(page_w, 3)
+	_contents.add_child(rule2)
 	var list := VBoxContainer.new()
-	list.add_theme_constant_override("separation", 0)
-	list.position = Vector2(rx - 8, BOOK.position.y + 84)
+	list.add_theme_constant_override("separation", 6)
+	list.position = Vector2(rx - 8, BOOK.position.y + 86)
 	list.custom_minimum_size = Vector2(BOOK.size.x * 0.5 - 64, 0)
-	menu.add_child(list)
+	_contents.add_child(list)
 	var buttons: Array[Button] = []
-	for ch: Array in _chapters(root, menu):
+	for ch: Array in _chapters():
 		var b := _chapter(ch)
 		list.add_child(b)
 		buttons.append(b)
-	_desc = _ink("", 18, Color("5a3a24"))
+	_desc = Journal.ink("", 18, Journal.INK_SOFT)
 	_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_desc.position = Vector2(rx, BOOK.end.y - 168)
-	_desc.size = Vector2(BOOK.size.x * 0.5 - 80, 52)
-	menu.add_child(_desc)
-	var seal := Button.new()
-	seal.text = "Lên đường  ▶"
-	seal.add_theme_font_size_override("font_size", 28)
-	seal.custom_minimum_size = Vector2(260, 68)
+	_desc.size = Vector2(page_w, 52)
+	_contents.add_child(_desc)
+	var seal := Journal.seal("Lên đường  ▶")
 	seal.position = Vector2(BOOK.end.x - 40 - 260, BOOK.end.y - 100)
-	for st in ["normal", "hover", "pressed", "focus"]:
-		var sb := StyleBoxFlat.new()
-		sb.bg_color = Color("d0402a") if st != "normal" else Color("a0281c")
-		sb.border_color = Color("ffd36b") if st in ["focus", "hover"] else Color("5a0c08")
-		sb.set_border_width_all(4)
-		sb.shadow_color = Color(0, 0, 0, 0.4)
-		sb.shadow_offset = Vector2(0, 4)
-		seal.add_theme_stylebox_override(st, sb)
-	seal.add_theme_color_override("font_color", Color("ffe0b0"))
-	seal.add_theme_color_override("font_focus_color", Color("fff2d0"))
-	seal.add_theme_color_override("font_hover_color", Color("fff2d0"))
 	seal.pressed.connect(func() -> void: get_tree().change_scene_to_file(STAGE_SCENE))
 	seal.focus_entered.connect(func() -> void: _desc.text = "Mở bản đồ, chọn ải rồi vào trận.")
-	seal.mouse_entered.connect(func() -> void: seal.grab_focus())
-	menu.add_child(seal)
+	_contents.add_child(seal)
 	buttons.append(seal)
 	for k in buttons.size():   # ↑/↓ walk the contents and the seal in a ring
 		buttons[k].focus_neighbor_bottom = buttons[(k + 1) % buttons.size()].get_path()
 		buttons[k].focus_neighbor_top = buttons[(k + buttons.size() - 1) % buttons.size()].get_path()
-	seal.call_deferred("grab_focus")
+	_appendix = _build_appendix(st, rx, page_w)
+	_appendix.visible = OS.get_cmdline_user_args().has("--lobby-stats")
+	_contents.visible = not _appendix.visible
+	menu.add_child(_appendix)
+
+	# the ribbons: icon tabs on the book's edge (→ from the contents, ↑ ↓ between them, ← back)
+	var ribs: Array[Button] = []
+	for k in 3:
+		var r: Array = [["nav_settings", Color("3a6a8a"), "Cài đặt", "Cài đặt: âm thanh, hiển thị, phím.", func() -> void: _show_settings(root, menu)],
+			["nav_character", Color("6a8a3a"), "Đổi nhân vật", "Đổi nhân vật: chọn hoặc tạo nhân vật khác (Esc).",
+				func() -> void: get_tree().change_scene_to_file(CHARACTERS_SCENE)],
+			["nav_title", Color("8a3a6a"), "Tiêu đề", "Tiêu đề: về màn hình tiêu đề.", func() -> void: get_tree().change_scene_to_file(TITLE_SCENE)]][k]
+		var rb := Journal.ribbon(String(r[0]), r[1], String(r[2]))
+		rb.position = Vector2(BOOK.end.x + 14, BOOK.position.y + 56 + k * 60)
+		rb.pressed.connect(r[4])
+		var say := String(r[3])
+		rb.focus_entered.connect(func() -> void: _desc.text = say)
+		menu.add_child(rb)
+		ribs.append(rb)
+	for k in 3:
+		ribs[k].focus_neighbor_bottom = ribs[(k + 1) % 3].get_path()
+		ribs[k].focus_neighbor_top = ribs[(k + 2) % 3].get_path()
+		ribs[k].focus_neighbor_left = buttons[0].get_path()
+	for b in buttons:
+		b.focus_neighbor_right = ribs[0].get_path()
+	if OS.get_cmdline_user_args().has("--lobby-ribbon"):   # shots of a ribbon in focus
+		ribs[1].call_deferred("grab_focus")
+	else:
+		seal.call_deferred("grab_focus")
 
 	if OS.get_cmdline_user_args().has("--lobby-settings"):   # shots of the settings page
 		_show_settings.call_deferred(root, menu)
 
-	var hint := _label("↑ ↓ chọn chương · Enter mở · Esc đổi nhân vật", 15, Color("c8a878"))
+	var hint := _label("↑ ↓ chọn chương · → dải đánh dấu · Enter mở · C chỉ số · Esc đổi nhân vật", 15, Color("c8a878"))
 	hint.position = Vector2(BOOK.position.x, vp.y - 28)
 	menu.add_child(hint)
 
 
-## Ink text on the page (no outline: the page is light).
-func _ink(s: String, sz: int, c: Color) -> Label:
-	var l := Label.new()
-	l.text = s
-	l.add_theme_font_size_override("font_size", sz)
-	l.add_theme_color_override("font_color", c)
-	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	return l
+func _unhandled_key_input(event: InputEvent) -> void:
+	var k := event as InputEventKey
+	if k != null and k.pressed and not k.echo and k.keycode == KEY_C and _appendix != null:   # the stats appendix
+		_appendix.visible = not _appendix.visible
+		_contents.visible = not _appendix.visible
+		get_viewport().set_input_as_handled()
 
 
-## A stat written in the ledger: icon, name, dotted leader, value.
-func _ledger(icon: String, name: String, value: String) -> Control:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
-	var ic := TextureRect.new()
-	ic.texture = UiIcons.texture(icon)
-	ic.custom_minimum_size = Vector2(22, 22)
-	ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	ic.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	ic.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	row.add_child(ic)
-	var n := _ink(name, 21, INK)
-	n.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(n)
-	row.add_child(_ink(value, 21, INK))
-	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 0)
-	v.add_child(row)
-	var dots := Label.new()   # the dotted rule under the line
-	dots.text = "·".repeat(200)
-	dots.clip_text = true
-	dots.add_theme_font_size_override("font_size", 10)
-	dots.add_theme_color_override("font_color", Color("a08060"))
-	dots.custom_minimum_size = Vector2(10, 8)
-	v.add_child(dots)
-	return v
+const STAT_ROWS := [["max_hp", "Máu tối đa", "Máu", "heart"], ["regen", "Hồi máu", "Hồi máu", "regen"], ["armor", "Giáp", "Giáp", "shield"],
+	["damage", "Sát thương", "Sát thương", "sword"], ["crit_chance", "Chí mạng", "Chí mạng", "star"],
+	["crit_mul", "Sát thương chí mạng", "ST chí mạng", "star"], ["cooldown", "Hồi chiêu", "Hồi chiêu", "haste"],
+	["area", "Vùng đánh", "Vùng", "reach"], ["amount", "Số lượng", "Số lượng", "extra_strike"], ["move_speed", "Tốc độ chạy", "Tốc độ", "boot"],
+	["magnet", "Tầm hút", "Tầm hút", "magnet"]]
 
 
-## A note on the page: a red title in ink, then its text.
-func _note(title: String, text: String) -> Control:
-	var l := RichTextLabel.new()
-	l.bbcode_enabled = true
-	l.fit_content = true
-	l.scroll_active = false
-	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	l.add_theme_font_size_override("normal_font_size", 18)
-	l.add_theme_color_override("default_color", INK)
-	l.text = "[color=#%s][font_size=21]%s.[/font_size][/color] %s" % [INK_RED.to_html(false), title, text]
-	return l
+## Every stat of the character with where it comes from: base (class + the run's crit base), equipment, skill tree, total.
+func _stat_table(slot: Slot) -> Dictionary:
+	var base: Dictionary = _class.get("stats", {})
+	var ups: Array = []
+	var lv := {}
+	if slot != null:
+		var lasting := SkillTree.lasting(slot)
+		ups = lasting[0]
+		lv = lasting[1]
+	var bd := PlayerStats.breakdown(base, ups, lv)
+	var crit: Dictionary = GameData.load_json(DATA + "run_config.json").get("crit", {})
+	var extra := {"crit_chance": float(crit.get("chance", 0.05)), "crit_mul": float(crit.get("mul", 1.75))}
+	var gear_ids: Dictionary = slot.profile.defs if slot != null else {}
+	var out := {}
+	for r: Array in STAT_ROWS:
+		var key: String = r[0]
+		var e: Dictionary = bd.get(key, {"base": float(base.get(key, 0.0)), "final": float(base.get(key, 0.0)), "parts": []})
+		var parts := {"gear": [0.0, 0.0], "tree": [0.0, 0.0]}   # [add, mul]
+		for p: Dictionary in e["parts"]:
+			var src := "gear" if gear_ids.has(String(p["id"])) else "tree"
+			parts[src][0] += float(p.get("add", 0.0))
+			parts[src][1] += float(p.get("mul", 0.0))
+		var b0 := float(e["base"]) + float(extra.get(key, 0.0))
+		out[key] = {"name": r[1], "short": r[2], "icon": r[3], "base": _fmt(key, b0),
+			"gear": _fmt_part(key, parts["gear"]), "tree": _fmt_part(key, parts["tree"]),
+			"total": _fmt(key, float(e["final"]) + float(extra.get(key, 0.0)))}
+	return out
+
+
+func _fmt(key: String, v: float) -> String:
+	match key:
+		"crit_chance", "crit_mul":
+			return "%d%%" % roundi(v * 100.0)
+		"cooldown":
+			return "%+d%%" % roundi((v - 1.0) * 100.0) if not is_equal_approx(v, 1.0) else "0%"
+		"area", "magnet":
+			return "×%.2f" % v
+		"regen":
+			return ("%.1f" % v).trim_suffix(".0") + "/giây"
+		"amount":
+			return "+%d" % roundi(v)
+		"armor":
+			var k := float(GameData.load_json(DATA + "run_config.json").get("player", {}).get("armor_k", 15.0))
+			return "%d (−%d%%)" % [roundi(v), roundi((1.0 - RUN.armor_mul(v, k)) * 100.0)] if v > 0.0 else "0"
+		_:
+			return str(roundi(v))
+
+
+func _fmt_part(key: String, am: Array) -> String:
+	var bits := PackedStringArray()
+	if not is_zero_approx(float(am[0])):
+		bits.append(("%+d%%" % roundi(float(am[0]) * 100.0)) if key in ["crit_chance", "crit_mul"] else ("%+.1f" % float(am[0])).trim_suffix(".0"))
+	if not is_zero_approx(float(am[1])):
+		bits.append("%+d%%" % roundi(float(am[1]) * 100.0))
+	return " ".join(bits) if not bits.is_empty() else "—"
+
+
+## The appendix page: every stat, base / equipment / skill tree / total.
+func _build_appendix(st: Dictionary, rx: float, page_w: float) -> Control:
+	var box := Control.new()
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var head := Journal.ink("Phụ lục: chỉ số", 36)
+	head.position = Vector2(rx, BOOK.position.y + 22)
+	box.add_child(head)
+	var grid := GridContainer.new()
+	grid.columns = 5
+	grid.add_theme_constant_override("h_separation", 12)
+	grid.add_theme_constant_override("v_separation", 2)
+	grid.position = Vector2(rx, BOOK.position.y + 80)
+	box.add_child(grid)
+	for h in ["Chỉ số", "Gốc", "Trang bị", "Cây", "Tổng"]:
+		grid.add_child(Journal.ink(h, 16, Journal.EDGE))
+	for r: Array in STAT_ROWS:
+		var e: Dictionary = st[r[0]]
+		grid.add_child(Journal.ink(String(e["name"]), 17))
+		grid.add_child(Journal.ink(String(e["base"]), 17))
+		grid.add_child(Journal.ink(String(e["gear"]), 17, Color("2a7a3a") if e["gear"] != "—" else Journal.INK))
+		grid.add_child(Journal.ink(String(e["tree"]), 17, Color("2a7a3a") if e["tree"] != "—" else Journal.INK))
+		grid.add_child(Journal.ink(String(e["total"]), 17, Journal.INK_RED))
+	var foot := Journal.ink("C: về Mục lục.", 18, Journal.INK_SOFT)
+	foot.position = Vector2(rx, BOOK.end.y - 60)
+	box.add_child(foot)
+	return box
 
 
 ## One chapter of the contents: icon, name, dotted leader, page number; the chosen one is inked dark.
 func _chapter(ch: Array) -> Button:
 	var b := Button.new()
-	b.custom_minimum_size = Vector2(0, 40)
+	b.custom_minimum_size = Vector2(0, 44)
 	b.focus_mode = Control.FOCUS_ALL
 	var plain := StyleBoxEmpty.new()
 	var on := StyleBoxFlat.new()
-	on.bg_color = INK
+	on.bg_color = Journal.INK
 	for st in ["normal", "pressed", "disabled"]:
 		b.add_theme_stylebox_override(st, plain)
 	b.add_theme_stylebox_override("hover", on)
@@ -367,36 +401,34 @@ func _chapter(ch: Array) -> Button:
 	var ic := TextureRect.new()
 	ic.texture = UiKit.vector_texture("res://assets/icons/lobby/%s.svg" % String(ch[0]), 32)
 	ic.custom_minimum_size = Vector2(32, 32)
-	ic.modulate = INK
+	ic.modulate = Journal.INK
 	ic.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(ic)
-	var nm := _ink(String(ch[1]), 24, INK)
+	var nm := Journal.ink(String(ch[1]), 26)
 	nm.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(nm)
-	var lead := _ink("·".repeat(200), 14, Color("a08060"))
-	lead.clip_text = true
+	var lead := Journal.dotted(14)
 	lead.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	lead.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(lead)
-	var pg := _ink(String(ch[2]), 22, EDGE)
+	var pg := Journal.ink(String(ch[2]), 22, Journal.EDGE)
 	pg.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(pg)
-	var open := _open(String(ch[4]))
-	if not open:
+	if not _open(String(ch[4])):
 		nm.modulate = Color(1, 1, 1, 0.45)
 	b.pressed.connect(func() -> void:
 		if _open(String(ch[4])):
 			(ch[5] as Callable).call())
 	b.focus_entered.connect(func() -> void:
-		for l: Control in [nm, pg]:
-			l.add_theme_color_override("font_color", Color("ffd36b") if l == pg else PAPER)
-		ic.modulate = PAPER
+		nm.add_theme_color_override("font_color", Journal.PAPER)
+		pg.add_theme_color_override("font_color", Journal.GOLD)
+		ic.modulate = Journal.PAPER
 		_desc.text = String(ch[3]) if _open(String(ch[4])) else _lock_text(String(ch[4])))
 	b.focus_exited.connect(func() -> void:
-		nm.add_theme_color_override("font_color", INK)
-		pg.add_theme_color_override("font_color", EDGE)
-		ic.modulate = INK)
+		nm.add_theme_color_override("font_color", Journal.INK)
+		pg.add_theme_color_override("font_color", Journal.EDGE)
+		ic.modulate = Journal.INK)
 	b.mouse_entered.connect(func() -> void: b.grab_focus())
 	return b
 
