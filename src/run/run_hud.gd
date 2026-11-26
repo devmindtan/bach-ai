@@ -89,7 +89,17 @@ func _draw() -> void:
 	var max_hp := float(run.stats["max_hp"])
 	var hb := Rect2(o + Vector2(14, 38), Vector2(me.size.x - 28, 18))
 	draw_rect(hb, Journal.PAPER)
-	draw_rect(Rect2(hb.position, Vector2(hb.size.x * clampf(run.hp / max_hp, 0.0, 1.0), hb.size.y)), Color("c0283a"))
+	# giáp ảo (user 2026-11-26): a grey part after the hp, shrinking as the buff runs out; when hp + it is over the
+	# max the whole bar scales to that total so the grey part always shows (the usual shield bar)
+	var wd: Array = run.ward_now()
+	var grey := float(wd[0]) * float(wd[1])
+	var hp_total := maxf(max_hp, run.hp + grey)
+	var x0 := roundf(hb.size.x * clampf(run.hp / hp_total, 0.0, 1.0))
+	draw_rect(Rect2(hb.position, Vector2(x0, hb.size.y)), Color("c0283a"))
+	if grey > 0.0:
+		var gw := roundf(minf(hb.size.x - x0, hb.size.x * grey / hp_total))
+		draw_rect(Rect2(hb.position + Vector2(x0, 0), Vector2(gw, hb.size.y)), Color("9a9a9a"))
+		draw_rect(Rect2(hb.position + Vector2(x0, 0), Vector2(gw, 4)), Color("d0d0d0"))
 	draw_rect(hb, Journal.INK, false, 3.0)
 	_centered(font, Vector2(hb.get_center().x, hb.position.y + 15), "%d / %d" % [ceili(run.hp), roundi(max_hp)], 15)
 	var xb := Rect2(o + Vector2(14, 60), Vector2(me.size.x - 28, 6))

@@ -2405,6 +2405,27 @@ static func signed(v: float) -> String:
 ## Share of a hit that gets through [param armor] (design/armor.md, after Brotato): 1 / (1 + armor / k),
 ## so k armor halves a hit and more armor helps less and less, never to immunity; negative armor
 ## raises it: (k - 2a) / (k - a).
+## The hp a temporary armor buff (giáp ảo, e.g. Khiên ảo +12) saves: [param hp] x (damage taken without the
+## buff's [param ward] armor / with it - 1); the HUD draws it as a grey part after the hp (user 2026-11-26).
+static func ward_extra(hp: float, armor: float, ward: float, k: float) -> float:
+	if ward <= 0.0:
+		return 0.0
+	return maxf(0.0, hp * (armor_mul(armor - ward, k) / armor_mul(armor, k) - 1.0))
+
+
+## The grey part now: [ward_extra, the share of the buffs' time left] for the running armor buffs.
+func ward_now() -> Array:
+	var ward := 0.0
+	var share := 0.0
+	for id: String in buffs.active:
+		var d: Dictionary = buff_def(id)
+		var add := float(d.get("effects", {}).get("armor", {}).get("add", 0.0))
+		if add > 0.0:
+			ward += add
+			share = maxf(share, float(buffs.time_left(id)) / maxf(0.01, float(d.get("duration", 1.0))))
+	return [ward_extra(hp, float(stats.get("armor", 0.0)), ward, _armor_k), share]
+
+
 static func armor_mul(armor: float, k: float) -> float:
 	k = maxf(1.0, k)
 	if armor >= 0.0:

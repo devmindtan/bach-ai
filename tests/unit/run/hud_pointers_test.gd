@@ -33,3 +33,15 @@ func test_trail_holds_then_catches_up() -> void:
 	_check(absf(trail - 0.6) < 0.01, "after 1.5 s the trail caught up to the bar, got %.2f" % trail)
 	var up := RunHud.trail_step(0.4, 0.7, 0.0, 0.05)   # healed: the trail jumps up with the bar
 	_check(is_equal_approx(up[0], 0.7), "a rising bar lifts the trail at once")
+
+
+## User 2026-11-26: giáp ảo (an armor buff such as Khiên ảo +12) shows as a grey part after the hp on the hp bar:
+## the hp the extra armor saves, i.e. hp x (damage taken without it / with it - 1).
+func test_ward_extra_is_the_hp_the_buff_armor_saves() -> void:
+	const RunScript := preload("res://src/run/run.gd")
+	var k := 15.0
+	var extra: float = RunScript.ward_extra(100.0, 14.0, 12.0, k)
+	var expect := 100.0 * (RunScript.armor_mul(2.0, k) / RunScript.armor_mul(14.0, k) - 1.0)
+	_check(is_equal_approx(extra, expect), "ward extra %.2f, expected %.2f" % [extra, expect])
+	_check(extra > 0.0, "an armor buff adds a grey part")
+	_check(is_zero_approx(RunScript.ward_extra(100.0, 2.0, 0.0, k)), "no buff armor: no grey part")
