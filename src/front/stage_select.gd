@@ -94,6 +94,13 @@ func _input(event: InputEvent) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_D and _mode == "campaign":
+		if _detail_layer != null:   # D opens and closes the Chi tiết sheet (web proposal)
+			_close_detail()
+		else:
+			_open_detail()
+		get_viewport().set_input_as_handled()
+		return
 	if event.is_action_pressed("ui_cancel") and _detail_layer != null:
 		_close_detail()
 		get_viewport().set_input_as_handled()
@@ -196,20 +203,35 @@ func _build() -> void:
 	var col := VBoxContainer.new()
 	col.position = RIGHT_PAGE.position + Vector2(0, 116)
 	col.custom_minimum_size = Vector2(RIGHT_PAGE.size.x, 0)
-	col.add_theme_constant_override("separation", 6)
+	col.add_theme_constant_override("separation", 0)
 	root.add_child(col)
 	var mh := HBoxContainer.new()
 	col.add_child(mh)
 	var ml := Journal.ink("Quái trong vùng", 22, Journal.INK_SOFT)
 	ml.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	mh.add_child(ml)
-	var more := UiKit.button("Chi tiết", _open_detail, Vector2(96, 30), 16)   # design/ux/stage-detail.md (not on the web page)
+	var more := Button.new()   # web proposal (approved 2026-11-26): an underlined red-ink link, D opens the sheet
+	more.text = "Chi tiết ▸ (D)"
+	more.flat = true
+	more.focus_mode = Control.FOCUS_NONE
+	more.add_theme_font_size_override("font_size", 20)
+	var line := StyleBoxFlat.new()
+	line.bg_color = Color(0, 0, 0, 0)
+	line.border_color = Journal.INK_RED
+	line.border_width_bottom = 2
+	for stn in ["normal", "hover", "pressed"]:
+		more.add_theme_stylebox_override(stn, line)
+	for k in ["font_color", "font_hover_color", "font_pressed_color"]:
+		more.add_theme_color_override(k, Journal.INK_RED)
+	more.pressed.connect(_open_detail)
 	mh.add_child(more)
-	Journal.restyle(mh)
 	var st := _stages.load_stage(_n)
 	var mons := HBoxContainer.new()
 	mons.add_theme_constant_override("separation", 10)
 	col.add_child(mons)
+	var gap := Control.new()
+	gap.custom_minimum_size = Vector2(0, 8)
+	col.add_child(gap)
 	for id: String in stage_monsters(st, _monsters).slice(0, 6):
 		var box := _monster_box(id)
 		box.custom_minimum_size = Vector2(64, 64)
@@ -217,9 +239,13 @@ func _build() -> void:
 	var dur := int(st.get("duration", 300))
 	var rw_first := _stages.rewards(_n, true)
 	var rw_again := _stages.rewards(_n, false)
-	col.add_child(Journal.ledger("", "Thời gian", "%02d:%02d" % [dur / 60, dur % 60], 22))
-	col.add_child(Journal.ledger("", "Vàng khi thắng", str(int(rw_first["gold"])), 22))
-	col.add_child(Journal.ledger("", "Đá", str(int(rw_first["gems"] if first else rw_again["gems"])), 22))
+	col.add_child(Journal.ledger("", "Thời gian", "%02d:%02d" % [dur / 60, dur % 60], 20))
+	col.add_child(Journal.ledger("", "Vàng khi thắng", str(int(rw_first["gold"])), 20))
+	col.add_child(Journal.ledger("", "Đá", str(int(rw_first["gems"] if first else rw_again["gems"])), 20))
+	var dl := Journal.ink("Độ khó so với Ải 1", 22, Journal.INK_SOFT)   # web proposal: difficulty on the page
+	col.add_child(dl)
+	for row in [["Máu quái", _stages.hp_mul(_n)], ["Sát thương quái", _stages.damage_mul(_n)], ["Mật độ quái", _stages.rate_mul(_n)]]:
+		col.add_child(Journal.ledger("", String(row[0]), ("×%.2f" % float(row[1])).replace(".", ","), 20))
 	var start := Journal.seal("Vào trận ▶", Vector2(240, 62), 26)
 	start.set_meta("sfx", "")   # ui_start instead of a click
 	start.position = RIGHT_PAGE.end - Vector2(240, 62)
@@ -833,7 +859,7 @@ func _open_detail() -> void:
 	var title := UiKit.label("Ải %d · %s" % [_n, String(st.get("name", ""))], 26, UiKit.GOLD)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(title)
-	var close := UiKit.button("Đóng" + UiKit.hint("Esc"), _close_detail, Vector2(120, 36), 16)
+	var close := UiKit.button("D / Esc đóng", _close_detail, Vector2(140, 36), 16)
 	head.add_child(close)
 	close.call_deferred("grab_focus")   # gamepad: A closes it (J5)
 	v.add_child(head)
