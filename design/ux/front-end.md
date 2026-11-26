@@ -60,10 +60,16 @@ Sảnh chuẩn bị ──Trang bị──→ Màn trang bị (design/ux/equipme
 
 ## Sảnh chuẩn bị (`src/lobby/lobby.tscn`)
 
-- Là nơi chuẩn bị cho nhân vật đã chọn: xem chỉ số, nội tại, bộ chiêu; nút **Trang bị** (màn trang bị) và
-  **Chọn ải ▶** (nút chính, mở màn chọn ải / chế độ). Không còn thẻ ải và nút Bắt đầu ở sảnh.
-- Thanh trên: **Nhân vật** (về màn chọn nhân vật), **Cài đặt**, **Menu chính**.
-- Không có mũi tên đổi class, không có trang quản lý slot (đã chuyển sang màn chọn nhân vật).
+Thiết kế lại 2026-11-26: người dùng xem 3 hướng trong Design Lab (`design-web/#bach-ai/lobby/1`, đặc tả + tham khảo ở
+`design-web/games/bach-ai/specs/lobby.md`) và chọn **B "Sổ hành trình"**. Một cuốn sổ bìa da mở trên bàn gỗ, có dải
+đánh dấu trang:
+
+- Trang trái: tên nhân vật, "class · vai trò · đã qua Ải N", chân dung (nhân vật mặc đồ đang mặc), 5 chỉ số kẻ sổ
+  (Máu, Sát thương, Tốc độ, Tầm hút, Chí mạng), nội tại và chiêu khởi đầu viết mực đỏ, vàng và đá ở chân trang.
+- Trang phải: **Mục lục** (Trang bị, Cây kỹ năng, Bộ thẻ, Quay đồ, Nhiệm vụ, Album, Cài đặt, Đổi nhân vật, Về tiêu
+  đề, đánh số trang La Mã, dòng chấm dẫn), dòng mô tả chương đang chọn (mục chưa mở ghi "Qua ải N"), con dấu sáp
+  **Lên đường ▶** (mục chính, focus sẵn, mở màn chọn ải).
+- ↑/↓ đi vòng qua các chương và con dấu, Enter mở, Esc đổi nhân vật.
 - Không có nhân vật nào (file bị xoá) → chuyển sang màn chọn nhân vật.
 
 ## Kiểm tra
