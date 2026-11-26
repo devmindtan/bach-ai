@@ -472,12 +472,12 @@ func _show_settings(root: Control, menu: Control) -> void:
 	root.add_child(center)
 	_dim(center)
 	var card := PanelContainer.new()
-	var st := _style(Color(0.09, 0.08, 0.13, 0.95), 24)
-	card.add_theme_stylebox_override("panel", st)
+	card.add_theme_stylebox_override("panel", Journal.sheet_style())   # a loose sheet over the journal
 	center.add_child(card)
 	card.add_child(SettingsPanel.build(func() -> void:
 		center.queue_free()
 		menu.visible = true))
+	Journal.restyle(card.get_child(0))
 
 
 

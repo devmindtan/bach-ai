@@ -259,3 +259,16 @@ static func restyle(n: Node) -> void:
 		e.add_theme_color_override("font_placeholder_color", DOTS)
 	for c in n.get_children():
 		restyle(c)
+
+
+## A loose sheet of the journal (overlays over a journal screen: settings, odds): paper, an edge, a margin.
+static func sheet_style(margin := 24) -> StyleBoxFlat:
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = PAPER
+	sb.border_color = EDGE
+	sb.set_border_width_all(4)
+	sb.shadow_color = Color(0, 0, 0, 0.5)
+	sb.shadow_offset = Vector2(0, 8)
+	sb.shadow_size = 2
+	sb.set_content_margin_all(margin)
+	return sb

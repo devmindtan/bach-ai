@@ -188,11 +188,13 @@ func _show_settings() -> void:
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_layer.get_child(0).add_child(center)
 	UiKit.dim(center)
-	var card := UiKit.panel(Color(0.09, 0.08, 0.13, 0.97), 24)
+	var card := PanelContainer.new()
+	card.add_theme_stylebox_override("panel", Journal.sheet_style())   # a loose sheet, like the journal's settings
 	center.add_child(card)
 	card.add_child(SettingsPanel.build(func() -> void:
 		center.queue_free()
 		_menu.visible = true))
+	Journal.restyle(card.get_child(0))
 
 
 func _unhandled_input(event: InputEvent) -> void:

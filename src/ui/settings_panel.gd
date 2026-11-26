@@ -47,7 +47,7 @@ static func build(on_back: Callable) -> VBoxContainer:
 		func() -> void: Prefs.current().set_value("music_volume", next_volume(Prefs.current().music_volume)))
 	_row(col, "Hiệu ứng âm thanh", func() -> String: return "%d%%" % Prefs.current().sfx_volume,
 		func() -> void: Prefs.current().set_value("sfx_volume", next_volume(Prefs.current().sfx_volume)))
-	var hint := _label("Tỉ lệ luôn là số nguyên để pixel và chữ sắc nét.", 13, MUTED)
+	var hint := _label("Tỉ lệ là số nguyên; cửa sổ nhỏ hơn 1280×720 thì thu cả khung để pixel không méo.", 13, MUTED)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(hint)
 	var back := _button("Quay lại", on_back)
