@@ -275,36 +275,51 @@ static func sheet_style(margin := 24) -> StyleBoxFlat:
 
 
 ## A text bookmark ribbon out of the book's right edge (journal.css .ribbon): vertical words on [param col];
-## the open one wider with a gold outline. Example: Journal.ribbons(root, ["Đồng cỏ", "Rừng"], [c1, c2], 0, cb)
-static func text_ribbon(text: String, col: Color, on: bool) -> Button:
+## the open one wider with a gold outline. Its height fits the words (user 2026-11-26: a short word left a gap).
+## [param lock_tip] != "": a locked ribbon (greyed, a padlock, not pressable; the tip says what opens it).
+static func text_ribbon(text: String, col: Color, on: bool, lock_tip := "") -> Button:
+	var locked := lock_tip != ""
 	var b := Button.new()
-	b.focus_mode = Control.FOCUS_ALL
+	b.focus_mode = Control.FOCUS_NONE if locked else Control.FOCUS_ALL
+	b.disabled = locked
+	b.tooltip_text = lock_tip
 	var font := ThemeDB.fallback_font
-	var h := maxf(92.0, font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 20).x + 24.0)
-	b.custom_minimum_size = Vector2(74 if on else 52, h)
+	var tw := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 20).x
+	var top := 30.0 if locked else 12.0   # room for the padlock
+	b.custom_minimum_size = Vector2(74 if on else 52, ceilf(top + tw + 12.0))
 	b.size = b.custom_minimum_size
-	for st in ["normal", "hover", "focus", "pressed"]:
+	var c := Color(0.32, 0.27, 0.22) if locked else col
+	for st in ["normal", "hover", "focus", "pressed", "disabled"]:
 		var sb := StyleBoxFlat.new()
-		sb.bg_color = col.lightened(0.15) if (on or st != "normal") else col
+		sb.bg_color = c.lightened(0.15) if (on or st in ["hover", "focus", "pressed"]) else c
 		sb.border_color = GOLD if (on or st in ["hover", "focus"]) else Color(0, 0, 0, 0.4)
 		sb.set_border_width_all(3)
 		b.add_theme_stylebox_override(st, sb)
-	var l := ink(text, 20, Color("f3e6c8"))
-	l.rotation = PI / 2.0   # vertical-rl: the words read top to bottom
-	l.position = Vector2(b.custom_minimum_size.x * 0.5 + 12.0, 12.0)
+	if locked:
+		var ic := TextureRect.new()
+		ic.texture = UiKit.vector_texture("res://assets/icons/lobby/nav_lock.svg", 18)
+		ic.position = Vector2((b.custom_minimum_size.x - 18.0) * 0.5, 7)
+		ic.size = Vector2(18, 18)
+		ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		b.add_child(ic)
+	var l := ink(text, 20, Color("a89a88") if locked else Color("f3e6c8"))
+	l.rotation = PI / 2.0   # vertical-rl: the words read top to bottom, centred across the ribbon
+	l.position = Vector2(b.custom_minimum_size.x * 0.5 + font.get_height(20) * 0.5, top)
 	b.add_child(l)
-	b.mouse_entered.connect(func() -> void: b.grab_focus())
+	if not locked:
+		b.mouse_entered.connect(func() -> void: b.grab_focus())
 	return b
 
 
-## A column of text ribbons on the book's right edge (top 90); [param pick] is called with the pressed index.
-static func ribbons(root: Control, names: Array, cols: Array, open: int, pick: Callable) -> VBoxContainer:
+## A column of text ribbons on the book's right edge, under the back tab; [param pick] is called with the pressed
+## index. [param locks]: per ribbon, "" or the tip of a locked one.
+static func ribbons(root: Control, names: Array, cols: Array, open: int, pick: Callable, locks: Array = []) -> VBoxContainer:
 	var v := VBoxContainer.new()
 	v.position = Vector2(BOOK.end.x + 14, BOOK.position.y + 118)   # out of the cover, under the back tab
 	v.add_theme_constant_override("separation", 10)
 	root.add_child(v)
 	for i in names.size():
-		var r := text_ribbon(String(names[i]), cols[i % cols.size()], i == open)
+		var r := text_ribbon(String(names[i]), cols[i % cols.size()], i == open, String(locks[i]) if i < locks.size() else "")
 		r.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 		r.pressed.connect(func() -> void: pick.call(i))
 		v.add_child(r)

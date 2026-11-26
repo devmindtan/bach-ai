@@ -178,11 +178,14 @@ func _build() -> void:
 	var regs := _stages.regions()
 	var names := regs.map(func(rg: Dictionary) -> String: return String(rg.get("name", "")))
 	var here := regs.find(r)
+	var locks := regs.map(func(rg: Dictionary) -> String:   # a region not reached yet is locked (user 2026-11-26)
+		var rf := int(rg.get("from", 1))
+		return "" if rf <= unlocked else "Mở khi vượt ải %d" % (rf - 1))
 	Journal.ribbons(root, names, [Color("6a8a3a"), Color("3a5a3a"), Color("5a6a2a")], here, func(i: int) -> void:
 		var rf := int(regs[i].get("from", 1))
 		if rf <= unlocked:
 			_n = rf
-			_rebuild())
+			_rebuild(), locks)
 	var chosen_tile := _map(root, from, to, unlocked)
 	# right page (web screen-stages-journal): the heading, its status, the modes, the region's monsters, a ledger
 	var boss := _stages.is_boss(_n)
