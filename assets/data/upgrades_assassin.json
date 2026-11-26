@@ -170,6 +170,27 @@
       "element": "physical"
     },
     {
+      "id": "execute",
+      "kind": "stat",
+      "name": "Kết liễu",
+      "desc": "Đòn của bạn làm quái thường còn dưới ngưỡng máu thì giết luôn, và Lướt hồi xong ngay. Mỗi cấp: ngưỡng +3% (tối đa 15%). Không có tác dụng với quái tinh anh và trùm.",
+      "max_level": 5,
+      "weight": 2,
+      "effects": {
+        "execute_below": {
+          "add": 0.03
+        }
+      },
+      "rarity": "epic",
+      "fx_tiers": [
+        "execute-i",
+        "execute-ii",
+        "execute-iii",
+        "execute-iv",
+        "execute-v"
+      ]
+    },
+    {
       "id": "quick_hands",
       "kind": "stat",
       "name": "Tay lẹ",

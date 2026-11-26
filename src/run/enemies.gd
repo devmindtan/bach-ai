@@ -104,6 +104,9 @@ var species := {}
 var k_phase := PackedByteArray()   # 1 = the kind's species flies through props and other monsters (Linh hồn)
 var element_of := {}
 var contact_bleed := {}   # the last step's contact came from a bite_bleed species: its bite_bleed {time, dps_mul}, else {}   # damage source (skill id) -> element; sources not in it take no species change
+var execute_below := 0.0   # Kết liễu (design/rogue-kits.md): a hero hit leaving a plain monster under this share dies
+var executes := 0          # executes since the run last read it (the run resets Lướt)
+var exec_pos: Array[Vector2] = []   # where they happened (the run draws the execute burst)
 var crit_chance := 0.0   # Chí mạng of direct hits (the run sets it from the stats, 6C.2)
 var crit_mul := 1.75
 var _crit_next := false
@@ -1363,6 +1366,12 @@ func _damage(i: int, amount: float, kb: Vector2, source := "") -> void:
 		knock[i] += kb
 	_split(i, hp_before)
 	_check_phase(i)
+	if execute_below > 0.0 and hp[i] > 0.0 and hp[i] < hp_cap[i] * execute_below and _hero_source(source) \
+			and k_elite[kind[i]] == 0 and k_boss[kind[i]] == 0:
+		damage_by[source] = float(damage_by.get(source, 0.0)) + hp[i]
+		hp[i] = 0.0
+		executes += 1
+		exec_pos.append(center_of(i))
 	if hp[i] <= 0.0:
 		state[i] = DYING
 		timer[i] = 0.0

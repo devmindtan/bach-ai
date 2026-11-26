@@ -162,3 +162,21 @@ func test_hp_bar_drops_on_a_late_monster_with_more_hp() -> void:
 	e.hit_circle(Vector2.ZERO, 60.0, 9.0, 0.0)    # 54 -> 45
 	_check(e.hp[0] < 54.0, "the hit took hp, hp %s" % e.hp[0])
 	_check(e.hp_frac(0) < 0.9, "the bar shows the loss (45 of 54 = 0.83), got %s" % e.hp_frac(0))
+
+
+## design/rogue-kits.md, Kết liễu: a hero hit that leaves a plain monster under execute_below of its spawn hp kills it
+## outright and counts an execute (the run resets Lướt); elites and bosses are never executed.
+func test_execute_kills_a_plain_monster_left_under_the_line() -> void:
+	var e := _enemies()
+	e.execute_below = 0.15
+	e.spawn("blob", Vector2(30, 0))   # 18 hp
+	_settle(e)
+	e.hit_circle(Vector2.ZERO, 60.0, 15.5, 0.0, "throw_knife")   # 18 -> 2.5, under 15% (2.7)
+	_check(e.hp[0] <= 0.0, "executed, hp %s" % e.hp[0])
+	_check(e.executes == 1, "one execute counted, got %d" % e.executes)
+	var f := _enemies()
+	f.execute_below = 0.15
+	f.spawn("blob", Vector2(30, 0))
+	_settle(f)
+	f.hit_circle(Vector2.ZERO, 60.0, 10.0, 0.0, "throw_knife")   # 18 -> 8: above the line
+	_check(f.hp[0] > 0.0 and f.executes == 0, "a monster above the line lives")

@@ -152,3 +152,4 @@ func stat_breakdown() -> Dictionary:
 	if run.enemies != null:   # Chí mạng: run_config.json crit + any crit_chance / crit_mul effects (6C.2)
 		run.enemies.crit_chance = float(run.cfg.get("crit", {}).get("chance", 0.0)) + float(run.stats.get("crit_chance", 0.0))
 		run.enemies.crit_mul = float(run.cfg.get("crit", {}).get("mul", 1.75)) + float(run.stats.get("crit_mul", 0.0))
+		run.enemies.execute_below = float(run.stats.get("execute_below", 0.0))   # Kết liễu (design/rogue-kits.md)

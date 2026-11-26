@@ -413,6 +413,9 @@ func _ready() -> void:
 			names.append(String(sd["zone"].get("sprite", "scorch")))
 		for tn in sd.get("tier_sprites", []):
 			names.append(String(tn))
+	for u: Dictionary in pool.get("upgrades", []):   # a stat card with its own look (Kết liễu's burst, by tier)
+		for tn in u.get("fx_tiers", []):
+			names.append(String(tn))
 	var hf: Dictionary = cfg.get("hit_feel", {})   # cảm giác đánh: the hit spark
 	if not hf.is_empty():
 		names.append(hit_spark_sprite if hit_spark_sprite != "" else String(hf.get("sprite", "hit-spark-a")))
@@ -2937,6 +2940,13 @@ func _step_damage_numbers(dt: float) -> void:
 	for b: Array in enemies.status_fx:   # Thánh ấn / Ăn mòn bursts
 		_add_fx(String(b[0]), "burst", _sprite_scale, 0.0, -1.0, b[1])
 	enemies.status_fx.clear()
+	if enemies.executes > 0:   # Kết liễu (design/rogue-kits.md): each execute readies Lướt and leaves its burst
+		_dash_cd = 0.0
+		var tier: String = "execute-" + ["i", "ii", "iii", "iv", "v"][clampi(int(levels.get("execute", 1)) - 1, 0, 4)]
+		for p: Vector2 in enemies.exec_pos:
+			_add_fx(tier, "burst", _sprite_scale, 0.0, -1.0, p)
+		enemies.executes = 0
+		enemies.exec_pos.clear()
 
 
 ## A flying projectile: hits when its fly hitbox (from the sprite) touches a
