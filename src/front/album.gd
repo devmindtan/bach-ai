@@ -84,11 +84,16 @@ static func skill_entries() -> Array:
 	var out := []
 	var classes := GameData.load_json("res://assets/data/classes.json")
 	var elems: Dictionary = GameData.load_json("res://assets/data/species.json").get("elements", {})
-	for cls: String in ["knight", "mage"]:
-		var pool := GameData.load_json("res://assets/data/upgrades_%s.json" % cls)
+	var dash_listed := false
+	for cls: String in classes:   # every class (user 2026-11-26: the archer and assassin were missing)
+		if cls.begins_with("_"):
+			continue
+		var pool := GameData.load_json("res://assets/data/" + String(classes[cls].get("upgrades", "upgrades_%s.json" % cls)))
 		for u: Dictionary in pool.get("upgrades", []):
-			if u.get("kind") != "skill" or u.get("id") == "dash" and cls == "mage":
+			if u.get("kind") != "skill" or (u.get("id") == "dash" and dash_listed):
 				continue
+			if u.get("id") == "dash":
+				dash_listed = true
 			var sp: Dictionary = pool.get("skills", {}).get(u["id"], {})
 			out.append({"id": u["id"], "name": u.get("name", u["id"]), "element": String(elems.get(u.get("element", ""), "")),
 				"cls": String(classes.get(cls, {}).get("name", cls)), "cooldown": float(sp.get("cooldown", 0.0)),

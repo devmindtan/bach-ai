@@ -27,3 +27,20 @@ func test_every_album_skill_has_sprites() -> void:
 			_check(sh != null, "%s tier %d: no sprite %s" % [e["id"], tier, name])
 			if sh != null:
 				_check(SkillSim.anim_of(sp, sh) in sh.animation_names(), "%s: no animation to play" % e["id"])
+
+
+## User 2026-11-23 / 2026-11-26: the Album lists the skills of every class (it showed only Kiếm sĩ and Pháp sư), with
+## the shared Lướt once.
+func test_album_lists_every_class_and_one_dash() -> void:
+	var album := preload("res://src/front/album.gd")
+	var classes := GameData.load_json("res://assets/data/classes.json")
+	var seen := {}
+	var dashes := 0
+	for e: Dictionary in album.skill_entries():
+		seen[String(e["cls"])] = true
+		if String(e["id"]) == "dash":
+			dashes += 1
+	for cid: String in classes:
+		if not cid.begins_with("_"):
+			_check(seen.has(String(classes[cid]["name"])), "%s has no skills in the Album" % classes[cid]["name"])
+	_check(dashes == 1, "Lướt is listed once, got %d" % dashes)
