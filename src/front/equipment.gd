@@ -637,10 +637,11 @@ func _detail(root: Control) -> void:
 	row.add_theme_constant_override("separation", 10)
 	v.add_child(row)
 	var cost := _prof.enhance_cost(_view)   # web proposal approved 2026-11-26: a ledger line and "Cường hoá ▸ (C)"
-	var col := VBoxContainer.new()
+	var col := VBoxContainer.new()   # the enhance line on its own full-width row above the link and the seal
 	col.add_theme_constant_override("separation", 2)
 	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(col)
+	row.add_sibling(col)
+	v.move_child(col, row.get_index())
 	col.add_child(Journal.ledger("", "Cường hoá +%d/%d (mỗi bậc +%d%%)" % [lv, _prof.max_plus(_view), roundi(Profile.PLUS_STEP * 100)],
 		("%d vàng" % cost) if cost > 0 else "tối đa", 16))
 	var eb := Journal.link("Cường hoá ▸ (C)", 18)
@@ -648,7 +649,11 @@ func _detail(root: Control) -> void:
 	if cost > 0 and _slot_data.gold < cost:
 		eb.tooltip_text = "Thiếu vàng: cần %d, đang có %d." % [cost, _slot_data.gold]
 	eb.pressed.connect(_enhance)
-	col.add_child(eb)
+	eb.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(eb)
+	var gap := Control.new()   # the link keeps its own width; the seal sits at the right
+	gap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(gap)
 	var act := Journal.seal("Bỏ ra" if is_worn else "Mặc ▶", Vector2(200, 60), 26)
 	act.pressed.connect(func() -> void:
 		if is_worn:
