@@ -22,14 +22,14 @@ Tránh: thêm chiêu chỉ khác màu / hệ của cùng một mũi tên (lỗi 
 | id | Tên | Cơ chế riêng | Trạng thái |
 |---|---|---|---|
 | quick_arrow | Tên nhanh | chiêu khởi đầu | có |
-| ricochet | Tên nảy | trúng quái thì nảy sang quái kế bên 2–5 lần, mỗi lần +10% sát thương | mới |
-| arrow_rain | Mưa tên | rơi xuống chỗ quái đông | có (thêm 5 bậc) |
-| thorn_trap | Bẫy gai | đặt bẫy nằm chờ trên đất; quái giẫm vào thì gai bật, trói + chảy máu | đổi |
-| hawk | Chim ưng | chim bay theo người suốt trận, tự lao vào quái máu cao nhất | đổi |
-| charged_shot | Tên tích lực | đứng yên càng lâu mũi tên kế tiếp càng to, xuyên nhiều | mới |
-| hunter_mark | Đánh dấu | dấu lên quái mạnh nhất: mọi đòn vào nó +40%; nó chết thì dấu nhảy sang con khác | mới |
-| net_shot | Lưới | bắn lưới bung ra trói cả đám quái | mới |
-| fire_arrow | Tên lửa | nổ, bỏng | có (thêm 5 bậc) |
+| ricochet | Tên nảy | trúng quái thì nảy sang quái kế bên 2–5 lần, mỗi lần +10% sát thương | xong |
+| arrow_rain | Mưa tên | rơi xuống chỗ quái đông | xong |
+| thorn_trap | Bẫy gai | đặt bẫy nằm chờ trên đất; quái giẫm vào thì gai bật, trói + chảy máu | xong |
+| hawk | Chim ưng | chim bay theo người suốt trận, tự lao vào quái máu cao nhất | xong |
+| charged_shot | Tên tích lực | đứng yên càng lâu mũi tên kế tiếp càng to, xuyên nhiều | xong |
+| hunter_mark | Đánh dấu | dấu lên quái mạnh nhất: mọi đòn vào nó +40%; nó chết thì dấu nhảy sang con khác | xong |
+| net_shot | Lưới | bắn lưới bung ra trói cả đám quái | xong |
+| fire_arrow | Tên lửa | nổ, bỏng | xong |
 | dash | Lướt | dùng chung | có |
 
 Bỏ: Tên xuyên, Quạt tên, Tên băng, Tên sét (chỉ là mũi tên đổi hệ).
@@ -39,17 +39,22 @@ Bỏ: Tên xuyên, Quạt tên, Tên băng, Tên sét (chỉ là mũi tên đổ
 | id | Tên | Cơ chế riêng | Trạng thái |
 |---|---|---|---|
 | throw_knife | Phi đao | chiêu khởi đầu, ném dao tầm gần | có |
-| boomerang | Dao hồi | dao bay ra rồi quay về tay, trúng cả lượt đi và về | mới |
-| smoke_bomb | Bom khói | khói quanh người: chậm, choáng | có (thêm 5 bậc) |
-| blade_orbit | Lốc dao | dao xoay quanh người liên tục trong vài giây | đổi (thay Vòng dao) |
-| shadow_strike | Ám kích | dịch chuyển ra sau lưng quái gần nhất, chém chéo | đổi |
-| execute | Kết liễu | đòn trúng quái thường dưới 15% máu thì giết luôn; hạ kiểu này thì hồi Lướt | mới |
-| shadow_clone | Phân thân | bóng ảnh đứng chỗ vừa Lướt, lặp lại chiêu của bạn trong 4 giây | mới |
-| combo | Liên hoàn | mỗi đòn trúng trong 2 giây +1 tầng (tối đa 10), mỗi tầng +3% chí mạng | mới |
-| poison_cloud | Độc vụ | vũng độc trên đất ăn mòn quái đứng trong đó | mới |
+| boomerang | Dao hồi | dao bay ra rồi quay về tay, trúng cả lượt đi và về | xong |
+| smoke_bomb | Bom khói | khói quanh người: chậm, choáng | xong |
+| blade_orbit | Lốc dao | dao xoay quanh người liên tục trong vài giây | xong |
+| shadow_strike | Ám kích | dịch chuyển ra sau lưng quái gần nhất, chém chéo | xong |
+| execute | Kết liễu | đòn trúng quái thường dưới 15% máu thì giết luôn; hạ kiểu này thì hồi Lướt | xong |
+| shadow_clone | Phân thân | bóng ảnh đứng chỗ vừa Lướt, lặp lại chiêu của bạn trong 4 giây | xong |
+| combo | Liên hoàn | mỗi đòn trúng trong 2 giây +1 tầng (tối đa 10), mỗi tầng +3% chí mạng | xong |
+| poison_cloud | Độc vụ | vũng độc trên đất ăn mòn quái đứng trong đó | xong |
 | dash | Lướt | dùng chung | có |
 
 Bỏ: Quạt dao, Dao xuyên, Dao rạch, Dao độc, Dao lửa (đều là dao bay đổi hệ).
+
+## Trạng thái (2026-11-26)
+
+Xong cả 13 bước: mỗi class 10 chiêu (kể cả Lướt), mọi chiêu có 5 bậc hình; 9 chiêu bản 1 đã gỡ, các sprite
+không còn dùng đã gỡ khỏi game (vẫn ở Sprite Lab).
 
 ## Thứ tự làm (mỗi chiêu một commit: code + test fail trước + 5 bậc hình + ảnh)
 
