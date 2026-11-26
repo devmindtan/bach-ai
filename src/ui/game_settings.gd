@@ -5,7 +5,8 @@ extends Node
 ##
 ## The game draws 1:1 with the screen and only scales by whole numbers
 ## (project stretch mode "disabled" + Window.content_scale_factor), so pixel art
-## and text stay sharp on any window size. A fractional canvas scale (a 1280x720
+## and text stay sharp on any window size; a window smaller than 1280x720 draws the frame 1:1 and shrinks the
+## finished picture (fit_mode), so no pixel row is dropped. A fractional canvas scale (a 1280x720
 ## window shrunk to 1237x696 by the window manager) blurred text and pixels.
 ##
 ## Example:
@@ -294,8 +295,30 @@ static func fit_scale(window: Vector2, chosen: int) -> float:
 	return float(chosen) if chosen > 0 and float(chosen) <= whole else whole
 
 
+## How the window shows the 1280x720 design: whole-number canvas scale while it fits; below that, the frame is
+## drawn 1:1 at 1280x720 and the finished picture is shrunk (user 2026-11-26: a canvas scaled by 0.96 with nearest
+## filtering dropped pixel rows, so heroes drew with broken lines on a 1366x768 laptop).
+static func fit_mode(window: Vector2) -> Window.ContentScaleMode:
+	var fit := minf(window.x / float(BASE.x), window.y / float(BASE.y))
+	return Window.CONTENT_SCALE_MODE_VIEWPORT if fit < 1.0 else Window.CONTENT_SCALE_MODE_DISABLED
+
+
 func _fit_scale() -> void:
-	get_tree().root.content_scale_factor = float(current_scale())
+	var root := get_tree().root
+	var w := Vector2(root.size)
+	for a in OS.get_cmdline_user_args():   # gamekit shots: the capture size
+		if a.begins_with("--gk-size="):
+			var wh := a.get_slice("=", 1).split("x")
+			w = Vector2(float(wh[0]), float(wh[1]))
+	var mode := fit_mode(w)
+	if mode == Window.CONTENT_SCALE_MODE_VIEWPORT:
+		root.content_scale_mode = mode
+		root.content_scale_aspect = Window.CONTENT_SCALE_ASPECT_KEEP
+		root.content_scale_size = BASE
+		root.content_scale_factor = 1.0
+	else:
+		root.content_scale_mode = mode
+		root.content_scale_factor = float(current_scale())
 
 
 func _load() -> void:

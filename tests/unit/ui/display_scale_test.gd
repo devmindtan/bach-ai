@@ -25,3 +25,12 @@ func test_a_smaller_window_shrinks_so_the_design_size_still_fits() -> void:
 	_check(692.0 / k >= 719.9 and 1280.0 / k >= 1279.9, "the screen keeps 1280x720 design units, got %.1f x %.1f" % [1280.0 / k, 692.0 / k])
 	var c := Prefs.fit_scale(Vector2(1920, 1000), 3)
 	_check(1000.0 / c >= 719.9, "a chosen x3 that does not fit falls back to what fits, got %.2f" % c)
+
+
+## User 2026-11-26 (lobby on a 1366x768 laptop, window ~1278x690): a canvas scaled by 0.96 with nearest
+## filtering dropped one pixel row/column in ~25, so heroes drew with uneven, broken lines. Below the design size
+## the game renders the whole 1280x720 frame 1:1 and shrinks the finished picture (viewport mode) instead.
+func test_a_smaller_window_shrinks_the_finished_frame_not_the_canvas() -> void:
+	_check(Prefs.fit_mode(Vector2(1278, 690)) == Window.CONTENT_SCALE_MODE_VIEWPORT, "1278x690: viewport mode (whole frame shrunk)")
+	_check(Prefs.fit_mode(Vector2(1280, 720)) == Window.CONTENT_SCALE_MODE_DISABLED, "1280x720: 1:1, no shrink")
+	_check(Prefs.fit_mode(Vector2(2560, 1440)) == Window.CONTENT_SCALE_MODE_DISABLED, "2560x1440: whole-number canvas scale")
