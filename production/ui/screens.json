@@ -124,6 +124,20 @@
       ]
     },
     {
+      "name": "01d3-equipment-enhance",
+      "spec": "design/ux/equipment.md",
+      "title": "Trang bị: bảng Cường hoá (C)",
+      "scene": "res://src/front/equipment.tscn",
+      "frames": 40,
+      "args": [
+        "--class=mage",
+        "--equip-slot=head",
+        "--equip-view=star_hat",
+        "--equip-plus=3",
+        "--equip-enhance"
+      ]
+    },
+    {
       "name": "01j-trials",
       "spec": "design/ux/stage-select.md",
       "title": "Chế độ Thử thách (luật riêng, thưởng Tẩy Tủy Đan)",

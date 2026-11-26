@@ -71,6 +71,8 @@ func _ready() -> void:
 			_view = a.get_slice("=", 1)
 		elif a.begins_with("--equip-drag="):   # shots: the slot a dragged bag item fits, lit
 			_drag_shot = a.get_slice("=", 1)
+		elif a == "--equip-enhance":   # shots: the Cường hoá sheet open
+			_toggle_enhance.call_deferred()
 		elif a.begins_with("--equip-plus="):   # shots: Cường hoá level of the viewed item
 			_equip_plus = int(a.get_slice("=", 1))
 	if _equip_plus >= 0 and _view != "":
@@ -103,10 +105,14 @@ func _draw() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel") and _enh_layer != null:
+		_toggle_enhance()
+		get_viewport().set_input_as_handled()
+		return
 	if event.is_action_pressed("ui_cancel"):
 		get_tree().change_scene_to_file(LOBBY_SCENE)
 	elif event is InputEventKey and event.pressed and not event.echo and (event as InputEventKey).physical_keycode == KEY_C:
-		_enhance()
+		_toggle_enhance()
 	elif event is InputEventKey and event.pressed and not event.echo and (event as InputEventKey).physical_keycode in [KEY_Q, KEY_E]:
 		var slots := Profile.slots_for(_cls)   # Q / E: the previous / next slot (web hint)
 		var i := slots.find(_sel)
@@ -645,10 +651,10 @@ func _detail(root: Control) -> void:
 	col.add_child(Journal.ledger("", "Cường hoá +%d/%d (mỗi bậc +%d%%)" % [lv, _prof.max_plus(_view), roundi(Profile.PLUS_STEP * 100)],
 		("%d vàng" % cost) if cost > 0 else "tối đa", 16))
 	var eb := Journal.link("Cường hoá ▸ (C)", 18)
-	eb.disabled = cost <= 0 or _slot_data.gold < cost
+	eb.disabled = false   # opens the sheet; its seal checks the gold
 	if cost > 0 and _slot_data.gold < cost:
 		eb.tooltip_text = "Thiếu vàng: cần %d, đang có %d." % [cost, _slot_data.gold]
-	eb.pressed.connect(_enhance)
+	eb.pressed.connect(_toggle_enhance)
 	eb.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(eb)
 	var gap := Control.new()   # the link keeps its own width; the seal sits at the right
@@ -664,6 +670,124 @@ func _detail(root: Control) -> void:
 		prefs.save_profile()
 		_rebuild())
 	row.add_child(act)
+
+
+var _enh_layer: CanvasLayer   # the Cường hoá sheet, null when closed
+
+
+## The Cường hoá sheet the user approved (design-web screen-equipment-journal ?view=enhance, 2026-11-26): a slip
+## pinned over the right page, one row per level +1..max with the main line at that level (+20% a level), the sub
+## line it opens and its gold; done levels ticked, the next in ink; the seal enhances once; C / Esc close it.
+func _toggle_enhance() -> void:
+	if _enh_layer != null:
+		_enh_layer.queue_free()
+		_enh_layer = null
+		return
+	if _view == "" or not _prof.defs.has(_view):
+		return
+	_enh_layer = CanvasLayer.new()
+	_enh_layer.layer = 5
+	add_child(_enh_layer)
+	var d: Dictionary = _prof.defs[_view]
+	var now := _prof.plus_of(_view)
+	var mx := _prof.max_plus(_view)
+	var slip := Rect2(640, 56, 500, 610)
+	var paper := Control.new()
+	paper.position = slip.position
+	paper.size = slip.size
+	paper.mouse_filter = Control.MOUSE_FILTER_STOP
+	paper.draw.connect(func() -> void:
+		paper.draw_rect(Rect2(Vector2(0, 6), slip.size), Color(0, 0, 0, 0.45))
+		paper.draw_rect(Rect2(Vector2.ZERO, slip.size), Journal.PAPER)
+		paper.draw_rect(Rect2(Vector2.ZERO, slip.size), Journal.EDGE, false, 3.0)
+		paper.draw_circle(Vector2(slip.size.x * 0.5, 0), 8.0, Color("5a0c08"))
+		paper.draw_circle(Vector2(slip.size.x * 0.5, 0), 6.0, Journal.SEAL))
+	_enh_layer.add_child(paper)
+	var v := VBoxContainer.new()
+	v.position = Vector2(26, 22)
+	v.custom_minimum_size = Vector2(slip.size.x - 52, 0)
+	v.add_theme_constant_override("separation", 0)
+	paper.add_child(v)
+	v.add_child(Journal.ink("Cường hoá · %s" % String(d.get("name", _view)), 28))
+	v.add_child(Journal.ink("Đang +%d / %d · mỗi bậc +%d%% hiệu ứng" % [now, mx, roundi(Profile.PLUS_STEP * 100)], 19, Journal.INK_RED))
+	var gap := Control.new()
+	gap.custom_minimum_size = Vector2(0, 8)
+	v.add_child(gap)
+	var names := {}
+	for s in STATS:
+		names[s[0]] = s[1]
+	var subs := _prof.subs_of(_view)
+	var base_cost := int(Profile.PLUS_COST.get(String(d.get("rarity", "common")), 30))
+	for k in range(1, mx + 1):
+		var parts := PackedStringArray()
+		for e: String in d.get("effects", {}):
+			var fx: Dictionary = d["effects"][e]
+			var m := 1.0 + Profile.PLUS_STEP * k
+			if fx.has("add"):
+				var a := float(fx["add"]) * m
+				parts.append("%s +%s" % [names.get(e, e), (str(roundi(a)) if is_equal_approx(a, roundf(a)) or a >= 10.0 else ("%.1f" % a).replace(".", ","))])
+			elif fx.has("mul"):
+				parts.append("%s %+d%%" % [names.get(e, e), roundi(float(fx["mul"]) * m * 100.0)])
+		var si := Profile.SUB_AT.find(k)
+		var opens := "mở dòng phụ %d: %s" % [si + 1, String(subs[si].get("desc", ""))] if si >= 0 and si < subs.size() else ""
+		v.add_child(_enh_row(k, ", ".join(parts), opens, base_cost * k, k <= now, k == now + 1))
+	var close := Journal.ink("C / Esc đóng", 18, Journal.INK_SOFT)
+	close.position = Vector2(26, slip.size.y - 50)
+	paper.add_child(close)
+	var cost := _prof.enhance_cost(_view)
+	var seal := Journal.seal(("Cường hoá ▸ %d" % cost) if cost > 0 else "Đã tối đa", Vector2(240, 60), 24)
+	seal.position = slip.size - Vector2(266, 84)
+	seal.disabled = cost <= 0 or _slot_data.gold < cost
+	if cost > 0 and _slot_data.gold < cost:
+		seal.tooltip_text = "Thiếu vàng: cần %d, đang có %d." % [cost, _slot_data.gold]
+	seal.pressed.connect(func() -> void:
+		_enhance()
+		_enh_layer.queue_free()
+		_enh_layer = null
+		_toggle_enhance())
+	paper.add_child(seal)
+
+
+func _enh_row(k: int, line: String, opens: String, gold: int, done: bool, next: bool) -> Control:
+	var p := PanelContainer.new()
+	p.custom_minimum_size = Vector2(448, 0)
+	p.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Journal.INK if next else Color(0, 0, 0, 0)
+	sb.border_color = Journal.DOTS
+	sb.border_width_bottom = 2
+	sb.content_margin_left = 6
+	sb.content_margin_right = 6
+	sb.content_margin_top = 2
+	sb.content_margin_bottom = 2
+	p.add_theme_stylebox_override("panel", sb)
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 10)
+	p.add_child(h)
+	var ink := Journal.PAPER if next else (Journal.INK_SOFT if done else Journal.INK)
+	var lv := Journal.ink("+%d" % k, 20, ink)
+	lv.custom_minimum_size = Vector2(40, 0)
+	lv.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	h.add_child(lv)
+	var mid := VBoxContainer.new()
+	mid.add_theme_constant_override("separation", 0)
+	mid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	h.add_child(mid)
+	var ll := Journal.ink(line, 18, ink)
+	ll.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART   # never wider than the slip
+	ll.custom_minimum_size = Vector2(280, 0)
+	mid.add_child(ll)
+	if opens != "":
+		var o := Journal.ink(opens, 16, Color("9fe0a8") if next else Color("2a7a3a"))
+		o.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		o.custom_minimum_size = Vector2(280, 0)
+		mid.add_child(o)
+	var g := Journal.ink("✓" if done else "%d vàng" % gold, 18, Journal.GOLD if next else ink)
+	g.custom_minimum_size = Vector2(96, 0)
+	g.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	g.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	h.add_child(g)
+	return p
 
 
 ## Cường hoá the viewed item once (+20% of its effects a level, gold).
