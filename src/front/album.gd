@@ -1,15 +1,15 @@
 extends Node2D
-## Album (bách khoa) screen (design/ux/album.md, prototype design-web/screen-album.html, user approved
+## Bách khoa (album) screen (design/ux/album.md, prototype design-web/screen-album.html, user approved
 ## 2026-11-23): tabs Quái / Boss / Kỹ năng (Q / E, LB / RB), a 7-column grid on the left, the chosen
 ## entry's details on the right. A monster or boss unlocks at its first kill (slot.bestiary); locked ones
 ## show as a dark silhouette with "?". Esc: lobby.
 ##
 ## Command line (after `--`), for shots: --album-tab=N (0 Quái, 1 Boss, 2 Kỹ năng), --album-sel=N,
-## --album-all (every monster unlocked).
+## --album-cls=N (Kỹ năng: the class), --album-all (every monster unlocked).
 
 const LOBBY_SCENE := "res://src/lobby/lobby.tscn"
-const COLS := 6   # journal: the grid on the left page (design-web screen-album-journal)
-const CELL := 70.0
+const COLS := 5   # journal: the grid on the left page (design-web screen-album-journal)
+const CELL := 84.0
 const LEFT_PAGE := Rect2(110, 74, 470, 572)
 const RIGHT_PAGE := Rect2(660, 74, 470, 572)
 const WEAK := Color("ff6a78")
@@ -27,6 +27,7 @@ var _sel := 0
 var _all := false
 var _layer: CanvasLayer
 var _cells: Array = []
+var _cls := 0   # Kỹ năng: the class shown (Z / C)
 
 
 func _ready() -> void:
@@ -49,6 +50,8 @@ func _ready() -> void:
 			_tab = clampi(int(a.get_slice("=", 1)), 0, TABS.size() - 1)
 		elif a.begins_with("--album-sel="):
 			_sel = int(a.get_slice("=", 1))
+		elif a.begins_with("--album-cls="):   # Kỹ năng: the class shown
+			_cls = int(a.get_slice("=", 1))
 		elif a == "--album-all":
 			_all = true
 	_build()
@@ -94,7 +97,7 @@ static func skill_entries() -> Array:
 			var sp: Dictionary = pool.get("skills", {}).get(u["id"], {})
 			out.append({"id": u["id"], "name": u.get("name", u["id"]), "element": String(elems.get(u.get("element", ""), "")),
 				"cls": String(classes.get(cls, {}).get("name", cls)), "cooldown": float(sp.get("cooldown", 0.0)),
-				"desc": String(u.get("desc", "")), "sp": sp, "hero": FrontArt.hero_sprite(classes.get(cls, {}))})
+				"desc": String(u.get("desc", "")), "sp": sp, "max": int(u.get("max_level", 5)), "hero": FrontArt.hero_sprite(classes.get(cls, {}))})
 	return out
 
 
@@ -116,7 +119,7 @@ static func monster_regions(stages: Stages) -> Dictionary:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	var n := entries(_tab).size()
+	var n := shown().size()
 	if event.is_action_pressed("ui_cancel"):
 		get_tree().change_scene_to_file(LOBBY_SCENE)
 		return
@@ -129,6 +132,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		_sel = mini(n - 1, _sel + COLS)
 	elif event.is_action_pressed("ui_up"):
 		_sel = maxi(0, _sel - COLS)
+	elif _tab == 2 and event is InputEventKey and event.pressed and not event.echo and event.physical_keycode in [KEY_Z, KEY_C]:
+		var k := _class_names().size()   # Z / C: the previous / next class's skills
+		_cls = posmod(_cls + (1 if event.physical_keycode == KEY_C else -1), maxi(1, k))
+		_sel = 0
 	elif _tab_key(event, 1):
 		_tab = (_tab + 1) % TABS.size()
 		_sel = 0
@@ -165,7 +172,8 @@ func _build() -> void:
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_layer.add_child(root)
 	Journal.back_tab(root, func() -> void: get_tree().change_scene_to_file(LOBBY_SCENE))   # "Trở lại" (web .back-tab)
-	var title := Journal.ink("Album", 44)
+	# left page (web screen-album-journal): "Bách khoa", the unlock count, the chapter line, class tabs (skills), the grid
+	var title := Journal.ink("Bách khoa", 44)
 	title.position = LEFT_PAGE.position + Vector2(0, -8)
 	root.add_child(title)
 	var opened := 0
@@ -174,32 +182,53 @@ func _build() -> void:
 		for id: String in entries(t):
 			total += 1
 			opened += 1 if unlocked(id) else 0
-	var done := Journal.ink("Đã mở %d / %d quái · %d kỹ năng" % [opened, total, _skills.size()], 18, Journal.INK_RED)
-	done.position = LEFT_PAGE.position + Vector2(2, 48)
-	root.add_child(done)
-	# tabs
-	var tabs := HBoxContainer.new()
-	tabs.position = LEFT_PAGE.position + Vector2(0, 84)
-	tabs.add_theme_constant_override("separation", 8)
-	root.add_child(tabs)
-	for k in TABS.size():
-		tabs.add_child(_tab_plate(k))
-	Journal.restyle(tabs)
-	var open_tab := tabs.get_child(_tab) as PanelContainer   # the open tab on ink (restyle made every plate a sketch box)
-	open_tab.add_theme_stylebox_override("panel", UiKit.style(Journal.INK, 0, Journal.INK, 2))
-	(open_tab.get_child(0) as Label).add_theme_color_override("font_color", Journal.GOLD)
-	# grid
-	var list := entries(_tab)
+	var count := Journal.ink("Đã mở %d/%d" % [opened, total], 20)
+	count.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	count.custom_minimum_size = Vector2(200, 0)
+	count.position = LEFT_PAGE.position + Vector2(LEFT_PAGE.size.x - 210, 8)
+	root.add_child(count)
+	var chap := Journal.ink("Chương: %s · %d mục" % [TABS[_tab], entries(_tab).size()], 20, Journal.INK_RED)
+	chap.position = LEFT_PAGE.position + Vector2(0, 48)
+	root.add_child(chap)
+	var y := 80.0
+	if _tab == 2:
+		var tabs := HBoxContainer.new()
+		tabs.position = LEFT_PAGE.position + Vector2(0, y)
+		tabs.add_theme_constant_override("separation", 6)
+		root.add_child(tabs)
+		var names := _class_names()
+		for i in names.size():
+			var b := Button.new()
+			b.text = names[i]
+			b.focus_mode = Control.FOCUS_NONE
+			b.add_theme_font_size_override("font_size", 18)
+			for st in ["normal", "hover", "pressed"]:
+				var sb := StyleBoxFlat.new()
+				sb.bg_color = Journal.INK if i == _cls else Color(0, 0, 0, 0)
+				sb.border_color = Journal.INK
+				sb.set_border_width_all(2)
+				sb.content_margin_left = 8
+				sb.content_margin_right = 8
+				b.add_theme_stylebox_override(st, sb)
+			for k in ["font_color", "font_hover_color", "font_pressed_color"]:
+				b.add_theme_color_override(k, Journal.PAPER if i == _cls else Journal.INK)
+			b.pressed.connect(func() -> void:
+				_cls = i
+				_sel = 0
+				_rebuild())
+			tabs.add_child(b)
+		y += 40.0
+	var list := shown()
 	_sel = clampi(_sel, 0, maxi(0, list.size() - 1))
 	var scroll := ScrollContainer.new()   # more entries than the page holds scroll, the chosen one kept in view
-	scroll.position = LEFT_PAGE.position + Vector2(0, 134)
-	scroll.size = Vector2(LEFT_PAGE.size.x + 14, LEFT_PAGE.end.y - LEFT_PAGE.position.y - 134)
+	scroll.position = LEFT_PAGE.position + Vector2(0, y)
+	scroll.size = Vector2(LEFT_PAGE.size.x + 14, LEFT_PAGE.size.y - y)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	root.add_child(scroll)
 	var grid := GridContainer.new()
 	grid.columns = COLS
-	grid.add_theme_constant_override("h_separation", 8)
-	grid.add_theme_constant_override("v_separation", 8)
+	grid.add_theme_constant_override("h_separation", 10)
+	grid.add_theme_constant_override("v_separation", 10)
 	scroll.add_child(grid)
 	var chosen: Control = null
 	for i in list.size():
@@ -209,38 +238,45 @@ func _build() -> void:
 			chosen = cell
 	if chosen != null:
 		(func() -> void: scroll.ensure_control_visible(chosen)).call_deferred()
-	# detail
-	var panel := PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
-	panel.position = RIGHT_PAGE.position
-	panel.custom_minimum_size = Vector2(RIGHT_PAGE.size.x, 0)
-	root.add_child(panel)
+	# the chapters are bookmark ribbons on the book's edge
+	Journal.ribbons(root, TABS, [Color("3a6a8a"), Color("8a3a3a"), Color("6a8a3a")], _tab, _open_tab)
+	var right := VBoxContainer.new()
+	right.position = RIGHT_PAGE.position
+	right.custom_minimum_size = Vector2(RIGHT_PAGE.size.x, 0)
+	right.add_theme_constant_override("separation", 2)
+	root.add_child(right)
 	if not list.is_empty():
-		_detail(panel, list[_sel])
-	Journal.restyle(panel)
-	var foot := Journal.ink("←↑↓→ chọn · %s đổi mục · %s về sổ" % ["Q / E" if not UiKit.using_pad() else "LB / RB",
-		"Esc" if not UiKit.using_pad() else "B"], 15, Journal.PAPER)
+		_detail(right, list[_sel])
+	var foot := Journal.ink("←↑↓→ chọn · %s đổi dải%s · %s về sổ" % ["Q / E" if not UiKit.using_pad() else "LB / RB",
+		" · Z / C đổi lớp" if _tab == 2 else "", "Esc" if not UiKit.using_pad() else "B"], 15, Journal.PAPER)
 	foot.position = Vector2(Journal.BOOK.position.x, Journal.BOOK.end.y + 14)
 	root.add_child(foot)
 
 
-## A tab plate; a click opens tab [param k] (the mouse works as well as Q / E; user 2026-11-23).
-func _tab_plate(k: int) -> Control:
-	var p := UiKit.panel(UiKit.PANEL_DARK if k != _tab else UiKit.PANEL, 6, UiKit.GOLD if k == _tab else Color("3a3448"))
-	p.custom_minimum_size = Vector2(150, 40)
-	p.mouse_filter = Control.MOUSE_FILTER_STOP
-	p.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	var l := Journal.ink("%s  %d" % [TABS[k], entries(k).size()], 20, Journal.GOLD if k == _tab else Journal.INK)
-	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	p.add_child(l)
-	p.gui_input.connect(func(ev: InputEvent) -> void:
-		if _left_click(ev) and k != _tab:
-			_tab = k
-			_sel = 0
-			_rebuild.call_deferred())
-	return p
+## The entries the grid shows: monsters / bosses, or the chosen class's skills (Lướt with the first class).
+func shown() -> Array:
+	if _tab != 2:
+		return entries(_tab)
+	var names := _class_names()
+	var cname: String = names[clampi(_cls, 0, names.size() - 1)] if not names.is_empty() else ""
+	return _skills.filter(func(e: Dictionary) -> bool: return String(e["cls"]) == cname or (String(e["id"]) == "dash" and _cls == 0))
+
+
+func _class_names() -> Array:
+	var out := []
+	for e: Dictionary in _skills:
+		if String(e["id"]) != "dash" and not out.has(String(e["cls"])):
+			out.append(String(e["cls"]))
+	return out
+
+
+## Opens chapter [param i] (a ribbon press); the page rebuilds after the press.
+func _open_tab(i: int) -> void:
+	if i != _tab:
+		_tab = i
+		_sel = 0
+		if is_inside_tree():
+			_rebuild.call_deferred()
 
 
 static func _left_click(ev: InputEvent) -> bool:
@@ -264,7 +300,7 @@ func _cell(e: Variant, on: bool, i := 0) -> Control:
 		if String(e.get("kind", "skill")) == "stat":
 			ic.modulate = Journal.INK
 		ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		ic.position = Vector2(7, 7)
+		ic.position = Vector2(14, 14)
 		c.add_child(ic)
 	var id := "" if _tab == 2 else String(e)
 	var lock := _tab < 2 and not unlocked(id)
@@ -317,28 +353,32 @@ func _used_rect(sheet: SpriteSheet) -> Rect2:
 	return r
 
 
-func _detail(panel: PanelContainer, e: Variant) -> void:
-	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 8)
-	panel.add_child(v)
+## The right page: the entry in a 200 px sketch box, its name and line centred, weak / resist stamps, a ledger, notes.
+func _detail(v: VBoxContainer, e: Variant) -> void:
 	var art := Control.new()
-	art.custom_minimum_size = Vector2(0, 150)
-	art.clip_contents = true
+	art.custom_minimum_size = Vector2(RIGHT_PAGE.size.x, 210)
 	v.add_child(art)
+	var box := Rect2((RIGHT_PAGE.size.x - 200) * 0.5, 0, 200, 200)
+	var head := func(name: String, line: String) -> void:
+		var h := Journal.ink(name, 44)
+		h.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		v.add_child(h)
+		if line != "":
+			var l := Journal.ink(line, 20, Journal.INK_RED)
+			l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			v.add_child(l)
 	if _tab == 2:
 		var sk: Dictionary = e
-		art.custom_minimum_size = Vector2(0, 190)
-		var sim := SkillSim.new()   # the skill cast on a slime dummy, tiers I..V in turn
-		sim.setup(sk.get("sp", {}), String(sk.get("hero", "swordsman")))
-		sim.set_anchors_preset(Control.PRESET_FULL_RECT)
-		art.add_child(sim)
-		var ic := UiKit.card_icon(String(sk["id"]), 40.0)
-		ic.position = Vector2(RIGHT_PAGE.size.x - 48, 8)
+		art.draw.connect(func() -> void:
+			art.draw_rect(box, Color("d8c498"))
+			art.draw_rect(box, Journal.EDGE, false, 4.0))
+		var ic := UiKit.card_icon(String(sk["id"]), 144.0)
+		ic.position = box.position + Vector2(28, 28)
 		art.add_child(ic)
-		v.add_child(UiKit.label(String(sk["name"]), 34, UiKit.TEXT))
-		v.add_child(UiKit.label("%s · Hệ %s" % [sk["cls"], sk["element"]], 20, UiKit.GOLD))
-		v.add_child(_row("Hồi chiêu", "%.1f s" % float(sk["cooldown"])))
-		var d := UiKit.label(String(sk["desc"]), 17, UiKit.MUTED)
+		head.call(String(sk["name"]), "%s · Hệ %s" % [sk["cls"], sk["element"] if String(sk["element"]) != "" else "—"])
+		v.add_child(Journal.ledger("", "Hồi chiêu", ("%.1f s" % float(sk["cooldown"])).replace(".", ",") if float(sk["cooldown"]) > 0.0 else "—", 20))
+		v.add_child(Journal.ledger("", "Số cấp", str(int(sk.get("max", 5))), 20))
+		var d := Journal.ink(String(sk["desc"]), 18)
 		d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		d.custom_minimum_size = Vector2(RIGHT_PAGE.size.x, 0)
 		v.add_child(d)
@@ -347,31 +387,43 @@ func _detail(panel: PanelContainer, e: Variant) -> void:
 	var lock := not unlocked(id)
 	var m: Dictionary = _monsters[id]
 	art.draw.connect(func() -> void:
-		art.draw_rect(Rect2(Vector2.ZERO, art.size), Color("d8c498"))   # the portrait sketch box
-		art.draw_rect(Rect2(Vector2.ZERO, art.size), Journal.EDGE, false, 4.0)
-		_draw_monster(art, id, art.size * 0.5, 66.0, lock))
-	v.add_child(UiKit.label("???" if lock else String(m.get("name", id)), 34, UiKit.TEXT))
-	var sp: Dictionary = _species.get("species", {}).get(String(m.get("species", "")), {})
+		art.draw_rect(box, Color("d8c498"))
+		art.draw_rect(box, Journal.EDGE, false, 4.0)
+		_draw_monster(art, id, box.get_center(), 80.0, lock))
 	if lock:
-		v.add_child(UiKit.label("Hạ một lần để mở", 20, UiKit.GOLD))
+		head.call("???", "Hạ một lần để ghi vào sổ")
 		return
-	v.add_child(UiKit.label("%s · %s" % [sp.get("name", ""), _where.get(id, "")], 20, UiKit.GOLD))
+	var sp: Dictionary = _species.get("species", {}).get(String(m.get("species", "")), {})
+	head.call(String(m.get("name", id)), String(sp.get("name", "—")) + (" · Trùm" if bool(m.get("boss", false)) else ""))
 	var names: Dictionary = _species.get("elements", {})
-	var weak: Array = sp.get("weak", []).map(func(x: String) -> String: return String(names.get(x, x)))
-	var res: Array = sp.get("resist", []).map(func(x: String) -> String: return String(names.get(x, x)))
-	var el := HBoxContainer.new()
-	el.add_theme_constant_override("separation", 14)
-	if not weak.is_empty():
-		el.add_child(UiKit.label("Yếu: " + ", ".join(weak), 18, WEAK))
-	if not res.is_empty():
-		el.add_child(UiKit.label("Kháng: " + ", ".join(res), 18, RESIST))
-	if weak.is_empty() and res.is_empty():
-		el.add_child(UiKit.label("Không yếu, không kháng hệ nào", 18, UiKit.MUTED))
-	v.add_child(el)
-	v.add_child(_row("Máu (ải 1)", str(roundi(float(m.get("hp", 0))))))
-	v.add_child(_row("Sát thương", str(roundi(float(m.get("damage", 0))))))
-	v.add_child(_row("Tốc độ", str(roundi(float(m.get("speed", 0))))))
-	v.add_child(UiKit.label("Đã hạ: %d" % int(_slot.bestiary.get(id, 0)), 18, UiKit.MUTED))
+	var stamps := HBoxContainer.new()   # weak (green) and resist (red) as tilted ink stamps
+	stamps.alignment = BoxContainer.ALIGNMENT_CENTER
+	stamps.add_theme_constant_override("separation", 8)
+	stamps.custom_minimum_size = Vector2(0, 40)
+	v.add_child(stamps)
+	var marks := []
+	for x: String in sp.get("weak", []):
+		marks.append(["Yếu " + String(names.get(x, x)), Color("2a7a3a")])
+	for x: String in sp.get("resist", []):
+		marks.append(["Kháng " + String(names.get(x, x)), Journal.INK_RED])
+	if marks.is_empty():
+		stamps.add_child(Journal.ink("Không yếu, không kháng hệ nào", 18, Journal.INK_SOFT))
+	for mk: Array in marks:
+		var st := Journal.ink(String(mk[0]), 18, mk[1])
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = Color(0, 0, 0, 0)
+		sb.border_color = mk[1]
+		sb.set_border_width_all(3)
+		sb.content_margin_left = 8
+		sb.content_margin_right = 8
+		st.add_theme_stylebox_override("normal", sb)
+		st.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		st.rotation = -0.05
+		stamps.add_child(st)
+	v.add_child(Journal.ledger("", "Máu (ải 1)", str(roundi(float(m.get("hp", 0)))), 20))
+	v.add_child(Journal.ledger("", "Sát thương", str(roundi(float(m.get("damage", 0)))), 20))
+	v.add_child(Journal.ledger("", "Tốc độ", str(roundi(float(m.get("speed", 0)))), 20))
+	v.add_child(Journal.ink("Đã hạ: %d · Gặp ở: %s" % [int(_slot.bestiary.get(id, 0)), _where.get(id, "—")], 18, Journal.INK_SOFT))
 
 
 func _row(k: String, val: String) -> HBoxContainer:

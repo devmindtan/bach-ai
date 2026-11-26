@@ -30,11 +30,14 @@ func test_cell_click_selects() -> void:
 	a.free()
 
 
-func test_tab_click_opens() -> void:
+func test_ribbon_click_opens() -> void:
+	# the chapters are bookmark ribbons (design-web screen-album-journal): pressing one opens it
 	var a: Node2D = AlbumScript.new()
-	var p: Control = a.call("_tab_plate", 1)
-	_check(p.mouse_filter == Control.MOUSE_FILTER_STOP, "a tab ignores the mouse")
-	p.gui_input.emit(_click())
-	_check(int(a.get("_tab")) == 1, "clicking the Boss tab does not open it")
-	p.free()
+	var root := Control.new()
+	var col: VBoxContainer = Journal.ribbons(root, AlbumScript.TABS, [Color.RED], 0, Callable(a, "_open_tab"))
+	var b := col.get_child(1) as Button
+	_check(b.mouse_filter == Control.MOUSE_FILTER_STOP, "a ribbon ignores the mouse")
+	b.pressed.emit()
+	_check(int(a.get("_tab")) == 1, "pressing the Boss ribbon does not open it")
+	root.free()
 	a.free()
