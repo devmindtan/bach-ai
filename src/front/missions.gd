@@ -6,12 +6,13 @@ extends Node2D
 ## Command line (after `--`), for shots: --missions-demo (some progress, one claimable).
 
 const LOBBY_SCENE := "res://src/lobby/lobby.tscn"
-const DONE := Color("8fe08a")
+const DONE := Color("2a7a3a")
+const LEFT_PAGE := Rect2(110, 74, 470, 572)
+const RIGHT_PAGE := Rect2(660, 74, 470, 572)
 
 var _slot: Slot
 var _d: Daily
 var _layer: CanvasLayer
-var _scroll := Vector2.ZERO
 
 
 func _ready() -> void:
@@ -36,13 +37,9 @@ func _ready() -> void:
 	_build()
 
 
-func _process(delta: float) -> void:
-	_scroll += Vector2(18.0, 6.0) * delta
-	queue_redraw()
-
-
 func _draw() -> void:
-	FrontArt.backdrop(self, _scroll, get_viewport_rect().size)
+	Journal.draw_desk(self, get_viewport_rect().size)
+	Journal.draw_book(self, Journal.BOOK)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -64,36 +61,60 @@ func _build() -> void:
 	root.size = get_viewport_rect().size
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_layer.add_child(root)
-	var title := UiKit.label("Nhiệm vụ ngày · %s" % _slot.name, 34, UiKit.GOLD)
-	title.position = Vector2(40, 24)
-	root.add_child(title)
-	var sub := UiKit.label("Làm mới lúc 0 giờ. Mỗi nhiệm vụ cho đá; nhận đủ cả %d thì thưởng thêm." % _slot.daily["ids"].size(), 16, UiKit.MUTED)
-	sub.position = Vector2(42, 72)
-	root.add_child(sub)
-	var wallet := UiKit.stat("gem", "%d đá" % _slot.gems, "Đá: quay gacha.", 16)
-	wallet.position = Vector2(root.size.x - 40 - 180 - 140, 36)
-	root.add_child(wallet)
-	var back := UiKit.button("Quay lại " + UiKit.hint("Esc"), func() -> void: get_tree().change_scene_to_file(LOBBY_SCENE), Vector2(180, 42), 17)
-	back.position = Vector2(root.size.x - 40 - 180, 28)
-	root.add_child(back)
-	var list := VBoxContainer.new()
-	list.position = Vector2(240, 108)
-	list.custom_minimum_size = Vector2(800, 0)
+	var hint := Journal.ink("↑ ↓ chọn · Enter nhận · Esc về sổ", 15, Journal.PAPER)
+	hint.position = Vector2(Journal.BOOK.position.x, Journal.BOOK.end.y + 14)
+	root.add_child(hint)
+	var list := VBoxContainer.new()   # left page: today's tasks
+	list.position = LEFT_PAGE.position + Vector2(0, -8)
+	list.custom_minimum_size = Vector2(LEFT_PAGE.size.x, 0)
 	list.add_theme_constant_override("separation", 8)
 	root.add_child(list)
+	list.add_child(Journal.ink("Nhiệm vụ", 44))
+	list.add_child(Journal.ink("Việc trong ngày · làm mới lúc 0 giờ", 18, Journal.INK_RED))
 	for id: String in _slot.daily["ids"]:
 		list.add_child(_card(id))
-	list.add_child(_bonus_card())
-	var first := UiKit.first_enabled_button(list)   # gamepad: a claim button if any, else Quay lại (J5)
-	(first if first != null else back).call_deferred("grab_focus")
+	Journal.restyle(list)
+	# right page: the rewards: gems, how many claimed, the completion bonus (the seal)
+	var right := VBoxContainer.new()
+	right.position = RIGHT_PAGE.position + Vector2(0, -8)
+	right.custom_minimum_size = Vector2(RIGHT_PAGE.size.x, 0)
+	right.add_theme_constant_override("separation", 6)
+	root.add_child(right)
+	right.add_child(Journal.ink("Phần thưởng", 40))
+	var ids: Array = _slot.daily["ids"]
+	var claimed := ids.filter(func(id: String) -> bool: return _d.claimed(_slot, id)).size()
+	var total := 0
+	for id: String in ids:
+		total += int(_d.mission(id).get("gems", 0))
+	right.add_child(Journal.ledger("gem", "Đá đang có", str(_slot.gems), 22))
+	right.add_child(Journal.ledger("", "Đã nhận", "%d / %d nhiệm vụ" % [claimed, ids.size()], 22))
+	right.add_child(Journal.ledger("", "Đá từ nhiệm vụ hôm nay", "%d" % total, 22))
+	right.add_child(Journal.ledger("", "Thưởng hoàn thành", "+%d đá" % int(_d.data.get("bonus_gems", 0)), 22, Journal.INK_RED))
+	var note := Journal.ink("Nhận đủ mọi nhiệm vụ hôm nay thì được thêm đá.", 18, Journal.INK_SOFT)
+	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	note.custom_minimum_size = Vector2(RIGHT_PAGE.size.x, 0)
+	right.add_child(note)
+	var ready := _d.bonus_ready(_slot)
+	var got := bool(_slot.daily.get("bonus", false))
+	var bonus := Journal.seal("Đã nhận" if got else "Nhận thưởng ▶", Vector2(260, 62), 24)
+	bonus.position = RIGHT_PAGE.end - Vector2(260, 62)
+	bonus.disabled = not ready
+	bonus.set_meta("sfx", "")
+	bonus.pressed.connect(func() -> void:
+		if _d.claim_bonus(_slot):
+			Sfx.play("chest")
+			_rebuild())
+	root.add_child(bonus)
+	var first := UiKit.first_enabled_button(list)   # gamepad: a claim button if any, else the bonus (J5)
+	(first if first != null else bonus).call_deferred("grab_focus")
 
 
 func _card(id: String) -> PanelContainer:
 	var m := _d.mission(id)
 	var done := _d.done(_slot, id)
 	var got := _d.claimed(_slot, id)
-	var p := UiKit.panel(UiKit.PANEL_DARK if not done else Color(0.12, 0.16, 0.12), 14, DONE if done and not got else UiKit.GOLD)
-	p.custom_minimum_size = Vector2(800, 88)
+	var p := UiKit.panel(UiKit.PANEL_DARK if not done else Color(0.12, 0.16, 0.12), 10, DONE if done and not got else UiKit.GOLD)
+	p.custom_minimum_size = Vector2(LEFT_PAGE.size.x, 0)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 18)
 	p.add_child(row)
@@ -102,21 +123,22 @@ func _card(id: String) -> PanelContainer:
 	v.add_theme_constant_override("separation", 4)
 	row.add_child(v)
 	v.add_child(UiKit.label(String(m.get("name", id)), 20, UiKit.TEXT))
-	v.add_child(UiKit.label(String(m.get("desc", "")), 14, UiKit.MUTED))
+	var dl := UiKit.label("%s  ·  %d / %d" % [String(m.get("desc", "")), _d.progress(_slot, id), int(m.get("target", 1))], 15, UiKit.MUTED)
+	dl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	v.add_child(dl)
 	var bar := ProgressBar.new()
 	bar.max_value = float(m.get("target", 1))
 	bar.value = float(_d.progress(_slot, id))
 	bar.show_percentage = false
 	bar.custom_minimum_size = Vector2(0, 12)
-	bar.add_theme_stylebox_override("background", UiKit.style(Color(0, 0, 0, 0.5), 0, Color("3a3448"), 1))
-	bar.add_theme_stylebox_override("fill", UiKit.style(DONE if done else UiKit.GOLD, 0))
+	bar.add_theme_stylebox_override("background", UiKit.style(Journal.PAPER, 0, Journal.INK, 2))   # an ink bar on paper
+	bar.add_theme_stylebox_override("fill", UiKit.style(DONE if done else Journal.INK_RED, 0))
 	v.add_child(bar)
-	v.add_child(UiKit.label("%d / %d" % [_d.progress(_slot, id), int(m.get("target", 1))], 13, UiKit.MUTED))
 	row.add_child(_reward(int(m.get("gems", 0))))
 	var b := UiKit.button("Đã nhận" if got else ("Nhận" if done else "Chưa xong"), func() -> void:
 		if _d.claim(_slot, id):
 			Sfx.play("coin")
-			_rebuild(), Vector2(140, 48), 17, UiKit.PRIMARY if done and not got else UiKit.PANEL)
+			_rebuild(), Vector2(104, 44), 17, UiKit.PRIMARY if done and not got else UiKit.PANEL)
 	b.disabled = got or not done
 	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	if done and not got:
@@ -151,5 +173,5 @@ func _bonus_card() -> PanelContainer:
 func _reward(gems: int) -> HBoxContainer:
 	var r := UiKit.stat("gem", "+%d" % gems, "Đá thưởng", 18)
 	r.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	r.custom_minimum_size = Vector2(80, 0)
+	r.custom_minimum_size = Vector2(64, 0)
 	return r
