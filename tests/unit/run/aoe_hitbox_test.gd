@@ -116,7 +116,7 @@ func _run(cls: String, levels: Dictionary) -> Node:
 	r.sheets = {}
 	for sk: String in r.pool.get("skills", {}):
 		var sd: Dictionary = r.pool["skills"][sk]
-		for n: Variant in sd.get("tier_sprites", [sd.get("sprite", sk)]):
+		for n: Variant in Array(sd.get("tier_sprites", [sd.get("sprite", sk)])) + Array(sd.get("impact_tiers", [])):   # blasts too, as the run loads
 			r.sheets[String(n)] = SpriteSheet.load_dir("res://assets/sprites/custom/" + String(n), String(n))
 		r.sheets[String(sd.get("sprite", sk))] = SpriteSheet.load_dir("res://assets/sprites/custom/" + String(sd.get("sprite", sk)), String(sd.get("sprite", sk)))
 	r.enemies = _flat()
@@ -379,4 +379,18 @@ func test_shadow_clone_repeats_projectiles_from_its_spot() -> void:
 		_check(float(near_clone["shot"]["damage"]) < float(r._fx[0]["shot"]["damage"]), "at less damage")
 	r._step_clone(10.0)
 	_check(r._clone.is_empty(), "the shadow fades after its time")
+	r.free()
+
+
+## design/rogue-kits.md, Lưới: the rolled net flies to a monster and bursts open, stunning every monster under it.
+func test_net_shot_bursts_and_stuns_the_crowd() -> void:
+	var r := _run("archer", {"net_shot": 1})
+	var e: Enemies = r.enemies
+	e.spawn("blob", Vector2(120, 0))
+	e.spawn("blob", Vector2(135, 12))
+	_settle(e)
+	r._cast("net_shot", r.pool["skills"]["net_shot"], "projectile")
+	_run_fx(r)
+	for i in 2:
+		_check(e.statuses_of(i).has("stun"), "monster %d is caught in the net, statuses %s" % [i, e.statuses_of(i)])
 	r.free()

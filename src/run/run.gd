@@ -1320,6 +1320,7 @@ func _cast(sid: String, ts: Dictionary, how: String) -> void:
 				if fx.is_empty():
 					continue
 				fx["vel"] = dv * speed
+				fx["impact_scale"] = float(ts.get("impact_scale", 1.0))   # undoes the shot's own px_scale for its blast (Lưới)
 				if bool(ts.get("boomerang", false)):   # Dao hồi (design/rogue-kits.md): out for out_time s, then home back
 					var outs: Array = ts.get("out_time", [0.4])
 					fx["boomerang"] = float(outs[clampi(int(levels.get(sid, 1)) - 1, 0, outs.size() - 1)])
@@ -3057,7 +3058,7 @@ func _step_shot(fx: Dictionary, dt: float) -> bool:
 	var impact := String(sh["impact"])
 	var blast := String(sh.get("impact_sprite", ""))   # a blast drawn as its own sprite (firefx, by tier)
 	if bool(sh["explode"]) and blast != "" and sheets.has(blast):
-		var b2 := _add_fx(blast, impact, float(fx["scale"]), float(sh["damage"]), -1.0, p, src, float(fx.get("kb", 140.0)))
+		var b2 := _add_fx(blast, impact, float(fx["scale"]) * float(fx.get("impact_scale", 1.0)), float(sh["damage"]), -1.0, p, src, float(fx.get("kb", 140.0)))
 		if not b2.is_empty():
 			b2["effects"] = fx.get("effects", [])
 		return true

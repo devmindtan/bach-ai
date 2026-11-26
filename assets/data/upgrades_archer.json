@@ -200,6 +200,24 @@
       "element": "physical"
     },
     {
+      "id": "net_shot",
+      "kind": "skill",
+      "name": "Lưới",
+      "desc": "Bắn một cuộn lưới vào quái gần nhất; trúng thì lưới bung ra trói cả đám quái quanh đó (choáng). Mỗi cấp: +20% sát thương, lưới rộng hơn, trói lâu hơn (0,8 → 1,6 giây).",
+      "max_level": 5,
+      "weight": 2,
+      "effects": {
+        "skill_damage.net_shot": {
+          "mul": 0.2
+        },
+        "skill_area.net_shot": {
+          "mul": 0.06
+        }
+      },
+      "rarity": "epic",
+      "element": "physical"
+    },
+    {
       "id": "steady_hand",
       "kind": "stat",
       "name": "Tay vững",
@@ -770,6 +788,58 @@
         "charged-shot-iv",
         "charged-shot-v"
       ]
+    },
+    "net_shot": {
+      "sprite": "net-i",
+      "tier_sprites": [
+        "net-i",
+        "net-ii",
+        "net-iii",
+        "net-iv",
+        "net-v"
+      ],
+      "cast": "projectile",
+      "anim_prefix": "fly_",
+      "impact": "burst",
+      "impact_tiers": [
+        "net-burst-i",
+        "net-burst-ii",
+        "net-burst-iii",
+        "net-burst-iv",
+        "net-burst-v"
+      ],
+      "explode": true,
+      "damage_mul": 0.6,
+      "size_mul": 1.0,
+      "cooldown": 5.5,
+      "speed": 420.0,
+      "pierce": 0,
+      "count": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "duration": 1.0,
+      "on_hit": [
+        {
+          "from": 1,
+          "status": "stun",
+          "time": 0.8
+        },
+        {
+          "from": 3,
+          "status": "stun",
+          "time": 1.2
+        },
+        {
+          "from": 5,
+          "status": "stun",
+          "time": 1.6
+        }
+      ],
+      "impact_scale": 2.0
     }
   }
 }
