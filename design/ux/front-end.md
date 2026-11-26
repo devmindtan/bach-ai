@@ -60,12 +60,11 @@ Sảnh chuẩn bị ──Trang bị──→ Màn trang bị (design/ux/equipme
 
 ## Sảnh chuẩn bị (`src/lobby/lobby.tscn`)
 
-Thiết kế lại 2026-11-26, người dùng chọn hướng A "Trại lửa" trong `design-web/screens/lobby.md` (bản cũ, tham khảo,
-3 hướng, ảnh `design-web/shots/lobby-*.png`). Cảnh trại đêm vẽ bằng code (bầu trời, sao, trăng, rặng cây, lửa trại
-lập loè, quầng sáng), nhân vật đứng cạnh lửa. Mỗi mục là một đồ vật trên cọc gỗ quanh lửa: Cài đặt, Trang bị, Cây kỹ
-năng, Album, **Lên đường** (mục chính, gỗ đỏ, focus sẵn), Bộ thẻ, Quay đồ, Nhiệm vụ, Về tiêu đề. ←/→ (và ↑/↓) đi vòng
-qua các vật, Enter mở; biển gỗ ở đáy ghi tên + việc của vật đang chọn (mục chưa mở ghi "Qua ải N"). Góc trái trên: tên,
-class · ải, 3 chỉ số; góc phải trên: vàng, đá. Esc: đổi nhân vật.
+- Là nơi chuẩn bị cho nhân vật đã chọn: xem chỉ số, nội tại, bộ chiêu; nút **Trang bị** (màn trang bị) và
+  **Chọn ải ▶** (nút chính, mở màn chọn ải / chế độ). Không còn thẻ ải và nút Bắt đầu ở sảnh.
+- Thanh trên: **Nhân vật** (về màn chọn nhân vật), **Cài đặt**, **Menu chính**.
+- Không có mũi tên đổi class, không có trang quản lý slot (đã chuyển sang màn chọn nhân vật).
+- Không có nhân vật nào (file bị xoá) → chuyển sang màn chọn nhân vật.
 
 ## Kiểm tra
 

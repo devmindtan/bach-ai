@@ -89,51 +89,37 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _process(delta: float) -> void:
 	_t += delta
+	_scroll += Vector2(18.0, 6.0) * delta   # the field drifts slowly behind the menu
 	queue_redraw()
 
 
-## Hướng A "Trại lửa" (design-web/screens/lobby.md, user 2026-11-26): a night camp; the hero sits by the fire and
-## every menu entry is an object on a wooden post round it.
 func _draw() -> void:
 	var size := get_viewport_rect().size
-	var horizon := size.y * 0.56
-	for k in 24:   # night sky in bands
-		var f := float(k) / 23.0
-		draw_rect(Rect2(0, horizon * f, size.x, horizon / 23.0 + 1.0), Color("0b1030").lerp(Color("2a2448"), f))
-	for k in 46:   # stars, kept off the text corners
-		var p := Vector2(float(k * 97 % int(size.x)), float(k * 53 % 300))
-		if (p.x < 320.0 and p.y < 150.0) or (p.x > size.x - 260.0 and p.y < 70.0):
-			continue
-		var tw := 0.6 + 0.4 * sin(_t * 2.0 + k)
-		draw_rect(Rect2(p, Vector2(3, 3)), Color(1.0, 0.96, 0.78, tw))
-	var moon := Vector2(size.x - 210.0, 98.0)
-	draw_circle(moon, 36.0, Color(0.95, 0.9, 0.78, 0.08))
-	draw_circle(moon, 28.0, Color("f3e6c8"))
-	draw_circle(moon + Vector2(8, 5), 22.0, Color("d8c8a0"))
-	draw_circle(moon - Vector2(3, 3), 22.0, Color("f3e6c8"))
-	var tree_pts := PackedVector2Array([Vector2(0, horizon)])   # the treeline
-	for k in 33:
-		tree_pts.append(Vector2(size.x * k / 32.0, horizon - (70.0 if k % 2 == 0 else 26.0) - float(k * 37 % 30)))
-	tree_pts.append(Vector2(size.x, horizon))
-	draw_colored_polygon(tree_pts, Color("0d1a12"))
-	draw_rect(Rect2(0, horizon, size.x, size.y - horizon), Color("16220f"))
-	for k in 6:   # grass in darker strips toward the bottom
-		draw_rect(Rect2(0, horizon + k * 52.0, size.x, 52.0), Color(0, 0, 0, 0.05 * k))
-	var fire := Vector2(FIRE_X, FIRE_Y)
-	var flick := 0.85 + 0.15 * sin(_t * 9.0) * sin(_t * 5.3)
-	for k in 5:   # warm light on the ground
-		_ellipse(fire + Vector2(0, 8), Vector2(380.0 - k * 64.0, 130.0 - k * 22.0), Color(1.0, 0.6, 0.16, 0.03 * flick))
+	var view := Rect2(_scroll, size)
+	draw_set_transform(-_scroll)
+	RunGround.draw(self, view.grow(64.0), 1.0e9, _stages.ground(_stage_n) if _stages != null else {})
+	draw_set_transform(Vector2.ZERO)
+	draw_rect(Rect2(Vector2.ZERO, size), Color(0.02, 0.03, 0.05, 0.55))
+	# darker bands top and bottom frame the screen
+	for k in 6:
+		var a := 0.08 * (6 - k)
+		draw_rect(Rect2(0, k * 14, size.x, 14), Color(0, 0, 0, a))
+		draw_rect(Rect2(0, size.y - (k + 1) * 14, size.x, 14), Color(0, 0, 0, a))
+	# hero stage: a stone pedestal with a rune ring in the class colour
+	var feet := Vector2(PEDESTAL_X, PEDESTAL_Y)
+	var col := Color(String(_class.get("color", "c9a65a")))
+	_ellipse(feet + Vector2(0, 10), Vector2(150, 40), Color(0, 0, 0, 0.35))
+	_ellipse(feet + Vector2(0, 6), Vector2(132, 34), Color("2a2533"))
+	_ellipse(feet, Vector2(132, 34), Color("4a4458"))
+	_ellipse(feet, Vector2(118, 28), Color("5c556c"))
+	for k in 24:   # rune ring turning slowly
+		var ang := k * TAU / 24.0 + _t * 0.35
+		var p := feet + Vector2(cos(ang) * 104.0, sin(ang) * 24.0)
+		var lit := 0.55 + 0.45 * sin(_t * 2.0 + k * 0.8)
+		draw_rect(Rect2(p - Vector2(3, 2), Vector2(6, 4)), Color(col, lit))
+	_ellipse(feet + Vector2(0, -2), Vector2(70, 14), Color(col, 0.18 + 0.08 * sin(_t * 2.0)))
 	if _hero != null:
-		_hero.draw(self, "idle", _t, fire + Vector2(-110, 30), FrontArt.scale_of(_hero, HERO_SCALE))
-	draw_rect(Rect2(fire + Vector2(-34, 18), Vector2(68, 12)), Color("5a3618"))   # logs
-	draw_rect(Rect2(fire + Vector2(-28, 24), Vector2(56, 10)), Color("6a4020"))
-	var h := 40.0 * flick
-	draw_rect(Rect2(fire + Vector2(-18, 18 - h * 0.75), Vector2(36, h * 0.75)), Color("d9361e"))
-	draw_rect(Rect2(fire + Vector2(-11, 18 - h), Vector2(22, h)), Color("ff9a2a"))
-	draw_rect(Rect2(fire + Vector2(-5, 18 - h * 0.55), Vector2(10, h * 0.55)), Color("fff2a0"))
-	for k in 4:   # sparks rising
-		var sp := fmod(_t * 0.7 + k * 0.25, 1.0)
-		draw_rect(Rect2(fire + Vector2(sin(k * 2.3 + _t) * 14.0, -h - sp * 90.0), Vector2(3, 3)), Color(1.0, 0.8, 0.3, 1.0 - sp))
+		_hero.draw(self, "idle", _t, feet, FrontArt.scale_of(_hero, HERO_SCALE))
 
 
 func _ellipse(c: Vector2, r: Vector2, col: Color) -> void:
@@ -144,37 +130,10 @@ func _ellipse(c: Vector2, r: Vector2, col: Color) -> void:
 	draw_colored_polygon(pts, col)
 
 
-const FIRE_X := 640.0
-const FIRE_Y := 470.0
-const WOOD := Color("2a1e14")
-const WOOD_EDGE := Color("5a3e24")
-const EMBER := Color("ffd36b")
-
-var _sign_name: Label
-var _sign_desc: Label
-
-
-## The camp props: [icon, name, what it does, position, feature lock ("" = open), action].
-func _props(root: Control, menu: Control) -> Array:
-	return [
-		["nav_settings", "Cài đặt", "Âm thanh, hiển thị, phím.", Vector2(40, 400), "", func() -> void: _show_settings(root, menu)],
-		["nav_equipment", "Trang bị", "Thay mũ, áo, giày, vũ khí; cường hoá đồ bằng vàng.", Vector2(140, 250), "",
-			func() -> void: get_tree().change_scene_to_file(EQUIPMENT_SCENE)],
-		["nav_tree", "Cây kỹ năng", "Điểm kỹ năng mở chỉ số lâu dài cho nhân vật này.", Vector2(300, 170), "tree",
-			func() -> void: get_tree().change_scene_to_file(TREE_SCENE)],
-		["nav_album", "Album", "Bách khoa: quái, boss và kỹ năng; quái mở khi hạ lần đầu.", Vector2(470, 120), "",
-			func() -> void: get_tree().change_scene_to_file("res://src/front/album.tscn")],
-		["nav_stages", "Lên đường", "Chọn ải rồi vào trận.", Vector2(680, 300), "",
-			func() -> void: get_tree().change_scene_to_file(STAGE_SCENE)],
-		["nav_deck", "Bộ thẻ", "Chọn thẻ mang vào trận: 8 chiêu, 6 chỉ số.", Vector2(830, 170), "deck",
-			func() -> void: get_tree().change_scene_to_file(DECK_SCENE)],
-		["nav_gacha", "Quay đồ", "Dùng đá quay trang bị hiếm.", Vector2(990, 250), "gacha",
-			func() -> void: get_tree().change_scene_to_file("res://src/front/gacha.tscn")],
-		["nav_missions", _missions_label(), "Nhiệm vụ hằng ngày và phần thưởng chờ nhận.", Vector2(1110, 400), "",
-			func() -> void: get_tree().change_scene_to_file("res://src/front/missions.tscn")],
-		["nav_title", "Về tiêu đề", "Về màn hình tiêu đề.", Vector2(1110, 560), "",
-			func() -> void: get_tree().change_scene_to_file(TITLE_SCENE)],
-	]
+const ROW_H := 64.0
+const BOTTOM_ROW := 108.0   # top of the stage card / start button row, from the bottom
+const PEDESTAL_X := 300.0
+const PEDESTAL_Y := 470.0
 
 
 func _build_ui() -> void:
@@ -192,137 +151,181 @@ func _build_ui() -> void:
 	root.add_child(menu)
 	var accent := Color(String(_class.get("color", "c9a65a")))
 
-	# top left: who is at the camp (no panel: the night is the frame)
-	var slot_now: Slot = Prefs.current().active_slot if _slot_mode else null
-	var cname := _label(slot_now.name if slot_now != null else String(_class.get("name", "")), 44, TEXT)
-	cname.position = Vector2(28, 16)
-	menu.add_child(cname)
-	var role := _label("%s · %s" % [String(_class.get("name", "")), ("Ải %d" % slot_now.best) if slot_now != null else String(_class.get("role", ""))], 22, accent.lightened(0.35))
-	role.position = Vector2(30, 70)
-	menu.add_child(role)
-	var base: Dictionary = _class.get("stats", {})
-	var stats := PlayerStats.compute(base, [], {})
-	if slot_now != null:   # equipment + skill tree of the character
-		var lasting := SkillTree.lasting(slot_now)
-		stats = PlayerStats.compute(base, lasting[0], lasting[1])
-	var srow := HBoxContainer.new()
-	srow.add_theme_constant_override("separation", 16)
-	srow.position = Vector2(30, 104)
-	menu.add_child(srow)
-	for it in [["heart", "%d" % roundi(float(stats.get("max_hp", 0))), "Máu tối đa"], ["sword", "%d" % roundi(float(stats.get("damage", 0))), "Sát thương"],
-			["boot", "%d" % roundi(float(stats.get("move_speed", 0))), "Tốc độ chạy"]]:
-		srow.add_child(_small_stat(it[0], it[1], it[2]))
-	if slot_now != null:   # top right: the purse
-		var purse := HBoxContainer.new()
-		purse.add_theme_constant_override("separation", 20)
-		menu.add_child(purse)
-		for it in [["coin", str(slot_now.gold), "Vàng"], ["gem", str(slot_now.gems), "Đá (quay đồ)"]]:
-			purse.add_child(_small_stat(it[0], it[1], it[2]))
-		purse.position = Vector2(vp.x - 28 - purse.get_combined_minimum_size().x - 20, 22)
+	# top bar: title left, settings / quit right
+	var title := _label("Chuẩn bị", 46, GOLD)   # the screen's name; the logo is on the title screen
+	title.position = Vector2(32, 18)
+	menu.add_child(title)
+	var sub := _label("Trang bị, chọn ải rồi vào trận", 16, MUTED)
+	sub.position = Vector2(36, 74)
+	menu.add_child(sub)
+	var top := HBoxContainer.new()
+	top.add_theme_constant_override("separation", 10)
+	var top_buttons := [_button("Nhân vật", func() -> void: get_tree().change_scene_to_file(CHARACTERS_SCENE)),
+		_button("Bộ thẻ", func() -> void: get_tree().change_scene_to_file(DECK_SCENE)),
+		_button("Gacha", func() -> void: get_tree().change_scene_to_file("res://src/front/gacha.tscn")),
+		_button(_missions_label(), func() -> void: get_tree().change_scene_to_file("res://src/front/missions.tscn")),
+		_button("Album", func() -> void: get_tree().change_scene_to_file("res://src/front/album.tscn")),
+		_button("Cài đặt", func() -> void: _show_settings(root, menu)),
+		_button("Menu chính", func() -> void: get_tree().change_scene_to_file(TITLE_SCENE))]
+	top.position = Vector2(vp.x - 32 - top_buttons.size() * 140 - (top_buttons.size() - 1) * 10, 26)
+	menu.add_child(top)
+	# icon-only (user 2026-11-20): the name and what it does are in the tooltip; Nhiệm vụ keeps a count badge
+	var tips := [["Nhân vật", "Chọn hoặc tạo nhân vật khác (Esc)."],
+		["Bộ thẻ", "Chọn thẻ mang vào trận: 8 chiêu, 6 chỉ số, giới hạn điểm theo độ hiếm."],
+		["Gacha", "Quay trang bị bằng kim cương."],
+		[_missions_label(), "Nhiệm vụ hằng ngày và phần thưởng chờ nhận."],
+		["Album", "Bách khoa: quái, boss và kỹ năng; quái mở khi hạ lần đầu."],
+		["Cài đặt", "Âm thanh, hiển thị, phím."],
+		["Menu chính", "Về màn hình tiêu đề."]]
+	var feats := ["", "deck", "gacha", "", "", "", ""]   # progressive unlocks (assets/data/unlocks.json)
+	for k in top_buttons.size():
+		var b: Button = top_buttons[k]
+		var label := b.text
+		b.text = ""
+		UiKit.with_vector_icon(b, String(["nav_character", "nav_deck", "nav_gacha", "nav_missions", "nav_album", "nav_settings", "nav_title"][k]), 36)
+		b.custom_minimum_size = Vector2(64, 56)
+		b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		Tip.attach(b, String(tips[k][0]), String(tips[k][1]) if _open(feats[k]) else _lock_text(feats[k]))
+		_lock(b, feats[k], Vector2(40, -6))
+		var count := label.get_slice("(", 1).trim_suffix(")") if label.contains("(") else ""
+		if count != "":   # rewards waiting: a red badge on the icon
+			var badge := UiKit.label(count, 13, Color.WHITE)
+			var bs := UiKit.style(Color("c0392b"), 0, Color("1b1726"), 2)
+			bs.set_corner_radius_all(9)
+			badge.add_theme_stylebox_override("normal", bs)
+			badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			badge.custom_minimum_size = Vector2(18, 18)
+			badge.position = Vector2(46, -4)
+			b.add_child(badge)
+		top.add_child(b)
+	# right-aligned by the row's real width: an icon or a longer label widens a button (Menu chính overflowed)
+	top.position.x = vp.x - 32 - top.get_combined_minimum_size().x
 
-	# the props round the fire; ←/→ (and ↑/↓) walk them in a ring, the sign below explains the one in focus
-	var props := _props(root, menu)
-	var buttons: Array[Button] = []
-	for pr: Array in props:
-		var b := _prop(pr, pr[1] == "Lên đường")
-		menu.add_child(b)
-		buttons.append(b)
-	for k in buttons.size():
-		var nxt := buttons[(k + 1) % buttons.size()].get_path()
-		var prv := buttons[(k + buttons.size() - 1) % buttons.size()].get_path()
-		buttons[k].focus_neighbor_right = nxt
-		buttons[k].focus_neighbor_left = prv
-		buttons[k].focus_neighbor_bottom = nxt
-		buttons[k].focus_neighbor_top = prv
-	var sign := PanelContainer.new()
-	sign.add_theme_stylebox_override("panel", _wood(Color("3a2818"), Color("6a4a2c"), 18))
-	sign.position = Vector2(vp.x * 0.5 - 300, vp.y - 128)
-	sign.custom_minimum_size = Vector2(600, 96)
-	menu.add_child(sign)
-	var sv := VBoxContainer.new()
-	sv.add_theme_constant_override("separation", 2)
-	sign.add_child(sv)
-	_sign_name = _label("", 30, EMBER)
-	sv.add_child(_sign_name)
-	_sign_desc = _label("", 18, Color("e0d0a8"))
-	_sign_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	sv.add_child(_sign_desc)
-	var keys := _label("← → chọn · Enter", 16, Color("a89070"))
-	keys.position = Vector2(sign.position.x + 600 - 170, sign.position.y + 12)
-	menu.add_child(keys)
-	buttons[4].call_deferred("grab_focus")   # Lên đường
+	# hero stage (drawn in _draw): name and role under it
+	var slot_now: Slot = Prefs.current().active_slot if _slot_mode else null
+	# slot mode: the slot's name big, "class · role" under it, then its progress
+	var cname := _label(slot_now.name if slot_now != null else String(_class.get("name", "")), 40, TEXT)
+	cname.clip_text = true
+	cname.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	cname.position = Vector2(PEDESTAL_X - 260, PEDESTAL_Y + 50)
+	cname.size = Vector2(520, 50)
+	cname.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	menu.add_child(cname)
+	var role_txt := String(_class.get("role", ""))
+	if slot_now != null:
+		role_txt = "%s · %s" % [String(_class.get("name", "")), role_txt]
+	var role := _label(role_txt, 18, accent.lightened(0.35))
+	role.position = Vector2(PEDESTAL_X - 260, PEDESTAL_Y + 100)
+	role.size = Vector2(520, 26)
+	role.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	menu.add_child(role)
+	if slot_now != null:
+		# progress: highest stage won, gold, gems (stops before the stage card at x 440)
+		var prog := HBoxContainer.new()
+		prog.add_theme_constant_override("separation", 16)
+		prog.alignment = BoxContainer.ALIGNMENT_CENTER
+		prog.position = Vector2(PEDESTAL_X - 140, PEDESTAL_Y + 132)
+		prog.custom_minimum_size = Vector2(280, 26)
+		menu.add_child(prog)
+		for it in [["star", "Ải %d" % slot_now.best, "Ải cao nhất đã vượt"], ["coin", str(slot_now.gold), "Vàng"],
+				["gem", str(slot_now.gems), "Đá (gacha, đợt 5)"]]:
+			prog.add_child(_small_stat(it[0], it[1], it[2]))
+
+	# right: the class card (stats, passive, starting skill, skill set)
+	var card := _card()
+	card.position = Vector2(620, 104)
+	card.custom_minimum_size = Vector2(vp.x - 620 - 32, 0)
+	menu.add_child(card)
+	var cv := VBoxContainer.new()
+	cv.add_theme_constant_override("separation", 12)
+	card.add_child(cv)
+	# stats with the worn equipment (green where it adds something)
+	var base: Dictionary = _class.get("stats", {})
+	var prof := Prefs.current().profile()
+	var cid := Prefs.current().hero
+	var stats := PlayerStats.compute(base, prof.as_upgrades(cid), prof.levels(cid))
+	if Prefs.current().active_slot != null:   # equipment + skill tree of the character
+		var lasting := SkillTree.lasting(Prefs.current().active_slot)
+		stats = PlayerStats.compute(base, lasting[0], lasting[1])
+	var tiles := HBoxContainer.new()
+	tiles.add_theme_constant_override("separation", 10)
+	cv.add_child(tiles)
+	for t in [["heart", "Máu", "max_hp", "%d"], ["sword", "Sát thương", "damage", "%d"],
+			["boot", "Tốc độ", "move_speed", "%d"], ["magnet", "Tầm hút", "magnet", "×%.1f"]]:
+		var val := float(stats.get(t[2], 0.0))
+		var txt: String = (t[3] % roundi(val)) if t[3] == "%d" else (t[3] % val)
+		tiles.add_child(_tile(t[0], t[1], txt, not is_equal_approx(val, float(base.get(t[2], val)))))
+	var pv: Dictionary = _class.get("passive", {})
+	if not pv.is_empty():
+		cv.add_child(_section("Nội tại", accent))
+		cv.add_child(_feature(String(pv.get("id", "")), String(pv.get("name", "")), String(pv.get("desc", "")), accent))
+	var pool := GameData.load_json(DATA + String(_class.get("upgrades", "")))
+	var ups: Dictionary = {}
+	for u: Dictionary in pool.get("upgrades", []):
+		ups[u["id"]] = u
+	for sid: String in _class.get("start_skills", {}):
+		cv.add_child(_section("Chiêu khởi đầu", GOLD))
+		var u: Dictionary = ups.get(sid, {})
+		cv.add_child(_feature(sid, String(u.get("name", sid)), String(u.get("desc", "")), GOLD))
+	# unique skills are not in the card set: they come from the level milestones
+	var skills := ups.values().filter(func(u: Dictionary) -> bool:
+		return u.get("kind") == "skill" and not bool(u.get("unique", false)))
+	var uniques := ups.values().filter(func(u: Dictionary) -> bool: return bool(u.get("unique", false)))
+	var n_stat := ups.values().filter(func(u: Dictionary) -> bool: return u.get("kind") != "skill").size()
+	cv.add_child(_section("Bộ chiêu (%d chiêu · %d thẻ chỉ số)" % [skills.size(), n_stat], GOLD))
+	var icons := HFlowContainer.new()
+	icons.add_theme_constant_override("h_separation", 8)
+	icons.add_theme_constant_override("v_separation", 8)
+	cv.add_child(icons)
+	for u: Dictionary in skills:
+		icons.add_child(_icon_tile(String(u.get("icon", u["id"])), String(u.get("name", "")), String(u.get("desc", ""))))
+	# level milestones: what the class can pick at levels 10/20/30 of a run
+	var mrow := HBoxContainer.new()
+	mrow.add_theme_constant_override("separation", 8)
+	cv.add_child(mrow)
+	var head := _section("Mốc cấp 10 · 20 · 30", GOLD)
+	head.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	mrow.add_child(head)
+	for u: Dictionary in uniques:
+		mrow.add_child(_icon_tile(String(u.get("icon", u["id"])), String(u.get("name", "")), String(u.get("desc", ""))))
+	var note := _label("chọn trong trận", 14, MUTED)
+	note.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	mrow.add_child(note)
+
+	# bottom right: the equipment screen and the main action, choosing a stage
+	# (stages and modes have their own screen: design/ux/stage-select.md)
+	var start_x := vp.x - 32 - 300
+	var gear := _button("Trang bị", func() -> void: get_tree().change_scene_to_file(EQUIPMENT_SCENE))
+	UiKit.with_vector_icon(gear, "nav_equipment", 40)
+	gear.custom_minimum_size = Vector2(200, ROW_H)
+	gear.add_theme_font_size_override("font_size", 22)
+	gear.position = Vector2(start_x - 16 - 200, vp.y - BOTTOM_ROW)
+	menu.add_child(gear)
+	var tree := _button("Cây kỹ năng", func() -> void: get_tree().change_scene_to_file(TREE_SCENE))
+	UiKit.with_vector_icon(tree, "nav_tree", 40)
+	tree.custom_minimum_size = Vector2(200, ROW_H)
+	tree.add_theme_font_size_override("font_size", 22)
+	tree.position = Vector2(start_x - 32 - 400, vp.y - BOTTOM_ROW)
+	menu.add_child(tree)
+	_lock(tree, "tree", Vector2(150, -8))
+	if not _open("tree"):
+		Tip.attach(tree, "Cây kỹ năng", _lock_text("tree"))
+	var start := UiKit.with_vector_icon(_button("Chọn ải  ▶", func() -> void: get_tree().change_scene_to_file(STAGE_SCENE)), "nav_stages", 40)
+	start.custom_minimum_size = Vector2(300, ROW_H)
+	start.add_theme_font_size_override("font_size", 26)
+	start.add_theme_stylebox_override("normal", _style(accent.darkened(0.45), 8))
+	start.add_theme_stylebox_override("hover", _style(accent.darkened(0.25), 8))
+	start.add_theme_stylebox_override("focus", _style(accent.darkened(0.25), 8))
+	start.position = Vector2(start_x, vp.y - BOTTOM_ROW)
+	menu.add_child(start)
+	start.call_deferred("grab_focus")
 
 	if OS.get_cmdline_user_args().has("--lobby-settings"):   # shots of the settings page
 		_show_settings.call_deferred(root, menu)
 
-	var hint := _label("Esc: đổi nhân vật", 16, Color("8a8070"))   # in-run keys are shown when a run starts
-	hint.position = Vector2(28, vp.y - 30)
+	var hint := _label("Enter: chọn ải  ·  Esc: chọn nhân vật  ·  Trong trận: WASD di chuyển, Space lướt, Tab nhân vật, Esc tạm dừng", 14, MUTED)
+	hint.position = Vector2(32, vp.y - 30)
 	menu.add_child(hint)
-
-
-## One camp prop: a wooden frame with the icon, a post under it and its name; focus lifts it and lights it.
-func _prop(pr: Array, main: bool) -> Button:
-	var b := Button.new()
-	b.position = pr[3]
-	b.custom_minimum_size = Vector2(130, 150)
-	b.focus_mode = Control.FOCUS_ALL
-	var empty := StyleBoxEmpty.new()
-	for st in ["normal", "hover", "pressed", "focus", "disabled"]:
-		b.add_theme_stylebox_override(st, empty)
-	var frame := PanelContainer.new()
-	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	frame.position = Vector2(17, 0)
-	frame.custom_minimum_size = Vector2(96, 96)
-	var normal := _wood(Color("5a1a14") if main else WOOD, Color("c0402e") if main else WOOD_EDGE, 12)
-	var lit := _wood(Color("7a2418") if main else Color("3a2a1a"), EMBER, 12)
-	lit.shadow_color = Color(1.0, 0.6, 0.16, 0.55)
-	lit.shadow_size = 14
-	frame.add_theme_stylebox_override("panel", normal)
-	b.add_child(frame)
-	var ic := TextureRect.new()
-	ic.texture = UiKit.vector_texture("res://assets/icons/lobby/%s.svg" % String(pr[0]), 64)
-	ic.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-	ic.custom_minimum_size = Vector2(64, 64)
-	ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	frame.add_child(ic)
-	var post := ColorRect.new()
-	post.color = Color("4a3220")
-	post.position = Vector2(59, 96)
-	post.size = Vector2(12, 26)
-	post.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	b.add_child(post)
-	var nm := _label(String(pr[1]), 18, Color("c8b48a"))
-	nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	nm.position = Vector2(-20, 122)
-	nm.size = Vector2(170, 26)
-	b.add_child(nm)
-	b.pressed.connect(pr[5])
-	b.focus_entered.connect(func() -> void:
-		frame.add_theme_stylebox_override("panel", lit)
-		frame.position.y = -8
-		nm.add_theme_color_override("font_color", Color("fff2a0"))
-		_sign_name.text = String(pr[1])
-		_sign_desc.text = String(pr[2]) if _open(String(pr[4])) else _lock_text(String(pr[4])))
-	b.focus_exited.connect(func() -> void:
-		frame.add_theme_stylebox_override("panel", normal)
-		frame.position.y = 0
-		nm.add_theme_color_override("font_color", Color("c8b48a")))
-	b.mouse_entered.connect(func() -> void: b.grab_focus())
-	_lock(b, String(pr[4]), Vector2(100, -8))
-	return b
-
-
-## A wooden board: dark plank, a thick edge and an inner bevel line.
-func _wood(bg: Color, edge: Color, pad: int) -> StyleBoxFlat:
-	var st := StyleBoxFlat.new()
-	st.bg_color = bg
-	st.border_color = edge
-	st.set_border_width_all(4)
-	st.set_content_margin_all(pad)
-	st.shadow_color = Color(0, 0, 0, 0.5)
-	st.shadow_offset = Vector2(0, 6)
-	st.shadow_size = 0
-	return st
 
 
 ## A small icon + value (slot progress under the hero); the tooltip names it.
@@ -347,12 +350,85 @@ func _small_stat(icon: String, value: String, tip: String) -> HBoxContainer:
 	return row
 
 
+## A stat tile: icon over the value, the name under it.
+func _tile(icon: String, name: String, value: String, boosted := false) -> PanelContainer:
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", _style(Color("231d30"), 8))
+	p.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	p.size_flags_stretch_ratio = 1.0
+	p.custom_minimum_size.x = 132   # four equal tiles
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 2)
+	v.alignment = BoxContainer.ALIGNMENT_BEGIN
+	p.add_child(v)
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 8)
+	h.alignment = BoxContainer.ALIGNMENT_CENTER
+	v.add_child(h)
+	var tex := TextureRect.new()
+	tex.texture = UiIcons.texture(icon)
+	tex.custom_minimum_size = Vector2(28, 28)
+	tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	tex.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	h.add_child(tex)
+	h.add_child(_label(value, 24, Color("8ee08e") if boosted else TEXT))
+	var n := _label(name, 14, MUTED)
+	n.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(n)
+	# green value = raised by equipment / the skill tree; the tooltip says so (the
+	# label "(có trang bị)" was wrong once the tree raised a stat, and widened the tile)
+	Tip.attach(p, name, ("Đã cộng trang bị và cây kỹ năng của nhân vật." if boosted else "Chỉ số gốc của class."),
+		Color("8ee08e") if boosted else GOLD, icon)
+	return p
 
 
+func _section(text: String, col: Color) -> Label:
+	return _label(text, 16, col)
 
 
+## Icon, name and description of a passive or skill.
+func _feature(icon: String, name: String, desc: String, col: Color) -> HBoxContainer:
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 12)
+	var frame := PanelContainer.new()
+	var st := _style(Color("1d1828"), 4)
+	st.border_color = col
+	frame.add_theme_stylebox_override("panel", st)
+	frame.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	h.add_child(frame)
+	var tex := TextureRect.new()
+	tex.texture = UiIcons.texture(icon)
+	tex.custom_minimum_size = Vector2(40, 40)
+	tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	tex.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	frame.add_child(tex)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 2)
+	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	h.add_child(v)
+	v.add_child(_label(name, 20, TEXT))
+	var d := _label(desc, 14, MUTED)
+	d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	v.add_child(d)
+	return h
 
 
+func _icon_tile(icon: String, name: String, desc: String) -> PanelContainer:
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", _style(Color("1d1828"), 4))
+	Tip.attach(p, name, desc, GOLD, icon)
+	p.mouse_filter = Control.MOUSE_FILTER_STOP
+	var tex := TextureRect.new()
+	tex.texture = UiIcons.texture(icon)
+	tex.custom_minimum_size = Vector2(36, 36)
+	tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	tex.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	p.add_child(tex)
+	return p
 
 
 ## Settings over the lobby: the menu column hides, the shared settings panel
@@ -379,6 +455,10 @@ func _dim(center: Control) -> void:
 	center.draw.connect(func() -> void: center.draw_rect(Rect2(Vector2.ZERO, center.size), Color(0, 0, 0, 0.6)))
 
 
+func _card() -> PanelContainer:
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", _style(PANEL, 16))
+	return p
 
 
 var _unlocks: Unlocks
