@@ -426,3 +426,26 @@ func test_shadow_strike_blinks_behind_the_target() -> void:
 	_run_fx(r)
 	_check(e.hp[0] < 100.0, "and cuts it, hp=%s" % e.hp[0])
 	r.free()
+
+
+## Regression 2026-11-26: a shot's blast was drawn at the shot's scale, which already carries the shot's px_scale, so
+## _add_fx applied px_scale twice and every blast (Cầu lửa, Giáo sấm, Lưới) came out at half size.
+func test_a_blast_is_drawn_at_the_skill_scale_not_half() -> void:
+	var r := _run("mage", {"fireball": 1})
+	var e: Enemies = r.enemies
+	e.spawn("blob", Vector2(120, 0))
+	_settle(e)
+	r._cast("fireball", r.pool["skills"]["fireball"], "projectile")
+	var shot_scale := float(r._fx[0]["scale"])   # skill scale x the fireball's px_scale (0.5)
+	var blast := {}
+	for i in 120:
+		r._step_fx(1.0 / 60.0)
+		for f: Dictionary in r._fx:
+			if not f.has("shot"):
+				blast = f
+		if not blast.is_empty():
+			break
+	_check(not blast.is_empty(), "the fireball bursts")
+	if not blast.is_empty():
+		_check(is_equal_approx(float(blast["scale"]), shot_scale), "the blast (px_scale 0.5 too) matches the shot's scale %s, got %s" % [shot_scale, blast["scale"]])
+	r.free()

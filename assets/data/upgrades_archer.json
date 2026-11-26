@@ -688,8 +688,7 @@
           "status": "stun",
           "time": 1.6
         }
-      ],
-      "impact_scale": 2.0
+      ]
     }
   }
 }

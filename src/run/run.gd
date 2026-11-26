@@ -1327,7 +1327,6 @@ func _cast(sid: String, ts: Dictionary, how: String) -> void:
 				if fx.is_empty():
 					continue
 				fx["vel"] = dv * speed
-				fx["impact_scale"] = float(ts.get("impact_scale", 1.0))   # undoes the shot's own px_scale for its blast (Lưới)
 				if bool(ts.get("boomerang", false)):   # Dao hồi (design/rogue-kits.md): out for out_time s, then home back
 					var outs: Array = ts.get("out_time", [0.4])
 					fx["boomerang"] = float(outs[clampi(int(levels.get(sid, 1)) - 1, 0, outs.size() - 1)])
@@ -3074,19 +3073,22 @@ func _step_shot(fx: Dictionary, dt: float) -> bool:
 	var src := String(fx.get("source", ""))
 	var impact := String(sh["impact"])
 	var blast := String(sh.get("impact_sprite", ""))   # a blast drawn as its own sprite (firefx, by tier)
+	# the shot's scale carries its own px_scale; _add_fx applies the blast's, so pass the skill scale (2026-11-26:
+	# every blast was drawn at half size)
+	var base_sc := float(fx["scale"]) / float(sheet.meta.get("px_scale", 1.0))
 	if bool(sh["explode"]) and blast != "" and sheets.has(blast):
-		var b2 := _add_fx(blast, impact, float(fx["scale"]) * float(fx.get("impact_scale", 1.0)), float(sh["damage"]), -1.0, p, src, float(fx.get("kb", 140.0)))
+		var b2 := _add_fx(blast, impact, base_sc, float(sh["damage"]), -1.0, p, src, float(fx.get("kb", 140.0)))
 		if not b2.is_empty():
 			b2["effects"] = fx.get("effects", [])
 		return true
 	if bool(sh["explode"]) and sheet.has_animation(impact):
-		var boom := _add_fx(sheet.name, impact, float(fx["scale"]), float(sh["damage"]), -1.0, p, src, float(fx.get("kb", 140.0)))
+		var boom := _add_fx(sheet.name, impact, base_sc, float(sh["damage"]), -1.0, p, src, float(fx.get("kb", 140.0)))
 		if not boom.is_empty():
 			boom["effects"] = fx.get("effects", [])
 		return true
 	enemies.hit_box(hb, float(sh["damage"]), float(fx.get("kb", 140.0)), src, fx.get("effects", []))
 	if blast != "" and sheets.has(blast):   # the hit flash from the skill's impact sprite (look only)
-		_add_fx(blast, impact, float(fx["scale"]), 0.0, -1.0, p, src)
+		_add_fx(blast, impact, base_sc, 0.0, -1.0, p, src)
 	elif sheet.has_animation(impact):
 		_fx.append({"sheet": sheet, "anim": impact, "t": 0.0, "scale": fx["scale"], "damage": 0.0,
 			"done": true, "life": sheet.duration(impact), "pos": p, "follow": false, "source": src})
