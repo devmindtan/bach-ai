@@ -63,6 +63,7 @@ var _pool_here := false      # --pool-here          # > 0: the hero stands in po
 var _outro_t := -1.0          # the boss outro: seconds left (-1 not started, 0 over)
 var _last_boss_name := "Boss"   # a wave of this stage spawns a boss: won only by killing it
 var _delayed: Array = []
+var _mark_sprite := ""   # Đánh dấu's reticle (tier sprite), drawn over the marked monster
 var _traps: Array = []   # Bẫy gai (design/rogue-kits.md): armed traps {pos, sid, life, dmg, sc, sprite, kb, trigger}
 var _pets := {}   # Chim ưng (design/rogue-kits.md): skill id -> {pos, state idle|dive|back, target, dmg, sc, t}
 var profile: Profile                # equipment (Prefs.current().profile())
@@ -1213,6 +1214,19 @@ func _cast(sid: String, ts: Dictionary, how: String) -> void:
 					if probe != null:
 						aim -= probe.center
 				_add_fx(sprite, anim, sc, dmg, -1.0, aim, sid, kb)
+		"mark":
+			# Đánh dấu: keep the mark on a living monster in reach; else move it to the one with the most hp
+			var lv := clampi(int(levels.get(sid, 1)) - 1, 0, 4)
+			var muls: Array = ts.get("mark_mul", [0.25])
+			enemies.mark_mul = float(muls[mini(lv, muls.size() - 1)])
+			var cur := enemies.index_of_uid(enemies.mark_uid)
+			if cur < 0 or enemies.center_of(cur).distance_to(center) > float(ts.get("cast_range", 420.0)):
+				var best := -1
+				for i in enemies.living_within(center, float(ts.get("cast_range", 420.0))):
+					if best < 0 or enemies.hp[i] > enemies.hp[best]:
+						best = i
+				enemies.mark_uid = enemies.uid[best] if best >= 0 else -1
+			_mark_sprite = sprite
 		"trap":
 			# Bẫy gai: armed traps between the hero and the nearest monster (around the hero when none), at most trap_max
 			for k in _skill_count(sid, ts):
@@ -2832,6 +2846,7 @@ func _draw() -> void:
 	_draw_fx(false)
 	_draw_pets()
 	_draw_combo()
+	_draw_mark_reticle()
 	if Prefs.current().monster_hp:
 		_draw_monster_hp(view)
 	if Prefs.current().damage_numbers:
@@ -3120,6 +3135,16 @@ func _draw_combo() -> void:
 		draw_rect(Rect2(p - Vector2(2, 2), Vector2(4, 4)), Color(0.05, 0.03, 0.08, 0.8))
 		if k < enemies.combo:
 			draw_rect(Rect2(p - Vector2(1, 1), Vector2(2, 2)), Color.WHITE if full else col)
+
+
+func _draw_mark_reticle() -> void:
+	if _mark_sprite == "" or enemies == null or enemies.mark_uid < 0:
+		return
+	var i := enemies.index_of_uid(enemies.mark_uid)
+	var sheet: SpriteSheet = sheets.get(_mark_sprite)
+	if i < 0 or sheet == null:
+		return
+	sheet.draw(self, "mark", clock, enemies.center_of(i), _sprite_scale * float(sheet.meta.get("px_scale", 1.0)))
 
 
 func _draw_pets() -> void:

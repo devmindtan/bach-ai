@@ -107,6 +107,8 @@ var contact_bleed := {}   # the last step's contact came from a bite_bleed speci
 var execute_below := 0.0   # Kết liễu (design/rogue-kits.md): a hero hit leaving a plain monster under this share dies
 var executes := 0          # executes since the run last read it (the run resets Lướt)
 var exec_pos: Array[Vector2] = []   # where they happened (the run draws the execute burst)
+var mark_uid := -1        # Đánh dấu (design/rogue-kits.md): uid of the marked monster, -1 = none
+var mark_mul := 0.0       # extra damage share hits on it take
 var combo_per := 0.0      # Liên hoàn (design/rogue-kits.md): crit chance per stack; 0 = no combo
 var combo_max := 10
 var combo_window := 2.0   # s without a hero hit before the stacks drop
@@ -1332,6 +1334,14 @@ func hit_arc(center: Vector2, facing: Vector2, radius: float, half_angle: float,
 	return hit_box(hb, damage, knockback, source, effects)
 
 
+## Index of the living monster with uid [param u], -1 when it is gone.
+func index_of_uid(u: int) -> int:
+	for i in count:
+		if uid[i] == u and state[i] != DYING:
+			return i
+	return -1
+
+
 ## Fraction of monster [param i]'s hp left, for its hp bar: of the hp it spawned with (hp_cap), which grows with the
 ## run's time (spawn_hp_mul), not of its kind's base hp.
 func hp_frac(i: int) -> float:
@@ -1357,6 +1367,8 @@ func _damage(i: int, amount: float, kb: Vector2, source := "") -> void:
 	if far_mul > 0.0 and _hero_source(source) and pos[i].distance_to(hero_at) > far_px:   # Mắt ưng: a far hit
 		bonus_by["far"] = float(bonus_by.get("far", 0.0)) + amount * far_mul
 		amount *= 1.0 + far_mul
+	if mark_uid >= 0 and uid[i] == mark_uid and _hero_source(source):   # Đánh dấu
+		amount *= 1.0 + mark_mul
 	amount *= float(_affix_def(i).get("damage_taken_mul", 1.0))   # Giáp
 	var smul := species_mul(kind[i], String(element_of.get(source, "")))   # loài: weak / resisted element
 	if shell_on[i] == 1:   # Côn trùng: the shell takes the first hit

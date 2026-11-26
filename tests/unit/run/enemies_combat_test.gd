@@ -180,3 +180,19 @@ func test_execute_kills_a_plain_monster_left_under_the_line() -> void:
 	_settle(f)
 	f.hit_circle(Vector2.ZERO, 60.0, 10.0, 0.0, "throw_knife")   # 18 -> 8: above the line
 	_check(f.hp[0] > 0.0 and f.executes == 0, "a monster above the line lives")
+
+
+## design/rogue-kits.md, Đánh dấu: hits on the marked monster deal mark_mul more; others are unchanged.
+func test_marked_monster_takes_more_damage() -> void:
+	var e := _enemies()
+	e.spawn("blob", Vector2(30, 0))
+	e.spawn("blob", Vector2(-300, 0))
+	e.hp[0] = 100.0
+	e.hp[1] = 100.0
+	_settle(e)
+	e.mark_uid = e.uid[0]
+	e.mark_mul = 0.4
+	e.hit_circle(Vector2.ZERO, 60.0, 10.0, 0.0, "quick_arrow")
+	_check(is_equal_approx(e.hp[0], 86.0), "the marked one takes 10 x 1.4, hp %s" % e.hp[0])
+	e.hit_circle(Vector2(-300, 0), 60.0, 10.0, 0.0, "quick_arrow")
+	_check(is_equal_approx(e.hp[1], 90.0), "an unmarked one takes 10, hp %s" % e.hp[1])

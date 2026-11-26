@@ -170,6 +170,21 @@
       "element": "physical"
     },
     {
+      "id": "hunter_mark",
+      "kind": "skill",
+      "name": "Đánh dấu",
+      "desc": "Đánh dấu con quái nhiều máu nhất trong tầm: mọi đòn của bạn vào nó gây thêm sát thương (25/30/35/40/50%). Nó chết hoặc ra khỏi tầm thì dấu nhảy sang con khác.",
+      "max_level": 5,
+      "weight": 2,
+      "effects": {
+        "skill_damage.hunter_mark": {
+          "mul": 0.2
+        }
+      },
+      "rarity": "rare",
+      "element": "physical"
+    },
+    {
       "id": "steady_hand",
       "kind": "stat",
       "name": "Tay vững",
@@ -686,6 +701,30 @@
         "ricochet-iv",
         "ricochet-v"
       ]
+    },
+    "hunter_mark": {
+      "sprite": "hunter-mark-i",
+      "tier_sprites": [
+        "hunter-mark-i",
+        "hunter-mark-ii",
+        "hunter-mark-iii",
+        "hunter-mark-iv",
+        "hunter-mark-v"
+      ],
+      "cast": "mark",
+      "anim": "mark",
+      "damage_mul": 0.0,
+      "size_mul": 1.0,
+      "cooldown": 0.5,
+      "cast_range": 420.0,
+      "mark_mul": [
+        0.25,
+        0.3,
+        0.35,
+        0.4,
+        0.5
+      ],
+      "duration": 1.0
     }
   }
 }

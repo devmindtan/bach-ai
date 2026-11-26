@@ -324,3 +324,17 @@ func test_thorn_trap_waits_until_a_monster_steps_on_it() -> void:
 	_run_fx(r)
 	_check(e.hp[0] < 100.0, "the thorns hurt the monster on it, hp=%s" % e.hp[0])
 	r.free()
+
+
+## design/rogue-kits.md, Đánh dấu: the cast marks the monster with the most hp in reach and sets the bonus by level.
+func test_hunter_mark_picks_the_toughest_monster() -> void:
+	var r := _run("archer", {"hunter_mark": 5})
+	var e: Enemies = r.enemies
+	e.spawn("blob", Vector2(60, 0))
+	e.spawn("blob", Vector2(160, 40))
+	_settle(e)
+	e.hp[1] = 300.0
+	r._cast("hunter_mark", r.pool["skills"]["hunter_mark"], "mark")
+	_check(e.mark_uid == e.uid[1], "the toughest monster is marked")
+	_check(is_equal_approx(e.mark_mul, 0.5), "level 5: +50%%, got %s" % e.mark_mul)
+	r.free()
