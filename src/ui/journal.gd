@@ -272,3 +272,40 @@ static func sheet_style(margin := 24) -> StyleBoxFlat:
 	sb.shadow_size = 2
 	sb.set_content_margin_all(margin)
 	return sb
+
+
+## A text bookmark ribbon out of the book's right edge (journal.css .ribbon): vertical words on [param col];
+## the open one wider with a gold outline. Example: Journal.ribbons(root, ["Đồng cỏ", "Rừng"], [c1, c2], 0, cb)
+static func text_ribbon(text: String, col: Color, on: bool) -> Button:
+	var b := Button.new()
+	b.focus_mode = Control.FOCUS_ALL
+	var font := ThemeDB.fallback_font
+	var h := maxf(92.0, font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 20).x + 24.0)
+	b.custom_minimum_size = Vector2(74 if on else 52, h)
+	b.size = b.custom_minimum_size
+	for st in ["normal", "hover", "focus", "pressed"]:
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = col.lightened(0.15) if (on or st != "normal") else col
+		sb.border_color = GOLD if (on or st in ["hover", "focus"]) else Color(0, 0, 0, 0.4)
+		sb.set_border_width_all(3)
+		b.add_theme_stylebox_override(st, sb)
+	var l := ink(text, 20, Color("f3e6c8"))
+	l.rotation = PI / 2.0   # vertical-rl: the words read top to bottom
+	l.position = Vector2(b.custom_minimum_size.x * 0.5 + 12.0, 12.0)
+	b.add_child(l)
+	b.mouse_entered.connect(func() -> void: b.grab_focus())
+	return b
+
+
+## A column of text ribbons on the book's right edge (top 90); [param pick] is called with the pressed index.
+static func ribbons(root: Control, names: Array, cols: Array, open: int, pick: Callable) -> VBoxContainer:
+	var v := VBoxContainer.new()
+	v.position = Vector2(BOOK.end.x, BOOK.position.y + 50)
+	v.add_theme_constant_override("separation", 10)
+	root.add_child(v)
+	for i in names.size():
+		var r := text_ribbon(String(names[i]), cols[i % cols.size()], i == open)
+		r.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		r.pressed.connect(func() -> void: pick.call(i))
+		v.add_child(r)
+	return v

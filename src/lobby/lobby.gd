@@ -471,13 +471,9 @@ func _show_settings(root: Control, menu: Control) -> void:
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.add_child(center)
 	_dim(center)
-	var card := PanelContainer.new()
-	card.add_theme_stylebox_override("panel", Journal.sheet_style())   # a loose sheet over the journal
-	center.add_child(card)
-	card.add_child(SettingsPanel.build(func() -> void:
+	center.add_child(SettingsPanel.build_journal(func() -> void:   # the web's settings spread (screen-settings-journal)
 		center.queue_free()
 		menu.visible = true))
-	Journal.restyle(card.get_child(0))
 
 
 
