@@ -1813,6 +1813,601 @@
           "desc": "Tầm hút +16%."
         }
       ]
+    },
+    "dusk_hood": {
+      "name": "Mũ trùm hoàng hôn",
+      "slot": "head",
+      "class": "assassin",
+      "rarity": "common",
+      "icon": "dusk_hood",
+      "effects": {
+        "cooldown": {
+          "mul": -0.03
+        },
+        "max_hp": {
+          "add": 5
+        }
+      },
+      "desc": "Hồi chiêu −3%, Máu tối đa +5.",
+      "starter": true
+    },
+    "night_hood": {
+      "name": "Mũ trùm bóng đêm",
+      "slot": "head",
+      "class": "assassin",
+      "rarity": "rare",
+      "icon": "night_hood",
+      "effects": {
+        "cooldown": {
+          "mul": -0.048
+        },
+        "max_hp": {
+          "add": 8
+        }
+      },
+      "desc": "Hồi chiêu −5%, Máu tối đa +8.",
+      "subs": [
+        {
+          "effects": {
+            "magnet": {
+              "mul": 0.1
+            }
+          },
+          "desc": "Tầm hút +10%."
+        }
+      ]
+    },
+    "blood_hood": {
+      "name": "Mũ trùm huyết",
+      "slot": "head",
+      "class": "assassin",
+      "rarity": "epic",
+      "icon": "blood_hood",
+      "effects": {
+        "cooldown": {
+          "mul": -0.069
+        },
+        "max_hp": {
+          "add": 12
+        }
+      },
+      "desc": "Hồi chiêu −7%, Máu tối đa +12.",
+      "subs": [
+        {
+          "effects": {
+            "magnet": {
+              "mul": 0.15
+            }
+          },
+          "desc": "Tầm hút +15%."
+        },
+        {
+          "effects": {
+            "regen": {
+              "add": 0.52
+            }
+          },
+          "desc": "Hồi máu +0,5/giây."
+        }
+      ]
+    },
+    "phantom_hood": {
+      "name": "Mũ trùm ma ảnh",
+      "slot": "head",
+      "class": "assassin",
+      "rarity": "legendary",
+      "icon": "phantom_hood",
+      "effects": {
+        "cooldown": {
+          "mul": -0.096
+        },
+        "max_hp": {
+          "add": 16
+        }
+      },
+      "desc": "Hồi chiêu −10%, Máu tối đa +16.",
+      "subs": [
+        {
+          "effects": {
+            "magnet": {
+              "mul": 0.225
+            }
+          },
+          "desc": "Tầm hút +22%."
+        },
+        {
+          "effects": {
+            "regen": {
+              "add": 0.64
+            }
+          },
+          "desc": "Hồi máu +0,6/giây."
+        },
+        {
+          "effects": {
+            "move_speed": {
+              "mul": 0.08
+            }
+          },
+          "desc": "Tốc độ chạy +8%."
+        }
+      ]
+    },
+    "dusk_tunic": {
+      "name": "Áo hoàng hôn",
+      "slot": "chest",
+      "class": "assassin",
+      "rarity": "common",
+      "icon": "dusk_tunic",
+      "effects": {
+        "armor": {
+          "add": 2
+        },
+        "max_hp": {
+          "add": 15
+        }
+      },
+      "desc": "Giáp +2, Máu tối đa +15.",
+      "starter": true
+    },
+    "night_tunic": {
+      "name": "Áo bóng đêm",
+      "slot": "chest",
+      "class": "assassin",
+      "rarity": "rare",
+      "icon": "night_tunic",
+      "effects": {
+        "armor": {
+          "add": 3
+        },
+        "max_hp": {
+          "add": 24
+        }
+      },
+      "desc": "Giáp +3, Máu tối đa +24.",
+      "subs": [
+        {
+          "effects": {
+            "move_speed": {
+              "mul": 0.05
+            }
+          },
+          "desc": "Tốc độ chạy +5%."
+        }
+      ]
+    },
+    "blood_tunic": {
+      "name": "Áo huyết",
+      "slot": "chest",
+      "class": "assassin",
+      "rarity": "epic",
+      "icon": "blood_tunic",
+      "effects": {
+        "armor": {
+          "add": 5
+        },
+        "max_hp": {
+          "add": 34
+        }
+      },
+      "desc": "Giáp +5, Máu tối đa +34.",
+      "subs": [
+        {
+          "effects": {
+            "regen": {
+              "add": 0.5
+            }
+          },
+          "desc": "Hồi máu +0,5/giây."
+        },
+        {
+          "effects": {
+            "move_speed": {
+              "mul": 0.065
+            }
+          },
+          "desc": "Tốc độ chạy +6%."
+        }
+      ]
+    },
+    "phantom_tunic": {
+      "name": "Áo ma ảnh",
+      "slot": "chest",
+      "class": "assassin",
+      "rarity": "legendary",
+      "icon": "phantom_tunic",
+      "effects": {
+        "armor": {
+          "add": 6
+        },
+        "max_hp": {
+          "add": 48
+        }
+      },
+      "desc": "Giáp +6, Máu tối đa +48.",
+      "subs": [
+        {
+          "effects": {
+            "regen": {
+              "add": 1.0
+            }
+          },
+          "desc": "Hồi máu +1/giây."
+        },
+        {
+          "effects": {
+            "move_speed": {
+              "mul": 0.08
+            }
+          },
+          "desc": "Tốc độ chạy +8%."
+        },
+        {
+          "effects": {
+            "cooldown": {
+              "mul": -0.064
+            }
+          },
+          "desc": "Hồi chiêu −6%."
+        }
+      ]
+    },
+    "dusk_dagger": {
+      "name": "Dao hoàng hôn",
+      "slot": "weapon",
+      "class": "assassin",
+      "rarity": "common",
+      "icon": "dusk_dagger",
+      "effects": {
+        "damage": {
+          "mul": 0.08
+        },
+        "area": {
+          "mul": 0.04
+        }
+      },
+      "desc": "Sát thương +8%, Vùng đánh +4%.",
+      "starter": true
+    },
+    "night_dagger": {
+      "name": "Dao bóng đêm",
+      "slot": "weapon",
+      "class": "assassin",
+      "rarity": "rare",
+      "icon": "night_dagger",
+      "effects": {
+        "damage": {
+          "mul": 0.128
+        },
+        "area": {
+          "mul": 0.064
+        }
+      },
+      "desc": "Sát thương +13%, Vùng đánh +6%.",
+      "subs": [
+        {
+          "effects": {
+            "cooldown": {
+              "mul": -0.04
+            }
+          },
+          "desc": "Hồi chiêu −4%."
+        }
+      ]
+    },
+    "blood_dagger": {
+      "name": "Dao huyết",
+      "slot": "weapon",
+      "class": "assassin",
+      "rarity": "epic",
+      "icon": "blood_dagger",
+      "effects": {
+        "damage": {
+          "mul": 0.184
+        },
+        "area": {
+          "mul": 0.092
+        }
+      },
+      "desc": "Sát thương +18%, Vùng đánh +9%.",
+      "subs": [
+        {
+          "effects": {
+            "max_hp": {
+              "add": 10
+            }
+          },
+          "desc": "Máu tối đa +10."
+        },
+        {
+          "effects": {
+            "cooldown": {
+              "mul": -0.052
+            }
+          },
+          "desc": "Hồi chiêu −5%."
+        }
+      ]
+    },
+    "phantom_dagger": {
+      "name": "Dao ma ảnh",
+      "slot": "weapon",
+      "class": "assassin",
+      "rarity": "legendary",
+      "icon": "phantom_dagger",
+      "effects": {
+        "damage": {
+          "mul": 0.256
+        },
+        "area": {
+          "mul": 0.128
+        }
+      },
+      "desc": "Sát thương +26%, Vùng đánh +13%.",
+      "subs": [
+        {
+          "effects": {
+            "max_hp": {
+              "add": 15
+            }
+          },
+          "desc": "Máu tối đa +15."
+        },
+        {
+          "effects": {
+            "cooldown": {
+              "mul": -0.064
+            }
+          },
+          "desc": "Hồi chiêu −6%."
+        },
+        {
+          "effects": {
+            "magnet": {
+              "mul": 0.16
+            }
+          },
+          "desc": "Tầm hút +16%."
+        }
+      ]
+    },
+    "dusk_boots": {
+      "name": "Giày hoàng hôn",
+      "slot": "feet",
+      "class": "assassin",
+      "rarity": "common",
+      "icon": "dusk_boots",
+      "effects": {
+        "move_speed": {
+          "mul": 0.05
+        },
+        "magnet": {
+          "mul": 0.1
+        }
+      },
+      "desc": "Tốc độ chạy +5%, Tầm hút +10%.",
+      "starter": true
+    },
+    "night_boots": {
+      "name": "Giày bóng đêm",
+      "slot": "feet",
+      "class": "assassin",
+      "rarity": "rare",
+      "icon": "night_boots",
+      "effects": {
+        "move_speed": {
+          "mul": 0.08
+        },
+        "magnet": {
+          "mul": 0.16
+        }
+      },
+      "desc": "Tốc độ chạy +8%, Tầm hút +16%.",
+      "subs": [
+        {
+          "effects": {
+            "regen": {
+              "add": 0.4
+            }
+          },
+          "desc": "Hồi máu +0,4/giây."
+        }
+      ]
+    },
+    "blood_boots": {
+      "name": "Giày huyết",
+      "slot": "feet",
+      "class": "assassin",
+      "rarity": "epic",
+      "icon": "blood_boots",
+      "effects": {
+        "move_speed": {
+          "mul": 0.115
+        },
+        "magnet": {
+          "mul": 0.23
+        }
+      },
+      "desc": "Tốc độ chạy +12%, Tầm hút +23%.",
+      "subs": [
+        {
+          "effects": {
+            "regen": {
+              "add": 0.5
+            }
+          },
+          "desc": "Hồi máu +0,5/giây."
+        },
+        {
+          "effects": {
+            "cooldown": {
+              "mul": -0.052
+            }
+          },
+          "desc": "Hồi chiêu −5%."
+        }
+      ]
+    },
+    "phantom_boots": {
+      "name": "Giày ma ảnh",
+      "slot": "feet",
+      "class": "assassin",
+      "rarity": "legendary",
+      "icon": "phantom_boots",
+      "effects": {
+        "move_speed": {
+          "mul": 0.16
+        },
+        "magnet": {
+          "mul": 0.32
+        }
+      },
+      "desc": "Tốc độ chạy +16%, Tầm hút +32%.",
+      "subs": [
+        {
+          "effects": {
+            "regen": {
+              "add": 1.0
+            }
+          },
+          "desc": "Hồi máu +1/giây."
+        },
+        {
+          "effects": {
+            "cooldown": {
+              "mul": -0.064
+            }
+          },
+          "desc": "Hồi chiêu −6%."
+        },
+        {
+          "effects": {
+            "area": {
+              "mul": 0.08
+            }
+          },
+          "desc": "Vùng đánh +8%."
+        }
+      ]
+    },
+    "dusk_gloves": {
+      "name": "Bao tay hoàng hôn",
+      "slot": "arms",
+      "class": "assassin",
+      "rarity": "common",
+      "icon": "dusk_gloves",
+      "effects": {
+        "damage": {
+          "mul": 0.05
+        },
+        "area": {
+          "mul": 0.03
+        }
+      },
+      "desc": "Sát thương +5%, Vùng đánh +3%.",
+      "starter": true
+    },
+    "night_gloves": {
+      "name": "Bao tay bóng đêm",
+      "slot": "arms",
+      "class": "assassin",
+      "rarity": "rare",
+      "icon": "night_gloves",
+      "effects": {
+        "damage": {
+          "mul": 0.08
+        },
+        "area": {
+          "mul": 0.048
+        }
+      },
+      "desc": "Sát thương +8%, Vùng đánh +5%.",
+      "subs": [
+        {
+          "effects": {
+            "max_hp": {
+              "mul": 0.05
+            }
+          },
+          "desc": "Máu tối đa +5%."
+        }
+      ]
+    },
+    "blood_gloves": {
+      "name": "Bao tay huyết",
+      "slot": "arms",
+      "class": "assassin",
+      "rarity": "epic",
+      "icon": "blood_gloves",
+      "effects": {
+        "damage": {
+          "mul": 0.115
+        },
+        "area": {
+          "mul": 0.069
+        }
+      },
+      "desc": "Sát thương +12%, Vùng đánh +7%.",
+      "subs": [
+        {
+          "effects": {
+            "cooldown": {
+              "mul": -0.04
+            }
+          },
+          "desc": "Hồi chiêu −4%."
+        },
+        {
+          "effects": {
+            "max_hp": {
+              "mul": 0.065
+            }
+          },
+          "desc": "Máu tối đa +6%."
+        }
+      ]
+    },
+    "phantom_gloves": {
+      "name": "Bao tay ma ảnh",
+      "slot": "arms",
+      "class": "assassin",
+      "rarity": "legendary",
+      "icon": "phantom_gloves",
+      "effects": {
+        "damage": {
+          "mul": 0.16
+        },
+        "area": {
+          "mul": 0.096
+        }
+      },
+      "desc": "Sát thương +16%, Vùng đánh +10%.",
+      "subs": [
+        {
+          "effects": {
+            "cooldown": {
+              "mul": -0.06
+            }
+          },
+          "desc": "Hồi chiêu −6%."
+        },
+        {
+          "effects": {
+            "max_hp": {
+              "mul": 0.08
+            }
+          },
+          "desc": "Máu tối đa +8%."
+        },
+        {
+          "effects": {
+            "magnet": {
+              "mul": 0.16
+            }
+          },
+          "desc": "Tầm hút +16%."
+        }
+      ]
     }
   },
   "equipment_renamed": {

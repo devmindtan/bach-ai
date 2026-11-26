@@ -11,7 +11,9 @@
       "bloodthirst",
       "twin_cast",
       "sp_ranger_boots",
-      "sp_ranger_gloves"
+      "sp_ranger_gloves",
+      "sp_shade_boots",
+      "sp_shade_gloves"
     ],
     "20": [
       "sp_aegis_helm",
@@ -21,7 +23,9 @@
       "guardian",
       "wide_choice",
       "sp_ranger_cloak",
-      "sp_ranger_ring"
+      "sp_ranger_ring",
+      "sp_shade_cloak",
+      "sp_shade_ring"
     ],
     "30": [
       "sp_aegis_chest",
@@ -31,7 +35,9 @@
       "undying",
       "head_start",
       "sp_ranger_hood",
-      "sp_ranger_bow"
+      "sp_ranger_bow",
+      "sp_shade_hood",
+      "sp_shade_dagger"
     ]
   },
   "rewards": {
@@ -163,6 +169,36 @@
       "kind": "card",
       "class": "archer",
       "card": "sp_ranger_bow"
+    },
+    "sp_shade_boots": {
+      "kind": "card",
+      "class": "assassin",
+      "card": "sp_shade_boots"
+    },
+    "sp_shade_gloves": {
+      "kind": "card",
+      "class": "assassin",
+      "card": "sp_shade_gloves"
+    },
+    "sp_shade_cloak": {
+      "kind": "card",
+      "class": "assassin",
+      "card": "sp_shade_cloak"
+    },
+    "sp_shade_ring": {
+      "kind": "card",
+      "class": "assassin",
+      "card": "sp_shade_ring"
+    },
+    "sp_shade_hood": {
+      "kind": "card",
+      "class": "assassin",
+      "card": "sp_shade_hood"
+    },
+    "sp_shade_dagger": {
+      "kind": "card",
+      "class": "assassin",
+      "card": "sp_shade_dagger"
     }
   }
 }

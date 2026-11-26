@@ -16,7 +16,8 @@ func test_every_class_has_a_playable_lpc_sprite() -> void:
 		if cid.begins_with("_"):
 			continue
 		var name := String(classes[cid].get("lpc_sprite", ""))
-		_check(name != "", "%s has no lpc_sprite" % cid)
+		if name == "":   # user 2026-11-25: heroes are the user's drawings; LPC was a trial, a class may have none
+			continue
 		var sh := SpriteSheet.load_dir("res://assets/sprites/custom/" + name, name)
 		_check(sh != null, "%s: no sheet %s (run gamekit sprites)" % [cid, name])
 		if sh == null:

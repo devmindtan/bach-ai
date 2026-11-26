@@ -26,6 +26,7 @@ var _t := 0.0
 var _scroll := Vector2.ZERO
 var _layer: CanvasLayer
 var _equip_defs := {}
+var _unlocks := Unlocks.load_default()
 
 
 func _ready() -> void:
@@ -43,6 +44,10 @@ func _ready() -> void:
 	if not prefs.is_fixed():
 		prefs.ensure_slots()
 	_reload()
+	for cid: String in _class_ids:   # the first class this player may create (user 2026-11-26: classes unlock)
+		if _unlocks.class_open(_entries, cid):
+			_create_class = cid
+			break
 	_chosen = prefs.active_slot.id if prefs.active_slot != null else ""
 	if _chosen == "" or _entry(_chosen).is_empty():
 		_chosen = String(_entries[0]["id"]) if not _entries.is_empty() else "+"
@@ -444,7 +449,7 @@ func _create_panel(panel: PanelContainer) -> void:
 		var n := name_edit.text.strip_edges()
 		if n == "":
 			n = "%s %d" % [String(_classes[_create_class].get("name", "")), _entries.size() + 1]
-		if prefs.is_fixed():
+		if prefs.is_fixed() or not _unlocks.class_open(_entries, _create_class):
 			return
 		var created := prefs.slot_store().create(n, _create_class)
 		if created == null:
@@ -462,8 +467,9 @@ const CARDS_W := 780.0
 func _class_card(cid: String) -> Button:
 	var cd: Dictionary = _classes[cid]
 	var on := cid == _create_class
+	var open := _unlocks.class_open(_entries, cid)
 	var b := Button.new()
-	var n := maxi(1, _class_ids.size())   # the cards share the panel's 780 px (3 classes: 250 each; 2: 383)
+	var n := maxi(1, _class_ids.size())   # the cards share the panel's 780 px (4 classes: 184 each; 3: 250; 2: 383)
 	var w := floorf((CARDS_W - 14.0 * (n - 1)) / n)
 	b.custom_minimum_size = Vector2(w, 372)
 	b.focus_mode = Control.FOCUS_ALL
@@ -472,8 +478,12 @@ func _class_card(cid: String) -> Button:
 	for st in ["hover", "focus", "pressed"]:
 		b.add_theme_stylebox_override(st, UiKit.style(acc.darkened(0.6), 12, Color.WHITE, 3))
 	b.pressed.connect(func() -> void:
+		if not open:   # locked: says which stage opens it, cannot be picked
+			return
 		_create_class = cid
 		_rebuild())
+	if not open:
+		b.modulate = Color(0.55, 0.55, 0.6)
 	var v := VBoxContainer.new()
 	v.set_anchors_preset(Control.PRESET_FULL_RECT)
 	v.offset_left = 14
@@ -483,7 +493,7 @@ func _class_card(cid: String) -> Button:
 	v.add_theme_constant_override("separation", 6 if n < 3 else 3)
 	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	b.add_child(v)
-	var hero := _hero_box(cid, Vector2(w - 28.0, 176 if n < 3 else 140), 4.0 if n < 3 else 3.0, 0.6, FrontArt.showcase_gear(cid))
+	var hero := _hero_box(cid, Vector2(w - 28.0, 176 if n < 3 else (140 if n < 4 else 112)), 4.0 if n < 3 else 3.0, 0.6, FrontArt.showcase_gear(cid))
 	v.add_child(hero)
 	var head: BoxContainer = HBoxContainer.new() if n < 3 else VBoxContainer.new()   # narrow: role under the name
 	head.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -503,11 +513,15 @@ func _class_card(cid: String) -> Button:
 	sr.add_child(UiKit.stat("heart", str(roundi(float(stats.get("max_hp", 0)))), "Máu", 16))
 	sr.add_child(UiKit.stat("sword", str(roundi(float(stats.get("damage", 0)))), "Sát thương", 16))
 	sr.add_child(UiKit.stat("boot", str(roundi(float(stats.get("move_speed", 0)))), "Tốc độ", 16))
+	if not open:
+		var lock := UiKit.label("Khóa: qua ải %d để mở" % _unlocks.need("class_" + cid), 16 if n < 3 else 14, UiKit.GOLD)
+		lock.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		v.add_child(lock)
 	var pv: Dictionary = cd.get("passive", {})
-	var pn := UiKit.label("Nội tại: " + String(pv.get("name", "")), 16 if n < 3 else 14, UiKit.GOLD)
+	var pn := UiKit.label("Nội tại: " + String(pv.get("name", "")), 16 if n < 3 else (14 if n < 4 else 13), UiKit.GOLD)
 	pn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	v.add_child(pn)
-	var pd := UiKit.label(String(pv.get("desc", "")), 14 if n < 3 else 12, UiKit.MUTED)
+	var pd := UiKit.label(String(pv.get("desc", "")), 14 if n < 3 else (12 if n < 4 else 11), UiKit.MUTED)
 	pd.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	v.add_child(pd)
 	var pool := GameData.load_json(DATA + String(cd.get("upgrades", "")))
@@ -516,7 +530,7 @@ func _class_card(cid: String) -> Button:
 		for u: Dictionary in pool.get("upgrades", []):
 			if String(u.get("id", "")) == sk:
 				start_names.append(String(u.get("name", sk)))
-	var sl := UiKit.label("Chiêu khởi đầu: " + ", ".join(start_names), 15 if n < 3 else 13, UiKit.TEXT)
+	var sl := UiKit.label("Chiêu khởi đầu: " + ", ".join(start_names), 15 if n < 3 else (13 if n < 4 else 12), UiKit.TEXT)
 	sl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	v.add_child(sl)
 	for c in v.get_children():
