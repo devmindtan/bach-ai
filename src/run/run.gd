@@ -1290,6 +1290,11 @@ func _cast(sid: String, ts: Dictionary, how: String) -> void:
 			# fired at the nearest monster; several fan out 12 degrees apart
 			var n := _skill_count(sid, ts)
 			var speed := float(ts.get("speed", 340.0))
+			var charge := 0.0   # Tên tích lực (design/rogue-kits.md): share of charge_time the hero has stood still
+			if ts.has("charge_time"):
+				charge = clampf(still_t / maxf(0.01, float(ts["charge_time"])), 0.0, 1.0)
+				dmg *= 1.0 + charge * float(ts.get("charge_mul", 1.0))
+				sc *= 1.0 + charge * float(ts.get("charge_size", 0.5))
 			for k in n:
 				var dv := to_target.rotated(deg_to_rad(12.0 * (k - (n - 1) * 0.5)))
 				var anim := _fly_anim(sprite, String(ts.get("anim_prefix", "fly_")), dv)
@@ -1307,7 +1312,7 @@ func _cast(sid: String, ts: Dictionary, how: String) -> void:
 				fx["bounce_range"] = float(ts.get("bounce_range", 180.0))
 				fx["bounce_mul"] = float(ts.get("bounce_mul", 0.1))
 				fx["prefix"] = String(ts.get("anim_prefix", "fly_"))
-				fx["shot"] = {"damage": dmg, "explode": bool(ts.get("explode", false)), "pierce": int(ts.get("pierce", 0)),
+				fx["shot"] = {"damage": dmg, "explode": bool(ts.get("explode", false)), "pierce": int(ts.get("pierce", 0)) + int(round(charge * float(ts.get("charge_pierce", 0)))),
 					"impact": String(ts.get("impact", "impact")), "wait": 0.0,
 					"impact_sprite": _tier_name(ts.get("impact_tiers", []), sid)}
 		"wave":

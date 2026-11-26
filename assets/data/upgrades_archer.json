@@ -185,6 +185,21 @@
       "element": "physical"
     },
     {
+      "id": "charged_shot",
+      "kind": "skill",
+      "name": "Tên tích lực",
+      "desc": "Đứng yên càng lâu (tối đa 2 giây) mũi tên kế tiếp càng mạnh: tới +150% sát thương, to hơn và xuyên thêm 4 quái. Mỗi cấp: +20% sát thương.",
+      "max_level": 5,
+      "weight": 2,
+      "effects": {
+        "skill_damage.charged_shot": {
+          "mul": 0.2
+        }
+      },
+      "rarity": "legendary",
+      "element": "physical"
+    },
+    {
       "id": "steady_hand",
       "kind": "stat",
       "name": "Tay vững",
@@ -725,6 +740,36 @@
         0.5
       ],
       "duration": 1.0
+    },
+    "charged_shot": {
+      "sprite": "charged-shot-i",
+      "cast": "projectile",
+      "anim_prefix": "fly_",
+      "impact": "impact",
+      "damage_mul": 1.0,
+      "size_mul": 1.0,
+      "cooldown": 2.8,
+      "speed": 640.0,
+      "pierce": 0,
+      "charge_time": 2.0,
+      "charge_mul": 1.5,
+      "charge_size": 0.6,
+      "charge_pierce": 4,
+      "count": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "duration": 1.0,
+      "tier_sprites": [
+        "charged-shot-i",
+        "charged-shot-ii",
+        "charged-shot-iii",
+        "charged-shot-iv",
+        "charged-shot-v"
+      ]
     }
   }
 }

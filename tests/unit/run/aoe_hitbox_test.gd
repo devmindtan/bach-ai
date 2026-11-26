@@ -338,3 +338,24 @@ func test_hunter_mark_picks_the_toughest_monster() -> void:
 	_check(e.mark_uid == e.uid[1], "the toughest monster is marked")
 	_check(is_equal_approx(e.mark_mul, 0.5), "level 5: +50%%, got %s" % e.mark_mul)
 	r.free()
+
+
+## design/rogue-kits.md, Tên tích lực: the longer the hero has stood still (up to charge_time s), the harder, bigger
+## and more piercing the next arrow.
+func test_charged_shot_grows_with_standing_still() -> void:
+	var r := _run("archer", {"charged_shot": 1})
+	var e: Enemies = r.enemies
+	e.spawn("blob", Vector2(200, 0))
+	_settle(e)
+	var ts: Dictionary = r.pool["skills"]["charged_shot"]
+	r.still_t = 0.0
+	r._cast("charged_shot", ts, "projectile")
+	var moving: Dictionary = r._fx[0]
+	r._fx.clear()
+	r.still_t = 5.0
+	r._cast("charged_shot", ts, "projectile")
+	var still: Dictionary = r._fx[0]
+	_check(float(still["shot"]["damage"]) > float(moving["shot"]["damage"]) * 1.5, "a full charge hits much harder: %s vs %s" % [still["shot"]["damage"], moving["shot"]["damage"]])
+	_check(float(still["scale"]) > float(moving["scale"]), "and is bigger")
+	_check(int(still["shot"]["pierce"]) > int(moving["shot"]["pierce"]), "and pierces more")
+	r.free()
