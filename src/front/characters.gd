@@ -1,9 +1,9 @@
 extends Node2D
-## Character select (design/ux/front-end.md): the character slots in a column on the
-## left (hero, name, class, highest stage) and the chosen one in a big panel on the
-## right (hero on a pedestal, progress, stats with equipment, passive, worn
-## items; Chơi / Đổi tên / Xóa). "+ Tạo nhân vật" turns the panel into
-## two class cards, a name field and "Tạo nhân vật". Esc goes back to the title.
+## Character select, "Các cuốn sổ" (design-web/games/bach-ai/screen-characters-journal.html, approved 2026-11-26):
+## an open journal; the left page lists one notebook per character (hero, name, class, highest stage) and
+## "+ Viết sổ mới"; the right page shows the chosen one (portrait, worn items, ledger, passive; seal "Dùng sổ
+## này", Đổi tên / Xóa sổ) or the create page (class sketches with lock stamps, a name line, seal "Viết sổ").
+## Esc goes back to the title.
 ##
 ## Command line (after `--`), for shots: --force-slots (preview slots, nothing is
 ## written), --front-create (open the create panel).
@@ -11,10 +11,6 @@ extends Node2D
 const TITLE_SCENE := "res://src/front/title.tscn"
 const LOBBY_SCENE := "res://src/lobby/lobby.tscn"
 const DATA := "res://assets/data/"
-const LEFT := Vector2(40, 104)
-const TILE := Vector2(360, 92)
-const PANEL_POS := Vector2(420, 104)
-const PANEL_SIZE := Vector2(820, 576)
 
 var _classes := {}
 var _class_ids: Array[String] = []
@@ -23,7 +19,6 @@ var _entries: Array = []   # [{id, slot, error}]
 var _chosen := ""          # slot id shown in the panel; "+" = the create panel
 var _create_class := ""
 var _t := 0.0
-var _scroll := Vector2.ZERO
 var _layer: CanvasLayer
 var _equip_defs := {}
 var _unlocks := Unlocks.load_default()
@@ -70,12 +65,12 @@ func _entry(id: String) -> Dictionary:
 
 func _process(delta: float) -> void:
 	_t += delta
-	_scroll += Vector2(18.0, 6.0) * delta
-	queue_redraw()
+
 
 
 func _draw() -> void:
-	FrontArt.backdrop(self, _scroll, get_viewport_rect().size)
+	Journal.draw_desk(self, get_viewport_rect().size)
+	Journal.draw_book(self, Journal.BOOK)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -96,111 +91,119 @@ func _build() -> void:
 	root.size = get_viewport_rect().size
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_layer.add_child(root)
-	var title := UiKit.label("Chọn nhân vật", 34, UiKit.GOLD)
-	title.position = Vector2(40, 24)
-	root.add_child(title)
-	var sub := UiKit.label("Mỗi nhân vật có class, túi đồ, tiến độ ải và vàng, đá riêng (tối đa %d)." % SlotStore.MAX, 15, UiKit.MUTED)
-	sub.position = Vector2(42, 70)
-	root.add_child(sub)
-	var back := UiKit.button("Quay lại " + UiKit.hint("Esc"), func() -> void: get_tree().change_scene_to_file(TITLE_SCENE), Vector2(180, 42), 17)
-	back.position = Vector2(root.size.x - 40 - 180, 28)
-	root.add_child(back)
-
-	# left: one tile per slot, then "+ Tạo nhân vật"
-	var col := VBoxContainer.new()
-	col.position = LEFT
-	col.add_theme_constant_override("separation", 10)
-	root.add_child(col)
+	var half := Journal.BOOK.size.x * 0.5
+	var left := _page(root, Rect2(Journal.BOOK.position + Vector2(40, 34), Vector2(half - 80, Journal.BOOK.size.y - 68)))
+	var right_rect := Rect2(Journal.BOOK.position + Vector2(half + 40, 34), Vector2(half - 80, Journal.BOOK.size.y - 68))
+	var right := _page(root, right_rect)
+	left.add_child(Journal.ink("Các cuốn sổ", 44))
+	var sub := Journal.ink("Mỗi nhân vật một cuốn sổ riêng: túi đồ, tiến độ, vàng, đá (tối đa %d)" % SlotStore.MAX, 18, Journal.INK_SOFT)
+	sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	left.add_child(sub)
+	var gap := Control.new()
+	gap.custom_minimum_size = Vector2(0, 8)
+	left.add_child(gap)
 	var first_focus: Control = null
 	for e: Dictionary in _entries:
-		var tile := _slot_tile(e)
-		col.add_child(tile)
+		var row := _slot_row(e)
+		left.add_child(row)
 		if String(e["id"]) == _chosen:
-			first_focus = tile
+			first_focus = row
 	if _entries.size() < SlotStore.MAX:
-		var add := _tile_button(_chosen == "+")
-		var row := HBoxContainer.new()
-		row.set_anchors_preset(Control.PRESET_FULL_RECT)
-		row.offset_left = 18
-		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		row.add_child(UiKit.label("+  Tạo nhân vật", 22, UiKit.GOLD))
-		(row.get_child(0) as Label).size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		add.add_child(row)
+		var add := _row_button(_chosen == "+")
+		add.text = "+  Viết sổ mới"
+		add.add_theme_font_size_override("font_size", 26)
+		add.custom_minimum_size = Vector2(0, 64)
+		add.add_theme_color_override("font_color", Journal.INK_RED)
 		add.pressed.connect(func() -> void:
 			_chosen = "+"
 			_rebuild())
-		col.add_child(add)
+		left.add_child(add)
 		if _chosen == "+":
 			first_focus = add
+	var hint := Journal.ink("↑ ↓ chọn sổ · Enter · Esc về tiêu đề", 15, Journal.PAPER)
+	hint.position = Vector2(Journal.BOOK.position.x, Journal.BOOK.end.y + 14)
+	root.add_child(hint)
 
-	# right: the chosen slot, a broken file, or the create panel
-	var panel := UiKit.panel(Color(0.09, 0.08, 0.13, 0.96), 20)
-	panel.position = PANEL_POS
-	panel.custom_minimum_size = PANEL_SIZE
-	panel.size = PANEL_SIZE
-	root.add_child(panel)
 	var e := _entry(_chosen)
 	if _chosen == "+":
-		_create_panel(panel)
+		_create_page(right, root, right_rect)
 	elif e.get("slot") == null:
-		_broken_panel(panel, e)
+		_broken_page(right, e)
 	else:
-		_slot_panel(panel, e["slot"])
+		_slot_page(right, root, right_rect, e["slot"])
 	if first_focus != null:
 		first_focus.call_deferred("grab_focus")
 
 
-func _tile_button(on: bool) -> Button:
+func _page(root: Control, r: Rect2) -> VBoxContainer:
+	var v := VBoxContainer.new()
+	v.position = r.position
+	v.size = r.size
+	v.custom_minimum_size = r.size
+	v.add_theme_constant_override("separation", 4)
+	root.add_child(v)
+	return v
+
+
+## A notebook row: ink-filled when chosen or focused (the web's .row.on).
+func _row_button(on: bool) -> Button:
 	var b := Button.new()
-	b.custom_minimum_size = TILE
 	b.focus_mode = Control.FOCUS_ALL
-	var border := Color.WHITE if on else UiKit.GOLD
-	b.add_theme_stylebox_override("normal", UiKit.style(UiKit.PANEL_HOVER if on else UiKit.PANEL, 8, border, 3 if on else 2))
+	b.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var flat := StyleBoxFlat.new()
+	flat.bg_color = Color(0, 0, 0, 0)
+	flat.border_color = Journal.DOTS
+	flat.border_width_bottom = 2
+	var inked := StyleBoxFlat.new()
+	inked.bg_color = Journal.INK
+	b.add_theme_stylebox_override("normal", inked if on else flat)
 	for st in ["hover", "focus", "pressed"]:
-		b.add_theme_stylebox_override(st, UiKit.style(UiKit.PANEL_HOVER, 8, Color.WHITE, 3))
+		b.add_theme_stylebox_override(st, inked)
+	b.add_theme_color_override("font_color", Journal.PAPER if on else Journal.INK)
+	for k in ["font_focus_color", "font_hover_color", "font_pressed_color"]:
+		b.add_theme_color_override(k, Journal.GOLD)
+	b.mouse_entered.connect(func() -> void: b.grab_focus())
 	return b
 
 
-## A slot in the left column: hero, name, class, highest stage.
-func _slot_tile(e: Dictionary) -> Button:
+## A character in the left page: hero, name, class and highest stage.
+func _slot_row(e: Dictionary) -> Button:
 	var id := String(e["id"])
 	var s: Slot = e["slot"]
-	var b := _tile_button(id == _chosen)
-	b.pressed.connect(func() -> void:
-		_chosen = id
-		_rebuild())
+	var on := id == _chosen
+	var b := _row_button(on)
+	b.custom_minimum_size = Vector2(0, 80)
+	b.focus_entered.connect(func() -> void:
+		if _chosen != id:
+			_chosen = id
+			_rebuild())
 	var row := HBoxContainer.new()
 	row.set_anchors_preset(Control.PRESET_FULL_RECT)
-	row.offset_left = 8
-	row.offset_right = -12
-	row.offset_top = 8
-	row.offset_bottom = -8
-	row.add_theme_constant_override("separation", 12)
+	row.offset_left = 10
+	row.offset_right = -10
+	row.add_theme_constant_override("separation", 14)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	b.add_child(row)
 	if s == null:
-		var bad := UiKit.label("Không đọc được (%s)" % String(e["error"]), 18, Color("ff9a9a"))
+		var bad := Journal.ink("Không đọc được (%s)" % String(e["error"]), 20, Journal.INK_RED)
 		bad.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		row.add_child(bad)
-		b.add_theme_stylebox_override("normal", UiKit.style(Color("2a1a20"), 8, Color("a04848")))
 		return b
-	var box := _hero_box(s.cls, Vector2(76, 76), 2.0, 0.0, s.profile.equipped(s.cls).values())
+	var box := _hero_box(s.cls, Vector2(64, 72), 2.0, 0.0, s.profile.equipped(s.cls).values())
 	box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(box)
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 2)
+	v.add_theme_constant_override("separation", 0)
 	v.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(v)
-	var name := UiKit.label(s.name, 21, UiKit.TEXT)
+	var name := Journal.ink(s.name, 28, Journal.PAPER if on else Journal.INK)
 	name.clip_text = true
 	name.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	v.add_child(name)
 	var cls_name := String(_classes.get(s.cls, {}).get("name", s.cls))
-	v.add_child(UiKit.label("%s  ·  Ải %d" % [cls_name, s.best], 15, _accent(s.cls).lightened(0.35)))
-	if Prefs.current().active_slot != null and Prefs.current().active_slot.id == id:
-		v.add_child(UiKit.label("Chơi lần trước", 13, UiKit.MUTED))
+	v.add_child(Journal.ink("%s · đã qua Ải %d" % [cls_name, s.best], 19, Journal.GOLD if on else Journal.INK_RED))
 	return b
 
 
@@ -208,10 +211,8 @@ func _accent(cls: String) -> Color:
 	return Color(String(_classes.get(cls, {}).get("color", "c9a65a")))
 
 
-## The class's idle hero at [param scale]: in a dark box with a shadow, or (k > 0) on a
-## pedestal of size k whose lowest edge stays inside the box (feet 50k + 6 px above it).
-func _hero_box(cls: String, box: Vector2, scale: float, k := 0.0, worn: Array = []) -> Control:
-	var pedestal := k > 0.0
+## The class's idle hero in a sketch box, feet near the bottom.
+func _hero_box(cls: String, box: Vector2, scale: float, _k := 0.0, worn: Array = [], framed := false, on := false) -> Control:
 	var c := Control.new()
 	c.custom_minimum_size = box
 	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -221,135 +222,98 @@ func _hero_box(cls: String, box: Vector2, scale: float, k := 0.0, worn: Array = 
 		if not _sheets.has(key):
 			_sheets[key] = FrontArt.hero_sheet(_classes.get(cls, {}), worn)
 		sheet = _sheets[key]
-	var col := _accent(cls)
 	c.draw.connect(func() -> void:
-		var feet := Vector2(box.x * 0.5, box.y - (50.0 * k + 6.0 if pedestal else 6.0))
-		if pedestal:
-			FrontArt.pedestal(c, feet, col, _t, k)
-		else:
-			c.draw_rect(Rect2(Vector2.ZERO, box), UiKit.PANEL_DARK)
-			c.draw_rect(Rect2(Vector2(10, box.y - 9), Vector2(box.x - 20, 4)), Color(0, 0, 0, 0.4))
+		if framed:
+			c.draw_rect(Rect2(Vector2.ZERO, box), Color("d8c498") if not on else Journal.INK)
+			c.draw_rect(Rect2(Vector2.ZERO, box), Journal.GOLD if on else Journal.EDGE, false, 4.0)
+		var feet := Vector2(box.x * 0.5, box.y - (box.y * 0.1 if framed else 2.0))
 		if sheet != null:
-			sheet.draw(c, "idle", _t if pedestal else 0.0, feet, FrontArt.scale_of(sheet, scale)))
-	if pedestal:
-		c.set_process(true)
-		var tick := Timer.new()   # the hero idles and the rune ring turns
-		tick.wait_time = 1.0 / 15.0
+			sheet.draw(c, "idle", _t if framed else 0.0, feet, FrontArt.scale_of(sheet, scale)))
+	if framed:
+		var tick := Timer.new()   # the hero idles
+		tick.wait_time = 1.0 / 12.0
 		tick.autostart = true
 		tick.timeout.connect(c.queue_redraw)
 		c.add_child(tick)
 	return c
 
 
-func _section(text: String) -> Label:
-	return UiKit.label(text, 16, UiKit.GOLD)
-
-
-## Name, class, progress, stats, passive, worn items, actions.
-func _slot_panel(panel: PanelContainer, s: Slot) -> void:
+## The chosen notebook: portrait, name, ledger, passive, worn items; seal + Đổi tên / Xóa.
+func _slot_page(v: VBoxContainer, root: Control, r: Rect2, s: Slot) -> void:
 	var prefs := Prefs.current()
-	var h := HBoxContainer.new()
-	h.add_theme_constant_override("separation", 24)
-	panel.add_child(h)
 	var cd: Dictionary = _classes.get(s.cls, {})
-	h.add_child(_hero_box(s.cls, Vector2(280, 440), 6.0, 0.82, s.profile.equipped(s.cls).values()))
-	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 10)
-	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	h.add_child(v)
-	var name_row := HBoxContainer.new()
-	v.add_child(name_row)
-	var name := UiKit.label(s.name, 34, UiKit.TEXT)
+	var top := HBoxContainer.new()
+	top.add_theme_constant_override("separation", 18)
+	v.add_child(top)
+	top.add_child(_hero_box(s.cls, Vector2(160, 160), 3.6, 0.0, s.profile.equipped(s.cls).values(), true))
+	var head := VBoxContainer.new()
+	head.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.add_theme_constant_override("separation", 2)
+	top.add_child(head)
+	var name := Journal.ink(s.name, 38)
 	name.clip_text = true
 	name.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	name_row.add_child(name)
+	head.add_child(name)
 	var edit := LineEdit.new()
 	edit.text = s.name
 	edit.max_length = 18
 	edit.visible = false
-	edit.add_theme_font_size_override("font_size", 22)
-	edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	name_row.add_child(edit)
-	v.add_child(UiKit.label("%s  ·  %s" % [String(cd.get("name", s.cls)), String(cd.get("role", ""))], 18, _accent(s.cls).lightened(0.35)))
-	var prog := HBoxContainer.new()
-	prog.add_theme_constant_override("separation", 22)
-	v.add_child(prog)
-	prog.add_child(UiKit.stat("star", "Ải %d" % s.best, "Ải cao nhất đã vượt"))
-	prog.add_child(UiKit.stat("coin", str(s.gold), "Vàng"))
-	prog.add_child(UiKit.stat("gem", str(s.gems), "Đá (gacha, đợt 5)"))
-	# stats with the worn equipment
-	var base: Dictionary = cd.get("stats", {})
-	var lasting := SkillTree.lasting(s)   # equipment + skill tree
-	var st := PlayerStats.compute(base, lasting[0], lasting[1])
-	var grid := GridContainer.new()
-	grid.columns = 4
-	grid.add_theme_constant_override("h_separation", 8)
-	v.add_child(grid)
-	for t in [["heart", "Máu", "max_hp", "%d"], ["sword", "Sát thương", "damage", "%d"],
-			["boot", "Tốc độ", "move_speed", "%d"], ["magnet", "Tầm hút", "magnet", "×%.1f"]]:
-		var val := float(st.get(t[2], 0.0))
-		var txt: String = (t[3] % roundi(val)) if t[3] == "%d" else (t[3] % val)
-		var cell := UiKit.panel(UiKit.PANEL_DARK, 8, Color("4a4458"))
-		cell.custom_minimum_size = Vector2(110, 0)
-		var cv := VBoxContainer.new()
-		cv.add_theme_constant_override("separation", 0)
-		cell.add_child(cv)
-		var top := HBoxContainer.new()
-		top.alignment = BoxContainer.ALIGNMENT_CENTER
-		top.add_theme_constant_override("separation", 6)
-		top.add_child(UiKit.icon(t[0], 20.0))
-		var boosted := not is_equal_approx(val, float(base.get(t[2], val)))
-		var vl := UiKit.label(txt, 20, Color("8fe08a") if boosted else UiKit.TEXT)
-		vl.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		top.add_child(vl)
-		cv.add_child(top)
-		var nl := UiKit.label(t[1], 13, UiKit.MUTED)
-		nl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		cv.add_child(nl)
-		grid.add_child(cell)
-	# passive
-	var pv: Dictionary = cd.get("passive", {})
-	if not pv.is_empty():
-		v.add_child(_section("Nội tại"))
-		v.add_child(_feature(String(pv.get("id", "")), String(pv.get("name", "")), String(pv.get("desc", ""))))
-	# worn items: six slots, dim when empty
-	v.add_child(_section("Trang bị"))
-	var gear := HBoxContainer.new()
-	gear.add_theme_constant_override("separation", 8)
-	v.add_child(gear)
+	edit.add_theme_font_size_override("font_size", 24)
+	edit.add_theme_color_override("font_color", Journal.INK)
+	var under := StyleBoxFlat.new()
+	under.bg_color = Color(0, 0, 0, 0)
+	under.border_color = Journal.INK
+	under.border_width_bottom = 3
+	for st in ["normal", "focus"]:
+		edit.add_theme_stylebox_override(st, under)
+	head.add_child(edit)
+	head.add_child(Journal.ink("%s · %s" % [String(cd.get("name", s.cls)), String(cd.get("role", "")).to_lower()], 20, Journal.INK_RED))
+	var gear := HBoxContainer.new()   # worn items: small sketch cells, empty ones blank
+	gear.add_theme_constant_override("separation", 4)
+	head.add_child(gear)
 	var worn := s.profile.equipped(s.cls)
-	const SLOT_NAMES := {"head": "Mũ", "chest": "Áo", "legs": "Quần", "arms": "Tay", "feet": "Giày", "weapon": "Vũ khí", "shield": "Khiên", "quiver": "Bao tên"}
+	const SLOT_NAMES := {"head": "Mũ", "chest": "Áo", "legs": "Quần", "arms": "Tay", "feet": "Giày", "weapon": "Vũ khí", "shield": "Khiên", "quiver": "Bao tên", "gloves": "Bao tay"}
 	for slot: String in Profile.slots_for(s.cls):
-		var cell := UiKit.panel(UiKit.PANEL_DARK, 6, UiKit.GOLD if worn.has(slot) else Color("4a4458"))
-		cell.custom_minimum_size = Vector2(52, 52)
 		var item_id := String(worn.get(slot, ""))
 		var d: Dictionary = _equip_defs.get(item_id, {})
-		var rar := String(d.get("rarity", "common"))
+		var cell := Control.new()
+		cell.custom_minimum_size = Vector2(40, 40)
+		cell.draw.connect(func() -> void: Journal.draw_sketch(cell, Rect2(Vector2.ZERO, Vector2(40, 40))))
 		if item_id != "":
+			var ic := UiKit.icon(String(d.get("icon", item_id)), 34.0)
+			ic.position = Vector2(3, 3)
+			cell.add_child(ic)
+			var rar := String(d.get("rarity", "common"))
 			Tip.attach(cell, String(d.get("name", item_id)), String(d.get("desc", "")), UiKit.RARITY.get(rar, UiKit.GOLD),
 				String(d.get("icon", item_id)), "%s · %s" % [UiKit.RARITY_NAME.get(rar, rar), SLOT_NAMES.get(slot, slot)])
 		else:
 			Tip.attach(cell, "%s: trống" % SLOT_NAMES.get(slot, slot), "Mặc đồ ở màn Trang bị (từ sảnh).")
-		if item_id != "":
-			cell.add_child(UiKit.icon(String(d.get("icon", item_id)), 48.0))
 		gear.add_child(cell)
-	# actions at the bottom
-	var spacer := Control.new()
-	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	v.add_child(spacer)
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 10)
-	v.add_child(row)
-	var play := UiKit.button("Chơi  ▶", func() -> void:
+	var gap := Control.new()
+	gap.custom_minimum_size = Vector2(0, 6)
+	v.add_child(gap)
+	var lasting := SkillTree.lasting(s)   # equipment + skill tree
+	var st := PlayerStats.compute(cd.get("stats", {}), lasting[0], lasting[1])
+	for t in [["star", "Ải cao nhất", str(s.best)], ["coin", "Vàng", str(s.gold)], ["gem", "Đá", str(s.gems)],
+			["heart", "Máu", str(roundi(float(st.get("max_hp", 0))))], ["sword", "Sát thương", str(roundi(float(st.get("damage", 0))))],
+			["boot", "Tốc độ chạy", str(roundi(float(st.get("move_speed", 0))))]]:
+		v.add_child(Journal.ledger(t[0], t[1], t[2], 19))
+	var pv: Dictionary = cd.get("passive", {})
+	if not pv.is_empty():
+		var n := Journal.note("Nội tại: " + String(pv.get("name", "")), String(pv.get("desc", "")), 17)
+		v.add_child(n)
+	# actions: the seal (main) at the page's bottom right, two ink words beside it
+	var play := Journal.seal("Dùng sổ này ▶", Vector2(240, 62), 26)
+	play.position = r.end - Vector2(240, 62)
+	play.pressed.connect(func() -> void:
 		if prefs.is_fixed():
 			prefs.active_slot = s
 		else:
 			prefs.select_slot(s.id)
-		get_tree().change_scene_to_file(LOBBY_SCENE), Vector2(220, 56), 24, UiKit.PRIMARY)
-	play.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(play)
-	var rename := UiKit.button("Đổi tên", func() -> void: pass, Vector2(110, 56), 17)
+		get_tree().change_scene_to_file(LOBBY_SCENE))
+	root.add_child(play)
+	var rename := _ink_button("Đổi tên")
+	rename.position = Vector2(r.position.x, r.end.y - 50)
 	rename.pressed.connect(func() -> void:
 		if not edit.visible:   # first press edits the name in place, the second saves
 			edit.visible = true
@@ -357,21 +321,44 @@ func _slot_panel(panel: PanelContainer, s: Slot) -> void:
 			rename.text = "Lưu"
 			edit.grab_focus()
 			return
-		var n := edit.text.strip_edges()
-		if n != "":
-			s.name = n
+		var nn := edit.text.strip_edges()
+		if nn != "":
+			s.name = nn
 		if not prefs.is_fixed():
 			prefs.slot_store().save(s)
 		_rebuild())
-	row.add_child(rename)
-	var del := UiKit.button("Xóa", func() -> void: pass, Vector2(110, 56), 17, UiKit.DANGER)
+	root.add_child(rename)
+	var del := _ink_button("Xóa sổ")
+	del.position = Vector2(r.position.x + 120, r.end.y - 50)
 	del.pressed.connect(func() -> void:
-		if del.text == "Xóa":   # asks once more
+		if del.text == "Xóa sổ":   # asks once more
 			del.text = "Chắc chắn?"
 			return
 		_delete(s.id))
-	row.add_child(del)
-	play.call_deferred("grab_focus")
+	root.add_child(del)
+
+
+## A plain word in ink that underlines in red when focused (secondary actions).
+func _ink_button(text: String) -> Button:
+	var b := Button.new()
+	b.text = text
+	b.focus_mode = Control.FOCUS_ALL
+	b.add_theme_font_size_override("font_size", 22)
+	var flat := StyleBoxFlat.new()
+	flat.bg_color = Color(0, 0, 0, 0)
+	flat.content_margin_left = 6
+	flat.content_margin_right = 6
+	var line := flat.duplicate() as StyleBoxFlat
+	line.border_color = Journal.INK_RED
+	line.border_width_bottom = 3
+	b.add_theme_stylebox_override("normal", flat)
+	for st in ["hover", "focus", "pressed"]:
+		b.add_theme_stylebox_override(st, line)
+	b.add_theme_color_override("font_color", Journal.INK_SOFT)
+	for k in ["font_focus_color", "font_hover_color", "font_pressed_color"]:
+		b.add_theme_color_override(k, Journal.INK_RED)
+	b.mouse_entered.connect(func() -> void: b.grab_focus())
+	return b
 
 
 func _delete(id: String) -> void:
@@ -386,154 +373,111 @@ func _delete(id: String) -> void:
 	_rebuild()
 
 
-func _feature(icon: String, title: String, desc: String) -> HBoxContainer:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 12)
-	var box := UiKit.panel(UiKit.PANEL_DARK, 4)
-	box.add_child(UiKit.icon(icon, 36.0))
-	box.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	row.add_child(box)
-	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 0)
-	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(v)
-	v.add_child(UiKit.label(title, 18, UiKit.TEXT))
-	var d := UiKit.label(desc, 14, UiKit.MUTED)
-	d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	v.add_child(d)
-	return row
-
-
-func _broken_panel(panel: PanelContainer, e: Dictionary) -> void:
-	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 12)
-	panel.add_child(v)
-	v.add_child(UiKit.label("Không đọc được nhân vật %s" % String(e.get("id", "")), 28, Color("ff9a9a")))
-	var why := UiKit.label("Lý do: %s. Các nhân vật khác vẫn chơi bình thường. Nhân vật này chỉ có thể xóa." % String(e.get("error", "")), 17, UiKit.MUTED)
-	why.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+func _broken_page(v: VBoxContainer, e: Dictionary) -> void:
+	v.add_child(Journal.ink("Sổ bị hỏng", 38, Journal.INK_RED))
+	var why := Journal.note("Không đọc được %s" % String(e.get("id", "")),
+		"Lý do: %s. Các sổ khác vẫn chơi bình thường. Sổ này chỉ có thể xóa." % String(e.get("error", "")), 19)
 	v.add_child(why)
-	var del := UiKit.button("Xóa", func() -> void: pass, Vector2(160, 48), 18, UiKit.DANGER)
+	var del := _ink_button("Xóa sổ")
 	del.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	del.pressed.connect(func() -> void:
-		if del.text == "Xóa":
+		if del.text == "Xóa sổ":
 			del.text = "Chắc chắn?"
 			return
 		_delete(String(e.get("id", ""))))
 	v.add_child(del)
 
 
-## Two class cards (hero, role, base stats, passive, starting skill), a name and "Tạo nhân vật".
-func _create_panel(panel: PanelContainer) -> void:
+## "Viết sổ mới": class sketches (2 per row, a red stamp on locked ones), a name line, the seal.
+func _create_page(v: VBoxContainer, root: Control, r: Rect2) -> void:
 	var prefs := Prefs.current()
-	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 12)
-	panel.add_child(v)
-	v.add_child(UiKit.label("Tạo nhân vật", 30, UiKit.TEXT))
-	v.add_child(UiKit.label("Chọn class. Class gắn với nhân vật, không đổi được sau này.", 15, UiKit.MUTED))
-	var cards := HBoxContainer.new()
-	cards.add_theme_constant_override("separation", 14)
-	v.add_child(cards)
+	v.add_child(Journal.ink("Viết sổ mới", 38))
+	v.add_child(Journal.ink("Chọn lớp (gắn với nhân vật, không đổi được)", 19, Journal.INK_SOFT))
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 12)
+	grid.add_theme_constant_override("v_separation", 10)
+	v.add_child(grid)
 	for cid: String in _class_ids:
-		cards.add_child(_class_card(cid))
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 10)
-	v.add_child(row)
+		grid.add_child(_class_card(cid, (r.size.x - 12.0) * 0.5))
+	var cd: Dictionary = _classes[_create_class]
+	var pv: Dictionary = cd.get("passive", {})
+	v.add_child(Journal.note(String(cd.get("name", "")), "%s. Nội tại: %s." % [String(cd.get("role", "")), String(pv.get("name", ""))], 17))
+	var line := HBoxContainer.new()
+	line.add_theme_constant_override("separation", 8)
+	v.add_child(line)
+	var lab := Journal.ink("Tên:", 24)
+	lab.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	line.add_child(lab)
 	var name_edit := LineEdit.new()
-	name_edit.placeholder_text = "Tên nhân vật (để trống: tự đặt)"
+	name_edit.placeholder_text = "%s %d" % [String(cd.get("name", "")), _entries.size() + 1]
 	name_edit.max_length = 18
-	name_edit.custom_minimum_size = Vector2(0, 52)
-	name_edit.add_theme_font_size_override("font_size", 18)
+	name_edit.custom_minimum_size = Vector2(0, 40)
+	name_edit.add_theme_font_size_override("font_size", 22)
+	name_edit.add_theme_color_override("font_color", Journal.INK)
+	name_edit.add_theme_color_override("font_placeholder_color", Journal.DOTS)
+	name_edit.add_theme_color_override("caret_color", Journal.INK)
 	name_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(name_edit)
-	var make := UiKit.button("Tạo nhân vật  ▶", func() -> void:
+	var under := StyleBoxFlat.new()
+	under.bg_color = Color(0, 0, 0, 0)
+	under.border_color = Journal.INK
+	under.border_width_bottom = 3
+	for st in ["normal", "focus"]:
+		name_edit.add_theme_stylebox_override(st, under)
+	line.add_child(name_edit)
+	var make := Journal.seal("Viết sổ ▶", Vector2(240, 62), 26)
+	make.position = r.end - Vector2(240, 62)
+	make.disabled = prefs.is_fixed() or not _unlocks.class_open(_entries, _create_class)
+	make.pressed.connect(func() -> void:
 		var n := name_edit.text.strip_edges()
 		if n == "":
-			n = "%s %d" % [String(_classes[_create_class].get("name", "")), _entries.size() + 1]
-		if prefs.is_fixed() or not _unlocks.class_open(_entries, _create_class):
-			return
+			n = name_edit.placeholder_text
 		var created := prefs.slot_store().create(n, _create_class)
 		if created == null:
 			return
 		prefs.select_slot(created.id)
 		_reload()
 		_chosen = created.id
-		_rebuild(), Vector2(260, 52), 20, UiKit.PRIMARY)
-	row.add_child(make)
+		_rebuild())
+	root.add_child(make)
 
 
-const CARDS_W := 780.0
-
-
-func _class_card(cid: String) -> Button:
+func _class_card(cid: String, w: float) -> Button:
 	var cd: Dictionary = _classes[cid]
 	var on := cid == _create_class
 	var open := _unlocks.class_open(_entries, cid)
 	var b := Button.new()
-	var n := maxi(1, _class_ids.size())   # the cards share the panel's 780 px (4 classes: 184 each; 3: 250; 2: 383)
-	var w := floorf((CARDS_W - 14.0 * (n - 1)) / n)
-	b.custom_minimum_size = Vector2(w, 372)
+	b.custom_minimum_size = Vector2(w, 150)
 	b.focus_mode = Control.FOCUS_ALL
-	var acc := _accent(cid)
-	b.add_theme_stylebox_override("normal", UiKit.style(acc.darkened(0.72) if on else UiKit.PANEL, 12, Color.WHITE if on else UiKit.GOLD, 3 if on else 2))
-	for st in ["hover", "focus", "pressed"]:
-		b.add_theme_stylebox_override(st, UiKit.style(acc.darkened(0.6), 12, Color.WHITE, 3))
+	for st in ["normal", "hover", "focus", "pressed"]:
+		var sb := StyleBoxFlat.new()
+		var lit: bool = on or st != "normal"
+		sb.bg_color = Journal.INK if on else Journal.SKETCH
+		sb.border_color = Journal.GOLD if lit else Journal.INK
+		sb.set_border_width_all(4 if lit else 3)
+		b.add_theme_stylebox_override(st, sb)
+	b.mouse_entered.connect(func() -> void: b.grab_focus())
 	b.pressed.connect(func() -> void:
-		if not open:   # locked: says which stage opens it, cannot be picked
+		if not open:   # locked: the stamp says which stage opens it
 			return
 		_create_class = cid
 		_rebuild())
-	if not open:
-		b.modulate = Color(0.55, 0.55, 0.6)
 	var v := VBoxContainer.new()
 	v.set_anchors_preset(Control.PRESET_FULL_RECT)
-	v.offset_left = 14
-	v.offset_right = -14
-	v.offset_top = 10
-	v.offset_bottom = -10
-	v.add_theme_constant_override("separation", 6 if n < 3 else 3)
+	v.offset_top = 6
+	v.add_theme_constant_override("separation", 0)
 	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	b.add_child(v)
-	var hero := _hero_box(cid, Vector2(w - 28.0, 176 if n < 3 else (140 if n < 4 else 112)), 4.0 if n < 3 else 3.0, 0.6, FrontArt.showcase_gear(cid))
-	v.add_child(hero)
-	var head: BoxContainer = HBoxContainer.new() if n < 3 else VBoxContainer.new()   # narrow: role under the name
-	head.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	v.add_child(head)
-	head.add_theme_constant_override("separation", 0)
-	var nm := UiKit.label(String(cd.get("name", cid)), 24, UiKit.TEXT)
-	nm.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	head.add_child(nm)
-	var role := UiKit.label(String(cd.get("role", "")), 15, acc.lightened(0.35))
-	role.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	head.add_child(role)
-	var stats: Dictionary = cd.get("stats", {})
-	var sr := HBoxContainer.new()
-	sr.add_theme_constant_override("separation", 16 if n < 3 else 8)
-	sr.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	v.add_child(sr)
-	sr.add_child(UiKit.stat("heart", str(roundi(float(stats.get("max_hp", 0)))), "Máu", 16))
-	sr.add_child(UiKit.stat("sword", str(roundi(float(stats.get("damage", 0)))), "Sát thương", 16))
-	sr.add_child(UiKit.stat("boot", str(roundi(float(stats.get("move_speed", 0)))), "Tốc độ", 16))
+	var hero := _hero_box(cid, Vector2(w, 100), 3.0, 0.0, FrontArt.showcase_gear(cid))
 	if not open:
-		var lock := UiKit.label("Khóa: qua ải %d để mở" % _unlocks.need("class_" + cid), 16 if n < 3 else 14, UiKit.GOLD)
-		lock.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		v.add_child(lock)
-	var pv: Dictionary = cd.get("passive", {})
-	var pn := UiKit.label("Nội tại: " + String(pv.get("name", "")), 16 if n < 3 else (14 if n < 4 else 13), UiKit.GOLD)
-	pn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	v.add_child(pn)
-	var pd := UiKit.label(String(pv.get("desc", "")), 14 if n < 3 else (12 if n < 4 else 11), UiKit.MUTED)
-	pd.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	v.add_child(pd)
-	var pool := GameData.load_json(DATA + String(cd.get("upgrades", "")))
-	var start_names := PackedStringArray()
-	for sk: String in cd.get("start_skills", {}):
-		for u: Dictionary in pool.get("upgrades", []):
-			if String(u.get("id", "")) == sk:
-				start_names.append(String(u.get("name", sk)))
-	var sl := UiKit.label("Chiêu khởi đầu: " + ", ".join(start_names), 15 if n < 3 else (13 if n < 4 else 12), UiKit.TEXT)
-	sl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	v.add_child(sl)
-	for c in v.get_children():
-		if c is Control:
-			(c as Control).mouse_filter = Control.MOUSE_FILTER_IGNORE
+		hero.modulate = Color(0.55, 0.5, 0.45, 0.7)
+	v.add_child(hero)
+	var nm := Journal.ink(String(cd.get("name", cid)), 24, Journal.PAPER if on else Journal.INK)
+	nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(nm)
+	if not open:
+		var stamp := Journal.ink("Qua ải %d" % _unlocks.need("class_" + cid), 20, Journal.INK_RED)
+		stamp.position = Vector2(w - 110, 8)
+		stamp.rotation = 0.12
+		b.add_child(stamp)
 	return b
