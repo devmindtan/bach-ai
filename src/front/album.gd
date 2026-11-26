@@ -8,8 +8,10 @@ extends Node2D
 ## --album-all (every monster unlocked).
 
 const LOBBY_SCENE := "res://src/lobby/lobby.tscn"
-const COLS := 7
-const CELL := 88.0
+const COLS := 6   # journal: the grid on the left page (design-web screen-album-journal)
+const CELL := 70.0
+const LEFT_PAGE := Rect2(110, 74, 470, 572)
+const RIGHT_PAGE := Rect2(660, 74, 470, 572)
 const WEAK := Color("ff6a78")
 const RESIST := Color("a9a9b8")
 const TABS := ["Quái", "Boss", "Kỹ năng"]
@@ -25,7 +27,6 @@ var _sel := 0
 var _all := false
 var _layer: CanvasLayer
 var _cells: Array = []
-var _scroll := Vector2.ZERO
 
 
 func _ready() -> void:
@@ -53,13 +54,9 @@ func _ready() -> void:
 	_build()
 
 
-func _process(delta: float) -> void:
-	_scroll += Vector2(18.0, 6.0) * delta
-	queue_redraw()
-
-
 func _draw() -> void:
-	FrontArt.backdrop(self, _scroll, get_viewport_rect().size)
+	Journal.draw_desk(self, get_viewport_rect().size)
+	Journal.draw_book(self, Journal.BOOK)
 
 
 ## Monster ids of the tab: plain monsters or bosses, in monsters.json order.
@@ -167,8 +164,8 @@ func _build() -> void:
 	root.size = get_viewport_rect().size
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_layer.add_child(root)
-	var title := UiKit.label("Album", 46, UiKit.GOLD)
-	title.position = Vector2(40, 18)
+	var title := Journal.ink("Album", 44)
+	title.position = LEFT_PAGE.position + Vector2(0, -8)
 	root.add_child(title)
 	var opened := 0
 	var total := 0
@@ -176,55 +173,63 @@ func _build() -> void:
 		for id: String in entries(t):
 			total += 1
 			opened += 1 if unlocked(id) else 0
-	var done := UiKit.label("Đã mở %d / %d quái · %d kỹ năng" % [opened, total, _skills.size()], 18, UiKit.MUTED)
-	done.position = Vector2(44, 76)
+	var done := Journal.ink("Đã mở %d / %d quái · %d kỹ năng" % [opened, total, _skills.size()], 18, Journal.INK_RED)
+	done.position = LEFT_PAGE.position + Vector2(2, 48)
 	root.add_child(done)
-	var back := UiKit.button("Quay lại" + UiKit.hint("Esc"), func() -> void: get_tree().change_scene_to_file(LOBBY_SCENE), Vector2(180, 42), 17)
-	back.position = Vector2(root.size.x - 40 - 180, 26)
-	back.focus_mode = Control.FOCUS_NONE   # the grid owns the arrows
-	root.add_child(back)
 	# tabs
 	var tabs := HBoxContainer.new()
-	tabs.position = Vector2(40, 104)
+	tabs.position = LEFT_PAGE.position + Vector2(0, 84)
 	tabs.add_theme_constant_override("separation", 8)
 	root.add_child(tabs)
 	for k in TABS.size():
 		tabs.add_child(_tab_plate(k))
-	var keys := UiKit.label("Q / E" if not UiKit.using_pad() else "LB / RB", 16, UiKit.MUTED)
-	keys.position = Vector2(40 + 3 * 158 + 8, 116)
-	root.add_child(keys)
+	Journal.restyle(tabs)
+	var open_tab := tabs.get_child(_tab) as PanelContainer   # the open tab on ink (restyle made every plate a sketch box)
+	open_tab.add_theme_stylebox_override("panel", UiKit.style(Journal.INK, 0, Journal.INK, 2))
+	(open_tab.get_child(0) as Label).add_theme_color_override("font_color", Journal.GOLD)
 	# grid
 	var list := entries(_tab)
 	_sel = clampi(_sel, 0, maxi(0, list.size() - 1))
+	var scroll := ScrollContainer.new()   # more entries than the page holds scroll, the chosen one kept in view
+	scroll.position = LEFT_PAGE.position + Vector2(0, 134)
+	scroll.size = Vector2(LEFT_PAGE.size.x + 14, LEFT_PAGE.end.y - LEFT_PAGE.position.y - 134)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	root.add_child(scroll)
 	var grid := GridContainer.new()
 	grid.columns = COLS
-	grid.position = Vector2(40, 166)
 	grid.add_theme_constant_override("h_separation", 8)
 	grid.add_theme_constant_override("v_separation", 8)
-	root.add_child(grid)
+	scroll.add_child(grid)
+	var chosen: Control = null
 	for i in list.size():
-		grid.add_child(_cell(list[i], i == _sel, i))
+		var cell := _cell(list[i], i == _sel, i)
+		grid.add_child(cell)
+		if i == _sel:
+			chosen = cell
+	if chosen != null:
+		(func() -> void: scroll.ensure_control_visible(chosen)).call_deferred()
 	# detail
-	var panel := UiKit.panel(UiKit.PANEL, 18)
-	panel.position = Vector2(732, 104)
-	panel.custom_minimum_size = Vector2(508, 576)
-	panel.size = Vector2(508, 576)
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+	panel.position = RIGHT_PAGE.position
+	panel.custom_minimum_size = Vector2(RIGHT_PAGE.size.x, 0)
 	root.add_child(panel)
 	if not list.is_empty():
 		_detail(panel, list[_sel])
-	var foot := UiKit.label("←↑↓→ chọn · %s đổi mục · %s quay lại" % ["Q / E" if not UiKit.using_pad() else "LB / RB",
-		"Esc" if not UiKit.using_pad() else "B"], 16, UiKit.MUTED)
-	foot.position = Vector2(40, root.size.y - 30)
+	Journal.restyle(panel)
+	var foot := Journal.ink("←↑↓→ chọn · %s đổi mục · %s về sổ" % ["Q / E" if not UiKit.using_pad() else "LB / RB",
+		"Esc" if not UiKit.using_pad() else "B"], 15, Journal.PAPER)
+	foot.position = Vector2(Journal.BOOK.position.x, Journal.BOOK.end.y + 14)
 	root.add_child(foot)
 
 
 ## A tab plate; a click opens tab [param k] (the mouse works as well as Q / E; user 2026-11-23).
 func _tab_plate(k: int) -> Control:
 	var p := UiKit.panel(UiKit.PANEL_DARK if k != _tab else UiKit.PANEL, 6, UiKit.GOLD if k == _tab else Color("3a3448"))
-	p.custom_minimum_size = Vector2(150, 44)
+	p.custom_minimum_size = Vector2(150, 40)
 	p.mouse_filter = Control.MOUSE_FILTER_STOP
 	p.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	var l := UiKit.label("%s  %d" % [TABS[k], entries(k).size()], 20, UiKit.GOLD if k == _tab else UiKit.MUTED)
+	var l := Journal.ink("%s  %d" % [TABS[k], entries(k).size()], 20, Journal.GOLD if k == _tab else Journal.INK)
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -255,22 +260,22 @@ func _cell(e: Variant, on: bool, i := 0) -> Control:
 			_rebuild.call_deferred())
 	if _tab == 2:
 		var ic := UiKit.card_icon(String(e["id"]), 56.0)
+		if String(e.get("kind", "skill")) == "stat":
+			ic.modulate = Journal.INK
 		ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		ic.position = Vector2(16, 16)
+		ic.position = Vector2(7, 7)
 		c.add_child(ic)
 	var id := "" if _tab == 2 else String(e)
 	var lock := _tab < 2 and not unlocked(id)
 	var boss := _tab == 1
 	c.draw.connect(func() -> void:
-		c.draw_rect(Rect2(Vector2.ZERO, c.size), Color("10161d"))
-		c.draw_rect(Rect2(Vector2(1.5, 1.5), c.size - Vector2(3, 3)), UiKit.GOLD if on else (Color("6e5426") if boss else Color("2e3442")), false, 3.0)
-		if on:   # inside the cell: clip_contents would cut a ring drawn outside
-			c.draw_rect(Rect2(Vector2(4.5, 4.5), c.size - Vector2(9, 9)), Color.WHITE, false, 2.0)
+		c.draw_rect(Rect2(Vector2.ZERO, c.size), Journal.INK if on else Journal.SKETCH)   # a sketch cell on the page
+		c.draw_rect(Rect2(Vector2(1.5, 1.5), c.size - Vector2(3, 3)), Journal.GOLD if on else (Journal.INK_RED if boss else Journal.INK), false, 3.0)
 		if id != "":
 			_draw_monster(c, id, c.size * 0.5, 36.0, lock)
 		if lock:
 			var f := ThemeDB.fallback_font
-			c.draw_string(f, Vector2(0, c.size.y * 0.5 + 12), "?", HORIZONTAL_ALIGNMENT_CENTER, c.size.x, 34, Color("59606e")))
+			c.draw_string(f, Vector2(0, c.size.y * 0.5 + 12), "?", HORIZONTAL_ALIGNMENT_CENTER, c.size.x, 34, Journal.PAPER if on else Journal.DOTS))
 	return c
 
 
@@ -327,21 +332,22 @@ func _detail(panel: PanelContainer, e: Variant) -> void:
 		sim.set_anchors_preset(Control.PRESET_FULL_RECT)
 		art.add_child(sim)
 		var ic := UiKit.card_icon(String(sk["id"]), 40.0)
-		ic.position = Vector2(416, 8)
+		ic.position = Vector2(RIGHT_PAGE.size.x - 48, 8)
 		art.add_child(ic)
 		v.add_child(UiKit.label(String(sk["name"]), 34, UiKit.TEXT))
 		v.add_child(UiKit.label("%s · Hệ %s" % [sk["cls"], sk["element"]], 20, UiKit.GOLD))
 		v.add_child(_row("Hồi chiêu", "%.1f s" % float(sk["cooldown"])))
 		var d := UiKit.label(String(sk["desc"]), 17, UiKit.MUTED)
 		d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		d.custom_minimum_size = Vector2(468, 0)
+		d.custom_minimum_size = Vector2(RIGHT_PAGE.size.x, 0)
 		v.add_child(d)
 		return
 	var id := String(e)
 	var lock := not unlocked(id)
 	var m: Dictionary = _monsters[id]
 	art.draw.connect(func() -> void:
-		art.draw_rect(Rect2(Vector2.ZERO, art.size), Color("0d1218"))
+		art.draw_rect(Rect2(Vector2.ZERO, art.size), Color("d8c498"))   # the portrait sketch box
+		art.draw_rect(Rect2(Vector2.ZERO, art.size), Journal.EDGE, false, 4.0)
 		_draw_monster(art, id, art.size * 0.5, 66.0, lock))
 	v.add_child(UiKit.label("???" if lock else String(m.get("name", id)), 34, UiKit.TEXT))
 	var sp: Dictionary = _species.get("species", {}).get(String(m.get("species", "")), {})
