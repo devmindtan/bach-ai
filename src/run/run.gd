@@ -168,7 +168,7 @@ var mark_style := "ring"   # run_config marks.style (roadmap F); --mark-style= i
 var _marks_cfg := {}
 var _sil_cache := {}       # sprite name -> white silhouette SpriteSheet (outline mark)
 var _num_tag := PackedByteArray()    # 1 = weak element (red), 2 = resisted (grey): design/species.md
-var _num_crit := PackedByteArray()   # 1 = that number is a crit (bigger, orange, "!")
+var _num_crit := PackedByteArray()   # 1 = that number is a crit (bigger, orange; the flash marks it)
 var shake := ScreenShake.new()       # camera shake (6C.2); Cài đặt can turn it off
 var _hitstop := 0.0                  # s the sim stays frozen after a crit on an elite / boss
 var _crit_cfg: Dictionary = {}
@@ -3496,7 +3496,7 @@ func _draw_damage_numbers(view: Rect2) -> void:
 		var a := 1.0 if u < 0.6 else 1.0 - (u - 0.6) / 0.4
 		var p := (_num_pos[i] - Vector2(30.0, _num_rise * u)).round()
 		var crit := _num_crit[i] == 1
-		var txt := str(maxi(1, roundi(_num_val[i]))) + ("!" if crit else "")
+		var txt := str(maxi(1, roundi(_num_val[i])))   # a crit shows the Gai nổ flash, no "!" (user 2026-11-26)
 		var sz := roundi(_num_size * 1.4) if crit else _num_size
 		var col := Color(1.0, 0.55, 0.15, a) if crit else Color(1.0, 0.93, 0.6, a)
 		if _num_tag[i] == 1:   # weak element: red (design/species.md)
