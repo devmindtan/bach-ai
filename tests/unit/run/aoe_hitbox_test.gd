@@ -196,7 +196,7 @@ func test_god_hammer_falls_on_the_nearest_monster() -> void:
 ## User 2026-11-26: the archer and assassin burst skills (lib/roguefx.py) must create their effect and damage a
 ## monster where they land.
 func test_archer_and_assassin_bursts_damage_the_monster() -> void:
-	for pair: Array in [["archer", "arrow_rain", "crowd"], ["archer", "thorn_trap", "nearest"],
+	for pair: Array in [["archer", "arrow_rain", "crowd"],
 			["assassin", "smoke_bomb", "self"], ["assassin", "shadow_strike", "nearest"]]:
 		var sid := String(pair[1])
 		var r := _run(String(pair[0]), {sid: 1})
@@ -302,4 +302,25 @@ func test_hit_stats_reach_the_monsters_without_the_panel() -> void:
 	_check(e.crit_chance >= 0.15, "Ám sát crit chance reaches the monsters, got %s" % e.crit_chance)
 	_check(e.execute_below > 0.1, "Kết liễu reaches the monsters, got %s" % e.execute_below)
 	_check(e.combo_per > 0.0, "Liên hoàn reaches the monsters, got %s" % e.combo_per)
+	r.free()
+
+
+## design/rogue-kits.md, Bẫy gai: the cast lays an armed trap on the ground; nothing happens until a monster steps on
+## it, then the thorns spring and hurt it.
+func test_thorn_trap_waits_until_a_monster_steps_on_it() -> void:
+	var r := _run("archer", {"thorn_trap": 1})
+	var e: Enemies = r.enemies
+	e.spawn("blob", Vector2(220, 0))
+	_settle(e)
+	r._cast("thorn_trap", r.pool["skills"]["thorn_trap"], "trap")
+	_check(r._traps.size() == 1, "one trap is laid, got %d" % r._traps.size())
+	for i in 30:
+		r._step_traps(1.0 / 60.0)
+	_check(r._traps.size() == 1 and is_equal_approx(e.hp[0], 100.0), "it waits while no monster is on it")
+	e.pos[0] = Vector2(r._traps[0]["pos"])   # the monster walks onto it
+	_settle(e)
+	r._step_traps(1.0 / 60.0)
+	_check(r._traps.is_empty(), "it springs")
+	_run_fx(r)
+	_check(e.hp[0] < 100.0, "the thorns hurt the monster on it, hp=%s" % e.hp[0])
 	r.free()

@@ -128,7 +128,7 @@
       "id": "thorn_trap",
       "kind": "skill",
       "name": "Bẫy gai",
-      "desc": "Gai mọc dưới chân quái gần nhất: trói chân (choáng) và chảy máu. Mỗi cấp: +20% sát thương. Cấp 2: 2 bẫy; cấp 4: 3 bẫy.",
+      "desc": "Đặt bẫy gai nằm chờ giữa bạn và quái gần nhất (giữ 8 giây, tối đa 6 bẫy). Quái giẫm vào thì gai bật: trói chân và chảy máu. Mỗi cấp: +20% sát thương. Cấp 2: 2 bẫy mỗi lần; cấp 4: 3 bẫy.",
       "max_level": 5,
       "weight": 2,
       "effects": {
@@ -596,12 +596,12 @@
       ]
     },
     "thorn_trap": {
-      "sprite": "thorn-trap",
-      "cast": "nearest",
+      "sprite": "thorn-trap-i",
+      "cast": "trap",
       "anim": "burst",
       "damage_mul": 0.8,
       "size_mul": 1.0,
-      "cooldown": 5.5,
+      "cooldown": 4.0,
       "cast_range": 200.0,
       "count": [
         1,
@@ -622,6 +622,16 @@
           "dps_mul": 0.2,
           "time": 2.0
         }
+      ],
+      "trap_life": 8.0,
+      "trap_max": 6,
+      "trigger": 22.0,
+      "tier_sprites": [
+        "thorn-trap-i",
+        "thorn-trap-ii",
+        "thorn-trap-iii",
+        "thorn-trap-iv",
+        "thorn-trap-v"
       ]
     },
     "hawk": {

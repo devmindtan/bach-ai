@@ -63,6 +63,7 @@ var _pool_here := false      # --pool-here          # > 0: the hero stands in po
 var _outro_t := -1.0          # the boss outro: seconds left (-1 not started, 0 over)
 var _last_boss_name := "Boss"   # a wave of this stage spawns a boss: won only by killing it
 var _delayed: Array = []
+var _traps: Array = []   # Bẫy gai (design/rogue-kits.md): armed traps {pos, sid, life, dmg, sc, sprite, kb, trigger}
 var _pets := {}   # Chim ưng (design/rogue-kits.md): skill id -> {pos, state idle|dive|back, target, dmg, sc, t}
 var profile: Profile                # equipment (Prefs.current().profile())
 var won_items: Array[String] = []   # equipment won this run (end screen)
@@ -759,6 +760,7 @@ func _tick(dt: float) -> void:
 	enemies.slams.clear()
 	_step_fx(dt)
 	_step_pets(dt)
+	_step_traps(dt)
 	step_zones(dt)
 	if not enemies.hit_pos.is_empty():
 		Sfx.play("hit")
@@ -1211,6 +1213,16 @@ func _cast(sid: String, ts: Dictionary, how: String) -> void:
 					if probe != null:
 						aim -= probe.center
 				_add_fx(sprite, anim, sc, dmg, -1.0, aim, sid, kb)
+		"trap":
+			# Bẫy gai: armed traps between the hero and the nearest monster (around the hero when none), at most trap_max
+			for k in _skill_count(sid, ts):
+				var spot := center + to_target.rotated((k - 1) * 0.6) * 90.0
+				if target_i >= 0:
+					spot = center.lerp(enemies.center_of(target_i), 0.55) + Vector2(rng.randf_range(-24, 24), rng.randf_range(-24, 24))
+				_traps.append({"pos": spot, "sid": sid, "life": float(ts.get("trap_life", 8.0)), "dmg": dmg, "sc": sc,
+					"sprite": sprite, "kb": kb, "trigger": float(ts.get("trigger", 22.0))})
+			while _traps.size() > int(ts.get("trap_max", 6)):
+				_traps.pop_front()
 		"orbit":
 			# Lốc dao (design/rogue-kits.md): the spin follows the hero for duration (by level), cutting every rehit s
 			var durs: Variant = ts.get("duration", 2.5)
@@ -2793,6 +2805,7 @@ func _draw() -> void:
 		var tint := Color(1, 1, 1, 0.45) if blink else Color.WHITE
 		_draw_auras("back")
 		_draw_fx(true)
+		_draw_traps()
 		_draw_dash_trail(hero)
 		if poison_t > 0.0:   # standing in poison (user 2026-11-21): a pulsing green tint and rising bubbles
 			var pz := 0.5 + 0.5 * sin(clock * 10.0)
@@ -3026,6 +3039,33 @@ func _step_shot(fx: Dictionary, dt: float) -> bool:
 	sh["pierce"] = int(sh["pierce"]) - 1
 	sh["wait"] = 0.15
 	return int(sh["pierce"]) < 0
+
+
+## Bẫy gai (design/rogue-kits.md): a trap springs (its burst deals the damage) when a monster steps within its
+## trigger radius; unsprung traps fade after their life.
+func _step_traps(dt: float) -> void:
+	var i := 0
+	while i < _traps.size():
+		var tr: Dictionary = _traps[i]
+		tr["life"] = float(tr["life"]) - dt
+		if not enemies.living_within(tr["pos"], float(tr["trigger"])).is_empty():
+			var fx := _add_fx(String(tr["sprite"]), "burst", float(tr["sc"]), float(tr["dmg"]), -1.0, tr["pos"], String(tr["sid"]), float(tr["kb"]))
+			if not fx.is_empty():
+				fx["ground"] = true
+			_traps.remove_at(i)
+		elif float(tr["life"]) <= 0.0:
+			_traps.remove_at(i)
+		else:
+			i += 1
+
+
+## Armed traps lie on the ground as the burst's opening frame (the cracked ring), blinking in their last second.
+func _draw_traps() -> void:
+	for tr: Dictionary in _traps:
+		var sheet: SpriteSheet = sheets.get(String(tr["sprite"]))
+		if sheet == null or (float(tr["life"]) < 1.0 and int(float(tr["life"]) * 8.0) % 2 == 0):
+			continue
+		sheet.draw(self, "burst", 0.25, tr["pos"], float(tr["sc"]) * float(sheet.meta.get("px_scale", 1.0)))
 
 
 ## Chim ưng (design/rogue-kits.md): every owned "pet" skill keeps its companion by the hero; a dive flies to its
