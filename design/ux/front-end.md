@@ -35,14 +35,11 @@ Sảnh chuẩn bị ──Trang bị──→ Màn trang bị (design/ux/equipme
 
 ## Màn tiêu đề (`src/front/title.tscn`, là màn chạy đầu tiên)
 
-- Nền: đồng cỏ trôi chậm như sảnh; hai nhân vật (kiếm sĩ, pháp sư) đứng trên bệ hai bên.
-- Giữa trên: logo **BÁCH ẢI** lớn, dưới là "Vượt trăm ải".
-- Giữa: một cột nút rộng bằng nhau, nút đầu là nút chính (màu nổi):
-  1. **Tiếp tục**, dòng phụ "<tên> · <class> · Ải <n>" (chỉ khi có nhân vật), hoặc **Chơi** khi chưa có (mở màn chọn nhân vật ở chế độ tạo);
-  2. **Chọn nhân vật**;
-  3. **Cài đặt** (bảng cài đặt dùng chung);
-  4. **Thoát**.
-- Dưới: phiên bản ở góc trái, phím tắt ở góc phải. Lên/xuống + Enter chọn; nút đầu có focus.
+Thiết kế lại 2026-11-26, hướng C "Hoàng hôn trước trận" (người dùng chọn trong Design Lab, sửa theo góp ý: chữ liền nét,
+bỏ nhân vật, cổng lớn, cổng xa cắm chân xuống đất; `design-web/games/bach-ai/specs/title.md`). Trời hoàng hôn kẻ dải,
+mặt trời thấp, bốn dãy đồi với các cổng ải xa dần, một cổng lớn trên đồi gần in bóng lên mặt trời; tên "BÁCH ẢI" (font
+chữ của game) và "VƯỢT TRĂM ẢI" lệch trái trên một vệt tối bầu dục; menu chữ ngang: **Tiếp tục** (dòng phụ "Ải N ·
+class"; "Chơi" khi chưa có nhân vật), Chọn nhân vật, Cài đặt, Thoát. ←/→ chọn (gạch chân màu than hồng), Enter.
 
 ## Màn chọn nhân vật (`src/front/characters.tscn`)
 
