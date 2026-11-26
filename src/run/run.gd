@@ -2391,7 +2391,9 @@ func upgrade_preview(id: String) -> Dictionary:
 
 
 const STAT_LABEL := {"max_hp": "Máu tối đa", "damage": "Sát thương", "cooldown": "Hồi chiêu", "area": "Vùng đánh", "amount": "Số lượng",
-	"move_speed": "Tốc độ chạy", "magnet": "Tầm hút", "regen": "Hồi máu", "armor": "Giáp"}
+	"move_speed": "Tốc độ chạy", "magnet": "Tầm hút", "regen": "Hồi máu", "armor": "Giáp",
+	"crit_chance": "Chí mạng", "crit_mul": "Sát thương chí mạng", "execute_below": "Kết liễu (máu dưới)",
+	"combo_per": "Liên hoàn (mỗi tầng)", "clone_time": "Phân thân"}
 
 
 ## "+20", "-0.5", "+1.5": a signed amount without a trailing ".0".
@@ -2426,6 +2428,12 @@ static func _fmt_stat(key: String, v: float) -> String:
 			return "×%.2f" % v
 		"regen":
 			return "%.1f/s" % v
+		"crit_chance", "crit_mul", "execute_below":
+			return "%d%%" % roundi(v * 100.0)
+		"combo_per":
+			return "+%.1f%% chí mạng" % (v * 100.0)
+		"clone_time":
+			return "%.1f s" % v
 		_:
 			return str(roundi(v))
 

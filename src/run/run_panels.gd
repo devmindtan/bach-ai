@@ -779,10 +779,13 @@ func _stat_card_row(o: Dictionary) -> HBoxContainer:
 	return h
 
 
-const CHARACTER_STATS := ["max_hp", "damage", "cooldown", "area", "amount", "move_speed", "regen", "magnet", "armor"]
+const CHARACTER_STATS := ["max_hp", "damage", "crit_chance", "crit_mul", "cooldown", "area", "amount", "move_speed", "regen",
+	"magnet", "armor", "execute_below", "combo_per", "clone_time"]
 ## Icon for each stat (ui-icons), used on the sheet and in source chips.
 const STAT_ICON := {"max_hp": "heart", "damage": "sword", "cooldown": "haste", "area": "reach",
-	"move_speed": "boot", "regen": "regen", "magnet": "magnet", "armor": "shield", "amount": "extra_strike"}
+	"move_speed": "boot", "regen": "regen", "magnet": "magnet", "armor": "shield", "amount": "extra_strike",
+	"crit_chance": "keen_blades", "crit_mul": "shadow_strike", "execute_below": "execute", "combo_per": "combo",
+	"clone_time": "shadow_clone"}
 const WHAT_ICON := {"Sát thương": "sword", "Hồi chiêu": "haste", "Vùng": "reach", "Nhát sau": "back_slash"}
 
 

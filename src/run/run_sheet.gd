@@ -29,6 +29,10 @@ func card_effect_text(id: String) -> String:
 			parts.append("Nhát chém sau %d%% sát thương của Chém kiếm" % roundi(pct * 100.0))
 			continue
 		var amount: String = ("%+d%%" % roundi(float(e["mul"]) * lv * 100.0)) if e.has("mul") else run.signed(float(e["add"]) * lv)
+		if e.has("add") and key in ["crit_chance", "crit_mul", "execute_below", "combo_per"]:   # shares read as percents
+			amount = "%+.1f%%" % (float(e["add"]) * lv * 100.0) if key == "combo_per" else "%+d%%" % roundi(float(e["add"]) * lv * 100.0)
+		elif e.has("add") and key == "clone_time":
+			amount = "+%.1f s" % (float(e["add"]) * lv)
 		if key.begins_with("skill_damage.") or key.begins_with("skill_area."):
 			parts.append("%s %s" % ["Sát thương" if key.begins_with("skill_damage.") else "Vùng", amount])
 			continue
@@ -148,4 +152,12 @@ func stat_breakdown() -> Dictionary:
 	if bd.has("cooldown") and float(bd["cooldown"]["final"]) - bsum < cd_floor:
 		bd["cooldown"]["final"] = cd_floor * maxf(0.2, 1.0 + bsum)
 		bd["cooldown"]["capped"] = true
+	# Chí mạng: the run's base (run_config crit) under the class and card bonuses, as the monsters apply it
+	var crit: Dictionary = run.cfg.get("crit", {})
+	for pair: Array in [["crit_chance", float(crit.get("chance", 0.05))], ["crit_mul", float(crit.get("mul", 1.75))]]:
+		var k: String = pair[0]
+		var e: Dictionary = bd.get(k, {"base": 0.0, "final": 0.0, "parts": []})
+		e["base"] = float(e["base"]) + float(pair[1])
+		e["final"] = float(e["final"]) + float(pair[1])
+		bd[k] = e
 	return bd
