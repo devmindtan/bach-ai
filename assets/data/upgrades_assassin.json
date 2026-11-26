@@ -170,6 +170,21 @@
       "element": "physical"
     },
     {
+      "id": "shadow_clone",
+      "kind": "stat",
+      "name": "Phân thân",
+      "desc": "Mỗi lần Lướt để lại một bóng ảnh ở chỗ cũ; trong lúc nó còn, mọi chiêu bắn của bạn cũng bắn ra từ bóng ảnh (50% sát thương). Mỗi cấp: bóng ảnh giữ thêm 0,8 giây (tối đa 4 giây).",
+      "max_level": 5,
+      "weight": 2,
+      "effects": {
+        "clone_time": {
+          "add": 0.8
+        }
+      },
+      "rarity": "legendary",
+      "fx_tiers": []
+    },
+    {
       "id": "combo",
       "kind": "stat",
       "name": "Liên hoàn",

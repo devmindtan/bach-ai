@@ -64,6 +64,9 @@ var _outro_t := -1.0          # the boss outro: seconds left (-1 not started, 0 
 var _last_boss_name := "Boss"   # a wave of this stage spawns a boss: won only by killing it
 var _delayed: Array = []
 var _mark_sprite := ""   # Đánh dấu's reticle (tier sprite), drawn over the marked monster
+var _clone := {}   # Phân thân (design/rogue-kits.md): {pos, life, face} while the shadow stands
+var _casting_clone := false
+var _clone_pass := false   # this cast is the shadow's (half damage)
 var _traps: Array = []   # Bẫy gai (design/rogue-kits.md): armed traps {pos, sid, life, dmg, sc, sprite, kb, trigger}
 var _pets := {}   # Chim ưng (design/rogue-kits.md): skill id -> {pos, state idle|dive|back, target, dmg, sc, t}
 var profile: Profile                # equipment (Prefs.current().profile())
@@ -761,6 +764,7 @@ func _tick(dt: float) -> void:
 	enemies.slams.clear()
 	_step_fx(dt)
 	_step_pets(dt)
+	_step_clone(dt)
 	_step_traps(dt)
 	step_zones(dt)
 	if not enemies.hit_pos.is_empty():
@@ -869,6 +873,7 @@ func try_dash() -> bool:
 	_dash_trail = _dash_left + 0.12
 	_dash_hit_half = false
 	_dash_cd = skill_cooldown("dash")
+	_leave_clone(player_pos)
 	if absf(_dash_dir.x) > 0.1:
 		face_left = _dash_dir.x < 0.0
 		_update_body()
@@ -1178,7 +1183,19 @@ func skill_pick_ids() -> Array[String]:
 
 
 func _cast(sid: String, ts: Dictionary, how: String) -> void:
-	var dmg := skill_damage(sid)
+	if how == "projectile" and not _clone.is_empty() and not _casting_clone:   # Phân thân: the shadow fires too
+		_casting_clone = true   # guards both nested casts against firing the shadow again
+		_clone_pass = false
+		_cast(sid, ts, how)
+		var saved := player_pos
+		player_pos = _clone["pos"]
+		_clone_pass = true
+		_cast(sid, ts, how)
+		_clone_pass = false
+		_casting_clone = false
+		player_pos = saved
+		return
+	var dmg := skill_damage(sid) * (float(cfg.get("clone", {}).get("damage_mul", 0.5)) if _clone_pass else 1.0)
 	var sc := _sprite_scale * skill_size(sid)
 	var sprite := _skill_sprite(sid, ts)
 	var center := player_pos + _hit_center
@@ -2826,6 +2843,7 @@ func _draw() -> void:
 		_draw_fx(true)
 		_draw_traps()
 		_draw_dash_trail(hero)
+		_draw_clone(hero)
 		if poison_t > 0.0:   # standing in poison (user 2026-11-21): a pulsing green tint and rising bubbles
 			var pz := 0.5 + 0.5 * sin(clock * 10.0)
 			tint = Color(tint.r * (0.55 + 0.15 * pz), tint.g, tint.b * (0.45 + 0.15 * pz), tint.a)
@@ -3059,6 +3077,33 @@ func _step_shot(fx: Dictionary, dt: float) -> bool:
 	sh["pierce"] = int(sh["pierce"]) - 1
 	sh["wait"] = 0.15
 	return int(sh["pierce"]) < 0
+
+
+## Phân thân (design/rogue-kits.md): a dash leaves a shadow at [param at] for the hero's clone_time s (0 = no card).
+func _leave_clone(at: Vector2) -> void:
+	var life := float(stats.get("clone_time", 0.0))
+	if life > 0.0:
+		_clone = {"pos": at, "life": life, "face": face_left}
+
+
+func _step_clone(dt: float) -> void:
+	if _clone.is_empty():
+		return
+	_clone["life"] = float(_clone["life"]) - dt
+	if float(_clone["life"]) <= 0.0:
+		_clone = {}
+
+
+## The shadow: the hero's own sprite in the card level's colour (I grey .. V violet-gold), see-through, fading out.
+const CLONE_COLS := [Color(0.35, 0.35, 0.45), Color(0.3, 0.3, 0.6), Color(0.45, 0.25, 0.7), Color(0.6, 0.25, 0.75), Color(0.85, 0.6, 0.35)]
+
+
+func _draw_clone(hero: SpriteSheet) -> void:
+	if _clone.is_empty() or hero == null:
+		return
+	var col: Color = CLONE_COLS[clampi(int(levels.get("shadow_clone", 1)) - 1, 0, 4)]
+	var a := clampf(float(_clone["life"]) / 0.5, 0.0, 1.0) * (0.55 + 0.1 * sin(clock * 12.0))
+	hero.draw(self, "idle", clock, _clone["pos"], hero_scale(hero), bool(_clone["face"]), Color(col, a))
 
 
 ## Bẫy gai (design/rogue-kits.md): a trap springs (its burst deals the damage) when a monster steps within its

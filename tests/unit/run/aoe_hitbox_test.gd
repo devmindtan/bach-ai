@@ -359,3 +359,24 @@ func test_charged_shot_grows_with_standing_still() -> void:
 	_check(float(still["scale"]) > float(moving["scale"]), "and is bigger")
 	_check(int(still["shot"]["pierce"]) > int(moving["shot"]["pierce"]), "and pierces more")
 	r.free()
+
+
+## design/rogue-kits.md, Phân thân: after a dash a shadow stays where the hero was; while it lasts every projectile
+## cast is fired again from the shadow at half damage.
+func test_shadow_clone_repeats_projectiles_from_its_spot() -> void:
+	var r := _run("assassin", {"throw_knife": 1, "shadow_clone": 5})
+	r._recompute_stats()
+	var e: Enemies = r.enemies
+	e.spawn("blob", Vector2(260, 0))
+	_settle(e)
+	r._leave_clone(Vector2(220, 0))
+	_check(not r._clone.is_empty(), "a dash leaves a shadow")
+	r._cast("throw_knife", r.pool["skills"]["throw_knife"], "projectile")
+	_check(r._fx.size() == 2, "one dagger from the hero and one from the shadow, got %d" % r._fx.size())
+	if r._fx.size() == 2:
+		var near_clone: Dictionary = r._fx[1]
+		_check(Vector2(near_clone["pos"]).distance_to(Vector2(220, 0)) < 40.0, "the second leaves from the shadow")
+		_check(float(near_clone["shot"]["damage"]) < float(r._fx[0]["shot"]["damage"]), "at less damage")
+	r._step_clone(10.0)
+	_check(r._clone.is_empty(), "the shadow fades after its time")
+	r.free()
