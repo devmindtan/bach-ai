@@ -8,10 +8,10 @@ extends Node2D
 
 const LOBBY_SCENE := "res://src/lobby/lobby.tscn"
 const TREE_SCENE := "res://src/front/card_tree.tscn"
-const TILE := Vector2(72, 72)   # journal: sketch cells on the left page (design-web screen-deck-journal)
+const TILE := Vector2(76, 76)   # journal: sketch cells on the left page (design-web screen-deck-journal)
 const LEFT_PAGE := Rect2(110, 74, 470, 572)
 const RIGHT_PAGE := Rect2(660, 74, 470, 572)
-const TIER_INK := {"common": Color("6a6a6a"), "rare": Color("3a6aaa"), "epic": Color("7a3ab8"), "legendary": Color("c0801a")}
+const TIER_INK := {"common": Color("3a2414"), "rare": Color("3a6aaa"), "epic": Color("7a3ab8"), "legendary": Color("c0801a")}
 
 var _slot: Slot
 var _ups: Array = []
@@ -73,6 +73,12 @@ func _draw() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		get_tree().change_scene_to_file(LOBBY_SCENE)
+	elif event is InputEventKey and event.pressed and not event.echo:
+		var k := (event as InputEventKey).physical_keycode
+		if k == KEY_Q or k == KEY_E:
+			_set_kind(1 - _kind)
+		elif k == KEY_T:
+			_open_tree(_view)
 
 
 func _save() -> void:
@@ -93,6 +99,9 @@ func _card(id: String) -> Dictionary:
 	return {}
 
 
+var _kind := 0   # the left page's tab: 0 Chiêu, 1 Chỉ số (Q / E)
+
+
 func _build() -> void:
 	_layer = CanvasLayer.new()
 	add_child(_layer)
@@ -101,228 +110,219 @@ func _build() -> void:
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_layer.add_child(root)
 	Journal.back_tab(root, func() -> void: get_tree().change_scene_to_file(LOBBY_SCENE))   # "Trở lại" (web .back-tab)
-	var title := Journal.ink("Bộ thẻ", 44)
-	title.position = LEFT_PAGE.position + Vector2(0, -8)
-	root.add_child(title)
-	var sub := Journal.ink("Lên cấp trong trận chỉ ra thẻ trong bộ", 18, Journal.INK_RED)
-	sub.position = LEFT_PAGE.position + Vector2(2, 48)
-	root.add_child(sub)
-	var hint := Journal.ink("Chọn thẻ · Enter thêm / bỏ · Esc về sổ", 15, Journal.PAPER)
+	var hint := Journal.ink("←↑↓→ chọn thẻ · Q / E chiêu / chỉ số · Enter thêm / bỏ · T cây thẻ · Esc về sổ", 15, Journal.PAPER)
 	hint.position = Vector2(Journal.BOOK.position.x, Journal.BOOK.end.y + 14)
 	root.add_child(hint)
-	# right page top: the deck tabs and the shards
+	# the decks are bookmark ribbons (web screen-deck-journal)
+	Journal.ribbons(root, _slot.decks.map(func(d: Dictionary) -> String: return String(d.get("name", "Bộ"))),
+		[Color("8a3a3a"), Color("3a6a8a"), Color("6a8a3a")], _slot.deck_active, func(i: int) -> void:
+		_slot.deck_active = i
+		_save()
+		_rebuild())
+	# left page: the title, its line, the Chiêu / Chỉ số tabs, the cards
+	var left := VBoxContainer.new()
+	left.position = LEFT_PAGE.position + Vector2(0, -8)
+	left.custom_minimum_size = Vector2(LEFT_PAGE.size.x, 0)
+	left.add_theme_constant_override("separation", 6)
+	root.add_child(left)
+	left.add_child(Journal.ink("Bộ thẻ", 44))
+	var sub := Journal.ink("Thẻ mang vào trận: lên cấp trong trận chỉ ra thẻ trong bộ", 20, Journal.INK_RED)
+	sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	sub.custom_minimum_size = Vector2(LEFT_PAGE.size.x, 0)
+	left.add_child(sub)
 	var tabs := HBoxContainer.new()
 	tabs.add_theme_constant_override("separation", 6)
-	tabs.position = RIGHT_PAGE.position
-	root.add_child(tabs)
-	for i in _slot.decks.size():
-		var on := i == _slot.deck_active
-		var t := UiKit.button(String(_slot.decks[i].get("name", "Bộ %d" % (i + 1))), func() -> void:
-			_slot.deck_active = i
-			_save()
-			_rebuild(), Vector2(104, 34), 17)
-		if on:
-			t.add_theme_stylebox_override("normal", UiKit.style(Color("3a3020"), 8, Color.WHITE, 3))   # chosen: ink after restyle
+	left.add_child(tabs)
+	for i in 2:
+		var t := Button.new()
+		t.text = ["Chiêu", "Chỉ số"][i]
+		t.focus_mode = Control.FOCUS_NONE
+		t.add_theme_font_size_override("font_size", 18)
+		for st in ["normal", "hover", "pressed"]:
+			var sb := StyleBoxFlat.new()
+			sb.bg_color = Journal.INK if i == _kind else Color(0, 0, 0, 0)
+			sb.border_color = Journal.INK
+			sb.set_border_width_all(2)
+			sb.content_margin_left = 8
+			sb.content_margin_right = 8
+			t.add_theme_stylebox_override(st, sb)
+		for k in ["font_color", "font_hover_color", "font_pressed_color"]:
+			t.add_theme_color_override(k, Journal.PAPER if i == _kind else Journal.INK)
+		t.pressed.connect(func() -> void: _set_kind(i))
 		tabs.add_child(t)
-	var wallet := _shard_stat("%d Mảnh thẻ" % _slot.shards, "Mảnh thẻ: thắng ải, hạ boss, mở rương, gacha trùng; mở nút cây thẻ.", 18)
-	wallet.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	tabs.add_child(wallet)
-	Journal.restyle(tabs)
-	# collection grid: skills, then stats
-	var y := 150.0
-	for kind in ["skill", "stat"]:
-		var head := Journal.ink("Chiêu" if kind == "skill" else "Chỉ số", 24, Journal.INK_SOFT)
-		head.position = Vector2(LEFT_PAGE.position.x, y)
-		root.add_child(head)
-		y += 34.0
-		var grid := GridContainer.new()
-		var cols := 6
-		var x0 := LEFT_PAGE.position.x
-		if kind == "skill" and not _start.is_empty():
-			# the starting skill: one big 2x2 tile of its own, always in the deck (user 2026-11-20)
-			var big := _start_tile(_card(String(_start[0])))
-			big.position = Vector2(x0, y)
-			root.add_child(big)
-			cols = 4
-			x0 += 2 * (TILE.x + 8)
-		grid.columns = cols
-		grid.add_theme_constant_override("h_separation", 8)
-		grid.add_theme_constant_override("v_separation", 8)
-		grid.position = Vector2(x0, y)
-		root.add_child(grid)
-		var n := 0
-		for u: Dictionary in _ups:
-			if String(u.get("kind", "")) == kind and Deck.is_deck_card(u) and not (kind == "skill" and _start.has(String(u["id"]))):
-				grid.add_child(_tile(u))
-				n += 1
-		var rows := ceilf(n / float(cols))
-		if cols == 4:
-			rows = maxf(rows, 2.0)
-		y += rows * (TILE.y + 8) + 12
-	_detail(root)
+	var grid := GridContainer.new()
+	grid.columns = 5
+	grid.add_theme_constant_override("h_separation", 8)
+	grid.add_theme_constant_override("v_separation", 8)
+	left.add_child(grid)
+	var focus: Control = null
+	for u: Dictionary in _list():
+		var t := _tile(u)
+		grid.add_child(t)
+		if String(u["id"]) == _view:
+			focus = t
+	if focus == null and grid.get_child_count() > 0:
+		focus = grid.get_child(0)
+	if focus != null:
+		focus.call_deferred("grab_focus")
+	_deck_page(root)
 
 
-## The starting skill's big tile: gold frame, a large icon, "Chiêu khởi đầu", a lock line; it is always in
-## the deck and cannot be taken out, so pressing it only shows its detail.
-func _start_tile(u: Dictionary) -> Button:
-	var id := String(u.get("id", ""))
-	var on := id == _view
-	var b := Button.new()
-	b.custom_minimum_size = TILE * 2 + Vector2(8, 8)
-	b.size = b.custom_minimum_size
-	b.focus_mode = Control.FOCUS_ALL
-	_sketch(b, Journal.INK_RED, on, true)
-	var v := VBoxContainer.new()
-	v.set_anchors_preset(Control.PRESET_FULL_RECT)
-	v.alignment = BoxContainer.ALIGNMENT_BEGIN
-	v.offset_top = 10
-	v.add_theme_constant_override("separation", 4)
-	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	b.add_child(v)
-	var tag := Journal.ink("Chiêu khởi đầu", 15, Journal.GOLD if on else Journal.INK_RED)
-	tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	v.add_child(tag)
-	var ic := UiKit.card_icon(id, 64.0)
-	ic.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	v.add_child(ic)
-	var nm := Journal.ink(String(u.get("name", id)), 19, Journal.PAPER if on else Journal.INK)
-	nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	v.add_child(nm)
-	var lock := Journal.ink("Luôn trong bộ", 14, Journal.PAPER if on else Journal.INK_SOFT)
-	lock.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	v.add_child(lock)
-	for c in v.get_children():
-		c.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	Tip.attach(b, String(u.get("name", id)), String(u.get("desc", "")), UiKit.GOLD, id, "Chiêu khởi đầu · luôn trong bộ")
-	b.pressed.connect(func() -> void:
-		_view = id
-		_rebuild())
-	if on:
-		b.call_deferred("grab_focus")
-	return b
+## The cards of the tab: skills (the starting one first) or stats, the deck's kind only.
+func _list() -> Array:
+	var kind := "skill" if _kind == 0 else "stat"
+	var out := []
+	for u: Dictionary in _ups:
+		if String(u.get("kind", "")) == kind and Deck.is_deck_card(u):
+			if _start.has(String(u["id"])):
+				out.push_front(u)
+			else:
+				out.append(u)
+	return out
 
 
+func _set_kind(i: int) -> void:
+	if i != _kind:
+		_kind = i
+		_view = String(_list()[0]["id"]) if not _list().is_empty() else ""
+		_rebuild()
+
+
+## A card: its icon in a sketch cell framed in its tier's ink; in the deck: a green tick; viewed: ink + gold.
+## Focus views it; Enter / a click adds or removes it.
 func _tile(u: Dictionary) -> Button:
 	var id := String(u["id"])
-	var in_deck := _cards().has(id)
+	var in_deck := _cards().has(id) or _start.has(id)
 	var on := id == _view
 	var b := Button.new()
 	b.custom_minimum_size = TILE
 	b.focus_mode = Control.FOCUS_ALL
-	var tier := String(u.get("rarity", "common"))   # design/card-rarity.md "Khung theo bậc": the frame is the tier
-	_sketch(b, TIER_INK.get(tier, Journal.INK), on, in_deck)   # the frame's ink is the tier (design/card-rarity.md)
-	var ic := UiKit.card_icon(id, 48.0)   # the name is in the tooltip and the detail (journal cells are icons)
-	ic.position = (TILE - Vector2(48, 48)) * 0.5
-	ic.size = Vector2(48, 48)
-	var line_art := String(u.get("kind", "")) == "stat"   # stat icons are pale line art: drawn in ink on paper
-	if line_art:
-		ic.modulate = Journal.PAPER if on else (Journal.INK if in_deck else Journal.INK_SOFT)
-	else:
-		ic.modulate = Color.WHITE if in_deck or on else Color(0.55, 0.5, 0.45)
+	var tier := String(u.get("rarity", "common"))
+	_sketch(b, TIER_INK.get(tier, Journal.INK), on, false)
+	var ic := UiKit.card_icon(id, 52.0)
+	ic.position = (TILE - Vector2(52, 52)) * 0.5
+	ic.size = Vector2(52, 52)
+	if String(u.get("kind", "")) == "stat":   # pale line art in ink on paper
+		ic.modulate = Journal.PAPER if on else Journal.INK
 	ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	b.add_child(ic)
-	var pts := Deck.cost(u, _cfg)   # no gem on the small tile (user 2026-11-20): the frame is the tier, the
-	if pts > 0:                     # detail shows the gem; only the deck cost stays, top left
-		var pl := Journal.ink("%d" % pts, 14, Journal.GOLD if on else TIER_INK.get(tier, Journal.INK))
-		pl.position = Vector2(5, 0)
-		pl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		b.add_child(pl)
-	Tip.attach(b, String(u.get("name", id)), String(u.get("desc", "")), UiKit.RARITY.get(tier, UiKit.TEXT), id,
-		"%s · %d điểm bộ thẻ" % [UiKit.RARITY_NAME.get(tier, tier), pts])
-	if in_deck:   # the tick, or a lock on the starting skill
-		var badge := PanelContainer.new()   # a gold round badge: "in this deck" at a glance
-		var bs := UiKit.style(Journal.SEAL, 0, Color("5a0c08"), 2)
-		bs.set_corner_radius_all(10)
-		badge.add_theme_stylebox_override("panel", bs)
-		badge.custom_minimum_size = Vector2(20, 20)
-		badge.position = Vector2(TILE.x - 22, 2)
-		badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		var mark := Journal.ink("✓", 13, Journal.PAPER)
-		mark.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		mark.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		badge.add_child(mark)
-		b.add_child(badge)
+	if in_deck:
+		var tick := Journal.ink("✓", 26, Color("2a7a3a"))
+		tick.position = Vector2(TILE.x - 20, -10)
+		b.add_child(tick)
+	Tip.attach(b, String(u.get("name", id)), String(u.get("desc", "")), TIER_INK.get(tier, Journal.INK), id,
+		"%s · %d điểm hiếm" % [UiKit.RARITY_NAME.get(tier, tier), Deck.cost(u, _cfg)])
+	b.focus_entered.connect(func() -> void:
+		if _view != id:
+			_view = id
+			_rebuild())
 	b.pressed.connect(func() -> void:
-		_view = id
-		_rebuild())
-	if on:
-		b.call_deferred("grab_focus")
+		if _start.has(id):   # the starting skill is always in the deck
+			return
+		var has := _cards().has(id)
+		var why := Deck.why_not_remove(_cards(), id, _start) if has else Deck.why_not_add(_cards(), _ups, id, _cfg)
+		if why == "":
+			_set_cards(Deck.remove(_cards(), id, _start) if has else _cards() + [id])
+			_rebuild()
+		else:
+			_why = why
+			_rebuild())
 	return b
 
 
-func _detail(root: Control) -> void:
-	var w := RIGHT_PAGE.size.x + 40
-	var panel := PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
-	panel.position = RIGHT_PAGE.position + Vector2(0, 50)
-	panel.custom_minimum_size = Vector2(RIGHT_PAGE.size.x, 0)
-	root.add_child(panel)
+var _why := ""   # why the last add / remove did not happen (shown once under the card)
+
+
+## The right page "Bộ đang dùng": the skill and stat slots, the rarity points and bar, the viewed card, the card
+## tree line (T) and the seal "Dùng bộ này".
+func _deck_page(root: Control) -> void:
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 8)
-	panel.add_child(v)
-	var u := _card(_view)
-	if not u.is_empty():
-		var head := HBoxContainer.new()
-		head.add_theme_constant_override("separation", 12)
-		v.add_child(head)
-		var hic := UiKit.card_icon(_view, 48.0)
-		if String(u.get("kind", "")) == "stat":
-			hic.modulate = Journal.INK   # pale line art in ink on paper
-		head.add_child(hic)
-		var hv := VBoxContainer.new()
-		head.add_child(hv)
-		hv.add_child(Journal.ink(String(u.get("name", _view)), 32))
-		var tr := String(u.get("rarity", "common"))
-		var sub := HBoxContainer.new()   # the tier's gem + name, then type and deck cost
-		sub.add_theme_constant_override("separation", 8)
-		sub.add_child(UiKit.rarity_badge(tr, 14))
-		sub.add_child(UiKit.label("·  %s  ·  %d điểm bộ thẻ" % ["Chiêu" if String(u["kind"]) == "skill" else "Thẻ chỉ số",
-			Deck.cost(u, _cfg)], 14, UiKit.MUTED))
-		hv.add_child(sub)
-		var d := UiKit.label(String(u.get("desc", "")), 15, UiKit.TEXT)
-		d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		d.custom_minimum_size.x = w - 40
-		v.add_child(d)
-		var in_deck := _cards().has(_view)
-		if _start.has(_view):   # the starting skill: a gold note, not a dead button with a red reason
-			var sl := UiKit.label("★ Chiêu khởi đầu: luôn trong bộ, không tốn điểm", 15, UiKit.GOLD)
-			sl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			v.add_child(sl)
-		var why := Deck.why_not_remove(_cards(), _view, _start) if in_deck else Deck.why_not_add(_cards(), _ups, _view, _cfg)
-		var act := UiKit.button("Bỏ khỏi bộ" if in_deck else "Thêm vào bộ", func() -> void:
-			_set_cards(Deck.remove(_cards(), _view, _start) if in_deck else _cards() + [_view])
-			_rebuild(), Vector2(w - 40, 44), 18, UiKit.PRIMARY)
-		act.disabled = why != ""
-		if not _start.has(_view):
-			v.add_child(act)
-		if why != "" and not _start.has(_view):
-			var wl := UiKit.label(why, 14, Color("ff9a8a"))
-			wl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			v.add_child(wl)
-		if not _trees.tree(_view).is_empty():
-			v.add_child(UiKit.label("Cây thẻ: %d / %d điểm" % [_trees.points(_slot, _view), int(_trees.tree(_view).get("max_points", 0))], 16, UiKit.TEXT))
-			var card := _view
-			v.add_child(UiKit.button("Cây thẻ  ▶", func() -> void:
-				Prefs.current().card_target = card
-				get_tree().change_scene_to_file(TREE_SCENE), Vector2(w - 40, 44), 18))
-		elif String(u["kind"]) == "skill":
-			v.add_child(UiKit.label("Cây thẻ: sắp có", 14, UiKit.MUTED))
-	var sep := HSeparator.new()
-	v.add_child(sep)
-	v.add_child(UiKit.label("Chiêu %d/%d  ·  Chỉ số %d/%d" % [Deck.count(_cards(), _ups, "skill"), int(_cfg.get("skills", 8)),
-		Deck.count(_cards(), _ups, "stat"), int(_cfg.get("stats", 6))], 18, UiKit.TEXT))
+	v.position = RIGHT_PAGE.position + Vector2(0, -8)
+	v.custom_minimum_size = Vector2(RIGHT_PAGE.size.x, 0)
+	v.add_theme_constant_override("separation", 4)
+	root.add_child(v)
+	var h2 := Journal.ink("Bộ đang dùng", 32)
+	var under := StyleBoxFlat.new()
+	under.bg_color = Color(0, 0, 0, 0)
+	under.border_color = Journal.INK
+	under.border_width_bottom = 3
+	h2.add_theme_stylebox_override("normal", under)
+	v.add_child(h2)
+	for kind in ["skill", "stat"]:
+		var ids := []
+		for u: Dictionary in _ups:
+			var id := String(u["id"])
+			if String(u.get("kind", "")) == kind and (_cards().has(id) or _start.has(id)) and not ids.has(id):
+				ids.append(id)
+		var n := int(_cfg.get("skills" if kind == "skill" else "stats", 8 if kind == "skill" else 6))
+		v.add_child(Journal.ink("%s %d/%d" % ["Chiêu" if kind == "skill" else "Chỉ số", ids.size(), n], 20, Journal.INK_SOFT))
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 6)
+		v.add_child(row)
+		for k in n:
+			var cell := Control.new()   # a dashed slot, the card's icon when filled
+			cell.custom_minimum_size = Vector2(54, 54)
+			cell.draw.connect(func() -> void:
+				var r := Rect2(Vector2.ZERO, cell.custom_minimum_size)
+				var x := 0.0
+				while x < r.size.x:
+					cell.draw_rect(Rect2(x, 0, 5, 2), Journal.INK)
+					cell.draw_rect(Rect2(x, r.size.y - 2, 5, 2), Journal.INK)
+					cell.draw_rect(Rect2(0, x, 2, 5), Journal.INK)
+					cell.draw_rect(Rect2(r.size.x - 2, x, 2, 5), Journal.INK)
+					x += 9.0)
+			if k < ids.size():
+				var ic := UiKit.card_icon(String(ids[k]), 44.0)
+				ic.position = Vector2(5, 5)
+				ic.size = Vector2(44, 44)
+				if kind == "stat":
+					ic.modulate = Journal.INK
+				cell.add_child(ic)
+			row.add_child(cell)
 	var used := Deck.points(_cards(), _ups, _cfg)
 	var budget := int(_cfg.get("budget", 0))
-	v.add_child(UiKit.label("Điểm bộ thẻ %d / %d  (Hiếm 1 · Sử thi 2 · Huyền thoại 3)" % [used, budget], 15,
-		Color("ff8a8a") if used >= budget else UiKit.GOLD))
-	var btns := HBoxContainer.new()
-	btns.add_theme_constant_override("separation", 10)
-	v.add_child(btns)
-	btns.add_child(UiKit.button("Bộ mặc định", func() -> void:
-		_set_cards(Deck.default_cards(_ups, _start, _cfg))
-		_rebuild(), Vector2((w - 50) / 2.0, 40), 16))
-	btns.add_child(UiKit.button("Tỉ lệ thẻ", func() -> void: _show_odds(), Vector2((w - 50) / 2.0, 40), 16))
-	Journal.restyle(panel)
+	v.add_child(Journal.ledger("", "Điểm hiếm", "%d/%d" % [used, budget], 20))
+	var bar := Control.new()
+	bar.custom_minimum_size = Vector2(300, 18)
+	bar.draw.connect(func() -> void:
+		bar.draw_rect(Rect2(0, 0, 300, 16), Journal.INK, false, 3.0)
+		bar.draw_rect(Rect2(2, 2, 296.0 * clampf(float(used) / maxf(1.0, budget), 0.0, 1.0), 12), Journal.INK_RED))
+	v.add_child(bar)
+	var u := _card(_view)
+	if not u.is_empty():
+		v.add_child(Journal.note(String(u.get("name", _view)), String(u.get("desc", "")), 18))
+		if _why != "":
+			var w := Journal.ink(_why, 17, Journal.INK_RED)
+			w.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			w.custom_minimum_size = Vector2(RIGHT_PAGE.size.x, 0)
+			v.add_child(w)
+			_why = ""
+		if not _trees.tree(_view).is_empty():
+			var card := _view
+			var link := Button.new()
+			link.text = "Cây thẻ ▸ nâng thẻ bằng Mảnh thẻ (phím T)"
+			link.flat = true
+			link.focus_mode = Control.FOCUS_NONE
+			link.alignment = HORIZONTAL_ALIGNMENT_LEFT
+			link.add_theme_font_size_override("font_size", 18)
+			for k in ["font_color", "font_hover_color", "font_pressed_color"]:
+				link.add_theme_color_override(k, Journal.INK if k == "font_color" else Journal.INK_RED)
+			link.pressed.connect(func() -> void: _open_tree(card))
+			v.add_child(link)
+	var use := Journal.seal("Dùng bộ này ▶", Vector2(260, 62), 26)
+	use.position = RIGHT_PAGE.end - Vector2(260, 62)
+	use.focus_mode = Control.FOCUS_NONE   # the cards own the arrows; Enter on the seal is the mouse's
+	use.pressed.connect(func() -> void:
+		_save()   # the open deck is the one the runs use (deck_active); back to the journal
+		get_tree().change_scene_to_file(LOBBY_SCENE))
+	root.add_child(use)
+
+
+func _open_tree(card: String) -> void:
+	if _trees.tree(card).is_empty():
+		return
+	Prefs.current().card_target = card
+	get_tree().change_scene_to_file(TREE_SCENE)
 
 
 ## The level-up card odds table (user 2026-11-21): how the chance of rare-or-better cards grows with the run level.
