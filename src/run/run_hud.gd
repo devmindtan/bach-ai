@@ -40,7 +40,7 @@ func _fit() -> void:
 	position = Vector2.ZERO
 	size = get_viewport_rect().size
 	if _gear != null:
-		_gear.position = Vector2(size.x - 44, ROW - 16)
+		_gear.position = Vector2(size.x - 52, 20)
 
 
 ## The settings button (gear) at the right end of the HUD row: opens the pause menu.
@@ -76,64 +76,85 @@ func _draw() -> void:
 	var font := ThemeDB.fallback_font
 	var w := size.x
 	_draw_wave_call(font)
-	# xp: thin bar across the whole top edge
-	var frac := clampf(float(run.xp) / float(run.xp_needed()), 0.0, 1.0)
-	draw_rect(Rect2(0, 0, w, 10), BACK)
-	draw_rect(Rect2(2, 2, (w - 4) * frac, 6), XP_BAR)
-	# level: star icon + number beside it (like kills / gold); the number used to sit
-	# on the star and its outline ran into the star's edge (user 2026-11-17)
-	UiIcons.draw(self, "star", Vector2(28, ROW), 2.0)
-	var lvl := str(run.level)
-	_text(font, Vector2(48, _baseline(ROW, 22)), lvl, 22)
-	# room for two digits, so the hp bar does not move when the level reaches 10
-	var lw := maxf(font.get_string_size(lvl, HORIZONTAL_ALIGNMENT_LEFT, -1, 22).x,
-		font.get_string_size("88", HORIZONTAL_ALIGNMENT_LEFT, -1, 22).x)
-	# hp: heart + bar with the number in its middle
+	# design-web screen-hud-journal (approved 2026-11-26): three paper slips pinned to the top
+	# left: name and level, the hp bar with its numbers, a thin xp bar
+	var me := Rect2(16, 14, 330, 74)
+	_slip(me, -0.014)
+	draw_set_transform(me.get_center(), -0.014)
+	var o := -me.size * 0.5
+	var who := String(run.playing_slot.name) if run.get("playing_slot") != null else String(run.class_data.get("name", ""))
+	_ink(font, o + Vector2(14, 30), who, 24)
+	var lv := "Cấp %d" % run.level
+	_ink(font, o + Vector2(me.size.x - 14 - font.get_string_size(lv, HORIZONTAL_ALIGNMENT_LEFT, -1, 22).x, 30), lv, 22, Journal.INK_RED)
 	var max_hp := float(run.stats["max_hp"])
-	var hx := roundf(48 + lw + 30)
-	UiIcons.draw(self, "heart", Vector2(hx, ROW), 2.0)
-	var bar := Rect2(hx + 18, ROW - 10, 200, 20)
-	draw_rect(bar, BACK)
-	draw_rect(Rect2(bar.position + Vector2(2, 2), Vector2((bar.size.x - 4) * clampf(run.hp / max_hp, 0.0, 1.0), 16)), HP_BAR)
-	_centered(font, Vector2(bar.get_center().x, _baseline(ROW, 14)), "%d / %d" % [ceili(run.hp), roundi(max_hp)], 14)
-	_draw_passive(Vector2(bar.end.x + 22, ROW))
-	_draw_buffs(font, Vector2(bar.position.x, ROW + 32))
-	# clock: icon + elapsed, the total smaller on the same baseline
+	var hb := Rect2(o + Vector2(14, 38), Vector2(me.size.x - 28, 18))
+	draw_rect(hb, Journal.PAPER)
+	draw_rect(Rect2(hb.position, Vector2(hb.size.x * clampf(run.hp / max_hp, 0.0, 1.0), hb.size.y)), Color("c0283a"))
+	draw_rect(hb, Journal.INK, false, 3.0)
+	_centered(font, Vector2(hb.get_center().x, hb.position.y + 15), "%d / %d" % [ceili(run.hp), roundi(max_hp)], 15)
+	var xb := Rect2(o + Vector2(14, 60), Vector2(me.size.x - 28, 6))
+	draw_rect(xb, Journal.PAPER)
+	draw_rect(Rect2(xb.position, Vector2(xb.size.x * clampf(float(run.xp) / float(run.xp_needed()), 0.0, 1.0), xb.size.y)), Color("3a6aaa"))
+	draw_rect(xb, Journal.INK, false, 2.0)
+	draw_set_transform(Vector2.ZERO, 0.0)
+	_draw_passive(Vector2(me.end.x + 22, me.position.y + 22))
+	_draw_buffs(font, Vector2(me.position.x + 4, me.end.y + 22))
+	# middle: the clock on one line, "02:41 / 05:00 · Ải 11" (user 2026-11-26: horizontal, not stacked)
 	var t := int(run.clock)
 	var total := int(run.duration)
 	var clock := "%02d:%02d" % [t / 60, t % 60]
-	var cw := font.get_string_size(clock, HORIZONTAL_ALIGNMENT_LEFT, -1, 28).x
-	var cx := w * 0.5 - cw * 0.5
-	UiIcons.draw(self, "clock", Vector2(cx - 22, ROW), 2.0)
-	_text(font, Vector2(cx, _baseline(ROW, 28)), clock, 28)
-	var tail := ("· Vòng %d" % (run.endless_cycle() + 1)) if run.endless else "/ %02d:%02d" % [total / 60, total % 60]
-	_text(font, Vector2(cx + cw + 8, _baseline(ROW, 28)), tail, 16, MUTED)
-	# kills and gold: icon + number pairs, right-aligned
-	var gold := str(run.gold)
-	var kills := str(run.enemies.total_kills)
-	var gw := font.get_string_size(gold, HORIZONTAL_ALIGNMENT_LEFT, -1, 22).x
-	var kw := font.get_string_size(kills, HORIZONTAL_ALIGNMENT_LEFT, -1, 22).x
-	var x := w - 60 - gw   # the gear button sits at the right end
-	_text(font, Vector2(x, _baseline(ROW, 22)), gold, 22)
-	UiIcons.draw(self, "coin", Vector2(x - 22, ROW), 2.0)
-	x -= 60 + kw
-	_text(font, Vector2(x, _baseline(ROW, 22)), kills, 22)
-	UiIcons.draw(self, "skull", Vector2(x - 22, ROW), 2.0)
-	if run.pickups != null and run.pickups.essence > 0:   # Tinh hoa, once there is some
-		var es := str(run.pickups.essence)
-		x -= 60 + font.get_string_size(es, HORIZONTAL_ALIGNMENT_LEFT, -1, 22).x
-		_text(font, Vector2(x, _baseline(ROW, 22)), es, 22)
-		UiIcons.draw(self, "essence", Vector2(x - 22, ROW), 2.0)
+	var tail := (" · Vòng %d" % (run.endless_cycle() + 1)) if run.endless else (" / %02d:%02d · Ải %d" % [total / 60, total % 60, run.stage_number])
+	var cw := font.get_string_size(clock, HORIZONTAL_ALIGNMENT_LEFT, -1, 30).x
+	var tw := font.get_string_size(tail, HORIZONTAL_ALIGNMENT_LEFT, -1, 20).x
+	var cl := Rect2(roundf(w * 0.5 - (cw + tw) * 0.5 - 14), 12, cw + tw + 28, 46)
+	_slip(cl, 0.01)
+	draw_set_transform(cl.get_center(), 0.01)
+	o = -cl.size * 0.5
+	_ink(font, o + Vector2(14, 34), clock, 30)
+	_ink(font, o + Vector2(14 + cw, 34), tail, 20, Journal.INK_SOFT)
+	draw_set_transform(Vector2.ZERO, 0.0)
+	# right: kills and gold (and Tinh hoa once there is some), icon + number pairs
+	var pairs := [["skull", str(run.enemies.total_kills)], ["coin", str(run.gold)]]
+	if run.pickups != null and run.pickups.essence > 0:
+		pairs.append(["essence", str(run.pickups.essence)])
+	var tw2 := 0.0
+	for p: Array in pairs:
+		tw2 += 38.0 + font.get_string_size(String(p[1]), HORIZONTAL_ALIGNMENT_LEFT, -1, 24).x + 16.0
+	var ta := Rect2(w - 16 - 48 - tw2 - 14, 14, tw2 + 14, 44)   # left of the gear (touch pause)
+	_slip(ta, 0.017)
+	draw_set_transform(ta.get_center(), 0.017)
+	o = -ta.size * 0.5
+	var x := o.x + 14
+	for p: Array in pairs:
+		UiIcons.draw(self, String(p[0]), Vector2(x + 12, 0), 2.0)
+		_ink(font, Vector2(x + 34, 9), String(p[1]), 24)
+		x += 38.0 + font.get_string_size(String(p[1]), HORIZONTAL_ALIGNMENT_LEFT, -1, 24).x + 16.0
+	draw_set_transform(Vector2.ZERO, 0.0)
 	_draw_skill_bar(font)
 	_draw_pointers()
 	_draw_boss_bar(font)
 
 
+## A paper slip (web .slip): paper with an edge, a drop shadow and a red pin on top; [param tilt] radians.
+func _slip(r: Rect2, tilt: float) -> void:
+	draw_set_transform(r.get_center(), tilt)
+	var rr := Rect2(-r.size * 0.5, r.size)
+	draw_rect(Rect2(rr.position + Vector2(0, 4), rr.size), Color(0, 0, 0, 0.4))
+	draw_rect(rr, Journal.PAPER)
+	draw_rect(rr, Journal.EDGE, false, 3.0)
+	draw_circle(Vector2(0, rr.position.y), 7.0, Color("5a0c08"))
+	draw_circle(Vector2(0, rr.position.y), 5.0, Journal.SEAL)
+	draw_set_transform(Vector2.ZERO, 0.0)
 
-const SLOT := 48.0
+
+func _ink(font: Font, p: Vector2, s: String, sz: int, col: Color = Journal.INK) -> void:
+	draw_string(font, p, s, HORIZONTAL_ALIGNMENT_LEFT, -1, sz, col)
+
+
+
+const SLOT := 60.0
 const SLOT_GAP := 8.0
-const SLOT_BOTTOM := 18.0   # gap under the bar
-const COOL := Color(0.02, 0.02, 0.05, 0.72)
+const SLOT_BOTTOM := 14.0   # gap under the bar
 const ACTIVE := Color("ffd36b")
 
 
@@ -233,17 +254,20 @@ func _draw_boss_bar(font: Font) -> void:
 	if i < 0:
 		return
 	var k: int = run.enemies.kind[i]
-	var w := 520.0
-	var bar := Rect2(roundf(size.x * 0.5 - w * 0.5), ROW + 40, w, 16)
+	# web screen-hud-journal ?view=boss: a paper slip under the clock, the name in red ink, the phase, the bar
+	var slip := Rect2(roundf(size.x * 0.5 - 300), 100, 600, 66)   # under the top slips, clear of them
+	_slip(slip, -0.007)
+	draw_set_transform(slip.get_center(), -0.007)
+	var o := -slip.size * 0.5
 	var name := String(run.enemies.k_extra[k].get("name", run.enemies.kind_ids[k]))
-	if run.enemies.phase_name(i) != "":   # phase 2 shows its own name (design/bosses.md)
-		name += " · " + run.enemies.phase_name(i)
+	var phase := String(run.enemies.phase_name(i))   # phase 2 shows its own name (design/bosses.md)
 	var enraged: bool = run.enemies.enraged(i)
-	var back := Rect2(bar.position.x - (110.0 if enraged else 12.0), bar.position.y - 28.0, 0.0, bar.size.y + 36.0)
-	back.end.x = bar.end.x + 64.0
-	draw_rect(back, Color(0.05, 0.03, 0.05, 0.62))   # a backdrop: the name stays readable over a crowd
-	_centered(font, Vector2(size.x * 0.5, bar.position.y - 6), name, 18)
-	draw_rect(bar.grow(2), Color(0.05, 0.03, 0.05))   # opaque: the crowd must not show through the empty part
+	var tail := (" · " + phase if phase != "" else "") + (" · NỔI GIẬN" if enraged else "")
+	var nw := font.get_string_size(name, HORIZONTAL_ALIGNMENT_LEFT, -1, 26).x
+	var tw := font.get_string_size(tail, HORIZONTAL_ALIGNMENT_LEFT, -1, 18).x
+	_ink(font, Vector2(-(nw + tw) * 0.5, o.y + 28), name, 26, Journal.INK_RED)
+	_ink(font, Vector2(-(nw + tw) * 0.5 + nw, o.y + 28), tail, 18, Journal.INK_RED if enraged else Journal.INK_SOFT)
+	var bar := Rect2(o + Vector2(14, 36), Vector2(slip.size.x - 28, 20))
 	var frac := clampf(run.enemies.hp[i] / run.enemies.k_hp[k], 0.0, 1.0)
 	if i != _trail_boss:   # a new boss: the trail starts full (bosses spawn full; a shot's --boss-hp shows the trail)
 		_trail_boss = i
@@ -252,19 +276,16 @@ func _draw_boss_bar(font: Font) -> void:
 	var ts := trail_step(_trail, frac, _trail_hold, get_process_delta_time())
 	_trail = ts[0]
 	_trail_hold = ts[1]
-	draw_rect(Rect2(bar.position, Vector2(bar.size.x * _trail, bar.size.y)), Color("f2d0c0"))   # recent damage
-	draw_rect(Rect2(bar.position, Vector2(bar.size.x * frac, bar.size.y)), Color("b0203a"))
-	draw_rect(Rect2(bar.position, Vector2(bar.size.x * frac, 4)), Color("ff6a7a"))
-	for f in [0.25, 0.5, 0.75]:   # split marks
-		draw_rect(Rect2(bar.position.x + bar.size.x * f - 1, bar.position.y, 2, bar.size.y), Color(0, 0, 0, 0.6))
+	draw_rect(bar, Journal.PAPER)
+	draw_rect(Rect2(bar.position, Vector2(bar.size.x * _trail, bar.size.y)), Color("e0b0a0"))   # recent damage
+	draw_rect(Rect2(bar.position, Vector2(bar.size.x * frac, bar.size.y)), Color("8a1a18"))
 	var ex: Dictionary = run.enemies.k_extra[k]
 	if ex.has("rage_at"):   # where the boss turns enraged: a gold notch over the bar
 		var rx := bar.position.x + bar.size.x * float(ex["rage_at"])
-		draw_rect(Rect2(rx - 2, bar.position.y - 4, 4, bar.size.y + 8), Color("f2c14e"))
-	var pct := "%d%%" % ceili(frac * 100.0)
-	_text(font, Vector2(bar.end.x + 10, bar.position.y + 14), pct, 16)
-	if enraged:
-		_text(font, Vector2(bar.position.x - 96, bar.position.y + 14), "NỔI GIẬN", 16, Color("ff6a5a"))
+		draw_rect(Rect2(rx - 2, bar.position.y - 3, 4, bar.size.y + 6), Color("c0801a"))
+	draw_rect(bar, Journal.INK, false, 3.0)
+	_centered(font, Vector2(0, bar.position.y + 16), "%d / %d" % [ceili(run.enemies.hp[i]), roundi(run.enemies.k_hp[k])], 16)
+	draw_set_transform(Vector2.ZERO, 0.0)
 
 
 ## The class passive's icon after the hp bar: dim while it waits for its
@@ -318,37 +339,20 @@ func _draw_skill_bar(font: Font) -> void:
 	for si: Dictionary in skills:
 		var r := Rect2(x, y, SLOT, SLOT)
 		var cd: Array = run.cooldown_state(si["id"])
-		draw_rect(r, BACK)
+		draw_rect(r, Journal.PAPER)   # web .skills .sk: a paper slot framed in ink
 		var tex: Texture2D = run.icon_texture(String(si["id"]))
 		if tex != null:
-			draw_texture_rect(tex, Rect2(r.position + Vector2(8, 8), Vector2(32, 32)), false)
+			draw_texture_rect(tex, Rect2(r.position + Vector2(8, 8), Vector2(44, 44)), false)
 		var left := float(cd[0])
 		var total := maxf(0.01, float(cd[1]))
-		if left > 0.0:
-			_draw_sweep(r.grow(-2), clampf(left / total, 0.0, 1.0))
+		if left > 0.0:   # the cooldown fills the slot from the bottom in dark ink (web .cd)
+			var k := clampf(left / total, 0.0, 1.0)
+			draw_rect(Rect2(r.position.x, r.end.y - r.size.y * k, r.size.x, r.size.y * k), Color(0.23, 0.14, 0.08, 0.73))
 			if total >= 1.5:
 				var t := ("%.1f" % left) if left < 10.0 else str(ceili(left))
 				_centered(font, Vector2(r.get_center().x, _baseline(r.get_center().y, 16)), t, 16)
-		var border := ACTIVE if bool(cd[2]) else (MUTED if left > 0.0 else TEXT)
-		draw_rect(r, border, false, 2.0)
+		draw_rect(r, ACTIVE if bool(cd[2]) else Journal.INK, false, 3.0)
 		x += SLOT + SLOT_GAP
-
-
-## Dark sector over [param r] covering [param frac] of a turn, clockwise from the top.
-func _draw_sweep(r: Rect2, frac: float) -> void:
-	if frac >= 0.999:
-		draw_rect(r, COOL)
-		return
-	var c := r.get_center()
-	var half := r.size * 0.5
-	var pts := PackedVector2Array([c])
-	var steps := maxi(2, ceili(frac * 64.0))
-	for i in steps + 1:
-		var ang := -PI * 0.5 + TAU * frac * float(i) / float(steps)
-		var d := Vector2(cos(ang), sin(ang))
-		var k := minf(half.x / maxf(absf(d.x), 0.0001), half.y / maxf(absf(d.y), 0.0001))
-		pts.append(c + d * k)
-	draw_colored_polygon(pts, COOL)
 
 
 func _centered(font: Font, baseline_center: Vector2, s: String, sz: int) -> void:

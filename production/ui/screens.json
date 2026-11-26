@@ -311,13 +311,13 @@
       "name": "03d-boss",
       "title": "Ải 10: boss Vua Thạch Nhầy (thanh máu, vòng cảnh báo nhảy dậm)",
       "scene": "res://src/run/run.tscn",
-      "frames": 1915,
+      "frames": 1980,
       "args": [
         "--stage=10",
         "--demo",
         "--god",
         "--seed=1",
-        "--sim-steps=4",
+        "--sim-steps=10",
         "--skills=blade_arc:3,whirlwind:2"
       ]
     },
