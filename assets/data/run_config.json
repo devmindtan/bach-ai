@@ -185,12 +185,16 @@
     }
   },
   "crit": {
-    "_doc": "Chí mạng (6C.2): chance and mul of direct hits (plus crit_chance / crit_mul effects); a crit on an elite or boss freezes the world hitstop s and shakes shake_crit px; the hero hurt shakes taken x shake_per_hurt px (2..7).",
+    "_doc": "Chí mạng (6C.2): chance and mul of direct hits (plus crit_chance / crit_mul effects); a crit on an elite or boss freezes the world hitstop s and shakes shake_crit px; the hero hurt shakes taken x shake_per_hurt px (2..7); each crit draws the sprite/anim flash (Gai nổ, user 2026-11-26) on the monster, at most max_per_frame per frame.",
     "chance": 0.05,
     "mul": 1.75,
     "hitstop": 0.035,
     "shake_crit": 2.0,
-    "shake_per_hurt": 0.25
+    "shake_per_hurt": 0.25,
+    "sprite": "crit-hit",
+    "anim": "c",
+    "scale": 1.0,
+    "max_per_frame": 3
   },
   "level_actions": {
     "_doc": "Level-up actions per run (6C.3, after Vampire Survivors Reroll / Banish / Skip): reroll = Đổi (new hand), banish = Loại (card out of the deck for the run, then a new hand), skip = Bỏ qua (no card, skip_gold gold).",

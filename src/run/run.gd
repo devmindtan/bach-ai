@@ -424,6 +424,8 @@ func _ready() -> void:
 	for u: Dictionary in pool.get("upgrades", []):   # a stat card with its own look (Kết liễu's burst, by tier)
 		for tn in u.get("fx_tiers", []):
 			names.append(String(tn))
+	if cfg.get("crit", {}).has("sprite"):   # Chí mạng: the hit flash (sprite-lab crit-hit, option C chosen 2026-11-26)
+		names.append(String(cfg.crit.sprite))
 	var hf: Dictionary = cfg.get("hit_feel", {})   # cảm giác đánh: the hit spark
 	if not hf.is_empty():
 		names.append(hit_spark_sprite if hit_spark_sprite != "" else String(hf.get("sprite", "hit-spark-a")))
@@ -2471,6 +2473,8 @@ func _apply_hit_stats() -> void:
 	if enemies == null:
 		return
 	enemies.crit_chance = float(cfg.get("crit", {}).get("chance", 0.0)) + float(stats.get("crit_chance", 0.0))
+	if OS.get_cmdline_user_args().has("--all-crit"):   # shots: every direct hit crits (see the Chí mạng flash)
+		enemies.crit_chance = 1.0
 	enemies.crit_mul = float(cfg.get("crit", {}).get("mul", 1.75)) + float(stats.get("crit_mul", 0.0))
 	enemies.execute_below = float(stats.get("execute_below", 0.0))
 	enemies.combo_per = float(stats.get("combo_per", 0.0))
@@ -3066,7 +3070,13 @@ func _step_damage_numbers(dt: float) -> void:
 	if enemies.crit_heavy > 0:   # a crit landed on an elite / boss: hitstop and a small shake
 		_hitstop = float(_crit_cfg.get("hitstop", 0.035))
 		shake.add(float(_crit_cfg.get("shake_crit", 2.0)))
+	var flashes := 0   # Chí mạng: the gai nổ flash on the struck monster, a few per frame
+	var flash_cap := int(_crit_cfg.get("max_per_frame", 3)) if Prefs.current().vfx < 2 else 0
 	for k in enemies.hit_pos.size():
+		if k < enemies.hit_crit.size() and enemies.hit_crit[k] == 1 and flashes < flash_cap and _crit_cfg.has("sprite"):
+			flashes += 1
+			_add_fx(String(_crit_cfg.sprite), String(_crit_cfg.get("anim", "c")), _sprite_scale * float(_crit_cfg.get("scale", 1.0)),
+				0.0, -1.0, enemies.hit_pos[k] + Vector2(0, 6))
 		_num_pos[_num_next] = enemies.hit_pos[k] + Vector2(rng.randf_range(-6.0, 6.0), 0.0)
 		_num_val[_num_next] = enemies.hit_val[k]
 		_num_crit[_num_next] = enemies.hit_crit[k] if k < enemies.hit_crit.size() else 0
