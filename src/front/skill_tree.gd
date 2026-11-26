@@ -13,17 +13,12 @@ const ORIGIN := Vector2(150, 196)   # the tree fills the journal's left page (de
 const STEP := Vector2(96, 100)
 const NODE := 60.0
 const KEY := 74.0
-const UP := Color("2a7a3a")
 const RIGHT_PAGE := Rect2(660, 74, 470, 572)
-const STATS := [["max_hp", "Máu tối đa", "%d"], ["damage", "Sát thương", "%d"], ["armor", "Giáp", "%d"],
-	["move_speed", "Tốc độ chạy", "%d"], ["cooldown", "Hồi chiêu", "×%.2f"], ["area", "Vùng đánh", "×%.2f"],
-	["magnet", "Tầm hút", "×%.2f"], ["regen", "Hồi máu", "%.1f/giây"]]
 
 var _slot: Slot
 var _tree: SkillTree
 var _class := {}
 var _view := ""
-var _reset_armed := false
 var _layer: CanvasLayer
 
 
@@ -94,14 +89,9 @@ func _build() -> void:
 	var title := Journal.ink("Cây kỹ năng", 44)
 	title.position = Vector2(110, 66)
 	root.add_child(title)
-	var wallet := HBoxContainer.new()
-	wallet.add_theme_constant_override("separation", 16)
-	wallet.position = Vector2(112, 122)
-	root.add_child(wallet)
-	wallet.add_child(UiKit.stat("essence", "%d Tinh hoa" % _slot.essence, "Tinh hoa: quái tinh anh và boss rơi; học nút.", 18))
-	wallet.add_child(UiKit.stat("pill", "%d Tẩy Tủy Đan" % _slot.pills, "Tẩy Tủy Đan: thắng thử thách; đặt lại cây.", 18))
-	wallet.add_child(UiKit.label("· điểm %d" % _tree.points(_slot), 18, UiKit.MUTED))
-	Journal.restyle(wallet)
+	var sub := Journal.ink("%s · mỗi hàng đắt hơn hàng trên" % String(_class.get("name", _slot.cls)), 20, Journal.INK_RED)
+	sub.position = Vector2(112, 122)
+	root.add_child(sub)
 	var hint := Journal.ink("←↑↓→ chọn nút · Enter học · Esc về sổ", 15, Journal.PAPER)
 	hint.position = Vector2(Journal.BOOK.position.x, Journal.BOOK.end.y + 14)
 	root.add_child(hint)
@@ -112,8 +102,12 @@ func _build() -> void:
 	edges.draw.connect(func() -> void:
 		for n: Dictionary in _tree.nodes(_slot.cls):
 			for req: String in n.get("requires", []):
-				var lit := _tree.rank(_slot, req) > 0
-				edges.draw_line(_center(_tree.node(req)), _center(n), Journal.INK_RED if lit else Journal.DOTS, 4.0 if lit else 2.0))
+				var a := _center(_tree.node(req))   # solid ink once the parent is learned, dashed before (web)
+				var b := _center(n)
+				if _tree.rank(_slot, req) > 0:
+					edges.draw_line(a, b, Journal.INK, 3.0)
+				else:
+					edges.draw_dashed_line(a, b, Journal.INK, 3.0, 6.0))
 	for n: Dictionary in _tree.nodes(_slot.cls):
 		root.add_child(_node_button(n))
 	_detail(root)
@@ -136,8 +130,8 @@ func _node_button(n: Dictionary) -> Control:
 	b.focus_mode = Control.FOCUS_ALL
 	# sketch squares: learned rose ink, maxed red ink, open ones paper, closed ones faded; the viewed one ink + gold
 	var on := id == _view
-	var bg := Journal.INK if on else (Journal.INK_RED if r >= mx else (Color("c88a7a") if r > 0 else (Journal.SKETCH if learnable else Color(Journal.SKETCH, 0.5))))
-	var border := Journal.GOLD if on else (Journal.INK if (r > 0 or learnable) else Journal.DOTS)
+	var bg := Journal.INK if on else (Color("c88a7a") if r > 0 else Journal.SKETCH)   # web: learned rose, others paper
+	var border := Journal.INK
 	for s in ["normal", "hover", "focus", "pressed"]:
 		var lit: bool = on or s != "normal"
 		var st := StyleBoxFlat.new()
@@ -150,10 +144,10 @@ func _node_button(n: Dictionary) -> Control:
 	holder.add_child(b)
 	var ic := UiKit.node_icon(String(n.get("vicon", "")), String(n.get("icon", "star")), side * 0.6)
 	ic.position = (Vector2(side, side) - ic.custom_minimum_size) / 2.0
-	ic.modulate = Color.WHITE if (r > 0 or on) else Color(0.35, 0.25, 0.18, 0.75 if learnable else 0.45)
+	ic.modulate = Journal.GOLD if on else Journal.INK   # the node icons are drawn in ink (web: the tree svgs)
 	b.add_child(ic)
 	ic.size = ic.custom_minimum_size   # a Button is not a container: a 512 px SVG kept its own size otherwise
-	var lv := Journal.ink("%d/%d" % [r, mx], 16, Journal.INK_RED if r >= mx else (Journal.INK if r > 0 else Journal.INK_SOFT))
+	var lv := Journal.ink("%d/%d" % [r, mx], 15, Journal.INK_RED if r >= mx else (Journal.INK if r > 0 else Journal.INK_SOFT))
 	var tag := StyleBoxFlat.new()   # the edge passes under it
 	tag.bg_color = Journal.PAPER
 	tag.border_color = Journal.INK
@@ -161,13 +155,19 @@ func _node_button(n: Dictionary) -> Control:
 	lv.add_theme_stylebox_override("normal", tag)
 	lv.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lv.custom_minimum_size.x = 34
-	lv.position = Vector2(side / 2.0 - 17, side + 2)
+	lv.position = Vector2(side - 22, side - 14)   # the rank tag on the node's bottom-right corner (web .rk)
 	lv.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	holder.add_child(lv)
+	b.focus_entered.connect(func() -> void:   # focus views a node; Enter / a click learns it (web: Enter học)
+		if _view != id:
+			_view = id
+			_rebuild())
 	b.pressed.connect(func() -> void:
-		_view = id
-		_reset_armed = false
-		_rebuild())
+		if _view == id:
+			_learn()
+		else:
+			_view = id
+			_rebuild())
 	if id == _view:
 		b.call_deferred("grab_focus")
 	return holder
@@ -175,140 +175,56 @@ func _node_button(n: Dictionary) -> Control:
 
 # --- detail and reset ---------------------------------------------------------------
 
+## The right page (web screen-tree-journal): the node's name, "Hàng · cấp", its text, the ledger (cost, Tinh hoa,
+## requirements), the reset note and the seal "Học".
 func _detail(root: Control) -> void:
-	var x := RIGHT_PAGE.position.x
-	var w := RIGHT_PAGE.size.x
-	var panel := PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
-	panel.position = RIGHT_PAGE.position
-	panel.custom_minimum_size = Vector2(w, 340)
-	panel.size = panel.custom_minimum_size
-	root.add_child(panel)
-	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 8)
-	panel.add_child(v)
 	var n := _tree.node(_view)
 	if n.is_empty():
 		return
 	var r := _tree.rank(_slot, _view)
 	var mx := int(n.get("max_rank", 1))
-	var owned := r > 0
-	var head := HBoxContainer.new()
-	head.add_theme_constant_override("separation", 12)
-	v.add_child(head)
-	var ib := PanelContainer.new()   # the node's icon in a sketch box
-	var ibs := StyleBoxFlat.new()
-	ibs.bg_color = Journal.INK
-	ibs.set_content_margin_all(6)
-	ib.add_theme_stylebox_override("panel", ibs)
-	ib.add_child(UiKit.node_icon(String(n.get("vicon", "")), String(n.get("icon", "star")), 48.0))
-	head.add_child(ib)
-	var hv := VBoxContainer.new()
-	head.add_child(hv)
-	hv.add_child(Journal.ink(String(n.get("name", _view)), 32, Journal.INK_RED if owned else Journal.INK))
-	hv.add_child(UiKit.label(("Then chốt · " if bool(n.get("keystone", false)) else "") + "Cấp %d / %d" % [r, mx], 14, UiKit.MUTED))
-	var d := UiKit.label(String(n.get("desc", "")), 16, UiKit.TEXT)
-	d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	v.add_child(d)
-	var conds := []
-	for q: String in n.get("requires", []):
-		conds.append(String(_tree.node(q).get("name", q)))
-	if int(n.get("requires_points", 0)) > 0:
-		conds.append("đã dùng %d điểm" % int(n["requires_points"]))
-	if not n.get("excludes", []).is_empty():
-		conds.append("chỉ chọn một nút then chốt")
-	if not conds.is_empty():
-		var cl := UiKit.label("Cần: " + ", ".join(conds), 14, UiKit.MUTED)
-		cl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		v.add_child(cl)
-	# stats before -> after: the next rank, or for a maxed node the last rank it gave
-	var with_ := _slot.tree.duplicate()
-	var without := _slot.tree.duplicate()
-	if r < mx:
-		with_.append(_view)
-	else:
-		without.erase(_view)
-	var a := _stats(without)
-	var c := _stats(with_)
-	var rows := GridContainer.new()
-	rows.columns = 2
-	rows.add_theme_constant_override("h_separation", 14)
-	v.add_child(rows)
-	for s in STATS:
-		var x0 := float(a.get(s[0], 0.0))
-		var x1 := float(c.get(s[0], 0.0))
-		if is_equal_approx(x0, x1):
-			continue
-		rows.add_child(UiKit.label(s[1], 15, UiKit.TEXT))
-		var better := (x1 < x0) if s[0] == "cooldown" else (x1 > x0)
-		rows.add_child(UiKit.label("%s → %s" % [_fmt(s[2], x0), _fmt(s[2], x1)], 15, UP if better else Color("ff8a8a")))
-	var spacer := Control.new()
-	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	v.add_child(spacer)
-	if r >= mx:
-		v.add_child(UiKit.label("Đã tối đa: có hiệu lực ở mọi trận của nhân vật này.", 14, UP))
-	else:
-		var why := _tree.why_not(_slot, _view)
-		if why != "":
-			var wl := UiKit.label(why, 14, Color("ff9a9a"))
-			wl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			v.add_child(wl)
-		var buy := Journal.seal("Học ▶  %d Tinh hoa" % _tree.cost(_view), Vector2(0, 56), 22)
-		buy.pressed.connect(func() -> void:
-			if _tree.buy(_slot, _view):
-				Sfx.play("buy")
-				_save()
-				_rebuild())
-		buy.disabled = why != ""
-		v.add_child(buy)
-	Journal.restyle(panel)
-	ib.add_theme_stylebox_override("panel", ibs)   # the icon stays on ink (restyle made it a sketch box)
-	_reset_box(root, x, w)
-
-
-func _reset_box(root: Control, x: float, w: float) -> void:
-	var panel := UiKit.panel(Color(0.09, 0.08, 0.13, 0.94), 12)
-	panel.position = Vector2(x, RIGHT_PAGE.end.y - 196)
-	panel.custom_minimum_size = Vector2(w, 196)
-	panel.size = panel.custom_minimum_size
-	root.add_child(panel)
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 8)
-	panel.add_child(v)
-	v.add_child(UiKit.label("Đặt lại cây", 20, UiKit.TEXT))
-	var cost := _tree.reset_cost(_slot)
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 16)
-	v.add_child(row)
-	row.add_child(UiKit.stat("pill", "1", "Tẩy Tủy Đan", 16))
-	row.add_child(UiKit.stat("coin", str(int(cost["gold"])), "Vàng", 16))
-	v.add_child(UiKit.label("Hoàn %d Tinh hoa, bỏ mọi nút đã học." % _tree.spent(_slot), 14, UiKit.MUTED))
-	var why := _tree.why_not_reset(_slot)
-	if why != "":
-		var wl := UiKit.label(why, 14, Color("ff9a9a"))
-		wl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		v.add_child(wl)
-	var btn := UiKit.button("Chắc chắn đặt lại?" if _reset_armed else "Đặt lại", func() -> void:
-		if not _reset_armed:   # asks once more
-			_reset_armed = true
-			_rebuild()
-			return
-		_reset_armed = false
-		if _tree.reset(_slot):
-			_save()
-		_rebuild(), Vector2(0, 44), 17, UiKit.DANGER)
-	btn.disabled = why != ""
-	v.add_child(btn)
-	Journal.restyle(panel)
+	v.position = RIGHT_PAGE.position + Vector2(0, -8)
+	v.custom_minimum_size = Vector2(RIGHT_PAGE.size.x, 0)
+	v.add_theme_constant_override("separation", 2)
+	root.add_child(v)
+	var h2 := Journal.ink(String(n.get("name", _view)), 32)
+	var under := StyleBoxFlat.new()
+	under.bg_color = Color(0, 0, 0, 0)
+	under.border_color = Journal.INK
+	under.border_width_bottom = 3
+	h2.add_theme_stylebox_override("normal", under)
+	v.add_child(h2)
+	v.add_child(Journal.ink("Hàng %d · cấp %d/%d" % [int(n.get("row", 0)) + 1, r, mx], 20, Journal.INK_RED))
+	var d := Journal.ink(String(n.get("desc", "")), 22)
+	d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	d.custom_minimum_size = Vector2(RIGHT_PAGE.size.x, 0)
+	v.add_child(d)
+	var gap := Control.new()
+	gap.custom_minimum_size = Vector2(0, 8)
+	v.add_child(gap)
+	var reqs := []
+	for q: String in n.get("requires", []):
+		reqs.append(String(_tree.node(q).get("name", q)))
+	v.add_child(Journal.ledger("", "Giá mỗi cấp", "%d Tinh hoa" % _tree.cost(_view), 20))
+	v.add_child(Journal.ledger("", "Tinh hoa đang có", str(_slot.essence), 20))
+	v.add_child(Journal.ledger("", "Cần", ", ".join(reqs) if not reqs.is_empty() else "—", 20))
+	var note := Journal.ink("Tẩy tuỷ: 1 Tẩy Tủy Đan + vàng, trả lại mọi Tinh hoa.", 18, Journal.INK_SOFT)
+	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	note.custom_minimum_size = Vector2(RIGHT_PAGE.size.x, 0)
+	v.add_child(note)
+	var why := _tree.why_not(_slot, _view) if r < mx else "Đã tối đa."
+	var buy := Journal.seal("Học ▶", Vector2(220, 62), 26)
+	buy.position = RIGHT_PAGE.end - Vector2(220, 62)
+	buy.focus_mode = Control.FOCUS_NONE   # the nodes own the arrows; Enter on a node learns it
+	buy.disabled = why != ""
+	buy.tooltip_text = why
+	buy.pressed.connect(_learn)
+	root.add_child(buy)
 
 
-func _stats(tree_ids: Array) -> Dictionary:
-	var keep := _slot.tree
-	_slot.tree = tree_ids
-	var lasting := SkillTree.lasting(_slot)
-	_slot.tree = keep
-	return PlayerStats.compute(_class.get("stats", {}), lasting[0], lasting[1])
-
-
-func _fmt(f: String, x: float) -> String:
-	return f % roundi(x) if f == "%d" else f % x
+func _learn() -> void:
+	if _tree.buy(_slot, _view):
+		Sfx.play("buy")
+		_save()
+		_rebuild()
