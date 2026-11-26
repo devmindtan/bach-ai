@@ -167,3 +167,95 @@ static func ribbon(icon: String, col: Color, tip: String) -> Button:
 		b.size.x = 54)
 	b.mouse_entered.connect(func() -> void: b.grab_focus())
 	return b
+
+
+## Ink for a colour a dark-theme screen (UiKit) used on light text: light → ink, muted → soft ink, gold → red ink,
+## greens/blues/purples keep their hue darkened so they read on paper.
+static func ink_of(c: Color) -> Color:
+	if c.a < 0.05:
+		return c
+	var lum := 0.299 * c.r + 0.587 * c.g + 0.114 * c.b
+	if lum < 0.4:   # already ink (a Journal label inside the tree): keep it
+		return c
+	var sat := maxf(c.r, maxf(c.g, c.b)) - minf(c.r, minf(c.g, c.b))
+	if sat < 0.12:   # greys
+		return INK if lum > 0.8 else (INK_SOFT if lum > 0.55 else DOTS)
+	if c.g > c.r + 0.1 and c.g > c.b:
+		return Color("2a7a3a")
+	if c.b > c.r + 0.1:
+		return Color("3a6aaa") if c.g > c.r else Color("7a3ab8")
+	if c.r > 0.9 and c.g < 0.7:
+		return INK_RED
+	return INK_RED if lum > 0.55 else INK_SOFT
+
+
+static func _flat(bg: Color, border: Color, w: int) -> StyleBoxFlat:
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = bg
+	sb.border_color = border
+	sb.set_border_width_all(w)
+	sb.content_margin_left = 10
+	sb.content_margin_right = 10
+	sb.content_margin_top = 6
+	sb.content_margin_bottom = 6
+	return sb
+
+
+## Turns a UiKit (dark) control tree into ink on paper, in place: labels in ink without shadows, panels as sketch
+## boxes, buttons as sketch cells (a chosen one, drawn with a white frame by UiKit, ink-filled; the screen's red
+## main action a wax seal). Example: Journal.restyle(my_panel) after building it with UiKit.
+static func restyle(n: Node) -> void:
+	if n is Label:
+		var l := n as Label
+		l.add_theme_color_override("font_color", ink_of(l.get_theme_color("font_color")))
+		l.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0))
+		l.add_theme_constant_override("outline_size", 0)
+	elif n is RichTextLabel:
+		var r := n as RichTextLabel
+		r.add_theme_color_override("default_color", INK)
+	elif n is Button:
+		var b := n as Button
+		var sb := b.get_theme_stylebox("normal") as StyleBoxFlat
+		var main := sb != null and sb.bg_color.r > sb.bg_color.g + 0.15 and sb.bg_color.r > 0.4
+		var chosen := sb != null and sb.border_color.v > 0.95 and sb.border_color.s < 0.1
+		for st in ["normal", "hover", "focus", "pressed", "disabled"]:
+			var lit: bool = st in ["hover", "focus", "pressed"]
+			var s2: StyleBoxFlat
+			if main:
+				s2 = _flat(Color("6a4a3a") if st == "disabled" else (Color("d0402a") if lit else SEAL), GOLD if lit else Color("5a0c08"), 4)
+			else:
+				s2 = _flat(INK if chosen else (Color(0, 0, 0, 0) if st == "disabled" else SKETCH), GOLD if (lit or chosen) else (DOTS if st == "disabled" else INK), 3 if (lit or chosen) else 2)
+			b.add_theme_stylebox_override(st, s2)
+		var fc := Color("ffe0b0") if main else (PAPER if chosen else INK)
+		b.add_theme_color_override("font_color", fc)
+		b.add_theme_color_override("font_focus_color", Color("fff2d0") if main else (GOLD if chosen else INK_RED))
+		b.add_theme_color_override("font_hover_color", Color("fff2d0") if main else (GOLD if chosen else INK_RED))
+		b.add_theme_color_override("font_pressed_color", Color("fff2d0") if main else INK_RED)
+		b.add_theme_color_override("font_disabled_color", DOTS)
+		b.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0))
+		if chosen:   # its labels sit on ink: paper text
+			for c in b.find_children("*", "Label", true, false):
+				(c as Label).add_theme_color_override("font_color", PAPER)
+				(c as Label).add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0))
+			return
+	elif n is PanelContainer:
+		var p := n as PanelContainer
+		var sb := p.get_theme_stylebox("panel") as StyleBoxFlat
+		if sb != null:
+			var s2 := sb.duplicate() as StyleBoxFlat
+			s2.bg_color = Color(SKETCH, 0.55)
+			s2.border_color = ink_of(sb.border_color) if sb.border_color.s > 0.3 else INK
+			s2.set_border_width_all(maxi(2, sb.border_width_left))
+			s2.set_corner_radius_all(0)
+			s2.shadow_size = 0
+			p.add_theme_stylebox_override("panel", s2)
+	elif n is LineEdit:
+		var e := n as LineEdit
+		var line := _flat(Color(0, 0, 0, 0), INK, 0)
+		line.border_width_bottom = 3
+		for st in ["normal", "focus"]:
+			e.add_theme_stylebox_override(st, line)
+		e.add_theme_color_override("font_color", INK)
+		e.add_theme_color_override("font_placeholder_color", DOTS)
+	for c in n.get_children():
+		restyle(c)

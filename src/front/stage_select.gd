@@ -70,13 +70,9 @@ func _ready() -> void:
 		_open_detail()
 
 
-func _process(delta: float) -> void:
-	_scroll += Vector2(18.0, 6.0) * delta
-	queue_redraw()
-
-
 func _draw() -> void:
-	FrontArt.backdrop(self, _scroll, get_viewport_rect().size, _stages.ground(_n) if _stages != null else {})
+	Journal.draw_desk(self, get_viewport_rect().size)
+	Journal.draw_book(self, Journal.BOOK)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -86,12 +82,23 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event.is_action_pressed("ui_cancel"):
 		get_tree().change_scene_to_file(LOBBY_SCENE)
+	elif _mode == "campaign" and event is InputEventKey and event.pressed and not event.echo and event.keycode in [KEY_Q, KEY_E]:
+		var regs := _stages.regions()   # Q / E: the previous / next region (its first stage, if open)
+		var i := regs.find(_stages.region(_n))
+		var r: Dictionary = regs[(i + (1 if event.keycode == KEY_E else regs.size() - 1)) % regs.size()]
+		_n = clampi(int(r.get("from", 1)), 1, _slot.unlocked(_stages.count()))
+		_rebuild()
 
 
 func _rebuild() -> void:
 	if _layer != null:
 		_layer.queue_free()
 	_build()
+
+
+const LEFT_PAGE := Rect2(110, 74, 470, 572)
+const RIGHT_PAGE := Rect2(660, 74, 470, 572)
+const MAP := Rect2(110, 196, 470, 420)
 
 
 func _build() -> void:
@@ -101,116 +108,182 @@ func _build() -> void:
 	root.size = get_viewport_rect().size
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_layer.add_child(root)
-	var title := UiKit.label({"campaign": "Chọn ải", "trials": "Thử thách", "endless": "Vô tận"}.get(_mode, "Chọn ải"), 34, UiKit.GOLD)
-	title.position = Vector2(40, 24)
-	root.add_child(title)
-	var who := UiKit.label("%s  ·  đã vượt ải %d" % [_slot.name, _slot.best], 15, UiKit.MUTED)
-	who.position = Vector2(42, 70)
-	root.add_child(who)
-	var back := UiKit.button("Quay lại " + UiKit.hint("Esc"), func() -> void: get_tree().change_scene_to_file(LOBBY_SCENE), Vector2(180, 42), 17)
-	back.position = Vector2(root.size.x - 40 - 180, 28)
-	root.add_child(back)
-
-	# left: game modes (only the campaign for now; the others shown locked)
-	var modes := VBoxContainer.new()
-	modes.position = Vector2(40, 104)
-	modes.add_theme_constant_override("separation", 10)
+	var hint := Journal.ink({"campaign": "← → chọn ải · Q / E đổi vùng · Enter vào trận · Esc về sổ",
+		"trials": "↑ ↓ chọn thử thách · Enter vào trận · Esc về sổ", "endless": "Enter vào trận · Esc về sổ"}.get(_mode, ""), 15, Journal.PAPER)
+	hint.position = Vector2(Journal.BOOK.position.x, Journal.BOOK.end.y + 14)
+	root.add_child(hint)
+	# right page top: the three modes as ink pills (locked ones faded, with what opens them)
+	var modes := HBoxContainer.new()
+	modes.position = RIGHT_PAGE.position
+	modes.size = Vector2(RIGHT_PAGE.size.x, 34)
+	modes.add_theme_constant_override("separation", 6)
 	root.add_child(modes)
-	modes.add_child(UiKit.label("Chế độ", 16, UiKit.GOLD))
-	modes.add_child(_mode_button("Vượt ải", "30 ải, mở dần", true, _mode == "campaign", func() -> void:
-		_mode = "campaign"
-		_rebuild()))
 	var t_open := _challenges.mode_open(_slot)
-	modes.add_child(_mode_button("Thử thách", ("%d thử thách" % _challenges.ids().size()) if t_open else "Mở khi vượt ải %d" % _challenges.mode_unlock(),
-		t_open, _mode == "trials", func() -> void:
-		_mode = "trials"
-		_rebuild()))
 	var e_open := _endless.is_open(_slot)
-	modes.add_child(_mode_button("Vô tận", (("Kỷ lục %s" % _mmss(_slot.endless_best)) if _slot.endless_best > 0.0 else "Chưa có kỷ lục") if e_open else "Mở khi vượt ải %d" % _endless.unlock(),
-		e_open, _mode == "endless", func() -> void:
-		_mode = "endless"
-		_rebuild()))
+	for m in [["campaign", "Vượt ải", true, ""], ["endless", "Vô tận", e_open, "Mở khi vượt ải %d" % _endless.unlock()],
+			["trials", "Thử thách", t_open, "Mở khi vượt ải %d" % _challenges.mode_unlock()]]:
+		var b := _ink_pill(String(m[1]), _mode == m[0], bool(m[2]))
+		if not bool(m[2]):
+			b.tooltip_text = String(m[3])
+		b.pressed.connect(func() -> void:
+			_mode = String(m[0])
+			_rebuild())
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		modes.add_child(b)
 	if _mode == "trials":
 		_build_trials(root)
 		return
 	if _mode == "endless":
 		_build_endless(root)
 		return
-
-	# middle: the stage grid, a row per region
-	var grid := VBoxContainer.new()
-	grid.position = Vector2(284, 104)
-	grid.add_theme_constant_override("separation", 6)
-	root.add_child(grid)
+	# left page: the region's name, region tabs, the map of its ten stages
+	var r := _stages.region(_n)
+	var title := Journal.ink(String(r.get("name", "")), 44)
+	title.position = LEFT_PAGE.position + Vector2(0, -8)
+	root.add_child(title)
+	var from := int(r.get("from", 1))
+	var to := int(r.get("to", 10))
+	var sub := Journal.ink("Ải %d–%d · trùm ở Ải %d · đã vượt %d/%d" % [from, to, to, _slot.best, _stages.count()], 19, Journal.INK_RED)
+	sub.position = LEFT_PAGE.position + Vector2(2, 48)
+	root.add_child(sub)
+	var tabs := HBoxContainer.new()
+	tabs.position = LEFT_PAGE.position + Vector2(0, 84)
+	tabs.size = Vector2(LEFT_PAGE.size.x, 30)
+	tabs.add_theme_constant_override("separation", 6)
+	root.add_child(tabs)
 	var unlocked := _slot.unlocked(_stages.count())
-	var chosen_tile: Button = null
-	for r: Dictionary in _stages.regions():
-		grid.add_child(UiKit.label(String(r.get("name", "")), 17, UiKit.GOLD))
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 6)
-		grid.add_child(row)
-		for n in range(int(r.get("from", 1)), int(r.get("to", 10)) + 1):
-			var t := _tile(n, n > unlocked)
-			row.add_child(t)
-			if n == _n:
-				chosen_tile = t
-	var legend := UiKit.label("✓ đã vượt  ·  viền vàng + đầu lâu: ải boss  ·  mờ: chưa mở", 13, UiKit.MUTED)
-	grid.add_child(legend)
-	# the mode's rules and progress under the grid (like the mode window of Vampire Survivors)
-	var info := UiKit.panel(Color(0.09, 0.08, 0.13, 0.9), 16)
-	info.position = Vector2(284, 440)
-	info.custom_minimum_size = Vector2(614, 0)
-	root.add_child(info)
-	var iv := VBoxContainer.new()
-	iv.add_theme_constant_override("separation", 6)
-	info.add_child(iv)
-	iv.add_child(UiKit.label("Vượt ải", 20, UiKit.TEXT))
-	for line in ["Ải thường: trụ hết giờ để vượt. Ải boss: boss ra ở phút 5, hạ boss mới thắng.",
-			"Mỗi ải mạnh hơn ải trước: quái nhiều máu, đánh đau và đông hơn.",
-			"Ải 10, 20, 30 có boss. Cấp 10, 20, 30 trong trận: chọn phần thưởng mốc."]:
-		var l := UiKit.label("•  " + line, 14, UiKit.MUTED)
-		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		l.custom_minimum_size = Vector2(580, 0)
-		iv.add_child(l)
-	var bar_row := HBoxContainer.new()
-	bar_row.add_theme_constant_override("separation", 12)
-	iv.add_child(bar_row)
-	var total := _stages.count()
-	var bar := Control.new()
-	bar.custom_minimum_size = Vector2(440, 22)
-	bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	bar.draw.connect(func() -> void:
-		bar.draw_rect(Rect2(0, 6, 440, 10), Color("2a2438"))
-		bar.draw_rect(Rect2(0, 6, 440.0 * float(_slot.best) / float(total), 10), Color("5f9a5a"))
-		for b in range(_stages.data.get("boss_every", 10), total + 1, int(_stages.data.get("boss_every", 10))):
-			bar.draw_rect(Rect2(440.0 * float(b) / float(total) - 1, 2, 2, 18), BOSS_GOLD))
-	bar_row.add_child(bar)
-	var prog := UiKit.label("Đã vượt %d / %d ải" % [_slot.best, total], 15, UiKit.TEXT)
-	prog.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	bar_row.add_child(prog)
-	# its bottom lines up with the detail column's (104 + 500) once laid out
-	var info_id := info.get_instance_id()   # by id: a rebuild may free info first (a freed capture prints an error)
-	(func() -> void:
-		var inf := instance_from_id(info_id) as Control
-		if inf != null:
-			inf.position.y = 604.0 - inf.size.y).call_deferred()
-
-	# right: the chosen stage, then the main action under it
-	var panel := UiKit.panel(Color(0.09, 0.08, 0.13, 0.96), 18)
-	panel.position = Vector2(root.size.x - 40 - 330, 104)
-	panel.custom_minimum_size = Vector2(330, 500)
-	panel.size = Vector2(330, 500)
+	for rg: Dictionary in _stages.regions():
+		var rf := int(rg.get("from", 1))
+		var b := _ink_pill(String(rg.get("name", "")), rf <= _n and _n <= int(rg.get("to", 10)), rf <= unlocked)
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		b.pressed.connect(func() -> void:
+			_n = clampi(rf, 1, unlocked)
+			_rebuild())
+		tabs.add_child(b)
+	var chosen_tile := _map(root, from, to, unlocked)
+	# right page: the chosen stage
+	var panel := VBoxContainer.new()
+	panel.position = RIGHT_PAGE.position + Vector2(0, 50)
+	panel.size = Vector2(RIGHT_PAGE.size.x, 420)
 	root.add_child(panel)
-	_detail(panel, unlocked)
-	var start := UiKit.button("Bắt đầu  ▶", func() -> void: _start(), Vector2(330, 64), 26, UiKit.PRIMARY)
+	var pc := PanelContainer.new()   # _detail fills a PanelContainer
+	pc.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+	panel.add_child(pc)
+	_detail(pc, unlocked)
+	Journal.restyle(pc)
+	var start := Journal.seal("Vào trận ▶", Vector2(240, 62), 26)
 	start.set_meta("sfx", "")   # ui_start instead of a click
-	start.position = Vector2(root.size.x - 40 - 330, 616)
+	start.position = RIGHT_PAGE.end - Vector2(240, 62)
 	start.disabled = _n > unlocked
+	start.pressed.connect(_start)
 	root.add_child(start)
 	if not start.disabled:
 		start.call_deferred("grab_focus")
 	elif chosen_tile != null:
 		chosen_tile.call_deferred("grab_focus")
+
+
+## The region's stages as squares on a dashed ink road (two rows of five, the second running back), the boss stage
+## bigger; won ones red ink, the chosen one ink with a gold frame, locked ones faded. Returns the chosen one.
+func _map(root: Control, from: int, to: int, unlocked: int) -> Button:
+	var pts := []
+	var n := to - from + 1
+	for k in n:
+		var row := k / 5
+		var col := k % 5
+		var x := 50.0 + col * 92.0 if row % 2 == 0 else 418.0 - col * 92.0
+		pts.append(MAP.position + Vector2(x, 70.0 + row * 200.0 + sin(k * 1.3) * 34.0))
+	var road := Control.new()
+	road.position = Vector2.ZERO
+	road.size = root.size
+	road.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(road)
+	road.draw.connect(func() -> void:
+		var path := []   # the turn between the rows bends out past the page edge's side, clear of the labels
+		for i in pts.size():
+			path.append(pts[i])
+			if i % 5 == 4 and i + 1 < pts.size():
+				path.append(pts[i] + Vector2(44, 0))
+				path.append(pts[i + 1] + Vector2(44, 0))
+		for i in path.size() - 1:
+			var a: Vector2 = path[i]
+			var b: Vector2 = path[i + 1]
+			var d := a.distance_to(b)
+			var s := 0.0
+			while s < d:
+				road.draw_line(a.lerp(b, s / d), a.lerp(b, minf(s + 8.0, d) / d), Journal.INK, 3.0)
+				s += 16.0)
+	var chosen: Button = null
+	for k in n:
+		var st := from + k
+		var boss := _stages.is_boss(st)
+		var locked := st > unlocked
+		var won := _slot.won(st)
+		var on := st == _n
+		var half := 22.0 if boss else 16.0
+		var b := Button.new()
+		b.position = pts[k] - Vector2(half, half)
+		b.custom_minimum_size = Vector2(half, half) * 2.0
+		b.size = b.custom_minimum_size
+		b.focus_mode = Control.FOCUS_NONE if locked else Control.FOCUS_ALL
+		b.disabled = locked
+		for sname in ["normal", "hover", "focus", "pressed", "disabled"]:
+			var lit: bool = on or sname in ["hover", "focus", "pressed"]
+			var sb := StyleBoxFlat.new()
+			sb.bg_color = Journal.INK if on else (Journal.SEAL if won else Journal.PAPER)
+			sb.border_color = Journal.GOLD if lit else Journal.INK
+			sb.set_border_width_all(4 if lit else 3)
+			if sname == "disabled":
+				sb.bg_color = Color(Journal.PAPER, 0.5)
+				sb.border_color = Journal.DOTS
+			b.add_theme_stylebox_override(sname, sb)
+		Tip.attach(b, "Ải %d" % st, ("Vượt ải %d để mở." % (st - 1)) if locked else ("Đã vượt %d lần." % int(_slot.wins.get(str(st), 0)) if won else "Chưa vượt."),
+			Journal.INK_RED, "skull" if boss else "", "Ải trùm" if boss else String(_stages.region(st).get("name", "")))
+		b.pressed.connect(func() -> void:
+			_n = st
+			_rebuild())
+		b.focus_entered.connect(func() -> void:
+			if _n != st:
+				_n = st
+				_rebuild())
+		b.mouse_entered.connect(func() -> void:
+			if not locked:
+				b.grab_focus())
+		root.add_child(b)
+		if boss:
+			var ic := UiKit.icon("skull", 24.0)
+			ic.position = Vector2(half - 12, half - 12)
+			ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			b.add_child(ic)
+		var lab := Journal.ink(("Trùm %d" if boss else "Ải %d") % st, 19, Journal.DOTS if locked else (Journal.INK_RED if on else Journal.INK))
+		lab.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		lab.custom_minimum_size = Vector2(90, 0)
+		lab.position = pts[k] + Vector2(-45, half + 2)
+		root.add_child(lab)
+		if on:
+			chosen = b
+	return chosen
+
+
+## A small ink tab (modes, regions): ink-filled when [param on], faded when not [param open].
+func _ink_pill(text: String, on: bool, open: bool) -> Button:
+	var b := Button.new()
+	b.text = text
+	b.custom_minimum_size = Vector2(0, 32)
+	b.focus_mode = Control.FOCUS_ALL if open else Control.FOCUS_NONE
+	b.disabled = not open
+	b.add_theme_font_size_override("font_size", 18)
+	for st in ["normal", "hover", "focus", "pressed", "disabled"]:
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = Journal.INK if on else Color(0, 0, 0, 0)
+		sb.border_color = Journal.INK_RED if st in ["hover", "focus"] else (Journal.DOTS if st == "disabled" else Journal.INK)
+		sb.set_border_width_all(2)
+		b.add_theme_stylebox_override(st, sb)
+	b.add_theme_color_override("font_color", Journal.PAPER if on else Journal.INK)
+	b.add_theme_color_override("font_disabled_color", Journal.DOTS)
+	for k in ["font_focus_color", "font_hover_color", "font_pressed_color"]:
+		b.add_theme_color_override(k, Journal.GOLD if on else Journal.INK_RED)
+	return b
 
 
 func _mode_button(name: String, line: String, open: bool, on: bool, cb: Callable) -> Button:
@@ -389,7 +462,8 @@ func _monster_box(id: String) -> Control:
 	c.clip_contents = true
 	Tip.attach(c, String(m.get("name", id)), "", UiKit.GOLD, "", "Quái vật")
 	c.draw.connect(func() -> void:
-		c.draw_rect(Rect2(Vector2.ZERO, c.size), UiKit.PANEL_DARK)
+		c.draw_rect(Rect2(Vector2.ZERO, c.size), Journal.SKETCH)   # a sketch box on the page
+		c.draw_rect(Rect2(Vector2.ZERO, c.size), Journal.INK, false, 2.0)
 		if sheet == null:
 			return
 		# whole-number scale from the body radius, the body centred in the box
@@ -421,97 +495,83 @@ static func _mmss(sec: float) -> String:
 	return "%02d:%02d" % [t / 60, t % 60]
 
 
-## The rules in the middle, the stage it plays and the record on the right, then Bắt đầu (the Thử thách layout).
+## Vô tận: the rules on the left page; the stage it plays, the record and the seal on the right.
 func _build_endless(root: Control) -> void:
-	var col := VBoxContainer.new()
-	col.position = Vector2(284, 104)
-	col.custom_minimum_size = Vector2(614, 0)
-	col.add_theme_constant_override("separation", 12)
-	root.add_child(col)
 	var base := _endless.base_stage(_slot.best, _stages)
-	var rules := UiKit.panel(Color(0.09, 0.08, 0.13, 0.9), 18)
-	rules.custom_minimum_size = Vector2(614, 0)
-	col.add_child(rules)
-	var rv := VBoxContainer.new()
-	rv.add_theme_constant_override("separation", 8)
-	rules.add_child(rv)
-	rv.add_child(UiKit.label("Sống càng lâu càng tốt", 24, UiKit.GOLD))
+	var left := VBoxContainer.new()
+	left.position = LEFT_PAGE.position + Vector2(0, -8)
+	left.size = LEFT_PAGE.size
+	left.add_theme_constant_override("separation", 10)
+	root.add_child(left)
+	left.add_child(Journal.ink("Vô tận", 44))
+	left.add_child(Journal.ink("Sống càng lâu càng tốt", 22, Journal.INK_RED))
 	for line in ["Chơi lại ải %d (%s) không giới hạn thời gian." % [base, String(_stages.region(base).get("name", ""))],
 			"Hết %s là sang Vòng mới: quái quay lại từ đầu, máu +%d%%, sát thương +%d%% mỗi vòng." % [
 				_mmss(float(_stages.load_stage(base).get("duration", 300.0))), roundi(float(_endless.data.get("cycle_hp", 1.0)) * 100),
 				roundi(float(_endless.data.get("cycle_damage", 0.25)) * 100)],
-			"Không có boss, không tính vượt ải. Giữ vàng, Tinh hoa và Mảnh thẻ đã nhặt."]:
-		var l := UiKit.label("· " + line, 17, UiKit.TEXT)
+			"Không có trùm, không tính vượt ải. Giữ vàng, Tinh hoa và Mảnh thẻ đã nhặt."]:
+		var l := Journal.ink("·  " + line, 20)
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		l.custom_minimum_size = Vector2(578, 0)
-		rv.add_child(l)
-	var panel := UiKit.panel(Color(0.09, 0.08, 0.13, 0.96), 18)
-	panel.position = Vector2(root.size.x - 40 - 330, 104)
-	panel.custom_minimum_size = Vector2(330, 500)
-	panel.size = Vector2(330, 500)
-	root.add_child(panel)
-	var pv := VBoxContainer.new()
-	pv.add_theme_constant_override("separation", 10)
-	panel.add_child(pv)
-	pv.add_child(UiKit.label("Vô tận", 30, UiKit.TEXT))
-	pv.add_child(UiKit.label("Ải %d · %s" % [base, String(_stages.region(base).get("name", ""))], 18, UiKit.GOLD))
-	pv.add_child(UiKit.label("Kỷ lục", 16, UiKit.MUTED))
-	pv.add_child(UiKit.label(_mmss(_slot.endless_best) if _slot.endless_best > 0.0 else "Chưa có", 40, UiKit.TEXT))
-	var start := UiKit.button("Bắt đầu  ▶", func() -> void:
+		l.custom_minimum_size = Vector2(LEFT_PAGE.size.x, 0)
+		left.add_child(l)
+	var right := VBoxContainer.new()
+	right.position = RIGHT_PAGE.position + Vector2(0, 54)
+	right.size = Vector2(RIGHT_PAGE.size.x, 300)
+	right.add_theme_constant_override("separation", 6)
+	root.add_child(right)
+	right.add_child(Journal.ink("Ải %d" % base, 40))
+	right.add_child(Journal.ink(String(_stages.region(base).get("name", "")), 20, Journal.INK_RED))
+	right.add_child(Journal.ledger("clock", "Kỷ lục", _mmss(_slot.endless_best) if _slot.endless_best > 0.0 else "Chưa có", 24))
+	right.add_child(Journal.ledger("star", "Vòng mới mỗi", _mmss(float(_stages.load_stage(base).get("duration", 300.0))), 22))
+	var start := Journal.seal("Vào trận ▶", Vector2(240, 62), 26)
+	start.set_meta("sfx", "")
+	start.position = RIGHT_PAGE.end - Vector2(240, 62)
+	start.pressed.connect(func() -> void:
 		Prefs.current().challenge_target = ""
 		Prefs.current().endless_target = true
 		Sfx.play("ui_start")
-		get_tree().change_scene_to_file(RUN_SCENE), Vector2(330, 64), 26, UiKit.PRIMARY)
-	start.set_meta("sfx", "")
-	start.position = Vector2(root.size.x - 40 - 330, 616)
+		get_tree().change_scene_to_file(RUN_SCENE))
 	root.add_child(start)
 	start.call_deferred("grab_focus")
 
 
 # --- challenge mode (design/challenge.md) ------------------------------------------
 
-## The challenges as cards in the middle, the chosen one on the right, then Bắt đầu.
+## Thử thách: the challenges down the left page, the chosen one and the seal on the right.
 func _build_trials(root: Control) -> void:
 	var col := VBoxContainer.new()
-	col.position = Vector2(284, 104)
-	col.add_theme_constant_override("separation", 10)
+	col.position = LEFT_PAGE.position + Vector2(0, -8)
+	col.size = LEFT_PAGE.size
+	col.add_theme_constant_override("separation", 8)
 	root.add_child(col)
-	col.add_child(UiKit.label("Luật riêng, cày lại được; thắng nhận Tẩy Tủy Đan để đặt lại cây kỹ năng.", 15, UiKit.MUTED))
+	col.add_child(Journal.ink("Thử thách", 44))
+	var sub := Journal.ink("Luật riêng, cày lại được; thắng nhận Tẩy Tủy Đan (đang có %d) để đặt lại cây kỹ năng." % _slot.pills, 18, Journal.INK_RED)
+	sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	sub.custom_minimum_size = Vector2(LEFT_PAGE.size.x, 0)
+	col.add_child(sub)
 	var chosen: Button = null
 	for id in _challenges.ids():
 		var card := _challenge_card(id)
 		col.add_child(card)
 		if id == _ch:
 			chosen = card
-	# what the pills are for, under the cards (bottom lined up with the detail column)
-	var info := UiKit.panel(Color(0.09, 0.08, 0.13, 0.9), 16)
-	info.position = Vector2(284, 520)
-	info.custom_minimum_size = Vector2(614, 84)
-	info.size = info.custom_minimum_size
-	root.add_child(info)
-	var ih := HBoxContainer.new()
-	ih.add_theme_constant_override("separation", 14)
-	info.add_child(ih)
-	ih.add_child(UiKit.icon("pill", 40.0))
-	var iv := VBoxContainer.new()
-	iv.add_theme_constant_override("separation", 2)
-	ih.add_child(iv)
-	iv.add_child(UiKit.label("Đang có %d Tẩy Tủy Đan" % _slot.pills, 18, UiKit.TEXT))
-	iv.add_child(UiKit.label("Dùng ở Cây kỹ năng: 1 viên + vàng để đặt lại cây, hoàn đủ Tinh hoa.", 14, UiKit.MUTED))
-	var panel := UiKit.panel(Color(0.09, 0.08, 0.13, 0.96), 18)
-	panel.position = Vector2(root.size.x - 40 - 330, 104)
-	panel.custom_minimum_size = Vector2(330, 500)
-	panel.size = Vector2(330, 500)
+	Journal.restyle(col)
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+	panel.position = RIGHT_PAGE.position + Vector2(0, 50)
+	panel.custom_minimum_size = Vector2(RIGHT_PAGE.size.x, 0)
 	root.add_child(panel)
 	_challenge_detail(panel)
-	var start := UiKit.button("Bắt đầu  ▶", func() -> void:
+	Journal.restyle(panel)
+	var start := Journal.seal("Vào trận ▶", Vector2(240, 62), 26)
+	start.set_meta("sfx", "")   # ui_start instead of a click
+	start.position = RIGHT_PAGE.end - Vector2(240, 62)
+	start.disabled = not _challenges.is_open(_slot, _ch)
+	start.pressed.connect(func() -> void:
 		Prefs.current().challenge_target = _ch
 		Prefs.current().endless_target = false
 		Sfx.play("ui_start")
-		get_tree().change_scene_to_file(RUN_SCENE), Vector2(330, 64), 26, UiKit.PRIMARY)
-	start.set_meta("sfx", "")   # ui_start instead of a click
-	start.position = Vector2(root.size.x - 40 - 330, 616)
-	start.disabled = not _challenges.is_open(_slot, _ch)
+		get_tree().change_scene_to_file(RUN_SCENE))
 	root.add_child(start)
 	if not start.disabled:
 		start.call_deferred("grab_focus")
@@ -525,7 +585,7 @@ func _challenge_card(id: String) -> Button:
 	var on := id == _ch
 	var wins := int(_slot.challenge_wins.get(id, 0))
 	var b := Button.new()
-	b.custom_minimum_size = Vector2(614, 112)
+	b.custom_minimum_size = Vector2(LEFT_PAGE.size.x, 124)
 	b.focus_mode = Control.FOCUS_ALL
 	var border := Color.WHITE if on else (UiKit.GOLD if open else Color("3a3448"))
 	b.add_theme_stylebox_override("normal", UiKit.style(UiKit.PANEL if open else TILE_LOCKED, 12, border, 3 if on else 2))
@@ -564,10 +624,12 @@ func _challenge_card(id: String) -> Button:
 	rl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	head.add_child(rl)
 	var dl := UiKit.label(String(c.get("desc", "")), 15, UiKit.TEXT if open else Color("6a6478"))
+	dl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	dl.custom_minimum_size = Vector2(LEFT_PAGE.size.x - 100, 0)
 	dl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	v.add_child(dl)
 	var dur := int(c.get("duration", 300))
-	var ml := UiKit.label("Dựa trên ải %d  ·  %d phút  ·  Tẩy Tủy Đan +%d lần đầu, +%d các lần sau" % [
+	var ml := UiKit.label("Ải %d  ·  %d phút  ·  Tẩy Tủy Đan +%d / +%d" % [
 		int(c.get("base", 1)), dur / 60, int(_challenges.data.get("pills_first", 2)), int(_challenges.data.get("pills", 1))], 13, UiKit.MUTED)
 	ml.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	v.add_child(ml)
@@ -706,6 +768,12 @@ func _open_detail() -> void:
 	_detail_layer.add_child(center)
 	var panel := UiKit.panel(UiKit.PANEL, 20)
 	panel.custom_minimum_size = Vector2(980, 0)
+	var paper := StyleBoxFlat.new()   # a loose sheet of the journal
+	paper.bg_color = Journal.PAPER
+	paper.border_color = Journal.EDGE
+	paper.set_border_width_all(4)
+	paper.set_content_margin_all(24)
+	panel.add_theme_stylebox_override("panel", paper)
 	center.add_child(panel)
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 12)
@@ -775,6 +843,8 @@ func _open_detail() -> void:
 	var first := _stages.rewards(_n, true)
 	var again := _stages.rewards(_n, false)
 	right.add_child(UiKit.label("Vàng %d · Đá lần đầu %d · Đá các lần sau %d" % [int(first["gold"]), int(first["gems"]), int(again["gems"])], 15, UiKit.TEXT))
+	for c in panel.get_children():   # ink on the sheet (its own paper style stays)
+		Journal.restyle(c)
 
 
 func _close_detail() -> void:
