@@ -127,8 +127,8 @@
     {
       "id": "blade_ring",
       "kind": "skill",
-      "name": "Vòng dao",
-      "desc": "Sáu con dao xoay vòng quanh người rồi bay ra. Mỗi cấp: +20% sát thương. Cấp 3: 2 vòng; cấp 5: 3 vòng.",
+      "name": "Lốc dao",
+      "desc": "Dao xoay vòng quanh người trong vài giây, cắt liên tục quái chạm vào. Mỗi cấp: +20% sát thương, thêm dao (3/4/4/5/6), xoay lâu hơn.",
       "max_level": 5,
       "weight": 2,
       "effects": {
@@ -622,21 +622,28 @@
       ]
     },
     "blade_ring": {
-      "sprite": "blade-ring",
-      "cast": "self",
-      "anim": "burst",
-      "damage_mul": 1.1,
+      "sprite": "blade-orbit-i",
+      "tier_sprites": [
+        "blade-orbit-i",
+        "blade-orbit-ii",
+        "blade-orbit-iii",
+        "blade-orbit-iv",
+        "blade-orbit-v"
+      ],
+      "cast": "orbit",
+      "anim": "spin",
+      "damage_mul": 0.5,
       "size_mul": 1.0,
-      "cooldown": 5.0,
-      "under_hero": true,
-      "knockback": 120.0,
-      "count": [
-        1,
-        1,
-        2,
-        2,
-        3
-      ]
+      "cooldown": 6.0,
+      "duration": [
+        2.5,
+        2.8,
+        3.0,
+        3.3,
+        3.6
+      ],
+      "rehit": 0.3,
+      "knockback": 60.0
     },
     "shadow_strike": {
       "sprite": "shadow-strike",

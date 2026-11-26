@@ -1210,6 +1210,13 @@ func _cast(sid: String, ts: Dictionary, how: String) -> void:
 					if probe != null:
 						aim -= probe.center
 				_add_fx(sprite, anim, sc, dmg, -1.0, aim, sid, kb)
+		"orbit":
+			# Lốc dao (design/rogue-kits.md): the spin follows the hero for duration (by level), cutting every rehit s
+			var durs: Variant = ts.get("duration", 2.5)
+			var life := float(durs[clampi(int(levels.get(sid, 1)) - 1, 0, (durs as Array).size() - 1)]) if durs is Array else float(durs)
+			var fx := _add_fx(sprite, String(ts.get("anim", "spin")), sc, dmg, life, null, sid, kb)
+			if not fx.is_empty():
+				fx["rehit"] = float(ts.get("rehit", 0.3))
 		"pet":
 			# Chim ưng: the companion dives at the monster with the most hp in cast_range
 			var best := -1

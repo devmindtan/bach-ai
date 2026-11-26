@@ -197,7 +197,7 @@ func test_god_hammer_falls_on_the_nearest_monster() -> void:
 ## monster where they land.
 func test_archer_and_assassin_bursts_damage_the_monster() -> void:
 	for pair: Array in [["archer", "arrow_rain", "crowd"], ["archer", "thorn_trap", "nearest"],
-			["assassin", "smoke_bomb", "self"], ["assassin", "blade_ring", "self"], ["assassin", "shadow_strike", "nearest"]]:
+			["assassin", "smoke_bomb", "self"], ["assassin", "shadow_strike", "nearest"]]:
 		var sid := String(pair[1])
 		var r := _run(String(pair[0]), {sid: 1})
 		var e: Enemies = r.enemies
@@ -272,4 +272,22 @@ func test_companion_hawk_dives_at_the_toughest_monster() -> void:
 	_check(e.hp[1] < 300.0, "it rakes the toughest monster, hp=%s" % e.hp[1])
 	_check(is_equal_approx(e.hp[0], 100.0), "not the nearest one, hp=%s" % e.hp[0])
 	_check(String(r._pets["hawk"]["state"]) == "idle", "it flies back to the hero")
+	r.free()
+
+
+## design/rogue-kits.md, Lốc dao: daggers circle the hero for the skill's duration and keep cutting a monster in the
+## ring (it is hit again every rehit s), then stop.
+func test_blade_orbit_keeps_cutting_round_the_hero() -> void:
+	var r := _run("assassin", {"blade_ring": 1})
+	var e: Enemies = r.enemies
+	e.spawn("blob", Vector2(34, 0))
+	_settle(e)
+	r._cast("blade_ring", r.pool["skills"]["blade_ring"], "orbit")
+	_check(not r._fx.is_empty(), "the daggers come out")
+	for i in 60:
+		r._step_fx(1.0 / 60.0)
+	_check(int(e.hits_by.get("blade_ring", 0)) >= 2, "a monster in the ring is cut more than once, hits=%s" % e.hits_by.get("blade_ring", 0))
+	for i in 300:
+		r._step_fx(1.0 / 60.0)
+	_check(r._fx.is_empty(), "the orbit ends after its duration")
 	r.free()
