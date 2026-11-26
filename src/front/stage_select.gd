@@ -75,6 +75,24 @@ func _draw() -> void:
 	Journal.draw_book(self, Journal.BOOK)
 
 
+## ↑ ↓ change the mode (web hint "↑ ↓ chế độ"), locked modes skipped; the map and seal keep ← →.
+func _input(event: InputEvent) -> void:
+	if _detail_layer != null or _mode == "trials" or not (event.is_action_pressed("ui_up") or event.is_action_pressed("ui_down")):
+		return
+	var order := ["campaign", "endless", "trials"]
+	var open := {"campaign": true, "endless": _endless.is_open(_slot), "trials": _challenges.mode_open(_slot)}
+	var d := 1 if event.is_action_pressed("ui_down") else -1
+	var i := order.find(_mode)
+	for _k in order.size():
+		i = posmod(i + d, order.size())
+		if open[order[i]]:
+			break
+	if order[i] != _mode:
+		_mode = order[i]
+		get_viewport().set_input_as_handled()
+		_rebuild()
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel") and _detail_layer != null:
 		_close_detail()
@@ -98,7 +116,7 @@ func _rebuild() -> void:
 
 const LEFT_PAGE := Rect2(110, 74, 470, 572)
 const RIGHT_PAGE := Rect2(660, 74, 470, 572)
-const MAP := Rect2(110, 196, 470, 420)
+const MAP := Rect2(110, 150, 470, 420)
 
 
 func _build() -> void:
@@ -108,19 +126,19 @@ func _build() -> void:
 	root.size = get_viewport_rect().size
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_layer.add_child(root)
-	var hint := Journal.ink({"campaign": "← → chọn ải · Q / E đổi vùng · Enter vào trận · Esc về sổ",
+	var hint := Journal.ink({"campaign": "← → chọn ải · Q / E đổi vùng · ↑ ↓ chế độ · Enter vào trận · Esc về sổ",
 		"trials": "↑ ↓ chọn thử thách · Enter vào trận · Esc về sổ", "endless": "Enter vào trận · Esc về sổ"}.get(_mode, ""), 15, Journal.PAPER)
 	hint.position = Vector2(Journal.BOOK.position.x, Journal.BOOK.end.y + 14)
 	root.add_child(hint)
 	# right page top: the three modes as ink pills (locked ones faded, with what opens them)
 	var modes := HBoxContainer.new()
-	modes.position = RIGHT_PAGE.position
+	modes.position = RIGHT_PAGE.position + (Vector2(0, 78) if _mode == "campaign" else Vector2.ZERO)   # web: under the stage heading
 	modes.size = Vector2(RIGHT_PAGE.size.x, 34)
 	modes.add_theme_constant_override("separation", 6)
 	root.add_child(modes)
 	var t_open := _challenges.mode_open(_slot)
 	var e_open := _endless.is_open(_slot)
-	for m in [["campaign", "Vượt ải", true, ""], ["endless", "Vô tận", e_open, "Mở khi vượt ải %d" % _endless.unlock()],
+	for m in [["campaign", "Thường", true, ""], ["endless", "Vô tận", e_open, "Mở khi vượt ải %d" % _endless.unlock()],
 			["trials", "Thử thách", t_open, "Mở khi vượt ải %d" % _challenges.mode_unlock()]]:
 		var b := _ink_pill(String(m[1]), _mode == m[0], bool(m[2]))
 		if not bool(m[2]):
@@ -128,7 +146,8 @@ func _build() -> void:
 		b.pressed.connect(func() -> void:
 			_mode = String(m[0])
 			_rebuild())
-		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		b.add_theme_font_size_override("font_size", 20)
+		b.custom_minimum_size = Vector2(0, 28)
 		modes.add_child(b)
 	if _mode == "trials":
 		_build_trials(root)
@@ -143,34 +162,63 @@ func _build() -> void:
 	root.add_child(title)
 	var from := int(r.get("from", 1))
 	var to := int(r.get("to", 10))
-	var sub := Journal.ink("Ải %d–%d · trùm ở Ải %d · đã vượt %d/%d" % [from, to, to, _slot.best, _stages.count()], 19, Journal.INK_RED)
+	var sub := Journal.ink("Ải %d–%d · trùm ở Ải %d" % [from, to, to], 19, Journal.INK_RED)
 	sub.position = LEFT_PAGE.position + Vector2(2, 48)
 	root.add_child(sub)
-	var tabs := HBoxContainer.new()
-	tabs.position = LEFT_PAGE.position + Vector2(0, 84)
-	tabs.size = Vector2(LEFT_PAGE.size.x, 30)
-	tabs.add_theme_constant_override("separation", 6)
-	root.add_child(tabs)
 	var unlocked := _slot.unlocked(_stages.count())
-	for rg: Dictionary in _stages.regions():
-		var rf := int(rg.get("from", 1))
-		var b := _ink_pill(String(rg.get("name", "")), rf <= _n and _n <= int(rg.get("to", 10)), rf <= unlocked)
-		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		b.pressed.connect(func() -> void:
-			_n = clampi(rf, 1, unlocked)
+	# the regions are bookmark ribbons on the book's edge (web .ribbons), locked ones too (they say nothing opens)
+	var regs := _stages.regions()
+	var names := regs.map(func(rg: Dictionary) -> String: return String(rg.get("name", "")))
+	var here := regs.find(r)
+	Journal.ribbons(root, names, [Color("6a8a3a"), Color("3a5a3a"), Color("5a6a2a")], here, func(i: int) -> void:
+		var rf := int(regs[i].get("from", 1))
+		if rf <= unlocked:
+			_n = rf
 			_rebuild())
-		tabs.add_child(b)
 	var chosen_tile := _map(root, from, to, unlocked)
-	# right page: the chosen stage
-	var panel := VBoxContainer.new()
-	panel.position = RIGHT_PAGE.position + Vector2(0, 50)
-	panel.size = Vector2(RIGHT_PAGE.size.x, 420)
-	root.add_child(panel)
-	var pc := PanelContainer.new()   # _detail fills a PanelContainer
-	pc.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
-	panel.add_child(pc)
-	_detail(pc, unlocked)
-	Journal.restyle(pc)
+	# right page (web screen-stages-journal): the heading, its status, the modes, the region's monsters, a ledger
+	var boss := _stages.is_boss(_n)
+	var h2 := Journal.ink(("Trùm · " if boss else "") + "Ải %d" % _n, 32)
+	var under := StyleBoxFlat.new()
+	under.bg_color = Color(0, 0, 0, 0)
+	under.border_color = Journal.INK
+	under.border_width_bottom = 3
+	h2.add_theme_stylebox_override("normal", under)
+	h2.custom_minimum_size = Vector2(RIGHT_PAGE.size.x, 0)
+	h2.position = RIGHT_PAGE.position + Vector2(0, -8)
+	root.add_child(h2)
+	var first := not _slot.won(_n)
+	var status := "Chưa mở: qua Ải %d trước" % (_n - 1) if _n > unlocked else ("Lần đầu: thưởng đá nhiều hơn" if first else "Đã qua")
+	var stl := Journal.ink(status, 22, Journal.INK_RED)
+	stl.position = RIGHT_PAGE.position + Vector2(0, 42)
+	root.add_child(stl)
+	var col := VBoxContainer.new()
+	col.position = RIGHT_PAGE.position + Vector2(0, 116)
+	col.custom_minimum_size = Vector2(RIGHT_PAGE.size.x, 0)
+	col.add_theme_constant_override("separation", 6)
+	root.add_child(col)
+	var mh := HBoxContainer.new()
+	col.add_child(mh)
+	var ml := Journal.ink("Quái trong vùng", 22, Journal.INK_SOFT)
+	ml.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	mh.add_child(ml)
+	var more := UiKit.button("Chi tiết", _open_detail, Vector2(96, 30), 16)   # design/ux/stage-detail.md (not on the web page)
+	mh.add_child(more)
+	Journal.restyle(mh)
+	var st := _stages.load_stage(_n)
+	var mons := HBoxContainer.new()
+	mons.add_theme_constant_override("separation", 10)
+	col.add_child(mons)
+	for id: String in stage_monsters(st, _monsters).slice(0, 6):
+		var box := _monster_box(id)
+		box.custom_minimum_size = Vector2(64, 64)
+		mons.add_child(box)
+	var dur := int(st.get("duration", 300))
+	var rw_first := _stages.rewards(_n, true)
+	var rw_again := _stages.rewards(_n, false)
+	col.add_child(Journal.ledger("", "Thời gian", "%02d:%02d" % [dur / 60, dur % 60], 22))
+	col.add_child(Journal.ledger("", "Vàng khi thắng", str(int(rw_first["gold"])), 22))
+	col.add_child(Journal.ledger("", "Đá", str(int(rw_first["gems"] if first else rw_again["gems"])), 22))
 	var start := Journal.seal("Vào trận ▶", Vector2(240, 62), 26)
 	start.set_meta("sfx", "")   # ui_start instead of a click
 	start.position = RIGHT_PAGE.end - Vector2(240, 62)
@@ -278,6 +326,8 @@ func _ink_pill(text: String, on: bool, open: bool) -> Button:
 		sb.bg_color = Journal.INK if on else Color(0, 0, 0, 0)
 		sb.border_color = Journal.INK_RED if st in ["hover", "focus"] else (Journal.DOTS if st == "disabled" else Journal.INK)
 		sb.set_border_width_all(2)
+		sb.content_margin_left = 10
+		sb.content_margin_right = 10
 		b.add_theme_stylebox_override(st, sb)
 	b.add_theme_color_override("font_color", Journal.PAPER if on else Journal.INK)
 	b.add_theme_color_override("font_disabled_color", Journal.DOTS)
@@ -471,7 +521,7 @@ func _monster_box(id: String) -> Control:
 		var r := body.radius if body != null else 8.0
 		var k := clampf(floorf(18.0 / maxf(r, 1.0)), 1.0, 3.0)
 		var off := body.center * k if body != null else Vector2(0, 8.0 * k)
-		sheet.draw(c, sheet.animation_names()[0], 0.0, Vector2(28, 28) - off, k))
+		sheet.draw(c, sheet.animation_names()[0], 0.0, c.size * 0.5 + Vector2(0, 6) - off, k))
 	return c
 
 
