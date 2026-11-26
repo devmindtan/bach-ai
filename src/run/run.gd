@@ -1090,8 +1090,6 @@ func _skills(dt: float) -> void:
 	for sid: String in skills:
 		var ts: Dictionary = skills[sid]
 		var how := String(ts.get("cast", ""))
-		if sid == "holy_column" and int(levels.get(sid, 0)) > 0 and float(_tier_cd.get(sid, 0.0)) - dt <= 0.0:
-			print("DBG holy cast, pool=", enemies.living_within(player_pos + _hit_center, float(ts.get("cast_range", 300.0))).size(), " sheet=", sheets.has(_skill_sprite(sid, ts)))
 		if how == "" or how == "active" or int(levels.get(sid, 0)) <= 0:
 			continue
 		var cd_left := float(_tier_cd.get(sid, 0.0)) - dt
