@@ -1,6 +1,6 @@
 # Album (bách khoa)
 
-Bản thử trên web: `design-web/screen-album.html` (người dùng duyệt bố cục 2026-11-23). Code: `src/front/album.gd`.
+Bản thử trên web: `design-web/games/bach-ai/screen-album.html` (người dùng duyệt bố cục 2026-11-23). Code: `src/front/album.gd`.
 
 Màn mới ở sảnh (bach-ai `production/roadmap.md` mục 5): mọi quái, boss, kỹ năng, vật phẩm. Quái/boss **mở khoá sau
 khi hạ lần đầu** (lưu trong slot), chưa mở thì hiện bóng đen "?".
@@ -26,7 +26,7 @@ hiệu ứng cao hơn khung (Cột thánh quang) thì cả cảnh thu về ×1 (
 
 ## Ảnh
 
-`production/ui/01n-album.png` (Quái), `01n2-album-skills.png` (Kỹ năng); bản web `design-web/shots/album-tab*.png`.
+`production/ui/01n-album.png` (Quái), `01n2-album-skills.png` (Kỹ năng); bản web `design-web/games/bach-ai/shots/album-tab*.png`.
 
 Lưu: `slot.bestiary` (id quái → số lần hạ), cộng ở cuối mỗi trận từ `Enemies.kills_kind`.
 
