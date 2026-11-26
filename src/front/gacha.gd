@@ -267,10 +267,14 @@ func _history(mv: VBoxContainer) -> void:
 		scroll.custom_minimum_size = Vector2(RIGHT_PAGE.size.x, 400)
 		scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 		mv.add_child(scroll)
+		var pad := MarginContainer.new()   # room for the scroll bar: it drew over the rarity column (user 2026-11-26)
+		pad.add_theme_constant_override("margin_right", 18)
+		pad.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		scroll.add_child(pad)
 		var list := VBoxContainer.new()
 		list.add_theme_constant_override("separation", 0)
 		list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		scroll.add_child(list)
+		pad.add_child(list)
 		var total := rows.size()   # pulls kept in the history, oldest #1
 		for k in rows.size():
 			var r: Dictionary = rows[k]
@@ -278,7 +282,6 @@ func _history(mv: VBoxContainer) -> void:
 			var rar := String(r["rarity"])
 			var row := Journal.ledger("", "#%d %s" % [total - k, String(d.get("name", r["id"]))], String(RNAME.get(rar, "")), 20, RAR_INK.get(rar, Journal.INK))
 			row.tooltip_text = when(float(r.get("t", 0.0)))
-			row.custom_minimum_size = Vector2(RIGHT_PAGE.size.x - 16, 0)
 			list.add_child(row)
 	mv.add_child(Journal.ink("Giữ %d lần quay gần nhất mỗi kệ. H: quay lại." % int(_g.data.get("history_keep", 100)), 18, Journal.INK_SOFT))
 

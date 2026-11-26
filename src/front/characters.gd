@@ -479,6 +479,6 @@ func _class_card(cid: String, w: float) -> Button:
 	if not open:
 		var stamp := Journal.ink("Qua ải %d" % _unlocks.need("class_" + cid), 20, Journal.INK_RED)
 		stamp.position = Vector2(w - 110, 8)
-		stamp.rotation = 0.12
+		stamp.rotation = 0.0   # straight: a rotated label blurs (user 2026-11-26)
 		b.add_child(stamp)
 	return b

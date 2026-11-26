@@ -418,7 +418,7 @@ func _detail(v: VBoxContainer, e: Variant) -> void:
 		sb.content_margin_right = 8
 		st.add_theme_stylebox_override("normal", sb)
 		st.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		st.rotation = -0.05
+		st.rotation = 0.0   # straight: a rotated label blurs (user 2026-11-26)
 		stamps.add_child(st)
 	v.add_child(Journal.ledger("", "Máu (ải 1)", str(roundi(float(m.get("hp", 0)))), 20))
 	v.add_child(Journal.ledger("", "Sát thương", str(roundi(float(m.get("damage", 0)))), 20))

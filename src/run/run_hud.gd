@@ -79,8 +79,8 @@ func _draw() -> void:
 	# design-web screen-hud-journal (approved 2026-11-26): three paper slips pinned to the top
 	# left: name and level, the hp bar with its numbers, a thin xp bar
 	var me := Rect2(16, 14, 330, 74)
-	_slip(me, -0.014)
-	draw_set_transform(me.get_center(), -0.014)
+	_slip(me, 0.0)
+	draw_set_transform(me.get_center(), 0.0)
 	var o := -me.size * 0.5
 	var who := String(run.playing_slot.name) if run.get("playing_slot") != null else String(run.class_data.get("name", ""))
 	_ink(font, o + Vector2(14, 30), who, 24)
@@ -106,9 +106,10 @@ func _draw() -> void:
 	var tail := (" · Vòng %d" % (run.endless_cycle() + 1)) if run.endless else (" / %02d:%02d · Ải %d" % [total / 60, total % 60, run.stage_number])
 	var cw := font.get_string_size(clock, HORIZONTAL_ALIGNMENT_LEFT, -1, 30).x
 	var tw := font.get_string_size(tail, HORIZONTAL_ALIGNMENT_LEFT, -1, 20).x
-	var cl := Rect2(roundf(w * 0.5 - (cw + tw) * 0.5 - 14), 12, cw + tw + 28, 46)
-	_slip(cl, 0.01)
-	draw_set_transform(cl.get_center(), 0.01)
+	var cw2 := ceilf((cw + tw + 28.0) * 0.5) * 2.0   # even sizes: the slip's centre stays on a whole pixel (sharp text)
+	var cl := Rect2(roundf(w * 0.5 - cw2 * 0.5), 12, cw2, 46)
+	_slip(cl, 0.0)
+	draw_set_transform(cl.get_center(), 0.0)
 	o = -cl.size * 0.5
 	_ink(font, o + Vector2(14, 34), clock, 30)
 	_ink(font, o + Vector2(14 + cw, 34), tail, 20, Journal.INK_SOFT)
@@ -120,9 +121,10 @@ func _draw() -> void:
 	var tw2 := 0.0
 	for p: Array in pairs:
 		tw2 += 38.0 + font.get_string_size(String(p[1]), HORIZONTAL_ALIGNMENT_LEFT, -1, 24).x + 16.0
-	var ta := Rect2(w - 16 - 48 - tw2 - 14, 14, tw2 + 14, 44)   # left of the gear (touch pause)
-	_slip(ta, 0.017)
-	draw_set_transform(ta.get_center(), 0.017)
+	var taw := ceilf((tw2 + 14.0) * 0.5) * 2.0   # even, whole-pixel width (sharp text)
+	var ta := Rect2(roundf(w - 16 - 48 - taw), 14, taw, 44)   # left of the gear (touch pause)
+	_slip(ta, 0.0)
+	draw_set_transform(ta.get_center(), 0.0)
 	o = -ta.size * 0.5
 	var x := o.x + 14
 	for p: Array in pairs:
@@ -135,7 +137,8 @@ func _draw() -> void:
 	_draw_boss_bar(font)
 
 
-## A paper slip (web .slip): paper with an edge, a drop shadow and a red pin on top; [param tilt] radians.
+## A paper slip (web .slip): paper with an edge, a drop shadow and a red pin on top. Kept straight ([param tilt]
+## 0): a tilted slip resampled its pixels and blurred the text (user 2026-11-26).
 func _slip(r: Rect2, tilt: float) -> void:
 	draw_set_transform(r.get_center(), tilt)
 	var rr := Rect2(-r.size * 0.5, r.size)
@@ -256,8 +259,8 @@ func _draw_boss_bar(font: Font) -> void:
 	var k: int = run.enemies.kind[i]
 	# web screen-hud-journal ?view=boss: a paper slip under the clock, the name in red ink, the phase, the bar
 	var slip := Rect2(roundf(size.x * 0.5 - 300), 100, 600, 66)   # under the top slips, clear of them
-	_slip(slip, -0.007)
-	draw_set_transform(slip.get_center(), -0.007)
+	_slip(slip, 0.0)
+	draw_set_transform(slip.get_center(), 0.0)
 	var o := -slip.size * 0.5
 	var name := String(run.enemies.k_extra[k].get("name", run.enemies.kind_ids[k]))
 	var phase := String(run.enemies.phase_name(i))   # phase 2 shows its own name (design/bosses.md)

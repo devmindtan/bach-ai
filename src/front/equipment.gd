@@ -584,7 +584,7 @@ func _detail(root: Control) -> void:
 	ssb.content_margin_right = 6
 	stamp.add_theme_stylebox_override("normal", ssb)
 	stamp.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	stamp.rotation = -0.05
+	stamp.rotation = 0.0   # straight: a rotated label blurs (user 2026-11-26)
 	nrow.add_child(stamp)
 	var who := ""
 	if d.has("class"):
@@ -595,10 +595,14 @@ func _detail(root: Control) -> void:
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	v.add_child(scroll)
+	var pad := MarginContainer.new()   # room for the scroll bar: it drew over the right column (user 2026-11-26)
+	pad.add_theme_constant_override("margin_right", 18)
+	pad.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(pad)
 	var body := VBoxContainer.new()
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.add_theme_constant_override("separation", 2)
-	scroll.add_child(body)
+	pad.add_child(body)
 	var desc := Journal.ink(String(d.get("desc", "")), 18)
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	desc.size_flags_horizontal = Control.SIZE_EXPAND_FILL

@@ -304,7 +304,7 @@ static func text_ribbon(text: String, col: Color, on: bool, lock_tip := "") -> B
 		b.add_child(ic)
 	var l := ink(text, 20, Color("a89a88") if locked else Color("f3e6c8"))
 	l.rotation = PI / 2.0   # vertical-rl: the words read top to bottom, centred across the ribbon
-	l.position = Vector2(b.custom_minimum_size.x * 0.5 + font.get_height(20) * 0.5, top)
+	l.position = Vector2(roundf(b.custom_minimum_size.x * 0.5 + font.get_height(20) * 0.5), top)   # whole pixels: sharp
 	b.add_child(l)
 	if not locked:
 		b.mouse_entered.connect(func() -> void: b.grab_focus())
