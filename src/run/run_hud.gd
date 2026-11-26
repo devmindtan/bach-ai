@@ -78,7 +78,7 @@ func _draw() -> void:
 	_draw_wave_call(font)
 	# design-web screen-hud-journal (approved 2026-11-26): three paper slips pinned to the top
 	# left: name and level, the hp bar with its numbers, a thin xp bar
-	var me := Rect2(16, 14, 330, 74)
+	var me := Rect2(16, 14, 330, 84)
 	_slip(me, 0.0)
 	draw_set_transform(me.get_center(), 0.0)
 	var o := -me.size * 0.5
@@ -87,7 +87,7 @@ func _draw() -> void:
 	var lv := "Cấp %d" % run.level
 	_ink(font, o + Vector2(me.size.x - 14 - font.get_string_size(lv, HORIZONTAL_ALIGNMENT_LEFT, -1, 22).x, 30), lv, 22, Journal.INK_RED)
 	var max_hp := float(run.stats["max_hp"])
-	var hb := Rect2(o + Vector2(14, 38), Vector2(me.size.x - 28, 18))
+	var hb := Rect2(o + Vector2(14, 40), Vector2(me.size.x - 28, 22))
 	draw_rect(hb, Journal.PAPER)
 	# giáp ảo (user 2026-11-26): a grey part after the hp, shrinking as the buff runs out; when hp + it is over the
 	# max the whole bar scales to that total so the grey part always shows (the usual shield bar)
@@ -101,8 +101,11 @@ func _draw() -> void:
 		draw_rect(Rect2(hb.position + Vector2(x0, 0), Vector2(gw, hb.size.y)), Color("9a9a9a"))
 		draw_rect(Rect2(hb.position + Vector2(x0, 0), Vector2(gw, 4)), Color("d0d0d0"))
 	draw_rect(hb, Journal.INK, false, 3.0)
-	_centered(font, Vector2(hb.get_center().x, hb.position.y + 15), "%d / %d" % [ceili(run.hp), roundi(max_hp)], 15)
-	var xb := Rect2(o + Vector2(14, 60), Vector2(me.size.x - 28, 6))
+	# the numbers centred in the bar from the font's own metrics (AGENTS.md: no hand-typed baselines); hp never
+	# shows above the max (it was ceil'd while the max was rounded: "182 / 181")
+	var shown_max := roundi(max_hp)
+	_centered(font, Vector2(hb.get_center().x, _mid_baseline(font, hb.get_center().y, 15)), "%d / %d" % [mini(ceili(run.hp), shown_max), shown_max], 15)
+	var xb := Rect2(o + Vector2(14, 68), Vector2(me.size.x - 28, 6))
 	draw_rect(xb, Journal.PAPER)
 	draw_rect(Rect2(xb.position, Vector2(xb.size.x * clampf(float(run.xp) / float(run.xp_needed()), 0.0, 1.0), xb.size.y)), Color("3a6aaa"))
 	draw_rect(xb, Journal.INK, false, 2.0)
@@ -158,6 +161,11 @@ func _slip(r: Rect2, tilt: float) -> void:
 	draw_circle(Vector2(0, rr.position.y), 7.0, Color("5a0c08"))
 	draw_circle(Vector2(0, rr.position.y), 5.0, Journal.SEAL)
 	draw_set_transform(Vector2.ZERO, 0.0)
+
+
+## The baseline that puts a line of [param sz] text visually centred on [param center_y] (from the font's metrics).
+static func _mid_baseline(font: Font, center_y: float, sz: int) -> float:
+	return roundf(center_y + (font.get_ascent(sz) - font.get_descent(sz)) * 0.5)
 
 
 func _ink(font: Font, p: Vector2, s: String, sz: int, col: Color = Journal.INK) -> void:
@@ -268,7 +276,7 @@ func _draw_boss_bar(font: Font) -> void:
 		return
 	var k: int = run.enemies.kind[i]
 	# web screen-hud-journal ?view=boss: a paper slip under the clock, the name in red ink, the phase, the bar
-	var slip := Rect2(roundf(size.x * 0.5 - 300), 100, 600, 66)   # under the top slips, clear of them
+	var slip := Rect2(roundf(size.x * 0.5 - 300), 100, 600, 70)   # under the top slips, clear of them
 	_slip(slip, 0.0)
 	draw_set_transform(slip.get_center(), 0.0)
 	var o := -slip.size * 0.5
@@ -280,7 +288,7 @@ func _draw_boss_bar(font: Font) -> void:
 	var tw := font.get_string_size(tail, HORIZONTAL_ALIGNMENT_LEFT, -1, 18).x
 	_ink(font, Vector2(-(nw + tw) * 0.5, o.y + 28), name, 26, Journal.INK_RED)
 	_ink(font, Vector2(-(nw + tw) * 0.5 + nw, o.y + 28), tail, 18, Journal.INK_RED if enraged else Journal.INK_SOFT)
-	var bar := Rect2(o + Vector2(14, 36), Vector2(slip.size.x - 28, 20))
+	var bar := Rect2(o + Vector2(14, 36), Vector2(slip.size.x - 28, 24))   # tall enough for 16 px numbers
 	var frac := clampf(run.enemies.hp[i] / run.enemies.k_hp[k], 0.0, 1.0)
 	if i != _trail_boss:   # a new boss: the trail starts full (bosses spawn full; a shot's --boss-hp shows the trail)
 		_trail_boss = i
@@ -295,9 +303,11 @@ func _draw_boss_bar(font: Font) -> void:
 	var ex: Dictionary = run.enemies.k_extra[k]
 	if ex.has("rage_at"):   # where the boss turns enraged: a gold notch over the bar
 		var rx := bar.position.x + bar.size.x * float(ex["rage_at"])
-		draw_rect(Rect2(rx - 2, bar.position.y - 3, 4, bar.size.y + 6), Color("c0801a"))
+		draw_rect(Rect2(rx - 2, bar.position.y - 5, 4, 8), Color("c0801a"))   # ticks on the edges only: the numbers
+		draw_rect(Rect2(rx - 2, bar.end.y - 3, 4, 8), Color("c0801a"))        # in the middle stay clear
 	draw_rect(bar, Journal.INK, false, 3.0)
-	_centered(font, Vector2(0, bar.position.y + 16), "%d / %d" % [ceili(run.enemies.hp[i]), roundi(run.enemies.k_hp[k])], 16)
+	var bmax := roundi(run.enemies.k_hp[k])
+	_centered(font, Vector2(0, _mid_baseline(font, bar.get_center().y, 16)), "%d / %d" % [mini(ceili(run.enemies.hp[i]), bmax), bmax], 16)
 	draw_set_transform(Vector2.ZERO, 0.0)
 
 

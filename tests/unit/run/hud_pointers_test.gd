@@ -45,3 +45,16 @@ func test_ward_extra_is_the_hp_the_buff_armor_saves() -> void:
 	_check(is_equal_approx(extra, expect), "ward extra %.2f, expected %.2f" % [extra, expect])
 	_check(extra > 0.0, "an armor buff adds a grey part")
 	_check(is_zero_approx(RunScript.ward_extra(100.0, 2.0, 0.0, k)), "no buff armor: no grey part")
+
+
+## User 2026-11-26: the hp numbers ran into the bar's bottom edge (a hand-typed baseline). The text must sit inside
+## the bar: its top (baseline - ascent) and bottom (baseline + descent) within the bar, as centred as the font allows.
+func test_bar_numbers_sit_inside_the_bar() -> void:
+	var font := ThemeDB.fallback_font
+	for t in [[22.0, 15], [24.0, 16]]:   # the hp bar and the boss bar
+		var bar := Rect2(0, 40, 300, t[0])
+		var base: float = RunHud._mid_baseline(font, bar.get_center().y, t[1])
+		var top := base - font.get_ascent(t[1])
+		var bottom := base + font.get_descent(t[1])
+		_check(top >= bar.position.y - 1.0 and bottom <= bar.end.y + 1.0, "text %.0f..%.0f inside bar %.0f..%.0f" % [top, bottom, bar.position.y, bar.end.y])
+		_check(absf((top + bottom) * 0.5 - bar.get_center().y) <= 1.0, "text centred on the bar")
