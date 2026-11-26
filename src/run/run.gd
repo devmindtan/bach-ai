@@ -1244,6 +1244,11 @@ func _cast(sid: String, ts: Dictionary, how: String) -> void:
 				if fx.is_empty():
 					continue
 				fx["vel"] = dv * speed
+				var bounces: Array = ts.get("bounce", [0])   # Tên nảy (design/rogue-kits.md): bounces by level
+				fx["bounce"] = int(bounces[clampi(int(levels.get(sid, 1)) - 1, 0, bounces.size() - 1)])
+				fx["bounce_range"] = float(ts.get("bounce_range", 180.0))
+				fx["bounce_mul"] = float(ts.get("bounce_mul", 0.1))
+				fx["prefix"] = String(ts.get("anim_prefix", "fly_"))
 				fx["shot"] = {"damage": dmg, "explode": bool(ts.get("explode", false)), "pierce": int(ts.get("pierce", 0)),
 					"impact": String(ts.get("impact", "impact")), "wait": 0.0,
 					"impact_sprite": _tier_name(ts.get("impact_tiers", []), sid)}
@@ -2959,9 +2964,35 @@ func _step_shot(fx: Dictionary, dt: float) -> bool:
 	elif sheet.has_animation(impact):
 		_fx.append({"sheet": sheet, "anim": impact, "t": 0.0, "scale": fx["scale"], "damage": 0.0,
 			"done": true, "life": sheet.duration(impact), "pos": p, "follow": false, "source": src})
+	if int(fx.get("bounce", 0)) > 0 and _bounce(fx, p):
+		return false
 	sh["pierce"] = int(sh["pierce"]) - 1
 	sh["wait"] = 0.15
 	return int(sh["pierce"]) < 0
+
+
+## Tên nảy (design/rogue-kits.md): after a hit at [param p], the shot turns to the nearest monster it has not hit yet
+## within its bounce_range, a little harder (bounce_mul). False when no such monster: it is spent like a plain hit.
+func _bounce(fx: Dictionary, p: Vector2) -> bool:
+	var hit: Array = fx.get("bounced_off", [])
+	for i in enemies.nearest_n(p, 6):
+		if enemies.center_of(i).distance_to(p) <= 14.0:   # the one just hit (or one hugging it)
+			if not hit.has(enemies.uid[i]):
+				hit.append(enemies.uid[i])
+	fx["bounced_off"] = hit
+	for i in enemies.nearest_n(p, 8):
+		if hit.has(enemies.uid[i]) or enemies.center_of(i).distance_to(p) > float(fx.get("bounce_range", 180.0)):
+			continue
+		var dv := (enemies.center_of(i) - p).normalized()
+		fx["vel"] = dv * (fx["vel"] as Vector2).length()
+		fx["anim"] = _fly_anim(String((fx["sheet"] as SpriteSheet).name), String(fx.get("prefix", "fly_")), dv)
+		fx["life"] = float(fx["t"]) + 0.8
+		fx["bounce"] = int(fx["bounce"]) - 1
+		var sh: Dictionary = fx["shot"]
+		sh["damage"] = float(sh["damage"]) * (1.0 + float(fx.get("bounce_mul", 0.1)))
+		sh["wait"] = 0.08
+		return true
+	return false
 
 
 ## Skill effects; [param under] = only those drawn behind the hero (ground

@@ -211,3 +211,21 @@ func test_archer_and_assassin_bursts_damage_the_monster() -> void:
 		_run_fx(r)
 		_check(e.hp[0] < 100.0, "%s: the monster must take damage, hp=%s" % [sid, e.hp[0]])
 		r.free()
+
+
+## design/rogue-kits.md, Tên nảy: an arrow with "bounce" hits a monster, then turns to the next nearest one it has
+## not hit and hits it too, a little harder each bounce.
+func test_ricochet_arrow_bounces_to_the_next_monster() -> void:
+	var r := _run("archer", {"ricochet": 1})
+	var e: Enemies = r.enemies
+	e.spawn("blob", Vector2(90, 0))
+	e.spawn("blob", Vector2(90, 110))
+	_settle(e)
+	r._cast("ricochet", r.pool["skills"]["ricochet"], "projectile")
+	_check(not r._fx.is_empty(), "the cast fires an arrow")
+	for i in 240:
+		if r._fx.is_empty():
+			break
+		r._step_fx(1.0 / 60.0)
+	_check(e.hp[0] < 100.0, "the first monster is hit, hp=%s" % e.hp[0])
+	_check(e.hp[1] < 100.0, "the arrow bounces to the second monster, hp=%s" % e.hp[1])

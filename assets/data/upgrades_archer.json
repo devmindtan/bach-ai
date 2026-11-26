@@ -155,6 +155,21 @@
       "element": "physical"
     },
     {
+      "id": "ricochet",
+      "kind": "skill",
+      "name": "Tên nảy",
+      "desc": "Mũi tên trúng quái thì nảy sang quái gần đó, mỗi lần nảy +10% sát thương. Số lần nảy theo cấp: 2/2/3/4/5. Cấp 3: 2 mũi.",
+      "max_level": 5,
+      "weight": 2,
+      "effects": {
+        "skill_damage.ricochet": {
+          "mul": 0.2
+        }
+      },
+      "rarity": "epic",
+      "element": "physical"
+    },
+    {
       "id": "steady_hand",
       "kind": "stat",
       "name": "Tay vững",
@@ -623,6 +638,41 @@
         2,
         2,
         3
+      ]
+    },
+    "ricochet": {
+      "sprite": "ricochet-i",
+      "cast": "projectile",
+      "anim_prefix": "fly_",
+      "impact": "impact",
+      "damage_mul": 0.9,
+      "size_mul": 1.0,
+      "cooldown": 2.4,
+      "speed": 520.0,
+      "pierce": 0,
+      "bounce": [
+        2,
+        2,
+        3,
+        4,
+        5
+      ],
+      "bounce_range": 180.0,
+      "bounce_mul": 0.1,
+      "count": [
+        1,
+        1,
+        2,
+        2,
+        2
+      ],
+      "duration": 1.0,
+      "tier_sprites": [
+        "ricochet-i",
+        "ricochet-ii",
+        "ricochet-iii",
+        "ricochet-iv",
+        "ricochet-v"
       ]
     }
   }
