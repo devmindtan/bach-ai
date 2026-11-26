@@ -1214,6 +1214,13 @@ func _cast(sid: String, ts: Dictionary, how: String) -> void:
 			var targets := enemies.nearest_n(center, n)
 			if targets.is_empty():
 				targets = [-1]
+			elif ts.has("blink"):   # Ám kích (design/rogue-kits.md): step to just behind the nearest monster first
+				var tc := enemies.center_of(targets[0])
+				var through := (tc - center).normalized()
+				player_pos = tc + through * float(ts["blink"]) - _hit_center
+				center = player_pos + _hit_center
+				face_left = through.x > 0.0   # turn back toward the monster just passed
+				_update_body()
 			var prefix := String(ts.get("anim_prefix", ""))
 			var on_target := bool(ts.get("at_target", false))
 			for k in mini(n, targets.size()):

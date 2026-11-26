@@ -526,7 +526,7 @@
       "duration": 0.8
     },
     "fire_arrow": {
-      "sprite": "arrow-c",
+      "sprite": "fire-arrow-i",
       "cast": "projectile",
       "anim_prefix": "fly_",
       "impact": "impact",
@@ -558,6 +558,13 @@
           "dps_mul": 0.25,
           "time": 2.0
         }
+      ],
+      "tier_sprites": [
+        "fire-arrow-i",
+        "fire-arrow-ii",
+        "fire-arrow-iii",
+        "fire-arrow-iv",
+        "fire-arrow-v"
       ]
     },
     "frost_arrow": {
@@ -627,7 +634,7 @@
       ]
     },
     "arrow_rain": {
-      "sprite": "arrow-rain",
+      "sprite": "arrow-rain-i",
       "cast": "crowd",
       "crowd_radius": 60.0,
       "anim": "burst",
@@ -641,6 +648,13 @@
         2,
         2,
         3
+      ],
+      "tier_sprites": [
+        "arrow-rain-i",
+        "arrow-rain-ii",
+        "arrow-rain-iii",
+        "arrow-rain-iv",
+        "arrow-rain-v"
       ]
     },
     "thorn_trap": {

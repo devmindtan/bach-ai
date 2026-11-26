@@ -412,3 +412,17 @@ func test_poison_pool_corrodes_what_stands_in_it() -> void:
 	_check(e.statuses_of(0).has("corrode"), "the monster in it is corroded, statuses %s" % [e.statuses_of(0)])
 	_check(e.statuses_of(0).has("slow"), "and slowed")
 	r.free()
+
+
+## design/rogue-kits.md, Ám kích: the assassin steps through the shadows to just behind the nearest monster and cuts.
+func test_shadow_strike_blinks_behind_the_target() -> void:
+	var r := _run("assassin", {"shadow_strike": 1})
+	var e: Enemies = r.enemies
+	e.spawn("blob", Vector2(150, 0))
+	_settle(e)
+	r._cast("shadow_strike", r.pool["skills"]["shadow_strike"], "nearest")
+	var at: Vector2 = r.player_pos + r._hit_center
+	_check(at.x > 150.0 and at.x < 200.0, "the hero lands just past the monster, at %s" % at)
+	_run_fx(r)
+	_check(e.hp[0] < 100.0, "and cuts it, hp=%s" % e.hp[0])
+	r.free()
