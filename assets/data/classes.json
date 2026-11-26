@@ -124,14 +124,14 @@
       "magnet": 1.1,
       "amount": 0.0,
       "crit_chance": 0.15,
-      "crit_mul": 0.75
+      "crit_mul": 0.5
     },
     "role": "Tầm gần · Chí mạng",
     "color": "#6a4fb0",
     "passive": {
       "id": "assassinate",
       "name": "Ám sát",
-      "desc": "+15% tỉ lệ chí mạng; đòn chí mạng gây 250% sát thương thay vì 175%."
+      "desc": "+15% tỉ lệ chí mạng; đòn chí mạng gây 225% sát thương thay vì 175%."
     },
     "start_skills": {
       "throw_knife": 1

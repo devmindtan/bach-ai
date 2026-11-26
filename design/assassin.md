@@ -15,7 +15,7 @@ Người dùng 2026-11-26: nhân vật do người dùng vẽ (`sprite-lab/sourc
 
 ## Nội tại: Ám sát
 
-+15% tỉ lệ chí mạng; chí mạng ×2,5 thay vì ×1,75. Làm bằng chỉ số gốc `crit_chance` / `crit_mul` của class
++15% tỉ lệ chí mạng; chí mạng ×2,25 thay vì ×1,75 (2026-11-26: hạ từ ×2,5 khi chí mạng bắt đầu hoạt động, xem design/rogue-kits.md). Làm bằng chỉ số gốc `crit_chance` / `crit_mul` của class
 (`run_sheet.gd` đã cộng chúng vào chí mạng của đòn), không cần code riêng.
 
 ## Chiêu (bước 1)
