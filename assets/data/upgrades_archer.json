@@ -143,7 +143,7 @@
       "id": "hawk",
       "kind": "skill",
       "name": "Chim ưng",
-      "desc": "Chim ưng lao xuống quái gần nhất, cú mổ rất mạnh. Mỗi cấp: +20% sát thương. Cấp 3: 2 lần lao; cấp 5: 3 lần.",
+      "desc": "Chim ưng bay theo bạn suốt trận; tới lượt thì lao vào quái nhiều máu nhất trong tầm, cào mạnh rồi bay về. Mỗi cấp: +20% sát thương, chim to và sáng hơn.",
       "max_level": 5,
       "weight": 2,
       "effects": {
@@ -625,20 +625,22 @@
       ]
     },
     "hawk": {
-      "sprite": "hawk-dive",
-      "cast": "nearest",
-      "anim": "burst",
+      "sprite": "hawk-pet-i",
+      "tier_sprites": [
+        "hawk-pet-i",
+        "hawk-pet-ii",
+        "hawk-pet-iii",
+        "hawk-pet-iv",
+        "hawk-pet-v"
+      ],
+      "cast": "pet",
+      "anim": "strike",
       "damage_mul": 1.8,
       "size_mul": 1.0,
-      "cooldown": 4.0,
+      "cooldown": 3.5,
       "cast_range": 360.0,
-      "count": [
-        1,
-        1,
-        2,
-        2,
-        3
-      ]
+      "dive_speed": 700.0,
+      "duration": 1.0
     },
     "ricochet": {
       "sprite": "ricochet-i",

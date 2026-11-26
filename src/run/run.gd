@@ -63,6 +63,7 @@ var _pool_here := false      # --pool-here          # > 0: the hero stands in po
 var _outro_t := -1.0          # the boss outro: seconds left (-1 not started, 0 over)
 var _last_boss_name := "Boss"   # a wave of this stage spawns a boss: won only by killing it
 var _delayed: Array = []
+var _pets := {}   # Chim ưng (design/rogue-kits.md): skill id -> {pos, state idle|dive|back, target, dmg, sc, t}
 var profile: Profile                # equipment (Prefs.current().profile())
 var won_items: Array[String] = []   # equipment won this run (end screen)
 var _gear_plus := 0                   # --gear-plus=N: Cường hoá level of the --gear items (shots)
@@ -756,6 +757,7 @@ func _tick(dt: float) -> void:
 		_add_fx("stomp-i", "burst", _sprite_scale * 1.6, 0.0, -1.0, p)
 	enemies.slams.clear()
 	_step_fx(dt)
+	_step_pets(dt)
 	step_zones(dt)
 	if not enemies.hit_pos.is_empty():
 		Sfx.play("hit")
@@ -1208,6 +1210,21 @@ func _cast(sid: String, ts: Dictionary, how: String) -> void:
 					if probe != null:
 						aim -= probe.center
 				_add_fx(sprite, anim, sc, dmg, -1.0, aim, sid, kb)
+		"pet":
+			# Chim ưng: the companion dives at the monster with the most hp in cast_range
+			var best := -1
+			for i in enemies.living_within(center, float(ts.get("cast_range", 360.0))):
+				if best < 0 or enemies.hp[i] > enemies.hp[best]:
+					best = i
+			_step_pets(0.0)
+			if best >= 0 and _pets.has(sid):
+				var pet: Dictionary = _pets[sid]
+				pet["state"] = "dive"
+				pet["target"] = enemies.center_of(best)
+				pet["dmg"] = dmg
+				pet["sc"] = sc
+				pet["sprite"] = sprite
+				pet["kb"] = kb
 		"self":
 			# count: pulses 0.25 s apart
 			for k in _skill_count(sid, ts):
@@ -2779,6 +2796,7 @@ func _draw() -> void:
 	_obstacle_view.draw(view, true)   # a tree the hero walks behind: drawn again, see-through, over the hero
 	_draw_statuses(view)
 	_draw_fx(false)
+	_draw_pets()
 	if Prefs.current().monster_hp:
 		_draw_monster_hp(view)
 	if Prefs.current().damage_numbers:
@@ -2986,6 +3004,50 @@ func _step_shot(fx: Dictionary, dt: float) -> bool:
 	sh["pierce"] = int(sh["pierce"]) - 1
 	sh["wait"] = 0.15
 	return int(sh["pierce"]) < 0
+
+
+## Chim ưng (design/rogue-kits.md): every owned "pet" skill keeps its companion by the hero; a dive flies to its
+## target at dive_speed, rakes it (the strike fx deals the damage) and flies back.
+func _step_pets(dt: float) -> void:
+	var home := player_pos + _hit_center
+	for sid: String in pool.get("skills", {}):
+		var ts: Dictionary = pool["skills"][sid]
+		if String(ts.get("cast", "")) != "pet" or int(levels.get(sid, 0)) <= 0:
+			continue
+		if not _pets.has(sid):
+			_pets[sid] = {"pos": home + Vector2(-20, -36), "state": "idle", "t": 0.0, "sprite": _skill_sprite(sid, ts)}
+		var pet: Dictionary = _pets[sid]
+		pet["t"] = float(pet["t"]) + dt
+		var t := float(pet["t"])
+		var perch := home + Vector2(cos(t * 1.6) * 30.0, -38.0 + sin(t * 3.2) * 4.0)
+		var speed := float(ts.get("dive_speed", 700.0)) * dt
+		var pos: Vector2 = pet["pos"]
+		match String(pet["state"]):
+			"dive":
+				var to: Vector2 = pet["target"]
+				pos = pos.move_toward(to, speed)
+				if pos.distance_to(to) <= 4.0:
+					var fx := _add_fx(String(pet["sprite"]), String(ts.get("anim", "strike")), float(pet["sc"]), float(pet["dmg"]), -1.0, to, sid, float(pet.get("kb", 140.0)))
+					if not fx.is_empty():
+						fx["effects"] = on_hit(sid)
+					pet["state"] = "back"
+			"back":
+				pos = pos.move_toward(perch, speed)
+				if pos.distance_to(perch) <= 10.0:
+					pet["state"] = "idle"
+			_:
+				pos = pos.lerp(perch, minf(1.0, dt * 8.0))
+		pet["face"] = signf((pos - (pet["pos"] as Vector2)).x) if absf((pos - (pet["pos"] as Vector2)).x) > 0.01 else float(pet.get("face", 1.0))
+		pet["pos"] = pos
+
+
+func _draw_pets() -> void:
+	for sid: String in _pets:
+		var pet: Dictionary = _pets[sid]
+		var sheet: SpriteSheet = sheets.get(String(pet["sprite"]))
+		if sheet == null or not sheet.has_animation("fly"):
+			continue
+		sheet.draw(self, "fly", float(pet["t"]), pet["pos"], _sprite_scale * float(sheet.meta.get("px_scale", 1.0)), float(pet.get("face", 1.0)) < 0.0)
 
 
 ## Dao hồi (design/rogue-kits.md): on its way back the dagger steers to the hero; true when it is back in the hand.

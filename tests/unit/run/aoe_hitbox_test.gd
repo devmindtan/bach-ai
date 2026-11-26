@@ -196,7 +196,7 @@ func test_god_hammer_falls_on_the_nearest_monster() -> void:
 ## User 2026-11-26: the archer and assassin burst skills (lib/roguefx.py) must create their effect and damage a
 ## monster where they land.
 func test_archer_and_assassin_bursts_damage_the_monster() -> void:
-	for pair: Array in [["archer", "arrow_rain", "crowd"], ["archer", "thorn_trap", "nearest"], ["archer", "hawk", "nearest"],
+	for pair: Array in [["archer", "arrow_rain", "crowd"], ["archer", "thorn_trap", "nearest"],
 			["assassin", "smoke_bomb", "self"], ["assassin", "blade_ring", "self"], ["assassin", "shadow_strike", "nearest"]]:
 		var sid := String(pair[1])
 		var r := _run(String(pair[0]), {sid: 1})
@@ -250,4 +250,26 @@ func test_boomerang_dagger_hits_out_and_back() -> void:
 	_check(turned, "the dagger turns back toward the hero")
 	_check(int(e.hits_by.get("boomerang", 0)) >= 2, "it hits on the way out and back, hits=%s" % e.hits_by.get("boomerang", 0))
 	_check(r._fx.is_empty(), "it ends when it comes back")
+	r.free()
+
+
+## design/rogue-kits.md, Chim ưng: a companion that stays by the hero all run; on its cooldown it dives at the monster
+## with the most hp in reach, rakes it, and flies back.
+func test_companion_hawk_dives_at_the_toughest_monster() -> void:
+	var r := _run("archer", {"hawk": 1})
+	var e: Enemies = r.enemies
+	e.spawn("blob", Vector2(60, 0))
+	e.spawn("blob", Vector2(150, 40))
+	_settle(e)
+	e.hp[1] = 300.0   # the toughest
+	e.hp_cap[1] = 300.0
+	r._step_pets(0.1)
+	_check(r._pets.has("hawk"), "the hawk is out with the hero")
+	r._cast("hawk", r.pool["skills"]["hawk"], "pet")
+	for i in 120:
+		r._step_pets(1.0 / 60.0)
+		r._step_fx(1.0 / 60.0)
+	_check(e.hp[1] < 300.0, "it rakes the toughest monster, hp=%s" % e.hp[1])
+	_check(is_equal_approx(e.hp[0], 100.0), "not the nearest one, hp=%s" % e.hp[0])
+	_check(String(r._pets["hawk"]["state"]) == "idle", "it flies back to the hero")
 	r.free()
