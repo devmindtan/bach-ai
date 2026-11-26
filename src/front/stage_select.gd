@@ -832,6 +832,9 @@ static func species_line(sid: String, table: Dictionary) -> String:
 	return " · ".join(parts)
 
 
+## Chi tiết, direction B the user picked (design-web screen-stages-journal ?view=detail-b, 2026-11-26): a slip pinned
+## over the right page, the map still in view: the stage's monsters as chips (scaled hp and damage) and its time marks
+## on an ink line. D / Esc close it.
 func _open_detail() -> void:
 	if _detail_layer != null:
 		return
@@ -839,92 +842,80 @@ func _open_detail() -> void:
 	_detail_layer = CanvasLayer.new()
 	_detail_layer.layer = 5
 	add_child(_detail_layer)
-	var dim := ColorRect.new()
-	dim.color = Color(0, 0, 0, 0.6)
-	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_detail_layer.add_child(dim)
-	var center := CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_detail_layer.add_child(center)
-	var panel := UiKit.panel(UiKit.PANEL, 20)
-	panel.custom_minimum_size = Vector2(980, 0)
-	var paper := StyleBoxFlat.new()   # a loose sheet of the journal
-	paper.bg_color = Journal.PAPER
-	paper.border_color = Journal.EDGE
-	paper.set_border_width_all(4)
-	paper.set_content_margin_all(24)
-	panel.add_theme_stylebox_override("panel", paper)
-	center.add_child(panel)
+	var slip := Rect2(640, 56, 500, 610)
+	var root := Control.new()
+	root.size = get_viewport_rect().size
+	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_detail_layer.add_child(root)
+	var paper := Control.new()
+	paper.position = slip.position
+	paper.size = slip.size
+	paper.mouse_filter = Control.MOUSE_FILTER_STOP
+	paper.draw.connect(func() -> void:
+		paper.draw_rect(Rect2(Vector2(0, 6), slip.size), Color(0, 0, 0, 0.45))
+		paper.draw_rect(Rect2(Vector2.ZERO, slip.size), Journal.PAPER)
+		paper.draw_rect(Rect2(Vector2.ZERO, slip.size), Journal.EDGE, false, 3.0)
+		paper.draw_circle(Vector2(slip.size.x * 0.5, 0), 8.0, Color("5a0c08"))
+		paper.draw_circle(Vector2(slip.size.x * 0.5, 0), 6.0, Journal.SEAL))
+	root.add_child(paper)
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 12)
-	panel.add_child(v)
-	var head := HBoxContainer.new()
-	var title := UiKit.label("Ải %d · %s" % [_n, String(st.get("name", ""))], 26, UiKit.GOLD)
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	head.add_child(title)
-	var close := UiKit.button("D / Esc đóng", _close_detail, Vector2(140, 36), 16)
-	head.add_child(close)
-	close.call_deferred("grab_focus")   # gamepad: A closes it (J5)
-	v.add_child(head)
-	var cols := HBoxContainer.new()
-	cols.add_theme_constant_override("separation", 24)
-	v.add_child(cols)
-	# left: the monsters
-	var left := VBoxContainer.new()
-	left.add_theme_constant_override("separation", 6)
-	left.custom_minimum_size = Vector2(520, 0)
-	cols.add_child(left)
-	left.add_child(UiKit.label("Quái của ải (đã tính độ khó)", 15, UiKit.MUTED))
-	var grid := GridContainer.new()
-	grid.columns = 5
-	grid.add_theme_constant_override("h_separation", 14)
-	grid.add_theme_constant_override("v_separation", 4)
-	left.add_child(grid)
-	for h in ["", "Tên", "Máu", "Sát thương", "Tốc độ"]:
-		grid.add_child(UiKit.label(h, 14, UiKit.MUTED))
+	v.position = Vector2(26, 22)
+	v.custom_minimum_size = Vector2(slip.size.x - 52, 0)
+	v.add_theme_constant_override("separation", 4)
+	paper.add_child(v)
+	v.add_child(Journal.ink("Chi tiết · %sẢi %d" % ["Trùm · " if _stages.is_boss(_n) else "", _n], 28))
+	v.add_child(Journal.ink(String(_stages.region(_n).get("name", "")), 20, Journal.INK_RED))
+	var chips := HFlowContainer.new()
+	chips.add_theme_constant_override("h_separation", 8)
+	chips.add_theme_constant_override("v_separation", 8)
+	v.add_child(chips)
 	for m: Dictionary in detail_monsters(st, _monsters, _stages.hp_mul(_n), _stages.damage_mul(_n)):
-		grid.add_child(_monster_box(String(m["id"])))
-		var nm := String(m["name"]) + ("  · BOSS" if m["boss"] else ("  · có tinh anh" if m["elite"] else ""))
-		var nv := VBoxContainer.new()
-		nv.add_theme_constant_override("separation", 0)
-		nv.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		nv.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		nv.add_child(UiKit.label(nm, 15, BOSS_GOLD if m["boss"] else (UiKit.GOLD if m["elite"] else UiKit.TEXT)))
-		nv.add_child(UiKit.label(species_line(String(_monsters[m["id"]].get("species", "")), _species), 13, UiKit.MUTED))
-		grid.add_child(nv)
-		for x in [roundi(m["hp"]), roundi(m["damage"]), roundi(m["speed"])]:
-			var l := UiKit.label(str(x), 15, UiKit.TEXT)
-			l.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-			l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-			grid.add_child(l)
-	# right: time marks and rewards
-	var right := VBoxContainer.new()
-	right.add_theme_constant_override("separation", 4)
-	right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	cols.add_child(right)
-	var dur := int(st.get("duration", 300))
-	right.add_child(UiKit.label("Mốc thời gian (trận %02d:%02d)" % [dur / 60, dur % 60], 15, UiKit.MUTED))
+		chips.add_child(_chip(m))
+	var line := Control.new()   # the time marks on an ink line, a dot each (events blue, elites and the boss red)
 	var ev_cfg: Dictionary = _run_cfg.get("events", {})
-	for mk: Array in detail_timeline(st, _monsters, _stages.region(_n).get("events", []), _n, int(ev_cfg.get("min_stage", 0)), ev_cfg):
-		var t := int(mk[0])
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 10)
-		var tl := UiKit.label("%02d:%02d" % [t / 60, t % 60], 15, UiKit.MUTED)
-		tl.custom_minimum_size = Vector2(52, 0)
-		row.add_child(tl)
-		var txt := String(mk[1])
-		var col := BOSS_GOLD if txt.begins_with("BOSS") else (Color("8fd0ff") if txt.begins_with("Sự kiện") else (UiKit.GOLD if txt.contains("tinh anh") else UiKit.TEXT))
-		var xl := UiKit.label(txt, 15, col)
-		xl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		xl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		row.add_child(xl)
-		right.add_child(row)
-	right.add_child(UiKit.label("Phần thưởng khi thắng", 15, UiKit.MUTED))
-	var first := _stages.rewards(_n, true)
-	var again := _stages.rewards(_n, false)
-	right.add_child(UiKit.label("Vàng %d · Đá lần đầu %d · Đá các lần sau %d" % [int(first["gold"]), int(first["gems"]), int(again["gems"])], 15, UiKit.TEXT))
-	for c in panel.get_children():   # ink on the sheet (its own paper style stays)
-		Journal.restyle(c)
+	var marks := detail_timeline(st, _monsters, _stages.region(_n).get("events", []), _n, int(ev_cfg.get("min_stage", 0)), ev_cfg)
+	line.custom_minimum_size = Vector2(slip.size.x - 52, 22.0 * marks.size() + 8)
+	v.add_child(line)
+	line.draw.connect(func() -> void:
+		var font := ThemeDB.fallback_font
+		line.draw_rect(Rect2(12, 4, 3, 22.0 * marks.size()), Journal.INK)
+		for i in marks.size():
+			var t := int(marks[i][0])
+			var txt := String(marks[i][1])
+			var col := Color("3a6aaa") if txt.begins_with("Sự kiện") else (Journal.INK_RED if (txt.begins_with("BOSS") or txt.contains("tinh anh")) else Journal.INK)
+			var y := 16.0 + 22.0 * i
+			line.draw_circle(Vector2(13.5, y), 5.0, col)
+			line.draw_string(font, Vector2(30, y + 6), "%02d:%02d" % [t / 60, t % 60], HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Journal.INK_SOFT)
+			line.draw_string(font, Vector2(86, y + 6), txt.replace("BOSS: ", "Trùm: "), HORIZONTAL_ALIGNMENT_LEFT, -1, 17, col))
+	var close := Journal.ink("D / Esc đóng", 18, Journal.INK_SOFT)
+	close.position = slip.size - Vector2(126, 34)
+	paper.add_child(close)
+
+
+## A monster chip on the detail slip: its first frame, name and scaled hp / damage; the tooltip has its species.
+func _chip(m: Dictionary) -> Control:
+	var c := PanelContainer.new()
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Journal.SKETCH
+	sb.border_color = Journal.INK_RED if m["boss"] else Journal.INK
+	sb.set_border_width_all(3)
+	sb.set_content_margin_all(4)
+	sb.content_margin_right = 8
+	c.add_theme_stylebox_override("panel", sb)
+	c.custom_minimum_size = Vector2(144, 0)
+	c.tooltip_text = species_line(String(_monsters[m["id"]].get("species", "")), _species) + (" · có tinh anh" if m["elite"] else "")
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 6)
+	c.add_child(h)
+	var pic := _monster_box(String(m["id"]))
+	pic.custom_minimum_size = Vector2(36, 36)
+	h.add_child(pic)
+	var t := VBoxContainer.new()
+	t.add_theme_constant_override("separation", 0)
+	h.add_child(t)
+	t.add_child(Journal.ink(String(m["name"]), 15, Journal.INK_RED if m["elite"] or m["boss"] else Journal.INK))
+	t.add_child(Journal.ink("♥%d  ⚔%d" % [roundi(m["hp"]), roundi(m["damage"])], 14, Journal.INK_SOFT))
+	return c
 
 
 func _close_detail() -> void:
