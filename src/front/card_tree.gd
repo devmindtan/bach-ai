@@ -9,10 +9,11 @@ extends Node2D
 ## Command line (after `--`), for shots: --card=<id>, --node-view=<node id>.
 
 const DECK_SCENE := "res://src/front/deck.tscn"
-const ORIGIN := Vector2(90, 190)
-const STEP := Vector2(170, 128)
-const NODE := 76.0
-const KEY := 92.0
+const ORIGIN := Vector2(195, 236)   # the nodes fill the journal's left page (design-web screen-cardtree-journal)
+const STEP := Vector2(150, 110)
+const NODE := 64.0
+const KEY := 78.0
+const RIGHT_PAGE := Rect2(660, 74, 470, 572)
 
 var _slot: Slot
 var _trees: CardTree
@@ -20,7 +21,6 @@ var _card := ""
 var _card_def := {}
 var _view := ""
 var _reset_armed := false
-var _scroll := Vector2.ZERO
 var _layer: CanvasLayer
 
 
@@ -51,13 +51,9 @@ func _ready() -> void:
 	_build()
 
 
-func _process(delta: float) -> void:
-	_scroll += Vector2(18.0, 6.0) * delta
-	queue_redraw()
-
-
 func _draw() -> void:
-	FrontArt.backdrop(self, _scroll, get_viewport_rect().size)
+	Journal.draw_desk(self, get_viewport_rect().size)
+	Journal.draw_book(self, Journal.BOOK)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -87,19 +83,28 @@ func _build() -> void:
 	root.size = get_viewport_rect().size
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_layer.add_child(root)
-	var title := UiKit.label("Cây thẻ · %s" % String(_card_def.get("name", _card)), 34, UiKit.GOLD)
-	title.position = Vector2(40, 24)
+	var title := Journal.ink("Cây thẻ", 44)
+	title.position = Vector2(110, 66)
 	root.add_child(title)
+	var head := HBoxContainer.new()   # the card's icon and name, as the left page's subtitle
+	head.add_theme_constant_override("separation", 8)
+	head.position = Vector2(112, 120)
+	root.add_child(head)
+	head.add_child(UiKit.card_icon(_card, 32.0))
+	var nm := Journal.ink(String(_card_def.get("name", _card)), 22, Journal.INK_RED)
+	nm.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	head.add_child(nm)
 	var bar := HBoxContainer.new()
-	bar.add_theme_constant_override("separation", 22)
-	bar.position = Vector2(42, 72)
+	bar.add_theme_constant_override("separation", 16)
+	bar.position = Vector2(112, 160)
 	root.add_child(bar)
-	bar.add_child(_shard_stat("%d Mảnh thẻ" % _slot.shards, "Mảnh thẻ: thắng ải, hạ boss, mở rương, gacha trùng.", 16))
+	bar.add_child(_shard_stat("%d Mảnh thẻ" % _slot.shards, "Mảnh thẻ: thắng ải, hạ boss, mở rương, gacha trùng.", 18))
 	var mp := int(_trees.tree(_card).get("max_points", 0))
-	bar.add_child(UiKit.label("Điểm đã dùng %d / %d" % [_trees.points(_slot, _card), mp], 16, UiKit.TEXT))
-	var back := UiKit.button("Quay lại " + UiKit.hint("Esc"), func() -> void: get_tree().change_scene_to_file(DECK_SCENE), Vector2(180, 42), 17)
-	back.position = Vector2(root.size.x - 40 - 180, 28)
-	root.add_child(back)
+	bar.add_child(UiKit.label("· điểm đã dùng %d / %d" % [_trees.points(_slot, _card), mp], 18, UiKit.MUTED))
+	Journal.restyle(bar)
+	var hint := Journal.ink("←↑↓→ chọn nút · Enter nâng · Esc về Bộ thẻ", 15, Journal.PAPER)
+	hint.position = Vector2(Journal.BOOK.position.x, Journal.BOOK.end.y + 14)
+	root.add_child(hint)
 	# edges under the nodes
 	var edges := Control.new()
 	edges.size = root.size
@@ -110,7 +115,7 @@ func _build() -> void:
 			for req: String in n.get("requires", []):
 				var lit := _trees.rank(_slot, _card, req) > 0
 				edges.draw_line(_center(_trees.node(_card, req)), _center(n),
-					UiKit.GOLD if lit else Color("3a3448"), 5.0 if lit else 3.0))
+					Journal.INK_RED if lit else Journal.DOTS, 4.0 if lit else 2.0))
 	for n: Dictionary in _trees.tree(_card).get("nodes", []):
 		root.add_child(_node_button(n))
 	_detail(root)
@@ -131,27 +136,32 @@ func _node_button(n: Dictionary) -> Control:
 	b.custom_minimum_size = Vector2(side, side)
 	b.size = Vector2(side, side)
 	b.focus_mode = Control.FOCUS_ALL
-	var bg := Color("3a3020") if r >= mx else (Color("2c2838") if r > 0 else Color("16131e"))
-	var border := UiKit.GOLD if r >= mx else (Color("c8d0e0") if r > 0 else (Color(UiKit.GOLD, 0.55) if learnable else Color("3a3448")))
-	if id == _view:
-		border = Color.WHITE
-	var st := UiKit.style(bg, 4, border, 5 if key else 3)
-	st.set_corner_radius_all(int(side / 2.0))
-	b.add_theme_stylebox_override("normal", st)
-	var hov := UiKit.style(UiKit.PANEL_HOVER, 4, Color.WHITE, 5 if key else 3)
-	hov.set_corner_radius_all(int(side / 2.0))
-	for s in ["hover", "focus", "pressed"]:
-		b.add_theme_stylebox_override(s, hov)
+	# sketch squares like the skill tree: learned rose, maxed red ink, open paper, closed faded; viewed ink + gold
+	var on := id == _view
+	var bg := Journal.INK if on else (Journal.INK_RED if r >= mx else (Color("c88a7a") if r > 0 else (Journal.SKETCH if learnable else Color(Journal.SKETCH, 0.5))))
+	var border := Journal.INK if (r > 0 or learnable) else Journal.DOTS
+	for s in ["normal", "hover", "focus", "pressed"]:
+		var lit: bool = on or s != "normal"
+		var st := StyleBoxFlat.new()
+		st.bg_color = bg
+		st.border_color = Journal.GOLD if lit else border
+		st.set_border_width_all(4 if lit or key else 3)
+		b.add_theme_stylebox_override(s, st)
+	b.mouse_entered.connect(func() -> void: b.grab_focus())
 	holder.add_child(b)
 	var ic := UiKit.card_icon(_card, side * 0.55)
 	ic.position = (Vector2(side, side) - ic.custom_minimum_size) / 2.0
-	ic.modulate = Color.WHITE if r > 0 else Color(0.45, 0.45, 0.5)
+	ic.modulate = Color.WHITE if (r > 0 or on) else Color(0.6, 0.5, 0.42, 0.8 if learnable else 0.45)
 	b.add_child(ic)
 	var g := UiKit.icon(String(n.get("glyph", "damage")), 24.0)
 	g.position = Vector2(side - 26, side - 26)
 	b.add_child(g)
-	var lv := UiKit.label("%d/%d" % [r, mx], 14, UiKit.GOLD if r >= mx else (UiKit.TEXT if r > 0 else UiKit.MUTED))
-	lv.add_theme_stylebox_override("normal", UiKit.style(Color("100e16"), 3, Color(0, 0, 0, 0), 0))   # the edge passes under it
+	var lv := Journal.ink("%d/%d" % [r, mx], 16, Journal.INK_RED if r >= mx else (Journal.INK if r > 0 else Journal.INK_SOFT))
+	var tag := StyleBoxFlat.new()   # the edge passes under it
+	tag.bg_color = Journal.PAPER
+	tag.border_color = Journal.INK
+	tag.set_border_width_all(2)
+	lv.add_theme_stylebox_override("normal", tag)
 	lv.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lv.custom_minimum_size.x = 34
 	lv.position = Vector2(side / 2.0 - 17, side + 2)
@@ -167,11 +177,11 @@ func _node_button(n: Dictionary) -> Control:
 
 
 func _detail(root: Control) -> void:
-	var x := ORIGIN.x + 2 * STEP.x + KEY + 40
-	var w := root.size.x - 40 - x
-	var panel := UiKit.panel(Color(0.09, 0.08, 0.13, 0.94), 16)
-	panel.position = Vector2(x, 120)
-	panel.custom_minimum_size = Vector2(w, 0)
+	var w := RIGHT_PAGE.size.x + 40
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+	panel.position = RIGHT_PAGE.position
+	panel.custom_minimum_size = Vector2(RIGHT_PAGE.size.x, 0)
 	root.add_child(panel)
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 8)
@@ -186,7 +196,7 @@ func _detail(root: Control) -> void:
 	head.add_child(UiKit.icon(String(n.get("glyph", "damage")), 24.0))
 	var hv := VBoxContainer.new()
 	head.add_child(hv)
-	hv.add_child(UiKit.label(String(n.get("name", _view)), 24, UiKit.GOLD if r > 0 else UiKit.TEXT))
+	hv.add_child(Journal.ink(String(n.get("name", _view)), 32, Journal.INK_RED if r > 0 else Journal.INK))
 	hv.add_child(UiKit.label(("Then chốt · " if bool(n.get("keystone", false)) else "") + "Cấp %d / %d" % [r, mx], 14, UiKit.MUTED))
 	var d := UiKit.label(String(n.get("desc", "")), 16, UiKit.TEXT)
 	d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -210,11 +220,12 @@ func _detail(root: Control) -> void:
 		cost_row.add_child(UiKit.label("Giá:", 16, UiKit.TEXT))
 		cost_row.add_child(UiKit.icon("shard", 24.0))
 		cost_row.add_child(UiKit.label(str(_trees.cost(_slot, _card)), 16, UiKit.TEXT if _slot.shards >= _trees.cost(_slot, _card) else Color("ff8a8a")))
-	var learn := UiKit.button("Học", func() -> void:
+	var learn := Journal.seal("Nâng ▶", Vector2(w - 40, 58), 24)
+	learn.pressed.connect(func() -> void:
 		if _trees.buy(_slot, _card, _view):
 			Sfx.play("buy")
 			_save()
-		_rebuild(), Vector2(w - 40, 46), 20, UiKit.PRIMARY)
+		_rebuild())
 	learn.disabled = why != ""
 	v.add_child(learn)
 	if why != "":
@@ -234,6 +245,7 @@ func _detail(root: Control) -> void:
 		_rebuild(), Vector2(w - 40, 40), 16, UiKit.DANGER if _reset_armed else UiKit.PANEL)
 	reset.disabled = refund <= 0
 	v.add_child(reset)
+	Journal.restyle(panel)
 
 
 ## Mảnh thẻ in the wallet: the 12 px glyph drawn x2 (UiKit.stat would draw it at x1, too small).
