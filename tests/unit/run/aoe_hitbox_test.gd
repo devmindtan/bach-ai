@@ -116,7 +116,7 @@ func _run(cls: String, levels: Dictionary) -> Node:
 	r.sheets = {}
 	for sk: String in r.pool.get("skills", {}):
 		var sd: Dictionary = r.pool["skills"][sk]
-		for n: Variant in Array(sd.get("tier_sprites", [sd.get("sprite", sk)])) + Array(sd.get("impact_tiers", [])):   # blasts too, as the run loads
+		for n: Variant in Array(sd.get("tier_sprites", [sd.get("sprite", sk)])) + Array(sd.get("impact_tiers", [])) + Array(sd.get("zone", {}).get("sprite_tiers", [])):   # blasts too, as the run loads
 			r.sheets[String(n)] = SpriteSheet.load_dir("res://assets/sprites/custom/" + String(n), String(n))
 		r.sheets[String(sd.get("sprite", sk))] = SpriteSheet.load_dir("res://assets/sprites/custom/" + String(sd.get("sprite", sk)), String(sd.get("sprite", sk)))
 	r.enemies = _flat()
@@ -393,4 +393,22 @@ func test_net_shot_bursts_and_stuns_the_crowd() -> void:
 	_run_fx(r)
 	for i in 2:
 		_check(e.statuses_of(i).has("stun"), "monster %d is caught in the net, statuses %s" % [i, e.statuses_of(i)])
+	r.free()
+
+
+## design/rogue-kits.md, Độc vụ: the splash leaves a poison pool; a monster standing in it is corroded and slowed
+## each tick until the pool dries up.
+func test_poison_pool_corrodes_what_stands_in_it() -> void:
+	var r := _run("assassin", {"poison_cloud": 1})
+	var e: Enemies = r.enemies
+	e.spawn("blob", Vector2(120, 0))
+	_settle(e)
+	var ts: Dictionary = r.pool["skills"]["poison_cloud"]
+	r._cast("poison_cloud", ts, "crowd")
+	for i in 90:
+		r._step_fx(1.0 / 60.0)
+		r.step_zones(1.0 / 60.0)
+	_check(r.zones.size() == 1 and String(r.zones[0]["kind"]) == "poison", "a poison pool lies there, zones %d" % r.zones.size())
+	_check(e.statuses_of(0).has("corrode"), "the monster in it is corroded, statuses %s" % [e.statuses_of(0)])
+	_check(e.statuses_of(0).has("slow"), "and slowed")
 	r.free()

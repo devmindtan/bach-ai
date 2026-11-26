@@ -170,6 +170,24 @@
       "element": "physical"
     },
     {
+      "id": "poison_cloud",
+      "kind": "skill",
+      "name": "Độc vụ",
+      "desc": "Ném bình độc vào chỗ quái đông: vỡ ra thành vũng độc nằm lại vài giây, quái đứng trong đó bị ăn mòn (nhận thêm sát thương) và làm chậm. Mỗi cấp: +20% sát thương, vũng rộng và lâu hơn.",
+      "max_level": 5,
+      "weight": 2,
+      "effects": {
+        "skill_damage.poison_cloud": {
+          "mul": 0.2
+        },
+        "skill_area.poison_cloud": {
+          "mul": 0.06
+        }
+      },
+      "rarity": "epic",
+      "element": "dark"
+    },
+    {
       "id": "shadow_clone",
       "kind": "stat",
       "name": "Phân thân",
@@ -731,6 +749,47 @@
         "boomerang-iv",
         "boomerang-v"
       ]
+    },
+    "poison_cloud": {
+      "sprite": "poison-splash-i",
+      "tier_sprites": [
+        "poison-splash-i",
+        "poison-splash-ii",
+        "poison-splash-iii",
+        "poison-splash-iv",
+        "poison-splash-v"
+      ],
+      "cast": "crowd",
+      "crowd_radius": 60.0,
+      "anim": "burst",
+      "damage_mul": 0.5,
+      "size_mul": 1.0,
+      "cooldown": 6.5,
+      "cast_range": 300.0,
+      "count": [
+        1,
+        1,
+        1,
+        2,
+        2
+      ],
+      "zone": {
+        "kind": "poison",
+        "sprite_tiers": [
+          "poison-pool-i",
+          "poison-pool-ii",
+          "poison-pool-iii",
+          "poison-pool-iv",
+          "poison-pool-v"
+        ],
+        "time": 3.5,
+        "radius_mul": 1.0,
+        "tick": 0.5,
+        "slow": {
+          "mul": 0.6,
+          "time": 0.7
+        }
+      }
     }
   }
 }

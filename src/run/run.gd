@@ -417,6 +417,8 @@ func _ready() -> void:
 			names.append(String(tn))
 		if sd.has("zone") and sd["zone"].get("kind", "") == "burn":
 			names.append(String(sd["zone"].get("sprite", "scorch")))
+		for tn in sd.get("zone", {}).get("sprite_tiers", []):   # Độc vụ's pool, by tier
+			names.append(String(tn))
 		for tn in sd.get("tier_sprites", []):
 			names.append(String(tn))
 	for u: Dictionary in pool.get("upgrades", []):   # a stat card with its own look (Kết liễu's burst, by tier)
@@ -1721,6 +1723,13 @@ func step_zones(dt: float) -> void:
 				z["tick"] = float(zd.get("tick", 0.5))
 				for i in enemies.living_within(c, float(z["r"])):
 					enemies.apply_status(i, "burn", zd.get("burn", {"time": 1.0, "dps_mul": 0.15}), float(z["dmg"]), String(z["src"]))
+		elif z["kind"] == "poison":   # Độc vụ (design/rogue-kits.md): corrode + slow what stands in it, every tick
+			z["tick"] = float(z["tick"]) - dt
+			if float(z["tick"]) <= 0.0:
+				z["tick"] = float(zd.get("tick", 0.5))
+				for i in enemies.living_within(c, float(z["r"])):
+					enemies.apply_status(i, "corrode", {}, float(z["dmg"]), String(z["src"]))
+					enemies.apply_status(i, "slow", zd.get("slow", {"mul": 0.6, "time": 0.7}), float(z["dmg"]), String(z["src"]))
 		elif z["kind"] == "pulse":
 			z["tick"] = float(z["tick"]) - dt
 			if float(z["tick"]) <= 0.0:
@@ -1748,9 +1757,12 @@ func _draw_zones() -> void:
 				var fade_p := clampf(float(z["t"]) / 0.4, 0.0, 1.0)
 				ps.draw(self, "linger", float(z["life"]) - float(z["t"]), z["at"], float(z["sc"]), false, Color(1, 1, 1, fade_p))
 			continue
-		if z["kind"] != "burn" or float(z["wait"]) > 0.0:
+		if not ["burn", "poison"].has(z["kind"]) or float(z["wait"]) > 0.0:
 			continue
-		var sh: SpriteSheet = sheets.get(String(z["zd"].get("sprite", "scorch")))
+		var tiers: Array = z["zd"].get("sprite_tiers", [])
+		var zname := String(tiers[clampi(int(levels.get(String(z["src"]), 1)) - 1, 0, tiers.size() - 1)]) if not tiers.is_empty() \
+			else String(z["zd"].get("sprite", "scorch"))
+		var sh: SpriteSheet = sheets.get(zname)
 		if sh == null:
 			continue
 		var fade := clampf(float(z["t"]) / 0.6, 0.0, 1.0)
