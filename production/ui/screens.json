@@ -247,6 +247,17 @@
       ]
     },
     {
+      "name": "01g-loading",
+      "spec": "design/ux/front-end.md",
+      "title": "Tải trận (nhẹ)",
+      "scene": "res://src/front/loading.tscn",
+      "frames": 30,
+      "args": [
+        "--force-slots",
+        "--loading-hold"
+      ]
+    },
+    {
       "name": "02-run-start",
       "title": "Vào ải (HUD, ô hồi chiêu)",
       "scene": "res://src/run/run.tscn",

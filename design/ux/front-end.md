@@ -72,6 +72,14 @@ Thiết kế lại 2026-11-26: người dùng xem 3 hướng trong Design Lab (`
 - ↑/↓ đi vòng qua các chương và con dấu, Enter mở, Esc đổi nhân vật.
 - Không có nhân vật nào (file bị xoá) → chuyển sang màn chọn nhân vật.
 
+## Tải trận (`src/front/loading.tscn`)
+
+Mới 2026-11-26 (người dùng: "màn hình tải trận nhẹ khi vào trận"; `design-web/games/bach-ai/screen-loading.html`). Màn
+chọn ải mở màn này thay vì mở thẳng trận. Màu hoàng hôn phẳng, tên vùng (nhỏ) + "Ải N" / "Trùm · Ải N" / "Vô tận" /
+tên thử thách (lớn), một vạch mực đứt nét làm thanh tải với nhân vật (đồ đang mặc) chạy dọc theo, một dòng mẹo. Nạp
+`run.tscn` bằng luồng nền (ResourceLoader.load_threaded_request) và mở khi nạp xong, ít nhất 1,2 s. `--loading-hold`:
+đứng yên ở giữa thanh (ảnh chụp).
+
 ## Kiểm tra
 
 - `gamekit ui-shots`: `00-title`, `00b-characters`, `00c-characters-new`, `01g-lobby-slot`; soi từng vùng ×2.

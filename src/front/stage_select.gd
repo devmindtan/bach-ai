@@ -9,7 +9,7 @@ extends Node2D
 ## uses the preview character), --stage-pick=N chooses stage N.
 
 const LOBBY_SCENE := "res://src/lobby/lobby.tscn"
-const RUN_SCENE := "res://src/run/run.tscn"
+const RUN_SCENE := "res://src/front/loading.tscn"   # runs start through the light loading screen (user 2026-11-26)
 const TILE := Vector2(56, 52)
 const BOSS_GOLD := Color("f2c14e")
 const TILE_LOCKED := Color("15121e")
