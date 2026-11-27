@@ -16,8 +16,8 @@ const SHADOW := Color(0, 0, 0, 0.7)
 const TRAIL_HOLD := 0.5    # s the boss bar's recent-damage trail waits before catching up
 const TRAIL_SPEED := 0.8   # bar widths a second it then shrinks
 const EDGE_MARGIN := 26.0
-const TOP_BAND := 96.0     # xp bar, hp, clock, boss bar: arrows stay below
-const BOTTOM_BAND := 84.0  # skill bar: arrows stay above
+const TOP_BAND := 72.0     # xp bar, hp, clock, boss bar: arrows stay below
+const BOTTOM_BAND := 60.0  # skill bar: arrows stay above
 const POINT_MAX := 6       # elite arrows at most (the nearest)
 
 var run: Node
@@ -76,19 +76,17 @@ func _draw() -> void:
 	var font := ThemeDB.fallback_font
 	var w := size.x
 	_draw_wave_call(font)
-	# design-web screen-hud-journal (approved 2026-11-26): three paper slips pinned to the top
-	# left: name and level, the hp bar with its numbers, a thin xp bar
-	var me := Rect2(16, 14, 330, 84)
-	_slip(me, 0.0)
-	draw_set_transform(me.get_center(), 0.0)
-	var o := -me.size * 0.5
+	# design-web screen-hud-journal ?view=hud-a (chosen 2026-11-27, "A đi"): no paper slips, edge strips. A thin xp
+	# line across the whole top edge, outlined text straight on the field
+	draw_rect(Rect2(0, 0, w, XP_H + 2), Color("1a1208"))
+	draw_rect(Rect2(0, 0, roundf(w * clampf(float(run.xp) / float(run.xp_needed()), 0.0, 1.0)), XP_H), Color("6a9ad8"))
+	draw_rect(Rect2(0, XP_H, w, 2), Color.BLACK)
 	var who := String(run.playing_slot.name) if run.get("playing_slot") != null else String(run.class_data.get("name", ""))
-	_ink(font, o + Vector2(14, 30), who, 24)
-	var lv := "Cấp %d" % run.level
-	_ink(font, o + Vector2(me.size.x - 14 - font.get_string_size(lv, HORIZONTAL_ALIGNMENT_LEFT, -1, 22).x, 30), lv, 22, Journal.INK_RED)
+	_ol(font, Vector2(12, _mid_baseline(font, 30, 22)), "%s · Cấp %d" % [who, run.level], 22)
 	var max_hp := float(run.stats["max_hp"])
-	var hb := Rect2(o + Vector2(14, 40), Vector2(me.size.x - 28, 22))
-	draw_rect(hb, Journal.PAPER)
+	var hb := Rect2(12, 44, 220, 18)
+	draw_rect(hb.grow(2), Color.BLACK)
+	draw_rect(hb, Color("1a1208"))
 	# giáp ảo (user 2026-11-26): a grey part after the hp, shrinking as the buff runs out; when hp + it is over the
 	# max the whole bar scales to that total so the grey part always shows (the usual shield bar)
 	var wd: Array = run.ward_now()
@@ -100,51 +98,35 @@ func _draw() -> void:
 		var gw := roundf(minf(hb.size.x - x0, hb.size.x * grey / hp_total))
 		draw_rect(Rect2(hb.position + Vector2(x0, 0), Vector2(gw, hb.size.y)), Color("9a9a9a"))
 		draw_rect(Rect2(hb.position + Vector2(x0, 0), Vector2(gw, 4)), Color("d0d0d0"))
-	draw_rect(hb, Journal.INK, false, 3.0)
 	# the numbers centred in the bar from the font's own metrics (AGENTS.md: no hand-typed baselines); hp never
 	# shows above the max (it was ceil'd while the max was rounded: "182 / 181")
 	var shown_max := roundi(max_hp)
-	_centered(font, Vector2(hb.get_center().x, _mid_baseline(font, hb.get_center().y, 15)), "%d / %d" % [mini(ceili(run.hp), shown_max), shown_max], 15)
-	var xb := Rect2(o + Vector2(14, 68), Vector2(me.size.x - 28, 6))
-	draw_rect(xb, Journal.PAPER)
-	draw_rect(Rect2(xb.position, Vector2(xb.size.x * clampf(float(run.xp) / float(run.xp_needed()), 0.0, 1.0), xb.size.y)), Color("3a6aaa"))
-	draw_rect(xb, Journal.INK, false, 2.0)
-	draw_set_transform(Vector2.ZERO, 0.0)
-	_draw_passive(Vector2(me.end.x + 22, me.position.y + 22))
-	_draw_buffs(font, Vector2(me.position.x + 4, me.end.y + 22))
+	_centered(font, Vector2(hb.get_center().x, _mid_baseline(font, hb.get_center().y, 18)), "%d / %d" % [mini(ceili(run.hp), shown_max), shown_max], 18)
+	_draw_passive(Vector2(hb.end.x + 22, hb.get_center().y))
+	_draw_buffs(font, Vector2(hb.position.x + 2, hb.end.y + 24))
 	# middle: the clock on one line, "02:41 / 05:00 · Ải 11" (user 2026-11-26: horizontal, not stacked)
 	var t := int(run.clock)
 	var total := int(run.duration)
 	var clock := "%02d:%02d" % [t / 60, t % 60]
 	var tail := (" · Vòng %d" % (run.endless_cycle() + 1)) if run.endless else (" / %02d:%02d · Ải %d" % [total / 60, total % 60, run.stage_number])
 	var cw := font.get_string_size(clock, HORIZONTAL_ALIGNMENT_LEFT, -1, 30).x
-	var tw := font.get_string_size(tail, HORIZONTAL_ALIGNMENT_LEFT, -1, 20).x
-	var cw2 := ceilf((cw + tw + 28.0) * 0.5) * 2.0   # even sizes: the slip's centre stays on a whole pixel (sharp text)
-	var cl := Rect2(roundf(w * 0.5 - cw2 * 0.5), 12, cw2, 46)
-	_slip(cl, 0.0)
-	draw_set_transform(cl.get_center(), 0.0)
-	o = -cl.size * 0.5
-	_ink(font, o + Vector2(14, 34), clock, 30)
-	_ink(font, o + Vector2(14 + cw, 34), tail, 20, Journal.INK_SOFT)
-	draw_set_transform(Vector2.ZERO, 0.0)
-	# right: kills and gold (and Tinh hoa once there is some), icon + number pairs
+	var tw := font.get_string_size(tail, HORIZONTAL_ALIGNMENT_LEFT, -1, 18).x
+	var cx := roundf(w * 0.5 - (cw + tw) * 0.5)
+	var cb := _mid_baseline(font, 36, 30)
+	_ol(font, Vector2(cx, cb), clock, 30)
+	_ol(font, Vector2(cx + cw, cb), tail, 18)
+	# right: kills and gold (and Tinh hoa once there is some), icon + number pairs, left of the gear (touch pause)
 	var pairs := [["skull", str(run.enemies.total_kills)], ["coin", str(run.gold)]]
 	if run.pickups != null and run.pickups.essence > 0:
 		pairs.append(["essence", str(run.pickups.essence)])
-	var tw2 := 0.0
-	for p: Array in pairs:
-		tw2 += 38.0 + font.get_string_size(String(p[1]), HORIZONTAL_ALIGNMENT_LEFT, -1, 24).x + 16.0
-	var taw := ceilf((tw2 + 14.0) * 0.5) * 2.0   # even, whole-pixel width (sharp text)
-	var ta := Rect2(roundf(w - 16 - 48 - taw), 14, taw, 44)   # left of the gear (touch pause)
-	_slip(ta, 0.0)
-	draw_set_transform(ta.get_center(), 0.0)
-	o = -ta.size * 0.5
-	var x := o.x + 14
-	for p: Array in pairs:
-		UiIcons.draw(self, String(p[0]), Vector2(x + 12, 0), 2.0)
-		_ink(font, Vector2(x + 34, 9), String(p[1]), 24)
-		x += 38.0 + font.get_string_size(String(p[1]), HORIZONTAL_ALIGNMENT_LEFT, -1, 24).x + 16.0
-	draw_set_transform(Vector2.ZERO, 0.0)
+	var x := w - 52 - 12
+	for k in range(pairs.size() - 1, -1, -1):
+		var n := String(pairs[k][1])
+		x -= font.get_string_size(n, HORIZONTAL_ALIGNMENT_LEFT, -1, 22).x
+		_ol(font, Vector2(x, _mid_baseline(font, 36, 22)), n, 22)
+		x -= 24
+		UiIcons.draw(self, String(pairs[k][0]), Vector2(x + 8, 36), 2.0)
+		x -= 14
 	_draw_skill_bar(font)
 	_draw_pointers()
 	_draw_boss_bar(font)
@@ -168,14 +150,21 @@ static func _mid_baseline(font: Font, center_y: float, sz: int) -> float:
 	return roundf(center_y + (font.get_ascent(sz) - font.get_descent(sz)) * 0.5)
 
 
+## Light text with a black outline straight on the field (web hud-a .ol).
+func _ol(font: Font, p: Vector2, s: String, sz: int) -> void:
+	draw_string_outline(font, p, s, HORIZONTAL_ALIGNMENT_LEFT, -1, sz, 4, Color.BLACK)
+	draw_string(font, p, s, HORIZONTAL_ALIGNMENT_LEFT, -1, sz, Color("f3e6c8"))
+
+
 func _ink(font: Font, p: Vector2, s: String, sz: int, col: Color = Journal.INK) -> void:
 	draw_string(font, p, s, HORIZONTAL_ALIGNMENT_LEFT, -1, sz, col)
 
 
 
-const SLOT := 60.0
-const SLOT_GAP := 8.0
-const SLOT_BOTTOM := 14.0   # gap under the bar
+const XP_H := 8.0
+const SLOT := 40.0          # web hud-a .ski .sk: 40 px, black frame, dark slot, 32 px icon
+const SLOT_GAP := 4.0
+const SLOT_BOTTOM := 8.0   # gap under the bar
 const ACTIVE := Color("ffd36b")
 
 
@@ -276,7 +265,7 @@ func _draw_boss_bar(font: Font) -> void:
 		return
 	var k: int = run.enemies.kind[i]
 	# web screen-hud-journal ?view=boss: a paper slip under the clock, the name in red ink, the phase, the bar
-	var slip := Rect2(roundf(size.x * 0.5 - 300), 100, 600, 70)   # under the top slips, clear of them
+	var slip := Rect2(roundf(size.x * 0.5 - 300), 70, 600, 70)   # under the top slips, clear of them
 	_slip(slip, 0.0)
 	draw_set_transform(slip.get_center(), 0.0)
 	var o := -slip.size * 0.5
@@ -321,7 +310,7 @@ func _draw_passive(c: Vector2) -> void:
 	if tex == null:
 		return
 	var on: bool = run.passive_active() or not (pv.has("hp_below") or pv.has("still_s"))   # lit while it is on
-	var r := Rect2(c - Vector2(13, 13), Vector2(26, 26))
+	var r := Rect2((c - Vector2(13, 13)).round(), Vector2(26, 26))
 	if on:
 		var col := Color(String(run.class_data.get("color", "ffd36b")))
 		draw_rect(r.grow(3), Color(col, 0.35 + 0.25 * sin(run.clock * 6.0)))
@@ -362,19 +351,20 @@ func _draw_skill_bar(font: Font) -> void:
 	for si: Dictionary in skills:
 		var r := Rect2(x, y, SLOT, SLOT)
 		var cd: Array = run.cooldown_state(si["id"])
-		draw_rect(r, Journal.PAPER)   # web .skills .sk: a paper slot framed in ink
+		draw_rect(r, Color(0.23, 0.14, 0.08, 0.8))
 		var tex: Texture2D = run.icon_texture(String(si["id"]))
 		if tex != null:
-			draw_texture_rect(tex, Rect2(r.position + Vector2(8, 8), Vector2(44, 44)), false)
+			draw_texture_rect(tex, Rect2(r.position + Vector2(4, 4), Vector2(32, 32)), false)
 		var left := float(cd[0])
 		var total := maxf(0.01, float(cd[1]))
 		if left > 0.0:   # the cooldown fills the slot from the bottom in dark ink (web .cd)
 			var k := clampf(left / total, 0.0, 1.0)
-			draw_rect(Rect2(r.position.x, r.end.y - r.size.y * k, r.size.x, r.size.y * k), Color(0.23, 0.14, 0.08, 0.73))
+			var hk := roundf(r.size.y * k)
+			draw_rect(Rect2(r.position.x, r.end.y - hk, r.size.x, hk), Color(0, 0, 0, 0.67))
 			if total >= 1.5:
 				var t := ("%.1f" % left) if left < 10.0 else str(ceili(left))
-				_centered(font, Vector2(r.get_center().x, _baseline(r.get_center().y, 16)), t, 16)
-		draw_rect(r, ACTIVE if bool(cd[2]) else Journal.INK, false, 3.0)
+				_centered(font, Vector2(r.get_center().x, _mid_baseline(font, r.get_center().y, 18)), t, 18)
+		draw_rect(r.grow(-1), ACTIVE if bool(cd[2]) else Color.BLACK, false, 2.0)
 		x += SLOT + SLOT_GAP
 
 
