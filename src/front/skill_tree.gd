@@ -113,7 +113,37 @@ func _build() -> void:
 					edges.draw_dashed_line(a, b, Journal.INK, 3.0, 6.0))
 	for n: Dictionary in _tree.nodes(_slot.cls):
 		root.add_child(_node_button(n))
+	# web screen-tree-journal ?view=cost (approved 2026-11-27): the purse in the left page's corner
+	var purse := _essence_tag(str(_slot.essence), 26, Journal.INK, 3)
+	purse.position = Vector2(512, 74)
+	root.add_child(purse)
 	_detail(root)
+
+
+## Tinh hoa icon + number in a paper tag with a [param border] px frame (the purse; the node cost badges).
+func _essence_tag(text: String, sz: int, col: Color, border: int) -> PanelContainer:
+	var pc := PanelContainer.new()
+	var st := StyleBoxFlat.new()
+	st.bg_color = Color("ddcca0") if border > 2 else Journal.PAPER
+	st.border_color = col
+	st.set_border_width_all(border)
+	st.content_margin_left = 6 if border > 2 else 2
+	st.content_margin_right = 8 if border > 2 else 4
+	pc.add_theme_stylebox_override("panel", st)
+	pc.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 4 if border > 2 else 1)
+	pc.add_child(h)
+	var ic := TextureRect.new()
+	ic.texture = UiIcons.texture("essence")
+	var px := 22 if border > 2 else 14
+	ic.custom_minimum_size = Vector2(px, px)
+	ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	ic.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	ic.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	h.add_child(ic)
+	h.add_child(Journal.ink(text, sz, col))
+	return pc
 
 
 func _node_button(n: Dictionary) -> Control:
@@ -161,6 +191,10 @@ func _node_button(n: Dictionary) -> Control:
 	lv.position = Vector2(side - 22, side - 14)   # the rank tag on the node's bottom-right corner (web .rk)
 	lv.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	holder.add_child(lv)
+	if r < mx:   # the cost of its next rank on the node's top-left corner (web .pc)
+		var pc := _essence_tag(str(_tree.cost(id)), 15, Journal.INK_RED, 2)
+		pc.position = Vector2(-8, -10)
+		holder.add_child(pc)
 	b.focus_entered.connect(func() -> void:   # focus views a node; Enter / a click learns it (web: Enter học)
 		if _view != id:
 			_view = id
@@ -209,8 +243,13 @@ func _detail(root: Control) -> void:
 	var reqs := []
 	for q: String in n.get("requires", []):
 		reqs.append(String(_tree.node(q).get("name", q)))
-	v.add_child(Journal.ledger("", "Giá mỗi cấp", "%d Tinh hoa" % _tree.cost(_view), 20))
-	v.add_child(Journal.ledger("", "Tinh hoa đang có", str(_slot.essence), 20))
+	var price := _tree.cost(_view)
+	var have := int(_slot.essence)
+	if r >= mx:
+		v.add_child(Journal.ledger("essence", "Giá", "đã đủ cấp", 20))
+	else:
+		v.add_child(Journal.ledger("essence", "Giá cấp %d" % (r + 1), "%d Tinh hoa" % price, 20))
+		v.add_child(Journal.ledger("essence", "Đang có", "%d → %s" % [have, str(have - price) if have >= price else "thiếu %d" % (price - have)], 20))
 	v.add_child(Journal.ledger("", "Cần", ", ".join(reqs) if not reqs.is_empty() else "—", 20))
 	var note := Journal.ink("Tẩy tuỷ: 1 Tẩy Tủy Đan + vàng, trả lại mọi Tinh hoa.", 18, Journal.INK_SOFT)
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -222,9 +261,29 @@ func _detail(root: Control) -> void:
 	rs.tooltip_text = _tree.why_not_reset(_slot)
 	rs.pressed.connect(_reset)
 	v.add_child(rs)
+	var src := Journal.ink("Tinh hoa: quái tinh anh rơi 1, trùm rơi 10; nhặt được giữ lại cả khi thua.", 18, Journal.INK_SOFT)
+	src.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	src.custom_minimum_size = Vector2(RIGHT_PAGE.size.x, 0)
+	v.add_child(src)
 	var why := _tree.why_not(_slot, _view) if r < mx else "Đã tối đa."
-	var buy := Journal.seal("Học ▶", Vector2(220, 62), 26)
-	buy.position = RIGHT_PAGE.end - Vector2(220, 62)
+	var buy := Journal.seal("Học ▶" if r >= mx else "Học ▶ −%d" % price, Vector2(260, 62), 26)
+	if r < mx:
+		var tw := buy.get_theme_font("font").get_string_size(buy.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 26).x
+		var ei := TextureRect.new()   # the Tinh hoa icon right after "−N" (web: Học ▶ −N + icon)
+		ei.texture = UiIcons.texture("essence")
+		ei.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		ei.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		ei.size = Vector2(24, 24)
+		ei.position = Vector2(roundf(130 - 9 + tw * 0.5), 19)
+		ei.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		buy.add_child(ei)
+		buy.add_theme_constant_override("h_separation", 0)
+		buy.text += "     "
+		if have < price:
+			var short := Journal.ink("Thiếu %d Tinh hoa" % (price - have), 20, Journal.INK_RED)
+			short.position = RIGHT_PAGE.end - Vector2(short.get_minimum_size().x, 62 + 34)
+			root.add_child(short)
+	buy.position = RIGHT_PAGE.end - Vector2(260, 62)
 	buy.focus_mode = Control.FOCUS_NONE   # the nodes own the arrows; Enter on a node learns it
 	buy.disabled = why != ""
 	buy.tooltip_text = why
