@@ -7,11 +7,13 @@ extends RefCounted
 ##   var col := SettingsPanel.build(func() -> void: back_to_menu())
 ##   center.add_child(col)
 
-const TEXT := Color("f2ecd8")
-const MUTED := Color("b9b2a0")
-const GOLD := Color("c9a65a")
-const CARD := Color("2a2438")
-const CARD_HOVER := Color("3b3352")
+# journal ink on paper: the pause menu's settings sit on a paper sheet since the in-run panels took the journal
+# look (the old pale text on dark cards was unreadable there, 2026-11-27)
+const TEXT := Color("3a2414")
+const MUTED := Color("5a3a24")
+const GOLD := Color("8a2a1a")
+const CARD := Color("ddcca0")
+const CARD_HOVER := Color("efe2bf")
 
 const SCALE_NAMES := ["Tự động", "×1", "×2", "×3"]
 
@@ -93,20 +95,21 @@ static func _button(s: String, cb: Callable) -> Button:
 	b.custom_minimum_size = Vector2(0, 44)
 	b.add_theme_font_size_override("font_size", 18)
 	b.add_theme_stylebox_override("normal", _style(CARD))
-	b.add_theme_stylebox_override("hover", _style(CARD_HOVER))
-	b.add_theme_stylebox_override("focus", _style(CARD_HOVER))
-	b.add_theme_stylebox_override("pressed", _style(CARD_HOVER))
+	b.add_theme_stylebox_override("hover", _style(CARD_HOVER, Journal.GOLD))
+	b.add_theme_stylebox_override("focus", _style(CARD_HOVER, Journal.GOLD))
+	b.add_theme_stylebox_override("pressed", _style(CARD_HOVER, Journal.GOLD))
+	for k in ["font_color", "font_hover_color", "font_focus_color", "font_pressed_color"]:
+		b.add_theme_color_override(k, TEXT)
 	if cb.is_valid():
 		b.pressed.connect(cb)
 	return b
 
 
-static func _style(bg: Color) -> StyleBoxFlat:
+static func _style(bg: Color, edge: Color = Color("8a2a1a")) -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
 	s.bg_color = bg
-	s.border_color = GOLD
-	s.set_border_width_all(2)
-	s.set_corner_radius_all(4)
+	s.border_color = edge
+	s.set_border_width_all(3)
 	s.set_content_margin_all(6)
 	return s
 
