@@ -7,16 +7,17 @@ extends Control
 ##   panels.show_level_up(["sharpen", "haste", "reach"])
 
 const DIM := Color(0, 0, 0, 0.6)
-const CARD := Color("2a2438")
-const CARD_HOVER := Color("3b3352")
-const BORDER := Color("c9a65a")
-const TEXT := Color("f2ecd8")
-const MUTED := Color("b9b2a0")
-const STAT_ACCENT := Color("6aa6d8")   # stat cards; skills use the gold BORDER
-const GAIN := Color("8ee08e")          # the value after the pick
-const MILESTONE := Color("ffd36b")
-const PIP_LOCKED := Color("1b1726")    # level not reached yet (dark, with a visible edge)
-const PIP_EDGE := Color("6b6380")
+# The journal palette (design-web screen-run-journal / screen-hud-journal, user 2026-11-27): ink on a paper sheet.
+const CARD := Color("ddcca0")         # a sketch cell
+const CARD_HOVER := Color("efe2bf")
+const BORDER := Color("8a2a1a")       # red ink: titles, skill accents, frames
+const TEXT := Color("3a2414")         # ink
+const MUTED := Color("5a3a24")        # soft ink
+const STAT_ACCENT := Color("3a6aaa")  # stat cards; skills use the red BORDER
+const GAIN := Color("2a7a3a")         # the value after the pick
+const MILESTONE := Color("c0801a")
+const PIP_LOCKED := Color("c8b088")   # level not reached yet (paper dark, with a visible edge)
+const PIP_EDGE := Color("a08060")
 
 var banish_mode := false   # Loại armed: the next card clicked is banished
 var _flipped: Array[String] = []   # the hand that already flipped in
@@ -60,8 +61,8 @@ func _view_buttons(root: VBoxContainer) -> void:
 	root.add_child(row)
 	for b: Array in [["Ẩn bảng" + UiKit.hint("H"), "hidden"], ["Nhân vật" + UiKit.hint("Tab"), "character"]]:
 		var view: String = b[1]
-		var btn := _button(String(b[0]), func() -> void: run.toggle_level_view(view))
-		btn.custom_minimum_size = Vector2(190, 40)
+		var btn := Journal.link(String(b[0]), 18)   # red underlined links, like the web sheet
+		btn.pressed.connect(func() -> void: run.toggle_level_view(view))
 		btn.focus_mode = Control.FOCUS_NONE
 		row.add_child(btn)
 
@@ -69,7 +70,7 @@ func _view_buttons(root: VBoxContainer) -> void:
 func show_peek() -> void:
 	hide_all()
 	var strip := PanelContainer.new()
-	var ps := _style(Color(0.09, 0.08, 0.13, 0.9))
+	var ps := Journal.sheet_style(12)
 	ps.content_margin_left = 20
 	ps.content_margin_right = 20
 	ps.content_margin_top = 8
@@ -113,7 +114,9 @@ func show_level_up(ids: Array[String], title := "Lên cấp! Chọn một") -> v
 	var root := _open(title, false)
 	_view_buttons(root)
 	if title.begins_with("Lên cấp") and run.rarity != null:   # this level's card odds (user 2026-11-21)
-		root.add_child(UiKit.rarity_odds_row(run.rarity.level_weights(run.level), 13))
+		var odds := UiKit.rarity_odds_row(run.rarity.level_weights(run.level), 13)
+		Journal.restyle(odds)   # tier names in their ink on paper
+		root.add_child(odds)
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 20)
@@ -182,11 +185,11 @@ func _filler_card(i: int, id: String, u: Dictionary) -> Button:
 	var b := Button.new()
 	b.custom_minimum_size = Vector2(300, 180)
 	b.focus_mode = Control.FOCUS_ALL
-	var muted := Color("7a7488")
+	var muted := Color("a08060")
 	b.add_theme_stylebox_override("normal", _style(CARD, muted))
 	b.add_theme_stylebox_override("hover", _style(CARD_HOVER, muted))
-	b.add_theme_stylebox_override("focus", _style(CARD_HOVER, Color.WHITE))
-	b.add_theme_stylebox_override("pressed", _style(CARD_HOVER, Color.WHITE))
+	b.add_theme_stylebox_override("focus", _style(CARD_HOVER, Journal.GOLD))
+	b.add_theme_stylebox_override("pressed", _style(CARD_HOVER, Journal.GOLD))
 	var v := VBoxContainer.new()
 	v.set_anchors_preset(Control.PRESET_FULL_RECT)
 	v.offset_left = 14
@@ -247,9 +250,9 @@ func _skill_pick_card(sid: String, pick: Callable) -> Button:
 	var b := Button.new()
 	b.custom_minimum_size = Vector2(340, 100)
 	b.add_theme_stylebox_override("normal", _style(CARD))
-	b.add_theme_stylebox_override("hover", _style(CARD_HOVER, Color.WHITE))
-	b.add_theme_stylebox_override("pressed", _style(CARD_HOVER, Color.WHITE))
-	b.add_theme_stylebox_override("focus", _style(CARD_HOVER, Color.WHITE))
+	b.add_theme_stylebox_override("hover", _style(CARD_HOVER, Journal.GOLD))
+	b.add_theme_stylebox_override("pressed", _style(CARD_HOVER, Journal.GOLD))
+	b.add_theme_stylebox_override("focus", _style(CARD_HOVER, Journal.GOLD))
 	var h := HBoxContainer.new()
 	h.set_anchors_preset(Control.PRESET_FULL_RECT)
 	h.offset_left = 14
@@ -274,7 +277,7 @@ func _skill_pick_card(sid: String, pick: Callable) -> Button:
 	v.add_child(num)
 	num.add_child(_label("×%d" % now, 20, TEXT))
 	num.add_child(_label("→", 20, MUTED))
-	num.add_child(_label("×%d" % (now + 1), 20, Color("8fe08a")))
+	num.add_child(_label("×%d" % (now + 1), 20, GAIN))
 	for c in num.get_children():
 		(c as Control).mouse_filter = Control.MOUSE_FILTER_IGNORE
 	for c in v.get_children():
@@ -326,17 +329,18 @@ func _upgrade_card(i: int, id: String) -> Button:
 	var skill: bool = u.get("kind") == "skill"
 	var tier := String(u.get("rarity", "common"))
 	# the rarity frames the card (design/card-rarity.md); commons keep the skill / stat colour
-	var accent: Color = Color("6a6478") if tier == "common" else UiKit.RARITY.get(tier, BORDER)   # commons plain, rarer cards in their colour
+	var accent: Color = Color("6a6a6a") if tier == "common" else Journal.ink_of(UiKit.RARITY.get(tier, BORDER))   # commons plain, rarer cards in their colour
 	var b := Button.new()
 	b.custom_minimum_size = Vector2(300, 180)   # grown to the tallest card by _fit_cards
 	b.focus_mode = Control.FOCUS_ALL
-	b.add_theme_stylebox_override("normal", UiKit.rarity_style(tier, true, false, 0))   # the frame is the tier
-	var hv := UiKit.rarity_style(tier, true, false, 0)
-	hv.bg_color = hv.bg_color.lightened(0.08)
-	b.add_theme_stylebox_override("hover", hv)
-	b.add_theme_stylebox_override("focus", UiKit.rarity_style(tier, true, true, 0))
-	b.add_theme_stylebox_override("pressed", UiKit.rarity_style(tier, true, true, 0))
-	UiKit.rarity_corners(b, tier)
+	# journal sketch card (design-web run-levelup-full): sketch paper framed in ink (rarer tiers in their ink); focused:
+	# lighter paper, a gold frame
+	b.add_theme_stylebox_override("normal", _style(CARD, TEXT if tier == "common" else accent))
+	b.add_theme_stylebox_override("hover", _style(CARD_HOVER, TEXT if tier == "common" else accent))
+	for st in ["focus", "pressed"]:
+		var on := _style(CARD_HOVER, Journal.GOLD)
+		on.set_border_width_all(5)
+		b.add_theme_stylebox_override(st, on)
 	var v := VBoxContainer.new()
 	v.set_anchors_preset(Control.PRESET_FULL_RECT)
 	v.offset_left = 14
@@ -351,12 +355,14 @@ func _upgrade_card(i: int, id: String) -> Button:
 	head.add_theme_constant_override("separation", 10)
 	head.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var tile := PanelContainer.new()
-	var ts := _style(Color("1d1828"), accent)
+	var ts := _style(Color("e8d8b0"), accent)
 	ts.set_content_margin_all(4)
 	tile.add_theme_stylebox_override("panel", ts)
 	tile.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var icon := TextureRect.new()
 	icon.texture = run.icon_texture(id)
+	if pale_icon(icon.texture):
+		icon.modulate = INK_GLYPH
 	icon.custom_minimum_size = Vector2(48, 48)
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -424,7 +430,7 @@ func _upgrade_card(i: int, id: String) -> Button:
 		else:
 			run.choose(idx))
 	if banish_mode:
-		b.add_theme_stylebox_override("normal", _style(CARD, Color("ff6a5a")))
+		b.add_theme_stylebox_override("normal", _style(CARD, Color("a01c1c")))
 	if i == 0:
 		b.call_deferred("grab_focus")
 	return b
@@ -461,7 +467,7 @@ func _draw_pips(c: Control, owned: int, max_level: int, milestones: Array, accen
 	var x := 0.0
 	for l in range(1, max_level + 1):
 		var nxt := show_next and l == owned + 1
-		var col := accent if l <= owned else (Color.WHITE if nxt else PIP_LOCKED)
+		var col := accent if l <= owned else (Journal.GOLD if nxt else PIP_LOCKED)
 		var cx := x + 9.0
 		if milestones.has(l):
 			var pts := PackedVector2Array([Vector2(cx, 0), Vector2(cx + 9, 9), Vector2(cx, 18), Vector2(cx - 9, 9)])
@@ -543,12 +549,14 @@ func _owned_tile(o: Dictionary, info: RichTextLabel) -> Button:
 	var b := Button.new()
 	b.custom_minimum_size = Vector2(OWNED_TILE, OWNED_TILE)
 	b.focus_mode = Control.FOCUS_ALL
-	b.add_theme_stylebox_override("normal", _style(Color("1d1828"), frame))
-	b.add_theme_stylebox_override("hover", _style(CARD_HOVER, Color.WHITE))
-	b.add_theme_stylebox_override("focus", _style(CARD_HOVER, Color.WHITE))
-	b.add_theme_stylebox_override("pressed", _style(CARD_HOVER, Color.WHITE))
+	b.add_theme_stylebox_override("normal", _style(CARD, frame))
+	b.add_theme_stylebox_override("hover", _style(CARD_HOVER, Journal.GOLD))
+	b.add_theme_stylebox_override("focus", _style(CARD_HOVER, Journal.GOLD))
+	b.add_theme_stylebox_override("pressed", _style(CARD_HOVER, Journal.GOLD))
 	var icon := TextureRect.new()
 	icon.texture = run.icon_texture(String(o["id"]))
+	if pale_icon(icon.texture):
+		icon.modulate = INK_GLYPH
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -575,7 +583,7 @@ func _draw_owned_badge(c: Control, lv: int, mx: int, accent: Color, maxed: bool)
 	var r := Rect2(OWNED_TILE - w - 10, OWNED_TILE - 24, w + 8, 16)
 	c.draw_rect(r, Color(0.05, 0.04, 0.08, 0.9))
 	c.draw_string(font, Vector2(r.position.x + 4, roundf(r.get_center().y + sz * 0.36)), s,
-		HORIZONTAL_ALIGNMENT_LEFT, -1, sz, MILESTONE if maxed else TEXT)
+		HORIZONTAL_ALIGNMENT_LEFT, -1, sz, Journal.GOLD if maxed else Journal.PAPER)
 	# level bar: one segment per level along the bottom edge
 	var x0 := 4.0
 	var bw := OWNED_TILE - 8.0
@@ -622,7 +630,7 @@ func show_character() -> void:
 	panel.offset_top = 16
 	panel.offset_right = -16
 	panel.offset_bottom = -16
-	var ps := _style(Color(0.09, 0.08, 0.13, 0.96))
+	var ps := Journal.sheet_style(24)
 	ps.set_content_margin_all(20)
 	panel.add_theme_stylebox_override("panel", ps)
 	dim.add_child(panel)
@@ -736,7 +744,7 @@ func _buff_row(id: String) -> HBoxContainer:
 	v.add_theme_constant_override("separation", 0)
 	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	h.add_child(v)
-	v.add_child(_label("%s  ·  còn %d s" % [d.get("name", id), ceili(run.buffs.time_left(id))], 15, Color(d.get("color", "f2ecd8"))))
+	v.add_child(_label("%s  ·  còn %d s" % [d.get("name", id), ceili(run.buffs.time_left(id))], 15, Journal.ink_of(Color(d.get("color", "f2ecd8")))))
 	var desc := _label(String(d.get("desc", "")), 12, MUTED)
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	v.add_child(desc)
@@ -888,7 +896,7 @@ func _skill_row(si: Dictionary) -> PanelContainer:
 		mods.add_theme_constant_override("h_separation", 16)
 		for w in ["Sát thương", "Hồi chiêu", "Vùng"]:
 			if tot.has(w):
-				var col := GAIN if (float(tot[w]) > 0.0) != (w == "Hồi chiêu") else Color("ff8a8a")
+				var col := GAIN if (float(tot[w]) > 0.0) != (w == "Hồi chiêu") else Color("a01c1c")
 				mods.add_child(_chip([String(WHAT_ICON[w])], "%s %+d%%" % [w, roundi(float(tot[w]))], String(tips[w]).strip_edges(), col, 13))
 		for o: String in other:
 			mods.add_child(_label(o, 13, MUTED))
@@ -899,7 +907,7 @@ func _skill_row(si: Dictionary) -> PanelContainer:
 		for e: Dictionary in si["statuses"]:
 			var sd: Dictionary = run.status_defs.get(String(e.get("status", "")), {})
 			var secs := ("%.1f s" % float(e["time"])) if e.has("time") else ""
-			st_row.add_child(_chip([String(e.get("status", ""))], "%s %s" % [sd.get("name", e.get("status", "")), secs], String(sd.get("desc", "")), Color("ffb08a"), 13))
+			st_row.add_child(_chip([String(e.get("status", ""))], "%s %s" % [sd.get("name", e.get("status", "")), secs], String(sd.get("desc", "")), Color("a04a1a"), 13))
 		v.add_child(st_row)
 	return card
 
@@ -934,7 +942,41 @@ func _icon(id: String, px: int) -> TextureRect:
 	t.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	t.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	t.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if pale_icon(t.texture):   # a white glyph made for the dark theme: in ink on the paper sheet
+		t.modulate = INK_GLYPH
 	return t
+
+
+const INK_GLYPH := Color(0.42, 0.28, 0.18)
+static var _pale := {}
+
+
+## True for an icon drawn as a pale glyph (mean lightness of its opaque pixels over 0.8, little colour): it vanishes on
+## paper, so the journal panels draw it in ink.
+static func pale_icon(tex: Texture2D) -> bool:
+	if tex == null:
+		return false
+	var key := tex.get_rid()
+	if _pale.has(key):
+		return _pale[key]
+	var img := tex.get_image()
+	var pale := false
+	if img != null:
+		if img.is_compressed():
+			img.decompress()
+		var n := 0
+		var lum := 0.0
+		var sat := 0.0
+		for y in range(0, img.get_height(), 2):
+			for x in range(0, img.get_width(), 2):
+				var c := img.get_pixel(x, y)
+				if c.a > 0.5:
+					n += 1
+					lum += c.get_luminance()
+					sat += c.s
+		pale = n > 0 and lum / n > 0.8 and sat / n < 0.25
+	_pale[key] = pale
+	return pale
 
 
 func show_settings() -> void:
@@ -1066,11 +1108,11 @@ func _end_view(which: String, report: Array) -> Control:
 		var h := HBoxContainer.new()
 		h.add_theme_constant_override("separation", 40)
 		h.alignment = BoxContainer.ALIGNMENT_CENTER
-		h.add_child(_ledger_list("Sát thương nhận vào", run.ledger_rows(run.taken_by), Color("ff8a8a")))
-		h.add_child(_ledger_list("Sát thương được giảm", run.ledger_rows(run.reduced_by), Color("8ad0ff")))
+		h.add_child(_ledger_list("Sát thương nhận vào", run.ledger_rows(run.taken_by), Color("a01c1c")))
+		h.add_child(_ledger_list("Sát thương được giảm", run.ledger_rows(run.reduced_by), Color("3a6aaa")))
 		return h
 	var c := CenterContainer.new()
-	c.add_child(_ledger_list("Máu đã hồi", run.ledger_rows(run.heal_by), Color("8aff9a")))
+	c.add_child(_ledger_list("Máu đã hồi", run.ledger_rows(run.heal_by), GAIN))
 	return c
 
 
@@ -1138,7 +1180,7 @@ func _milestone_choice(info: Dictionary, pick: Callable) -> Button:
 
 
 const DMG_BAR := 150.0
-const RARITY := {"common": Color("e8e2d0"), "rare": Color("6fb7ff"), "epic": Color("c38df5"), "legendary": Color("f2b64a")}
+const RARITY := {"common": Color("3a2414"), "rare": Color("3a6aaa"), "epic": Color("7a3ab8"), "legendary": Color("c0801a")}   # ink on paper
 
 
 func _damage_table(report: Array) -> GridContainer:
@@ -1158,6 +1200,8 @@ func _damage_table(report: Array) -> GridContainer:
 		name.add_theme_constant_override("separation", 8)
 		var icon := TextureRect.new()
 		icon.texture = run.icon_texture(String(r.get("icon", r["id"])))
+		if pale_icon(icon.texture):
+			icon.modulate = INK_GLYPH
 		icon.custom_minimum_size = Vector2(24, 24)
 		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -1225,9 +1269,10 @@ func _open(title: String, boxed := true) -> VBoxContainer:
 	var root := VBoxContainer.new()
 	root.alignment = BoxContainer.ALIGNMENT_CENTER
 	root.add_theme_constant_override("separation", 18)
+	boxed = true   # every in-run panel is a journal sheet (user 2026-11-27, design-web screen-run-journal)
 	if boxed:
 		var panel := PanelContainer.new()
-		var ps := _style(Color(0.09, 0.08, 0.13, 0.94))
+		var ps := Journal.sheet_style(24)   # the journal look (design-web screen-run-journal, user 2026-11-27): a paper sheet
 		ps.content_margin_left = 40
 		ps.content_margin_right = 40
 		ps.content_margin_top = 24
@@ -1260,7 +1305,12 @@ func _button(s: String, cb: Callable) -> Button:
 	b.add_theme_font_size_override("font_size", 20)
 	b.add_theme_stylebox_override("normal", _style(CARD))
 	b.add_theme_stylebox_override("hover", _style(CARD_HOVER))
-	b.add_theme_stylebox_override("focus", _style(CARD_HOVER))
+	var on := _style(CARD_HOVER, Journal.GOLD)
+	b.add_theme_stylebox_override("focus", on)
+	for k in ["font_color", "font_hover_color", "font_pressed_color"]:
+		b.add_theme_color_override(k, TEXT)
+	b.add_theme_color_override("font_focus_color", BORDER)
+	b.add_theme_color_override("font_disabled_color", PIP_EDGE)
 	b.pressed.connect(cb)
 	return b
 
@@ -1269,6 +1319,5 @@ func _style(bg: Color, border := BORDER) -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
 	s.bg_color = bg
 	s.border_color = border
-	s.set_border_width_all(2)
-	s.set_corner_radius_all(4)
+	s.set_border_width_all(3)   # journal: square sketch boxes in ink
 	return s
