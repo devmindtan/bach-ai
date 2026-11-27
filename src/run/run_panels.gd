@@ -87,11 +87,12 @@ func show_peek() -> void:
 	var l := _label("Đang xem chiến trường", 18, TEXT)
 	l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(l)
-	var back_btn := _button("Hiện thẻ" + UiKit.hint("H"), func() -> void: run.toggle_level_view("hidden"))
-	back_btn.custom_minimum_size = Vector2(160, 36)
+	# red links like the level-up sheet: the strip stays narrow, clear of the HUD slips (it touched the hp slip, 2026-11-27)
+	var back_btn := Journal.link("Hiện thẻ" + UiKit.hint("H"), 18)
+	back_btn.pressed.connect(func() -> void: run.toggle_level_view("hidden"))
 	row.add_child(back_btn)
-	var sheet := _button("Nhân vật" + UiKit.hint("Tab"), func() -> void: run.toggle_level_view("character"))
-	sheet.custom_minimum_size = Vector2(170, 36)
+	var sheet := Journal.link("Nhân vật" + UiKit.hint("Tab"), 18)
+	sheet.pressed.connect(func() -> void: run.toggle_level_view("character"))
 	sheet.focus_mode = Control.FOCUS_NONE
 	row.add_child(sheet)
 	back_btn.call_deferred("grab_focus")
