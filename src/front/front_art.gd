@@ -51,9 +51,11 @@ static func hero_sprite(class_data: Dictionary) -> String:
 	return String(class_data.get("sprite", "swordsman"))
 
 
-## Draw scale for [param sheet] where the old 48 px heroes used [param k]: x the sheet's px_scale (LPC: 0.5).
+## Draw scale for [param sheet] where the old 48 px heroes used [param k]: x the sheet's px_scale (LPC: 0.5),
+## rounded down to a whole number (at least 1): 3.6 drew the hero with uneven pixel columns and lost the lines of
+## the user's drawing (user 2026-11-27, the characters page portrait).
 static func scale_of(sheet: SpriteSheet, k: float) -> float:
-	return k * (float(sheet.meta.get("px_scale", 1.0)) if sheet != null else 1.0)
+	return maxf(1.0, floorf(k * (float(sheet.meta.get("px_scale", 1.0)) if sheet != null else 1.0)))
 
 
 ## Item ids of the class's common (first tier) set: menus show heroes dressed in it (user 2026-11-25: the creation
