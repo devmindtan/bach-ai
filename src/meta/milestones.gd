@@ -1,12 +1,12 @@
 class_name Milestones
 extends RefCounted
 ## Level milestone rewards (assets/data/milestones.json, design/progression.md):
-## what levels 10/20/30 of a run offer a class, each reward's name / description /
+## what levels 7/14/21 of a run offer a class, each reward's name / description /
 ## icon, and the numbers of the rewards picked in this run (they end with it).
 ##
 ## Example:
 ##   var m := Milestones.load_default()
-##   var ids := m.offers(10, "mage")              # ["sp_star_pants", "sp_star_shoes", "bloodthirst", "twin_cast"]
+##   var ids := m.offers(7, "mage")              # ["sp_star_pants", "sp_star_shoes", "bloodthirst", "twin_cast"]
 ##   var heal := m.number(owned, "heal_frac")     # 0.2 when the run has Khát máu
 
 const PATH := "res://assets/data/milestones.json"

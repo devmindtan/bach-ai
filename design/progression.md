@@ -48,7 +48,9 @@
 - Màn kết quả hiện vàng, đá nhận được; khi thắng có nút **Ải tiếp ▶**.
 - Đá dùng cho gacha ở đợt 5; đợt 3 chỉ tích luỹ.
 
-## Phần thưởng mốc cấp 10/20/30
+## Phần thưởng mốc cấp 7/14/21
+
+Mốc đổi từ 10/20/30 sang **7/14/21** (người dùng 2026-11-27): trận 5 phút chỉ lên khoảng cấp 21 (KN tăng ×1,22 mỗi cấp), nên cấp 30 không bao giờ tới.
 
 Người dùng 2026-11-17: mốc là **cấp của nhân vật trong trận**, phần thưởng **chỉ có tác dụng trong trận đó**.
 Lên cấp 10, 20, 30 → bảng "Mốc cấp N! Chọn một phần thưởng" mở trước thẻ lên cấp thường; chọn **1 trong 3**.
@@ -79,7 +81,7 @@ dùng mốc cấp thay cho rương boss vì mỗi ải là một trận 5 phút.
 - `tests/unit/core/stages_test.gd`: công thức đơn điệu tăng, không nhảy vọt; ải boss; chọn file lịch quái.
 - `tests/unit/meta/slot_test.gd`: lưu/đọc, phiên bản, file hỏng không làm mất slot khác, phần thưởng lần đầu/lặp lại,
   slot không giữ phần thưởng mốc.
-- `tests/unit/run/milestone_test.gd`: mỗi phần thưởng có tác dụng trong trận; cấp 10/20/30 mở bảng chọn mỗi mốc
+- `tests/unit/run/milestone_test.gd`: mỗi phần thưởng có tác dụng trong trận; cấp 7/14/21 mở bảng chọn mỗi mốc
   một lần. `tests/integration/meta/session_test.gd`: phần thưởng không ghi vào slot, trận sau bắt đầu không có.
 - `tests/integration/data/data_consistency_test.gd`: chiêu độc nhất có trong `upgrades_<class>.json` với `unique`,
   không xuất hiện trong bộ thẻ khi chưa có.

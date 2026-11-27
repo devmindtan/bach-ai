@@ -28,7 +28,7 @@ Trạng thái (2026-11-26): đã có Tên nhanh, Lướt, Tên xuyên, Quạt t�
 | hawk | Chim ưng | Vật lý | chim bay vòng, lao vào quái có máu cao nhất |
 | dash | Lướt | — | dùng chung |
 
-Thẻ chỉ số riêng: **Thêm tên** (như Thêm đòn / Thêm phép), Tay vững (tốc bắn), Tầm xa. Mốc 10/20/30: như hai class kia.
+Thẻ chỉ số riêng: **Thêm tên** (như Thêm đòn / Thêm phép), Tay vững (tốc bắn), Tầm xa. Mốc 7/14/21: như hai class kia.
 
 ## Các bước (mỗi bước một commit)
 

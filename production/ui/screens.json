@@ -451,13 +451,13 @@
     },
     {
       "name": "08-milestone",
-      "title": "Mốc cấp 10: chọn 1 trong 4 phần thưởng (chỉ trong trận)",
+      "title": "Mốc cấp 7: chọn 1 trong 4 phần thưởng (chỉ trong trận)",
       "scene": "res://src/run/run.tscn",
       "frames": 40,
       "args": [
         "--class=mage",
         "--seed=1",
-        "--milestone=10"
+        "--milestone=7"
       ]
     },
     {

@@ -1819,10 +1819,10 @@ func _step_fx(dt: float) -> void:
 
 
 # --- level milestone rewards (design/progression.md) ---------------------------
-# Reaching level 10/20/30 of a run offers one of three rewards for the rest of
+# Reaching level 7/14/21 of a run offers one of three rewards for the rest of
 # that run: a unique skill (starts at level 1, levelled by cards), a passive,
 # or a rule. Nothing is kept after the run (user 2026-11-17).
-# What the slot picked at stages 10/20/30: a unique skill (starts at level 1,
+# What the slot picked at levels 7/14/21: a unique skill (starts at level 1,
 # levelled by cards), a passive, or a rule that changes the run.
 
 ## Applies the owned rewards to this run: unique skills start at level 1, the

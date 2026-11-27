@@ -2,7 +2,7 @@ extends RefCounted
 ## Unit tests for the milestone rewards in a run (design/progression.md): each
 ## reward the slot owns has its effect — unique skills start at level 1, the
 ## passives (Khát máu / Hộ thể / Bất tử) and the rules (Song kích / Thêm lựa
-## chọn / Bứt tốc), and levels 10/20/30 of a run queue the pick.
+## chọn / Bứt tốc), and levels 7/14/21 of a run queue the pick.
 
 const Run := preload("res://src/run/run.gd")
 
@@ -53,8 +53,8 @@ func test_special_card_reward_works_at_once_with_one_level() -> void:
 
 func test_other_class_special_card_is_not_offered() -> void:
 	var m := Milestones.load_default()
-	_check(m.offers(10, "knight").has("sp_aegis_boots") and not m.offers(10, "knight").has("sp_star_pants"),
-		"level 10 offers the knight its own cards only, got %s" % [m.offers(10, "knight")])
+	_check(m.offers(7, "knight").has("sp_aegis_boots") and not m.offers(7, "knight").has("sp_star_pants"),
+		"level 7 offers the knight its own cards only, got %s" % [m.offers(7, "knight")])
 
 
 func test_legendary_skills_are_deck_cards_now() -> void:
@@ -151,16 +151,16 @@ func test_head_start_gives_two_picks_at_once() -> void:
 
 # --- level milestones in a run ------------------------------------------------
 
-func test_level_10_20_30_queue_their_pick_once() -> void:
+func test_level_7_14_21_queue_their_pick_once() -> void:
 	var r := _run("mage", {}, [])
-	r._queue_milestones(8, 11)
-	_check(r._ms_queue == [10], "passing level 10 queues it, got %s" % [r._ms_queue])
-	r._queue_milestones(9, 10)
-	_check(r._ms_queue == [10], "not twice")
-	r._queue_milestones(19, 31)
-	_check(r._ms_queue == [10, 20, 30], "a big jump queues each, got %s" % [r._ms_queue])
-	r._queue_milestones(1, 9)
-	_check(r._ms_queue.size() == 3, "levels below 10 queue nothing")
+	r._queue_milestones(5, 8)
+	_check(r._ms_queue == [7], "passing level 7 queues it, got %s" % [r._ms_queue])
+	r._queue_milestones(6, 7)
+	_check(r._ms_queue == [7], "not twice")
+	r._queue_milestones(13, 22)
+	_check(r._ms_queue == [7, 14, 21], "a big jump queues each, got %s" % [r._ms_queue])
+	r._queue_milestones(1, 6)
+	_check(r._ms_queue.size() == 3, "levels below 7 queue nothing")
 	r.free()
 
 
@@ -274,7 +274,7 @@ func test_card_tree_nodes_change_the_skill_in_the_run() -> void:
 
 
 func test_milestone_offers_are_drawn_from_every_level() -> void:
-	# user 2026-11-22: the level 10/20/30 rewards are shuffled together, not fixed per milestone
+	# user 2026-11-22: the level 7/14/21 rewards are shuffled together, not fixed per milestone
 	var m := Milestones.load_default()
 	var n := int(m.data.get("offer_count", 0))
 	_check(n >= 3, "offer_count in milestones.json, got %d" % n)
@@ -289,6 +289,6 @@ func test_milestone_offers_are_drawn_from_every_level() -> void:
 		_check(ids.size() == n, "%d offers, got %s" % [n, ids])
 		for id in ids:
 			_check(pool.has(id) and id != "sp_aegis_boots", "%s: a knight reward not already owned" % id)
-			if m.offers(30, "knight").has(id):
+			if m.offers(21, "knight").has(id):
 				seen_late_at_10 = true
-	_check(seen_late_at_10, "a level-30 reward can come up at any milestone")
+	_check(seen_late_at_10, "a level-21 reward can come up at any milestone")

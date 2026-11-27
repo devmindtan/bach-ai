@@ -29,7 +29,7 @@ chiêu riêng, sức mạnh lâu dài vào cây kỹ năng, trang bị và gacha
 │ TIỀN TRẬN (sáng, sảnh)                                       │
 │  Tiêu đề ─ Chọn nhân vật ─ Sảnh chuẩn bị                    │
 │                                                              │
-│  Sảnh: thẻ chỉ số (gồm trang bị), nội tại, chiêu, mốc 10/20/30 │
+│  Sảnh: thẻ chỉ số (gồm trang bị), nội tại, chiêu, mốc 7/14/21 │
 │   ├─ Trang bị (Màn Trang bị)                                 │
 │   ├─ Cây kỹ năng (design/skill-tree-v2.md)                │
 │   ├─ Gacha (Đợt 5, design/gacha.md)                          │
@@ -40,7 +40,7 @@ chiêu riêng, sức mạnh lâu dài vào cây kỹ năng, trang bị và gacha
 │ TRẬN CHIẾN (tối, trong ải)                                    │
 │  Di chuyển → chiêu tự đánh → quái rơi kinh nghiệm/vàng        │
 │  → lên cấp → 3 thẻ → sống tới hết giờ + boss (ải 10/20/30)    │
-│  → mốc cấp 10/20/30: 1/3 phần thưởng cho trận đó              │
+│  → mốc cấp 7/14/21: 1/3 phần thưởng cho trận đó              │
 └───────────────────────────┬──────────────────────────────────┘
                             ▼
 ┌──────────────────────────────────────────────────────────────┐
@@ -63,7 +63,7 @@ chiêu riêng, sức mạnh lâu dài vào cây kỹ năng, trang bị và gacha
 | 14 | Chế độ Thử thách | ✅ | `design/challenge.md` | thử thách luật riêng, rơi Tẩy Tủy Đan |
 | 7 | Trang bị | ✅ | `design/equipment.md` | 5 ô, độ hiếm, màn trang bị, cường hoá +1..+5 bằng vàng |
 | 8 | Gacha | ✅ lõi | `design/gacha.md` | 2 banner, 10 đá/lượt, pity 50, trùng → vàng |
-| 9 | Mốc cấp 10/20/30 (trong trận) | ✅ | `design/progression.md` (mục mốc) | 6 chiêu độc nhất, 3 nội tại, 3 luật; chỉ trong trận |
+| 9 | Mốc cấp 7/14/21 (trong trận) | ✅ | `design/progression.md` (mục mốc) | 6 chiêu độc nhất, 3 nội tại, 3 luật; chỉ trong trận |
 | 10 | Slot nhân vật | ✅ | `design/progression.md` (mục slot) | tối đa 4 slot, schema v1 |
 | 11 | Trang bị rơi (elite) | ✅ | `assets/data/run_config.json` (rewards) | thắng ải 1 món, rương tinh anh 25% |
 | 12 | UX / màn hình | 🛠 | `design/ux/` | xem `ux/ui-style.md` cho hướng thiết kế |
@@ -86,7 +86,7 @@ chiêu riêng, sức mạnh lâu dài vào cây kỹ năng, trang bị và gacha
 ```text
 Lần đầu → Tiêu đề → Chọn nhân vật (tạo Kiếm sĩ/Pháp sư) → Sảnh → Chọn ải 1
 → Ải 1: slime, dơi, goblin; 5 phút; thắng → Kết quả → Sảnh → Ải 2 (hoặc ải 1 lại)
-→ Ải 3…10 (Vua Thạch Nhầy); trong trận lên cấp 10/20/30 chọn 1/3 phần thưởng mốc → Ải 11…20 (boss ải 20)
+→ Ải 3…10 (Vua Thạch Nhầy); trong trận lên cấp 7/14/21 chọn 1/3 phần thưởng mốc → Ải 11…20 (boss ải 20)
 → Ải 21…30 (boss ải 30) → slot mạnh dần qua cây kỹ năng + trang bị
 → Mở ải 31+ (vùng mới) khi có đủ 30/30 (hoặc vượt ải 30 đủ số lần)
 ```

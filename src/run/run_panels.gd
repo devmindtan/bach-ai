@@ -284,7 +284,7 @@ func _skill_pick_card(sid: String, pick: Callable) -> Button:
 	return b
 
 
-## Level milestone (10/20/30): one of three rewards for the rest of this run only
+## Level milestone (7/14/21): one of three rewards for the rest of this run only
 ## (design/progression.md). Keys 1-3 or a click pick, like a level-up.
 func show_milestone_pick(level: int, ids: Array[String]) -> void:
 	_reshow = func() -> void: show_milestone_pick(level, ids)

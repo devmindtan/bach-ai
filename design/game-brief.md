@@ -78,7 +78,7 @@ Phút 2–3 của ải 1 đợt dơi bay nhanh vây quanh, phút 4 có quái tin
 ## Build order
 1. Lượt chơi 5 phút với Kiếm sĩ ở ải 1: di chuyển, 2 chiêu tự đánh, 3 loại quái theo đợt, kinh nghiệm + lên cấp 1/3, thua/thắng (đợt 1 của roadmap). Kèm thử tải 500 quái.
 2. Độ sâu build: Pháp sư, đủ bộ nâng cấp 2 class, quái tinh anh, boss ải 10.
-3. Tiến trình ải 1–30, chọn ải, lưu slot, hiệu ứng mốc 10/20/30.
+3. Tiến trình ải 1–30, chọn ải, lưu slot, hiệu ứng mốc 7/14/21.
 4. Cây kỹ năng + trang bị.
 5. Gacha.
 6. Nội dung đủ 100 ải, 4 class, cân bằng.

@@ -25,7 +25,7 @@ Người dùng 2026-11-26: nhân vật do người dùng vẽ (`sprite-lab/sourc
 | throw_knife | Phi đao | chiêu khởi đầu: ném dao vào quái gần nhất, tầm gần; cấp 3: 2 dao, cấp 5: 3 dao |
 | dash | Lướt | dùng chung |
 
-Thẻ chỉ số: Tay lẹ (hồi chiêu), Dao bén (sát thương), Thêm dao, cùng các thẻ chung. Thẻ đặc biệt mốc 10/20/30:
+Thẻ chỉ số: Tay lẹ (hồi chiêu), Dao bén (sát thương), Thêm dao, cùng các thẻ chung. Thẻ đặc biệt mốc 7/14/21:
 Bước ảnh, Săn mồi, Màn đêm, Vòng dao, Dao sấm, Ảnh tốc (cùng cơ chế với bộ của Cung thủ).
 
 ## Mở khóa class
