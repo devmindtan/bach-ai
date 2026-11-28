@@ -247,7 +247,7 @@ func _new_player(bus: StringName) -> AudioStreamPlayer:
 
 
 func _on_node_added(node: Node) -> void:
-	if node.get_parent() == get_tree().root and not node is Window:
+	if ButtonFeel.is_screen(node, get_tree().root):
 		ButtonFeel.opened_ms = Time.get_ticks_msec()   # a new screen: its buttons rise in
 	if node is BaseButton:
 		var b := node as BaseButton

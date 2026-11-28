@@ -35,3 +35,17 @@ func test_wide_rows_lift_a_few_pixels() -> void:
 	if not is_equal_approx(ButtonFeel.lift_of(b).x, ButtonFeel.LIFT):
 		failures.append("a small button lost its lift")
 	b.free()
+
+
+func test_only_a_loaded_scene_restarts_the_rise() -> void:
+	var root := Node.new()
+	var tip := CanvasLayer.new()
+	root.add_child(tip)
+	if ButtonFeel.is_screen(tip, root):
+		failures.append("a tip layer counts as a new screen")
+	var scene := Node2D.new()
+	scene.scene_file_path = "res://src/front/stage_select.tscn"
+	root.add_child(scene)
+	if not ButtonFeel.is_screen(scene, root):
+		failures.append("a loaded scene does not count as a new screen")
+	root.free()

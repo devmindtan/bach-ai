@@ -12,6 +12,7 @@ const MARK_W := 10.0
 const LIFT := 1.04
 const LIFT_S := 0.12
 const LIFT_PX := 4.0
+const FRESH_MS := 120
 const MARK_GAP := 10.0
 const SLIDE_S := 0.11
 const RISE_S := 0.16
@@ -20,6 +21,12 @@ const RISE_MAX := 6
 const RISE_WINDOW_MS := 350
 
 static var opened_ms := -100000   # when the current screen appeared (set by Audio on scene change)
+
+
+## True when [param node] is a screen loaded under [param root] (a .tscn scene), not a tip, note or page-turn layer
+## added there: those reset the rise clock, and a stage select rebuilt on each move then faded out and in (2026-11-28).
+static func is_screen(node: Node, root: Node) -> bool:
+	return node.get_parent() == root and node.scene_file_path != "" and not node is Window and not node is CanvasLayer
 
 
 static func motion() -> bool:
@@ -31,6 +38,7 @@ static func attach(b: BaseButton, audio: Node) -> void:
 	if b.has_meta("_feel"):
 		return
 	b.set_meta("_feel", true)
+	b.tree_entered.connect(func() -> void: b.set_meta("_born", Time.get_ticks_msec()))
 	b.focus_entered.connect(func() -> void: _on_focus(b, audio))
 	b.focus_exited.connect(func() -> void: _settle(b))
 	b.pressed.connect(func() -> void: bounce(b))
@@ -93,13 +101,24 @@ static func _mark_at(b: Control) -> Rect2:
 
 ## The focused button rises a little and its new colour fades in (web .row.on transition), not a hard swap.
 static func _lift(b: Control) -> void:
-	if not motion() or not b.is_inside_tree():
+	if not b.is_inside_tree():
 		return
 	b.pivot_offset = b.size * 0.5
+	if not motion():
+		return
+	if fresh(b):   # a page rebuilt on focus (stage select, notebooks): its new button starts lifted, no flash
+		b.scale = lift_of(b)
+		return
 	var tw := b.create_tween().set_parallel().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	b.modulate = Color(1.35, 1.3, 1.15)
 	tw.tween_property(b, "scale", lift_of(b), LIFT_S)
 	tw.tween_property(b, "modulate", Color.WHITE, LIFT_S * 1.5)
+
+
+## True for a button made in the last FRESH_MS: a screen that rebuilds itself on each move would replay the lift and
+## flash every time, which read as flicker (stage select, 2026-11-28).
+static func fresh(b: Control) -> bool:
+	return Time.get_ticks_msec() - int(b.get_meta("_born", -100000)) < FRESH_MS
 
 
 ## The lifted scale: LIFT for small buttons, at most LIFT_PX wider on each side for wide rows (a 470 px row at 1.04
