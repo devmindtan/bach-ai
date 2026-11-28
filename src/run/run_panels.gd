@@ -7,17 +7,35 @@ extends Control
 ##   panels.show_level_up(["sharpen", "haste", "reach"])
 
 const DIM := Color(0, 0, 0, 0.6)
-# The journal palette (design-web screen-run-journal / screen-hud-journal, user 2026-11-27): ink on a paper sheet.
-const CARD := Color("ddcca0")         # a sketch cell
-const CARD_HOVER := Color("efe2bf")
-const BORDER := Color("8a2a1a")       # red ink: titles, skill accents, frames
-const TEXT := Color("3a2414")         # ink
-const MUTED := Color("5a3a24")        # soft ink
-const STAT_ACCENT := Color("3a6aaa")  # stat cards; skills use the red BORDER
-const GAIN := Color("2a7a3a")         # the value after the pick
-const MILESTONE := Color("c0801a")
-const PIP_LOCKED := Color("c8b088")   # level not reached yet (paper dark, with a visible edge)
-const PIP_EDGE := Color("a08060")
+# Two palettes: the journal (ink on a paper sheet, design-web screen-run-journal, user 2026-11-27) for the pause, end,
+# milestone and character panels, and the dark one the level-up went back to (user 2026-11-28: "vẫn giữ thiết kế cũ
+# đó", the look before 6c5ff68a: dark violet cards straight on the field, a gold title, gold-edged buttons).
+const JOURNAL := {"CARD": Color("ddcca0"), "CARD_HOVER": Color("efe2bf"), "BORDER": Color("8a2a1a"), "TEXT": Color("3a2414"),
+	"MUTED": Color("5a3a24"), "STAT_ACCENT": Color("3a6aaa"), "GAIN": Color("2a7a3a"), "MILESTONE": Color("c0801a"),
+	"PIP_LOCKED": Color("c8b088"), "PIP_EDGE": Color("a08060")}
+const DARK := {"CARD": Color("2a2438"), "CARD_HOVER": Color("3b3352"), "BORDER": Color("c9a65a"), "TEXT": Color("f2ecd8"),
+	"MUTED": Color("b9b2a0"), "STAT_ACCENT": Color("6aa6d8"), "GAIN": Color("8ee08e"), "MILESTONE": Color("ffd36b"),
+	"PIP_LOCKED": Color("1b1726"), "PIP_EDGE": Color("6b6380")}
+var CARD: Color         # a card / button face
+var CARD_HOVER: Color
+var BORDER: Color       # titles, skill accents, frames
+var TEXT: Color
+var MUTED: Color
+var STAT_ACCENT: Color  # stat cards; skills use BORDER
+var GAIN: Color         # the value after the pick
+var MILESTONE: Color
+var PIP_LOCKED: Color   # level not reached yet
+var PIP_EDGE: Color
+var _dark := false      # the panel on screen uses DARK
+
+
+## Switches the colours above to DARK ([param dark]) or JOURNAL.
+func _palette(dark: bool) -> void:
+	_dark = dark
+	var p: Dictionary = DARK if dark else JOURNAL
+	for k: String in p:
+		set(k, p[k])
+
 
 var banish_mode := false   # Loại armed: the next card clicked is banished
 var _flipped: Array[String] = []   # the hand that already flipped in
@@ -28,6 +46,7 @@ var _box: Control
 
 
 func _ready() -> void:
+	_palette(false)
 	# a Control under a CanvasLayer has no parent rect: size it to the viewport
 	# (anchors alone left it 0x0, so panels and the HUD were laid out at the corner)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -61,14 +80,20 @@ func _view_buttons(root: VBoxContainer) -> void:
 	root.add_child(row)
 	for b: Array in [["Ẩn bảng" + UiKit.hint("H"), "hidden"], ["Nhân vật" + UiKit.hint("Tab"), "character"]]:
 		var view: String = b[1]
-		var btn := Journal.link(String(b[0]), 18)   # red underlined links, like the web sheet
-		btn.pressed.connect(func() -> void: run.toggle_level_view(view))
+		var btn: Button
+		if _dark:
+			btn = _button(String(b[0]), func() -> void: run.toggle_level_view(view))
+			btn.custom_minimum_size = Vector2(190, 40)
+		else:
+			btn = Journal.link(String(b[0]), 18)   # red underlined links, like the web sheet
+			btn.pressed.connect(func() -> void: run.toggle_level_view(view))
 		btn.focus_mode = Control.FOCUS_NONE
 		row.add_child(btn)
 
 
 func show_peek() -> void:
 	hide_all()
+	_palette(false)
 	var strip := PanelContainer.new()
 	var ps := Journal.sheet_style(12)
 	ps.content_margin_left = 20
@@ -112,11 +137,12 @@ func show_level_up(ids: Array[String], title := "Lên cấp! Chọn một") -> v
 	_reshow = func() -> void: show_level_up(ids, title)
 	if ids != _flipped:
 		banish_mode = false   # a new hand: Loại is not armed
-	var root := _open(title, false)
+	var root := _open(title, false, true)
 	_view_buttons(root)
 	if title.begins_with("Lên cấp") and run.rarity != null:   # this level's card odds (user 2026-11-21)
 		var odds := UiKit.rarity_odds_row(run.rarity.level_weights(run.level), 13)
-		Journal.restyle(odds)   # tier names in their ink on paper
+		if not _dark:
+			Journal.restyle(odds)   # tier names in their ink on paper
 		root.add_child(odds)
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -330,18 +356,27 @@ func _upgrade_card(i: int, id: String) -> Button:
 	var skill: bool = u.get("kind") == "skill"
 	var tier := String(u.get("rarity", "common"))
 	# the rarity frames the card (design/card-rarity.md); commons keep the skill / stat colour
-	var accent: Color = Color("6a6a6a") if tier == "common" else Journal.ink_of(UiKit.RARITY.get(tier, BORDER))   # commons plain, rarer cards in their colour
+	var accent: Color
 	var b := Button.new()
 	b.custom_minimum_size = Vector2(300, 180)   # grown to the tallest card by _fit_cards
 	b.focus_mode = Control.FOCUS_ALL
-	# journal sketch card (design-web run-levelup-full): sketch paper framed in ink (rarer tiers in their ink); focused:
-	# lighter paper, a gold frame
-	b.add_theme_stylebox_override("normal", _style(CARD, TEXT if tier == "common" else accent))
-	b.add_theme_stylebox_override("hover", _style(CARD_HOVER, TEXT if tier == "common" else accent))
-	for st in ["focus", "pressed"]:
-		var on := _style(CARD_HOVER, Journal.GOLD)
-		on.set_border_width_all(5)
-		b.add_theme_stylebox_override(st, on)
+	if _dark:   # the frame is the tier (UiKit rarity style), as before the journal look
+		accent = Color("6a6478") if tier == "common" else UiKit.RARITY.get(tier, BORDER)
+		b.add_theme_stylebox_override("normal", UiKit.rarity_style(tier, true, false, 0))
+		var hv := UiKit.rarity_style(tier, true, false, 0)
+		hv.bg_color = hv.bg_color.lightened(0.08)
+		b.add_theme_stylebox_override("hover", hv)
+		b.add_theme_stylebox_override("focus", UiKit.rarity_style(tier, true, true, 0))
+		b.add_theme_stylebox_override("pressed", UiKit.rarity_style(tier, true, true, 0))
+		UiKit.rarity_corners(b, tier)
+	else:   # journal sketch card: paper framed in ink (rarer tiers in their ink); focused: lighter paper, a gold frame
+		accent = Color("6a6a6a") if tier == "common" else Journal.ink_of(UiKit.RARITY.get(tier, BORDER))
+		b.add_theme_stylebox_override("normal", _style(CARD, TEXT if tier == "common" else accent))
+		b.add_theme_stylebox_override("hover", _style(CARD_HOVER, TEXT if tier == "common" else accent))
+		for st in ["focus", "pressed"]:
+			var on := _style(CARD_HOVER, Journal.GOLD)
+			on.set_border_width_all(5)
+			b.add_theme_stylebox_override(st, on)
 	var v := VBoxContainer.new()
 	v.set_anchors_preset(Control.PRESET_FULL_RECT)
 	v.offset_left = 14
@@ -356,13 +391,13 @@ func _upgrade_card(i: int, id: String) -> Button:
 	head.add_theme_constant_override("separation", 10)
 	head.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var tile := PanelContainer.new()
-	var ts := _style(Color("e8d8b0"), accent)
+	var ts := _style(Color("1d1828") if _dark else Color("e8d8b0"), accent)
 	ts.set_content_margin_all(4)
 	tile.add_theme_stylebox_override("panel", ts)
 	tile.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var icon := TextureRect.new()
 	icon.texture = run.icon_texture(id)
-	if pale_icon(icon.texture):
+	if not _dark and pale_icon(icon.texture):
 		icon.modulate = INK_GLYPH
 	icon.custom_minimum_size = Vector2(48, 48)
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -438,7 +473,7 @@ func _upgrade_card(i: int, id: String) -> Button:
 		else:
 			run.choose(idx))
 	if banish_mode:
-		b.add_theme_stylebox_override("normal", _style(CARD, Color("a01c1c")))
+		b.add_theme_stylebox_override("normal", _style(CARD, Color("ff6a5a") if _dark else Color("a01c1c")))
 	if i == 0:
 		b.call_deferred("grab_focus")
 	return b
@@ -632,6 +667,7 @@ func _show_owned_info(info: RichTextLabel, o: Dictionary) -> void:
 ## with their real numbers, running buffs and the stat cards taken.
 func show_character() -> void:
 	hide_all()
+	_palette(false)
 	var dim := ColorRect.new()
 	dim.color = Color(0, 0, 0, 0.72)
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -1269,8 +1305,9 @@ func _icon_value(icon: String, value: String) -> HBoxContainer:
 
 ## A modal: dimmed screen, centred column with the title. boxed puts the column
 ## on a panel so it stays readable over a crowded field (pause, win, lose).
-func _open(title: String, boxed := true) -> VBoxContainer:
+func _open(title: String, boxed := true, dark := false) -> VBoxContainer:
 	hide_all()
+	_palette(dark)
 	var dim := ColorRect.new()
 	dim.color = DIM
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -1282,7 +1319,8 @@ func _open(title: String, boxed := true) -> VBoxContainer:
 	var root := VBoxContainer.new()
 	root.alignment = BoxContainer.ALIGNMENT_CENTER
 	root.add_theme_constant_override("separation", 18)
-	boxed = true   # every in-run panel is a journal sheet (user 2026-11-27, design-web screen-run-journal)
+	if not dark:
+		boxed = true   # every journal panel is a sheet (user 2026-11-27, design-web screen-run-journal)
 	if boxed:
 		var panel := PanelContainer.new()
 		var ps := Journal.sheet_style(24)   # the journal look (design-web screen-run-journal, user 2026-11-27): a paper sheet
@@ -1299,6 +1337,12 @@ func _open(title: String, boxed := true) -> VBoxContainer:
 		var l := _label(title, 40, BORDER)
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		root.add_child(l)
+	if dark and ButtonFeel.motion():   # the field dims in and the column drops into place (user 2026-11-28: smoother)
+		dim.modulate.a = 0.0
+		root.modulate.a = 0.0
+		var tw := dim.create_tween().set_parallel().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		tw.tween_property(dim, "modulate:a", 1.0, 0.14)
+		tw.tween_property(root, "modulate:a", 1.0, 0.18)
 	return root
 
 
@@ -1324,13 +1368,37 @@ func _button(s: String, cb: Callable) -> Button:
 		b.add_theme_color_override(k, TEXT)
 	b.add_theme_color_override("font_focus_color", BORDER)
 	b.add_theme_color_override("font_disabled_color", PIP_EDGE)
+	if _dark:
+		_raise(b)
 	b.pressed.connect(cb)
 	return b
+
+
+## Dark buttons sit on the field like a raised plate (user 2026-11-28: "sửa lại button trông tự nhiên hơn", colours kept):
+## a dark lip under the face, a slightly lighter top edge; hover brightens the edge, a press sinks the face onto its lip.
+func _raise(b: Button) -> void:
+	var edge := BORDER.darkened(0.25)
+	for st: String in ["normal", "hover", "focus", "pressed", "disabled"]:
+		var s := StyleBoxFlat.new()
+		s.bg_color = CARD_HOVER if st in ["hover", "focus"] else (CARD.darkened(0.15) if st == "pressed" else CARD)
+		s.border_color = BORDER.lightened(0.25) if st in ["hover", "focus"] else (PIP_EDGE if st == "disabled" else edge)
+		s.set_border_width_all(2)
+		s.set_corner_radius_all(4)
+		s.shadow_color = Color(0, 0, 0, 0.55)
+		s.shadow_offset = Vector2(0, 1 if st == "pressed" else 4)
+		s.content_margin_top = 4.0 if st == "pressed" else 1.0   # the face sinks with the press
+		s.content_margin_bottom = 0.0 if st == "pressed" else 3.0
+		b.add_theme_stylebox_override(st, s)
+	b.add_theme_color_override("font_hover_color", Color.WHITE)
 
 
 func _style(bg: Color, border := BORDER) -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
 	s.bg_color = bg
 	s.border_color = border
-	s.set_border_width_all(3)   # journal: square sketch boxes in ink
+	if _dark:   # the dark look: a thin gold edge, soft corners
+		s.set_border_width_all(2)
+		s.set_corner_radius_all(4)
+	else:
+		s.set_border_width_all(3)   # journal: square sketch boxes in ink
 	return s
