@@ -18,3 +18,14 @@ func test_skipped_key_runs_action_without_slip() -> void:
 func test_unknown_key_is_not_skipped() -> void:
 	if Notice.skipped("no_such_key_for_test"):
 		failures.append("an unticked key reads as skipped")
+
+
+func test_tight_crops_empty_margin() -> void:
+	var img := Image.create(16, 16, false, Image.FORMAT_RGBA8)
+	img.fill_rect(Rect2i(6, 6, 4, 4), Color.RED)
+	var a := AtlasTexture.new()
+	a.atlas = ImageTexture.create_from_image(img)
+	a.region = Rect2(0, 0, 16, 16)
+	var t := Notice.tight(a) as AtlasTexture
+	if t == null or t.region != Rect2(6, 6, 4, 4):
+		failures.append("tight region %s" % [t.region if t else null])

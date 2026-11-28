@@ -71,7 +71,7 @@ static func note(title: String, sub := "", icon: Texture2D = null, warn := false
 	p.add_child(h)
 	if icon != null:
 		var ic := TextureRect.new()
-		ic.texture = icon
+		ic.texture = tight(icon)
 		ic.custom_minimum_size = Vector2(32, 32)
 		ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -95,6 +95,27 @@ static func note(title: String, sub := "", icon: Texture2D = null, warn := false
 	tw.tween_interval(NOTE_S)
 	tw.tween_property(p, "modulate:a", 0.0, 0.25)
 	tw.tween_callback(p.queue_free)
+
+
+## [param icon] cut to its painted pixels: gear frames keep wide empty margins, so a 32 px box showed a small helmet.
+static func tight(icon: Texture2D) -> Texture2D:
+	var a := icon as AtlasTexture
+	if a == null or a.atlas == null:
+		return icon
+	var img := a.atlas.get_image()
+	if img == null:
+		return icon
+	var r := Rect2i(a.region)
+	var used := img.get_region(r).get_used_rect()
+	if used.size.x <= 0 or used.size == r.size:
+		return icon
+	var side := maxi(used.size.x, used.size.y)   # square, so KEEP_ASPECT scales both icons alike
+	var c := used.get_center()
+	var sq := Rect2i(c - Vector2i(side, side) / 2, Vector2i(side, side)).intersection(Rect2i(Vector2i.ZERO, r.size))
+	var t := AtlasTexture.new()
+	t.atlas = a.atlas
+	t.region = Rect2(r.position + sq.position, sq.size)
+	return t
 
 
 ## Asks before [param on_yes] (a delete or a reset). With [param key] != "" the slip offers "Không hỏi lại", and once
