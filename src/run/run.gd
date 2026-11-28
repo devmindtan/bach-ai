@@ -122,6 +122,8 @@ var sheets: Dictionary = {}   # sprite name -> SpriteSheet
 # player
 var player_pos := Vector2.ZERO
 var facing := Vector2.RIGHT     # last move direction (8-dir)
+var player_vel := Vector2.ZERO   # walk velocity, eased (MoveFeel)
+var _cam_pos := Vector2.INF      # the eased camera centre (MoveFeel.follow); INF until the first frame
 var face_left := false          # the hero is drawn in the side view only; left = mirrored
 var attack_dir := Vector2.RIGHT # towards the nearest monster, snapped to the slash's 4 directions
 var hp := 100.0
@@ -577,7 +579,10 @@ func _process(delta: float) -> void:
 	var sim_us := Time.get_ticks_usec() - t0
 	if bench > 0 or _debug != null:
 		_dbg().add_tick(sim_us)
-	_camera.position = player_pos.round()
+	var cc: Dictionary = cfg.get("camera", {})
+	_cam_pos = player_pos if _cam_pos == Vector2.INF or sim_steps > 1 else MoveFeel.follow(_cam_pos, player_pos,
+		float(cc.get("follow_rate", 0.0)), float(cc.get("max_lag", 0.0)), delta)
+	_camera.position = _cam_pos.round()
 	if OS.get_cmdline_user_args().has("--count-log") and Engine.get_process_frames() % 300 == 0:
 		printerr("GK: t=%.0f alive=%d" % [clock, enemies.living()])
 	shake.enabled = Prefs.current().screen_shake   # the pause menu's Cài đặt can turn it off mid-run
@@ -836,6 +841,7 @@ func _move_player(dt: float) -> void:
 		try_dash()
 	if _dash_left > 0.0:
 		_dash_step(dt)
+		player_vel = _dash_dir * float(stats["move_speed"])   # out of a dash at walk speed, not from a stop
 		return
 	var dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	if demo:
@@ -843,14 +849,20 @@ func _move_player(dt: float) -> void:
 	if root_t > 0.0:   # Rễ trói: rooted, cannot walk (attacks go on; the dash still breaks free)
 		root_t = maxf(0.0, root_t - dt)
 		dir = Vector2.ZERO
-	_moving = dir.length_squared() > 0.01
-	still_t = 0.0 if _moving else still_t + dt   # Mắt ưng counts how long the hero has stood still
-	if _moving:
+	var walking := dir.length_squared() > 0.01
+	still_t = 0.0 if walking else still_t + dt   # Mắt ưng counts how long the hero has stood still
+	var mv: Dictionary = cfg.get("player", {}).get("move", {})
+	var speed := float(stats["move_speed"])
+	player_vel = MoveFeel.step_velocity(player_vel, dir.limit_length(1.0) * speed, speed,
+		float(mv.get("accel_s", 0.0)), float(mv.get("decel_s", 0.0)), dt)
+	_moving = player_vel.length_squared() > 1.0
+	if walking:
 		facing = dir.normalized()
 		if absf(facing.x) > 0.1:
 			face_left = facing.x < 0.0
 			_update_body()
-		player_pos += dir.limit_length(1.0) * float(stats["move_speed"]) * dt
+	if _moving:
+		player_pos += player_vel * dt
 		player_pos = _keep_inside(player_pos)
 		if obstacles != null:
 			player_pos = obstacles.push_out(player_pos, PLAYER_BODY)
