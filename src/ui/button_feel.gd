@@ -8,7 +8,9 @@ extends RefCounted
 ## - the buttons of a newly opened screen rise in one after another.
 ## Motion is off at Cài đặt › Hiệu ứng ≥ 2 (like the page turn); the sounds stay.
 
-const MARK_W := 6.0
+const MARK_W := 10.0
+const LIFT := 1.04
+const LIFT_S := 0.12
 const MARK_GAP := 10.0
 const SLIDE_S := 0.11
 const RISE_S := 0.16
@@ -29,6 +31,7 @@ static func attach(b: BaseButton, audio: Node) -> void:
 		return
 	b.set_meta("_feel", true)
 	b.focus_entered.connect(func() -> void: _on_focus(b, audio))
+	b.focus_exited.connect(func() -> void: _settle(b))
 	b.pressed.connect(func() -> void: bounce(b))
 	b.gui_input.connect(func(e: InputEvent) -> void:
 		var m := e as InputEventMouseButton
@@ -42,6 +45,7 @@ static func attach(b: BaseButton, audio: Node) -> void:
 static func _on_focus(b: BaseButton, audio: Node) -> void:
 	if b.get_meta("sfx", "ui_click") != "":
 		audio.call("play_id", "ui_tick")
+	_lift(b)
 	var box := b.get_parent() as VBoxContainer
 	if box != null and box.get_child_count() > 1:
 		_slide_mark(b, box)
@@ -59,7 +63,10 @@ static func _slide_mark(b: BaseButton, box: VBoxContainer) -> void:
 	box.set_meta("_mark_row", b)
 	if not box.has_meta("_mark"):
 		box.set_meta("_mark", to)
-		box.draw.connect(func() -> void: box.draw_rect(box.get_meta("_mark"), Journal.GOLD))
+		box.draw.connect(func() -> void:
+			var r: Rect2 = box.get_meta("_mark")
+			box.draw_rect(r.grow(2.0), Journal.INK)
+			box.draw_rect(r, Journal.GOLD))
 		box.sort_children.connect(func() -> void:   # the rows moved (first layout, a row grew): snap to the row
 			var row: Variant = box.get_meta("_mark_row")
 			if is_instance_valid(row):
@@ -83,6 +90,26 @@ static func _mark_at(b: Control) -> Rect2:
 	return Rect2(-MARK_GAP - MARK_W, b.position.y, MARK_W, b.size.y)
 
 
+## The focused button rises a little and its new colour fades in (web .row.on transition), not a hard swap.
+static func _lift(b: Control) -> void:
+	if not motion() or not b.is_inside_tree():
+		return
+	b.pivot_offset = b.size * 0.5
+	var tw := b.create_tween().set_parallel().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	b.modulate = Color(1.35, 1.3, 1.15)
+	tw.tween_property(b, "scale", Vector2(LIFT, LIFT), LIFT_S)
+	tw.tween_property(b, "modulate", Color.WHITE, LIFT_S * 1.5)
+
+
+static func _settle(b: Control) -> void:
+	if not b.is_inside_tree():
+		return
+	if not motion():
+		b.scale = Vector2.ONE
+		return
+	b.create_tween().tween_property(b, "scale", Vector2.ONE, LIFT_S * 0.7)
+
+
 ## Squash then bounce back (web @keyframes press).
 static func bounce(c: Control) -> void:
 	if not motion() or not c.is_inside_tree():
@@ -91,7 +118,7 @@ static func bounce(c: Control) -> void:
 	var tw := c.create_tween()
 	tw.tween_property(c, "scale", Vector2(0.93, 0.88), 0.05)
 	tw.tween_property(c, "scale", Vector2(1.05, 1.06), 0.06)
-	tw.tween_property(c, "scale", Vector2.ONE, 0.06)
+	tw.tween_property(c, "scale", Vector2(LIFT, LIFT) if c.has_focus() else Vector2.ONE, 0.06)
 
 
 ## A short side shake: this one cannot be used.
