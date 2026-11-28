@@ -49,3 +49,23 @@ func test_only_a_loaded_scene_restarts_the_rise() -> void:
 	if not ButtonFeel.is_screen(scene, root):
 		failures.append("a loaded scene does not count as a new screen")
 	root.free()
+
+
+
+## Only opted-in lists show the gold mark: gear slots and region ribbons are VBoxes too (user 2026-11-28).
+func test_mark_only_on_opted_in_lists() -> void:
+	var plain := VBoxContainer.new()
+	var menu := VBoxContainer.new()
+	ButtonFeel.mark_list(menu)
+	if plain.has_meta(ButtonFeel.MARK_META) or not menu.has_meta(ButtonFeel.MARK_META):
+		failures.append("the gold mark is not opt-in")
+	plain.free()
+	menu.free()
+
+
+## A click on the value's left half lowers a setting, so a volume can go down by mouse (user 2026-11-28).
+func test_click_left_half_steps_down() -> void:
+	if SettingsPanel.click_step(300.0, 280.0, 360.0) != -1:
+		failures.append("a click on the left half did not step down")
+	if SettingsPanel.click_step(400.0, 280.0, 360.0) != 1 or SettingsPanel.click_step(50.0, 280.0, 360.0) != 1:
+		failures.append("a click on the right half or the name did not step up")

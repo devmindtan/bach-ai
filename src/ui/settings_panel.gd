@@ -161,6 +161,7 @@ static func build_journal(on_back: Callable) -> Control:
 	left.custom_minimum_size = Vector2(470, 0)
 	left.add_theme_constant_override("separation", 2)
 	root.add_child(left)
+	ButtonFeel.mark_list(left)
 	left.add_child(Journal.ink("Cài đặt", 44))
 	left.add_child(Journal.ink("Hình ảnh và điều khiển", 22, Journal.INK_RED))
 	var right := VBoxContainer.new()
@@ -168,6 +169,7 @@ static func build_journal(on_back: Callable) -> Control:
 	right.custom_minimum_size = Vector2(470, 0)
 	right.add_theme_constant_override("separation", 2)
 	root.add_child(right)
+	ButtonFeel.mark_list(right)
 	var h2 := Journal.ink("Âm thanh", 32)
 	var under := StyleBoxFlat.new()   # .page h2: an ink rule under the heading
 	under.bg_color = Color(0, 0, 0, 0)
@@ -259,8 +261,10 @@ static func _journal_row(col: VBoxContainer, o: Array, meter_key: String) -> But
 	b.focus_entered.connect(refresh)
 	b.focus_exited.connect(refresh)
 	b.mouse_entered.connect(func() -> void: b.grab_focus())
-	b.pressed.connect(func() -> void:
-		(o[2] as Callable).call(1)
+	b.pressed.connect(func() -> void:   # a click left of the value's centre steps down (◂), right of it up (▸):
+		(o[2] as Callable).call(click_step(b.get_local_mouse_position().x, val.get_global_rect().position.x - b.global_position.x,
+				val.get_global_rect().get_center().x - b.global_position.x)
+			if b.is_hovered() else 1)   # clicks only went up, so a volume could not be lowered (user 2026-11-28)
 		refresh.call())
 	b.gui_input.connect(func(ev: InputEvent) -> void:
 		for d in [[&"ui_right", 1], [&"ui_left", -1]]:
@@ -271,6 +275,12 @@ static func _journal_row(col: VBoxContainer, o: Array, meter_key: String) -> But
 	col.add_child(b)
 	refresh.call()
 	return b
+
+
+## The step of a mouse click at [param x] on a row whose value spans from [param left] and is centred at
+## [param centre]: −1 on the value's ◂ half, +1 elsewhere (the name too).
+static func click_step(x: float, left: float, centre: float) -> int:
+	return -1 if x >= left and x < centre else 1
 
 
 ## A volume one step (audio.json "volume" step) up or down, 0..100.

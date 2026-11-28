@@ -169,10 +169,13 @@ func _build_ui() -> void:
 		rows.add_child(Journal.ledger(String(r["icon"]), String(r["short"]), String(r["total"]), 18))
 	var more := Journal.link("Xem đủ chỉ số ▸ (C)", 16)   # a click opens it too (user 2026-11-28)
 	more.pressed.connect(_toggle_appendix)
-	rows.add_child(more)
+	# under the portrait: below the stat rows it sat on the passive's first line, and pushing the notes down ran the
+	# mage's long passive into the purse rule (user 2026-11-28)
+	more.position = Vector2(PORTRAIT.position.x, PORTRAIT.end.y + 2)
+	menu.add_child(more)
 	var notes := VBoxContainer.new()
 	notes.add_theme_constant_override("separation", 2)
-	notes.position = Vector2(lx + 20, PORTRAIT.end.y + 30)   # long passives (mage) ran into the purse rule (2026-11-27)
+	notes.position = Vector2(lx + 20, PORTRAIT.end.y + 36)   # long passives (mage) ran into the purse rule (2026-11-27)
 	notes.custom_minimum_size = Vector2(BOOK.size.x * 0.5 - 100, 0)
 	menu.add_child(notes)
 	var pv: Dictionary = _class.get("passive", {})
@@ -224,6 +227,7 @@ func _build_ui() -> void:
 	list.position = Vector2(rx - 8, BOOK.position.y + 86)
 	list.custom_minimum_size = Vector2(BOOK.size.x * 0.5 - 64, 0)
 	_contents.add_child(list)
+	ButtonFeel.mark_list(list)
 	var buttons: Array[Button] = []
 	for ch: Array in _chapters():
 		var b := _chapter(ch)

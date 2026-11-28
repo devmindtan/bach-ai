@@ -20,6 +20,10 @@ const RISE_STEP := 0.03
 const RISE_MAX := 6
 const RISE_WINDOW_MS := 350
 
+## Lists that show the sliding gold mark opt in with this meta (a chapter list, settings rows): on any VBox it also
+## lit gear slots and region ribbons, where it read as misplaced (user 2026-11-28).
+const MARK_META := &"feel_mark"
+
 static var opened_ms := -100000   # when the current screen appeared (set by Audio on scene change)
 
 
@@ -31,6 +35,11 @@ static func is_screen(node: Node, root: Node) -> bool:
 
 static func motion() -> bool:
 	return Prefs.current().vfx < 2
+
+
+## Lets the rows of [param box] carry the sliding gold mark.
+static func mark_list(box: VBoxContainer) -> void:
+	box.set_meta(MARK_META, true)
 
 
 ## Hooks [param b] up. [param audio] plays the sounds (Audio autoload).
@@ -56,7 +65,7 @@ static func _on_focus(b: BaseButton, audio: Node) -> void:
 		audio.call("play_id", "ui_tick")
 	_lift(b)
 	var box := b.get_parent() as VBoxContainer
-	if box != null and box.get_child_count() > 1:
+	if box != null and box.has_meta(MARK_META):
 		_slide_mark(b, box)
 
 

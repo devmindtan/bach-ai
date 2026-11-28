@@ -311,9 +311,9 @@ func _map(root: Control, from: int, to: int, unlocked: int) -> Button:
 			sb.bg_color = Journal.INK if on else (Journal.SEAL if won else Journal.PAPER)
 			sb.border_color = Journal.GOLD if lit else Journal.INK
 			sb.set_border_width_all(4 if lit else 3)
-			if sname == "disabled":
-				sb.bg_color = Color(Journal.PAPER, 0.5)
-				sb.border_color = Journal.DOTS
+			if sname == "disabled":   # solid paper with a padlock, not faded (user 2026-11-28: "khoá thì phải hiển thị khóa")
+				sb.bg_color = Journal.PAPER
+				sb.border_color = Journal.INK_SOFT
 			b.add_theme_stylebox_override(sname, sb)
 		Tip.attach(b, "Ải %d" % st, ("Vượt ải %d để mở." % (st - 1)) if locked else ("Đã vượt %d lần." % int(_slot.wins.get(str(st), 0)) if won else "Chưa vượt."),
 			Journal.INK_RED, "skull" if boss else "", "Ải trùm" if boss else String(_stages.region(st).get("name", "")))
@@ -328,12 +328,19 @@ func _map(root: Control, from: int, to: int, unlocked: int) -> Button:
 			if not locked:
 				b.grab_focus())
 		root.add_child(b)
-		if boss:
+		if locked:
+			var lk := TextureRect.new()
+			lk.texture = UiKit.vector_texture("res://assets/icons/lobby/nav_lock.svg", 18)
+			lk.position = Vector2(half - 9, half - 9)
+			lk.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			lk.modulate = Journal.INK_SOFT
+			b.add_child(lk)
+		elif boss:
 			var ic := UiKit.icon("skull", 24.0)
 			ic.position = Vector2(half - 12, half - 12)
 			ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			b.add_child(ic)
-		var lab := Journal.ink(("Trùm %d" if boss else "Ải %d") % st, 19, Journal.DOTS if locked else (Journal.INK_RED if on else Journal.INK))
+		var lab := Journal.ink(("Trùm %d" if boss else "Ải %d") % st, 19, Journal.INK_SOFT if locked else (Journal.INK_RED if on else Journal.INK))
 		lab.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		lab.custom_minimum_size = Vector2(90, 0)
 		lab.position = pts[k] + Vector2(-45, half + 2)

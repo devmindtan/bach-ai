@@ -261,6 +261,16 @@
       ]
     },
     {
+      "name": "01f3-stage-locked",
+      "spec": "design/ux/stage-select.md",
+      "title": "Chọn ải: vùng 2, ải chưa mở có ổ khoá",
+      "scene": "res://src/front/stage_select.tscn",
+      "frames": 40,
+      "args": [
+        "--stage-pick=11"
+      ]
+    },
+    {
       "name": "01f2-stage-detail",
       "spec": "design/ux/stage-detail.md",
       "title": "Chi tiết ải (quái, mốc thời gian, phần thưởng)",
