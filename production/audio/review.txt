@@ -29,6 +29,7 @@ sfx/gacha_epic	0.68s	peak 0.7	rms 0.355
 sfx/gacha_legend	1.41s	peak 0.8	rms 0.368
 sfx/enhance	0.46s	peak 0.65	rms 0.212
 sfx/buy	0.201s	peak 0.5	rms 0.338
+sfx/page	0.28s	peak 0.22	rms 0.085
 music/menu	22.857s	peak 0.6	rms 0.116
 music/run	14.545s	peak 0.6	rms 0.109
 music/boss	12.8s	peak 0.62	rms 0.13

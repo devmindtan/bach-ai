@@ -66,6 +66,27 @@ static func current() -> Prefs:
 	return _default
 
 
+var _last_scene: Node = null
+var _turn_shot := "--page-turn" in OS.get_cmdline_user_args()
+
+
+## A journal screen just became the current scene: turn a page (PageTurn). Shots (--gk-*) never do.
+func _process(_delta: float) -> void:
+	if _turn_shot:   # shots (--page-turn): the screen sits in the capture's SubViewport, not current_scene
+		for n in get_tree().root.find_children("*", "", true, false):
+			if PageTurn.SCENES.has(n.scene_file_path):
+				_turn_shot = false
+				PageTurn.play(get_tree(), n)
+				break
+	var cur := get_tree().current_scene
+	if cur == _last_scene or cur == null:
+		return
+	var first := _last_scene == null
+	_last_scene = cur
+	if not first and not _fixed and PageTurn.SCENES.has(cur.scene_file_path):
+		PageTurn.play(get_tree())
+
+
 func _ready() -> void:
 	UiFonts.install()   # bundled glyph fallbacks, before any screen draws text
 	var forced_hero := ""

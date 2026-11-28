@@ -154,6 +154,11 @@
     "buy": {
       "voices": 1,
       "gap": 0.1
+    },
+    "page": {
+      "voices": 1,
+      "gap": 0.15,
+      "db": -6.0
     }
   },
   "skills": {

@@ -78,5 +78,6 @@
     {"wave": "square", "duty": 0.5, "freq": 1568, "freq_end": 1400, "attack": 0.001, "sustain": 0.02, "decay": 0.25, "lowpass": 6000},
     {"wave": "noise", "freq": 5000, "attack": 0.001, "sustain": 0.0, "decay": 0.05, "highpass": 2000, "gain": 0.5, "seed": 53},
     {"wave": "sine", "freq": 2093, "attack": 0.01, "sustain": 0.05, "decay": 0.3, "gain": 0.4, "delay": 0.1}]},
-  "buy": {"wave": "square", "duty": 0.5, "freq": 784, "attack": 0.001, "sustain": 0.05, "decay": 0.15, "arp": [[0.05, 1.26], [0.1, 1.19]], "lowpass": 5000, "volume": 0.5}
+  "buy": {"wave": "square", "duty": 0.5, "freq": 784, "attack": 0.001, "sustain": 0.05, "decay": 0.15, "arp": [[0.05, 1.26], [0.1, 1.19]], "lowpass": 5000, "volume": 0.5},
+  "page": {"wave": "noise", "freq": 5000, "freq_end": 1800, "attack": 0.02, "sustain": 0.08, "decay": 0.18, "lowpass": 3200, "volume": 0.22, "seed": 41}
 }
