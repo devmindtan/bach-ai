@@ -11,6 +11,7 @@ extends RefCounted
 const MARK_W := 10.0
 const LIFT := 1.04
 const LIFT_S := 0.12
+const LIFT_PX := 4.0
 const MARK_GAP := 10.0
 const SLIDE_S := 0.11
 const RISE_S := 0.16
@@ -97,8 +98,15 @@ static func _lift(b: Control) -> void:
 	b.pivot_offset = b.size * 0.5
 	var tw := b.create_tween().set_parallel().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	b.modulate = Color(1.35, 1.3, 1.15)
-	tw.tween_property(b, "scale", Vector2(LIFT, LIFT), LIFT_S)
+	tw.tween_property(b, "scale", lift_of(b), LIFT_S)
 	tw.tween_property(b, "modulate", Color.WHITE, LIFT_S * 1.5)
+
+
+## The lifted scale: LIFT for small buttons, at most LIFT_PX wider on each side for wide rows (a 470 px row at 1.04
+## crossed the page's dashed edge, 2026-11-28).
+static func lift_of(c: Control) -> Vector2:
+	var k := minf(LIFT, 1.0 + 2.0 * LIFT_PX / maxf(c.size.x, 1.0))
+	return Vector2(k, k)
 
 
 static func _settle(b: Control) -> void:
@@ -118,7 +126,7 @@ static func bounce(c: Control) -> void:
 	var tw := c.create_tween()
 	tw.tween_property(c, "scale", Vector2(0.93, 0.88), 0.05)
 	tw.tween_property(c, "scale", Vector2(1.05, 1.06), 0.06)
-	tw.tween_property(c, "scale", Vector2(LIFT, LIFT) if c.has_focus() else Vector2.ONE, 0.06)
+	tw.tween_property(c, "scale", lift_of(c) if c.has_focus() else Vector2.ONE, 0.06)
 
 
 ## A short side shake: this one cannot be used.

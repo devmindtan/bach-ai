@@ -5,7 +5,7 @@ extends Node2D
 ## này", Đổi tên / Xóa sổ) or the create page (class sketches with lock stamps, a name line, seal "Viết sổ").
 ## Esc goes back to the title.
 ##
-## Command line (after `--`), for shots: --force-slots (preview slots, nothing is
+## Command line (after `--`), for shots: --char-pick=N (open the N-th notebook), --force-slots (preview slots, nothing is
 ## written), --front-create (open the create panel).
 
 const TITLE_SCENE := "res://src/front/title.tscn"
@@ -46,6 +46,9 @@ func _ready() -> void:
 	_chosen = prefs.active_slot.id if prefs.active_slot != null else ""
 	if _chosen == "" or _entry(_chosen).is_empty():
 		_chosen = String(_entries[0]["id"]) if not _entries.is_empty() else "+"
+	for a in OS.get_cmdline_user_args():   # --char-pick=N: shots of the N-th notebook (the mage's long passive)
+		if a.begins_with("--char-pick=") and int(a.get_slice("=", 1)) < _entries.size():
+			_chosen = String(_entries[int(a.get_slice("=", 1))]["id"])
 	if OS.get_cmdline_user_args().has("--front-create") or _entries.is_empty():
 		_chosen = "+"
 	_build()
@@ -295,10 +298,17 @@ func _slot_page(v: VBoxContainer, root: Control, r: Rect2, s: Slot) -> void:
 	v.add_child(gap)
 	var lasting := SkillTree.lasting(s)   # equipment + skill tree
 	var st := PlayerStats.compute(cd.get("stats", {}), lasting[0], lasting[1])
-	for t in [["star", "Ải cao nhất", str(s.best)], ["coin", "Vàng", str(s.gold)], ["gem", "Đá", str(s.gems)],
-			["heart", "Máu", str(roundi(float(st.get("max_hp", 0))))], ["sword", "Sát thương", str(roundi(float(st.get("damage", 0))))],
-			["boot", "Tốc độ chạy", str(roundi(float(st.get("move_speed", 0))))]]:
-		v.add_child(Journal.ledger(t[0], t[1], t[2], 19))
+	var grid := GridContainer.new()   # two columns: the mage's long passive ran into Đổi tên / Xóa sổ (2026-11-28)
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 28)
+	grid.add_theme_constant_override("v_separation", 0)
+	v.add_child(grid)
+	for t in [["star", "Ải cao nhất", str(s.best)], ["heart", "Máu", str(roundi(float(st.get("max_hp", 0))))],
+			["coin", "Vàng", str(s.gold)], ["sword", "Sát thương", str(roundi(float(st.get("damage", 0))))],
+			["gem", "Đá", str(s.gems)], ["boot", "Tốc độ", str(roundi(float(st.get("move_speed", 0))))]]:
+		var l := Journal.ledger(t[0], t[1], t[2], 19)
+		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		grid.add_child(l)
 	var pv: Dictionary = cd.get("passive", {})
 	if not pv.is_empty():
 		var n := Journal.note("Nội tại: " + String(pv.get("name", "")), String(pv.get("desc", "")), 17)

@@ -30,6 +30,17 @@
       ]
     },
     {
+      "name": "00b2-characters-mage",
+      "spec": "design/ux/front-end.md",
+      "title": "Chọn nhân vật: sổ pháp sư (nội tại dài nhất)",
+      "scene": "res://src/front/characters.tscn",
+      "frames": 40,
+      "args": [
+        "--force-slots",
+        "--char-pick=1"
+      ]
+    },
+    {
       "name": "00c-characters-new",
       "spec": "design/ux/front-end.md",
       "title": "Chọn nhân vật: tạo mới (chọn class)",

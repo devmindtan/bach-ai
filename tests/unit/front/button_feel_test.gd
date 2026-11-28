@@ -23,3 +23,15 @@ func test_feel_sounds_exist() -> void:
 			failures.append("audio.json lacks %s" % id)
 		if not ResourceLoader.exists("res://assets/audio/sfx/%s.wav" % id):
 			failures.append("no %s.wav" % id)
+
+
+func test_wide_rows_lift_a_few_pixels() -> void:
+	var b := Button.new()
+	b.size = Vector2(470, 80)
+	var grow := (ButtonFeel.lift_of(b).x - 1.0) * b.size.x * 0.5
+	if grow > ButtonFeel.LIFT_PX + 0.01:
+		failures.append("a wide row grows %.1f px a side" % grow)
+	b.size = Vector2(40, 40)
+	if not is_equal_approx(ButtonFeel.lift_of(b).x, ButtonFeel.LIFT):
+		failures.append("a small button lost its lift")
+	b.free()
