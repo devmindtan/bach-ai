@@ -67,11 +67,16 @@ static func current() -> Prefs:
 
 
 var _last_scene: Node = null
+## Warm load (2026-11-28, "khựng"): the journal screens and the run load in a background thread while the title is
+## up and are held here, so the first visit to the lobby (~450 ms of loading) no longer freezes the screen.
+var _warm := []
+var _warm_held := []
 var _turn_shot := "--page-turn" in OS.get_cmdline_user_args()
 
 
 ## A journal screen just became the current scene: turn a page (PageTurn). Shots (--gk-*) never do.
 func _process(_delta: float) -> void:
+	_step_warm()
 	if _turn_shot:   # shots (--page-turn): the screen sits in the capture's SubViewport, not current_scene
 		for n in get_tree().root.find_children("*", "", true, false):
 			if PageTurn.SCENES.has(n.scene_file_path):
@@ -87,8 +92,27 @@ func _process(_delta: float) -> void:
 		PageTurn.play(get_tree())
 
 
+func _start_warm() -> void:
+	if _fixed or OS.has_feature("web"):   # shots load what they need; the web export has no threads
+		return
+	for p: String in PageTurn.SCENES + ["res://src/run/run.tscn"]:
+		if ResourceLoader.load_threaded_request(p, "PackedScene", true) == OK:
+			_warm.append(p)
+
+
+func _step_warm() -> void:
+	for k in range(_warm.size() - 1, -1, -1):
+		var st := ResourceLoader.load_threaded_get_status(_warm[k])
+		if st == ResourceLoader.THREAD_LOAD_LOADED:
+			_warm_held.append(ResourceLoader.load_threaded_get(_warm[k]))
+			_warm.remove_at(k)
+		elif st != ResourceLoader.THREAD_LOAD_IN_PROGRESS:
+			_warm.remove_at(k)
+
+
 func _ready() -> void:
-	UiFonts.install()   # bundled glyph fallbacks, before any screen draws text
+	UiFonts.install()
+	_start_warm.call_deferred()   # bundled glyph fallbacks, before any screen draws text
 	var forced_hero := ""
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--gk-"):
