@@ -1,4 +1,6 @@
-sfx/ui_click	0.051s	peak 0.5	rms 0.323
+sfx/ui_click	0.091s	peak 0.5	rms 0.206
+sfx/ui_tick	0.031s	peak 0.3	rms 0.104
+sfx/ui_deny	0.141s	peak 0.4	rms 0.148
 sfx/ui_start	0.302s	peak 0.7	rms 0.257
 sfx/hit	0.061s	peak 0.35	rms 0.116
 sfx/kill	0.131s	peak 0.5	rms 0.152
