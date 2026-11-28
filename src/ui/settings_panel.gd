@@ -42,6 +42,8 @@ static func build(on_back: Callable) -> VBoxContainer:
 		func() -> void: Prefs.current().set_value("screen_shake", not Prefs.current().screen_shake))
 	_row(col, "Hiệu ứng", func() -> String: return String(Prefs.VFX_NAMES[Prefs.current().vfx]),
 		func() -> void: Prefs.current().set_value("vfx", (Prefs.current().vfx + 1) % 3))   # fewer effects in busy late game
+	_row(col, "Hỏi trước khi làm", func() -> String: return "Luôn" if Prefs.current().skip_confirm.is_empty() else "Bỏ qua %d" % Prefs.current().skip_confirm.size(),
+		func() -> void: Prefs.current().set_value("skip_confirm", []))
 	if DisplayServer.is_touchscreen_available() or "--touch" in OS.get_cmdline_user_args():   # phones only (J4)
 		_row(col, "Cần điều khiển", func() -> String: return String(Prefs.TOUCH_NAMES[Prefs.current().touch_stick]),
 			func() -> void: Prefs.current().set_value("touch_stick", (Prefs.current().touch_stick + 1) % 3))
@@ -143,6 +145,9 @@ static func build_journal(on_back: Callable) -> Control:
 			func(_d: int) -> void: p.set_value("screen_shake", not p.screen_shake)],
 		["Hiệu ứng", func() -> String: return String(Prefs.VFX_NAMES[p.vfx]),
 			func(d: int) -> void: p.set_value("vfx", posmod(p.vfx + d, 3))],
+		# Notice.ask "Không hỏi lại" ticks: Luôn = every confirm shows; Bỏ qua N = N kinds skipped, change it to ask again
+		["Hỏi trước khi làm", func() -> String: return "Luôn" if p.skip_confirm.is_empty() else "Bỏ qua %d" % p.skip_confirm.size(),
+			func(_d: int) -> void: p.set_value("skip_confirm", [])],
 	]
 	if DisplayServer.is_touchscreen_available() or "--touch" in OS.get_cmdline_user_args():   # phones only (J4)
 		opts.append(["Cần điều khiển", func() -> String: return String(Prefs.TOUCH_NAMES[p.touch_stick]),

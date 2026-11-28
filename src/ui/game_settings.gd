@@ -30,6 +30,7 @@ var fullscreen := false
 var scale := 0                      # 0 = auto, else 1..3
 var damage_numbers := true
 var monster_hp := true
+var skip_confirm: Array = []   # Notice.ask keys the player ticked "Không hỏi lại" for (2026-11-28)
 var screen_shake := true   # Rung màn hình (6C.2)
 var preview_best := 10             # --preview-best=N: stages the preview slot has won
 var touch_stick := 0       # Cần điều khiển (J4): 0 Nổi, 1 Cố định, 2 Tắt
@@ -375,6 +376,7 @@ func _load() -> void:
 	damage_numbers = bool(cfg.get_value("hud", "damage_numbers", damage_numbers))
 	monster_hp = bool(cfg.get_value("hud", "monster_hp", monster_hp))
 	screen_shake = bool(cfg.get_value("hud", "screen_shake", screen_shake))
+	skip_confirm = Array(cfg.get_value("hud", "skip_confirm", skip_confirm))
 	vfx = clampi(int(cfg.get_value("hud", "vfx", vfx)), 0, 2)
 	touch_stick = clampi(int(cfg.get_value("hud", "touch_stick", touch_stick)), 0, 2)
 	music_volume = clampi(int(cfg.get_value("audio", "music", music_volume)), 0, 100)
@@ -391,6 +393,7 @@ func _save() -> void:
 	cfg.set_value("hud", "damage_numbers", damage_numbers)
 	cfg.set_value("hud", "monster_hp", monster_hp)
 	cfg.set_value("hud", "screen_shake", screen_shake)
+	cfg.set_value("hud", "skip_confirm", skip_confirm)
 	cfg.set_value("hud", "vfx", vfx)
 	cfg.set_value("hud", "touch_stick", touch_stick)
 	cfg.set_value("audio", "music", music_volume)

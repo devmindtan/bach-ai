@@ -77,6 +77,7 @@ func _rebuild() -> void:
 func _pull(n: int) -> void:
 	var got := _g.pull(_slot, _bid, n, _rng)
 	if got.is_empty():
+		Notice.note("Không đủ đá", "Cần %d đá cho %d lượt quay" % [_g.cost(n), n], UiIcons.texture("gem"), true)
 		return
 	_last = got
 	_tab = "result"

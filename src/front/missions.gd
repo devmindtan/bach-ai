@@ -116,6 +116,7 @@ func _build() -> void:
 	seal.disabled = waiting == 0
 	seal.set_meta("sfx", "")
 	seal.pressed.connect(func() -> void:   # claims every finished task and, once all are claimed, the bonus
+		var gems0 := _slot.gems
 		var any := false
 		for id: String in ids:
 			any = _d.claim(_slot, id) or any
@@ -123,6 +124,7 @@ func _build() -> void:
 			any = true
 		if any:
 			Sfx.play("chest")
+			Notice.note("Đã nhận thưởng", "+%d đá · còn %d" % [_slot.gems - gems0, _slot.gems], UiIcons.texture("gem"))
 			_rebuild())
 	root.add_child(seal)
 	if first != null:
@@ -196,8 +198,10 @@ func _row(id: String) -> Button:
 	b.focus_exited.connect(paint)
 	b.mouse_entered.connect(func() -> void: b.grab_focus())
 	b.pressed.connect(func() -> void:
+		var gems0 := _slot.gems
 		if _d.claim(_slot, id):
 			Sfx.play("coin")
+			Notice.note("Đã nhận thưởng", "+%d đá · còn %d" % [_slot.gems - gems0, _slot.gems], UiIcons.texture("gem"))
 			_rebuild())
 	paint.call()
 	return b

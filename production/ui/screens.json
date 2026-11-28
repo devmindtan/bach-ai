@@ -470,6 +470,26 @@
         "--demo",
         "--seed=1"
       ]
+    },
+    {
+      "name": "10-ask-reset",
+      "spec": "design/ux/front-end.md",
+      "title": "Hỏi trước khi tẩy tuỷ",
+      "scene": "res://src/front/skill_tree.tscn",
+      "frames": 40,
+      "args": [
+        "--ask-reset"
+      ]
+    },
+    {
+      "name": "10b-notes",
+      "spec": "design/ux/front-end.md",
+      "title": "Thông báo góc (mặc đồ, thiếu vàng)",
+      "scene": "res://src/front/equipment.tscn",
+      "frames": 40,
+      "args": [
+        "--note-shot"
+      ]
     }
   ]
 }

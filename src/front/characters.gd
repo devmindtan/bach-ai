@@ -331,11 +331,11 @@ func _slot_page(v: VBoxContainer, root: Control, r: Rect2, s: Slot) -> void:
 	root.add_child(rename)
 	var del := _ink_button("Xóa sổ")
 	del.position = Vector2(r.position.x + 120, r.end.y - 50)
-	del.pressed.connect(func() -> void:
-		if del.text == "Xóa sổ":   # asks once more
-			del.text = "Chắc chắn?"
-			return
-		_delete(s.id))
+	del.pressed.connect(func() -> void:   # always asks: a notebook cannot come back (web screen-notices ?view=delete)
+		Notice.ask("", "Xóa sổ %s?" % s.name, "Mất hết túi đồ, tiến độ, vàng, đá của nhân vật này. Không lấy lại được.", "",
+			"Xóa sổ", func() -> void:
+				_delete(s.id)
+				Notice.note("Đã xóa sổ %s" % s.name, "", null, true)))
 	root.add_child(del)
 
 
@@ -382,10 +382,8 @@ func _broken_page(v: VBoxContainer, e: Dictionary) -> void:
 	var del := _ink_button("Xóa sổ")
 	del.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	del.pressed.connect(func() -> void:
-		if del.text == "Xóa sổ":
-			del.text = "Chắc chắn?"
-			return
-		_delete(String(e.get("id", ""))))
+		Notice.ask("", "Xóa sổ hỏng?", "Sổ này không đọc được; xóa thì mất hẳn.", "", "Xóa sổ",
+			func() -> void: _delete(String(e.get("id", "")))))
 	v.add_child(del)
 
 

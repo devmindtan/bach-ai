@@ -83,6 +83,9 @@ func _ready() -> void:
 	if _view == "":
 		_view = _default_view()
 	_build()
+	if "--note-shot" in OS.get_cmdline_user_args():   # shots: the corner notes (web screen-notices ?view=toast)
+		_note_worn(_view, true)
+		Notice.note("Thiếu vàng", "Cần 240 vàng, đang có 120", UiIcons.texture("coin"), true)
 	if _drag_shot != "":
 		_light_target(bag_drag_data(_drag_shot))
 
@@ -478,6 +481,7 @@ func drop_on_slot(slot: String, data: Variant) -> bool:
 	if not can_drop_on_slot(slot, data) or not _prof.equip(_cls, String(data["item"])):
 		return false
 	Sfx.play("buy")
+	_note_worn(String(data["item"]), true)
 	_sel = slot
 	_view = String(data["item"])
 	_after_change()
@@ -492,9 +496,27 @@ func can_drop_on_bag(data: Variant) -> bool:
 func drop_on_bag(data: Variant) -> bool:
 	if not can_drop_on_bag(data):
 		return false
+	var off := String(_prof.equipped(_cls).get(String(data["slot"]), ""))
 	_prof.unequip(_cls, String(data["slot"]))
+	_note_worn(off, false)
 	_after_change()
 	return true
+
+
+func _item_name(id: String) -> String:
+	return String(_prof.defs.get(id, {}).get("name", id))
+
+
+func _item_icon(id: String) -> String:
+	return String(_prof.defs.get(id, {}).get("icon", id))
+
+
+## The corner note after wearing / taking off [param id] (web screen-notices ?view=toast).
+func _note_worn(id: String, on: bool) -> void:
+	if id == "":
+		return
+	Notice.note(("Đã mặc %s" if on else "Đã bỏ ra %s") % _item_name(id), SLOT_NAME.get(String(_prof.defs.get(id, {}).get("slot", "")), ""),
+		UiIcons.texture(_item_icon(id)))
 
 
 func _after_change() -> void:
@@ -679,9 +701,11 @@ func _detail(root: Control) -> void:
 	act.pressed.connect(func() -> void:
 		if is_worn:
 			_prof.unequip(_cls, _sel)
+			_note_worn(_view, false)
 		else:
 			_prof.equip(_cls, _view)
 			Sfx.play("buy")
+			_note_worn(_view, true)
 		prefs.save_profile()
 		_rebuild())
 	row.add_child(act)
@@ -810,12 +834,17 @@ func _enhance() -> void:
 	if _view == "":
 		return
 	var wallet := {"v": _slot_data.gold}
+	var cost := _prof.enhance_cost(_view)
 	if _prof.enhance(_view, wallet):
 		Sfx.play("enhance")
 		Daily.load_default().add(_slot_data, "enhances", 1)
 		_slot_data.gold = int(wallet["v"])
 		Prefs.current().save_profile()
+		Notice.note("Cường hoá %s +%d" % [_item_name(_view), _prof.plus_of(_view)], "−%d vàng · còn %d" % [cost, _slot_data.gold],
+			UiIcons.texture(_item_icon(_view)))
 		_rebuild()
+	elif cost > 0 and _slot_data.gold < cost:
+		Notice.note("Thiếu vàng", "Cần %d vàng, đang có %d" % [cost, _slot_data.gold], UiIcons.texture("coin"), true)
 
 
 func _fmt(f: String, x: float) -> String:

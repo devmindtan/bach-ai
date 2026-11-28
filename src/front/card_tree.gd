@@ -158,20 +158,20 @@ func _build() -> void:
 func _reset() -> void:
 	if _trees.spent(_slot, _card) <= 0:
 		return
-	if not _reset_armed:
-		_reset_armed = true
-		_rebuild()
-		return
-	_reset_armed = false
-	_trees.reset(_slot, _card)
-	_save()
-	_rebuild()
+	var back := _trees.spent(_slot, _card)
+	Notice.ask("reset_cards", "Đặt lại thẻ?", "Bỏ hết các nút đã nâng của thẻ này, hoàn lại Mảnh thẻ.",
+		"Nhận lại: %d Mảnh thẻ" % back, "Đặt lại", func() -> void:
+			_trees.reset(_slot, _card)
+			_save()
+			Notice.note("Đã đặt lại thẻ", "Hoàn %d Mảnh thẻ" % back, UiIcons.texture("nav_deck"))
+			_rebuild())
 
 
 func _learn() -> void:
 	if _trees.buy(_slot, _card, _view):
 		Sfx.play("buy")
 		_save()
+		Notice.note("Đã nâng thẻ", "Còn %d Mảnh thẻ" % _slot.shards, UiIcons.texture("nav_deck"))
 		_rebuild()
 
 

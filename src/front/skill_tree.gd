@@ -44,6 +44,8 @@ func _ready() -> void:
 	if _view == "":
 		_view = _first_open()
 	_build()
+	if "--ask-reset" in OS.get_cmdline_user_args():   # shots: the Tẩy tuỷ confirm slip
+		_reset.call_deferred()
 
 
 ## The first node a rank can be bought of, else the first one.
@@ -293,20 +295,28 @@ func _detail(root: Control) -> void:
 
 ## Tẩy tuỷ: the first press asks, the second resets (1 Tẩy Tủy Đan + gold, every Tinh hoa back).
 func _reset() -> void:
-	if _tree.why_not_reset(_slot) != "":
+	if _tree.why_not_reset(_slot) != "" and not "--ask-reset" in OS.get_cmdline_user_args():
+		Notice.note("Chưa tẩy tuỷ được", _tree.why_not_reset(_slot), UiIcons.texture("pill"), true)
 		return
-	if not _reset_armed:
-		_reset_armed = true
-		_rebuild()
-		return
-	_reset_armed = false
-	if _tree.reset(_slot):
-		_save()
-	_rebuild()
+	var c := _tree.reset_cost(_slot)   # web screen-notices ?view=reset: the slip names what it costs and gives back
+	var back := _tree.spent(_slot)
+	Notice.ask("reset_tree", "Tẩy tuỷ cây kỹ năng?", "Bỏ hết các nút đã học, trả lại toàn bộ Tinh hoa.",
+		"Tốn: 1 Tẩy Tủy Đan + %d vàng · Nhận lại: %d Tinh hoa" % [int(c["gold"]), back], "Tẩy tuỷ", func() -> void:
+			if _tree.reset(_slot):
+				_save()
+				Notice.note("Đã tẩy tuỷ", "Nhận lại %d Tinh hoa · còn %d" % [back, _slot.essence], UiIcons.texture("essence"))
+			_rebuild())
 
 
 func _learn() -> void:
+	var price := _tree.cost(_view)
+	var why := _tree.why_not(_slot, _view)
 	if _tree.buy(_slot, _view):
 		Sfx.play("buy")
 		_save()
+		var n := _tree.node(_view)
+		Notice.note("Đã học %s · cấp %d" % [String(n.get("name", _view)), _tree.rank(_slot, _view)],
+			"−%d Tinh hoa · còn %d" % [price, _slot.essence], UiIcons.texture("essence"))
 		_rebuild()
+	elif why != "":
+		Notice.note("Chưa học được", why, UiIcons.texture("essence"), true)
