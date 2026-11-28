@@ -157,13 +157,23 @@ func _build() -> void:
 	mv.custom_minimum_size = Vector2(RIGHT_PAGE.size.x, 0)
 	mv.add_theme_constant_override("separation", 8)
 	root.add_child(mv)
-	var h2 := Journal.ink("Lịch sử quay · %s" % String(cur.get("name", _bid)) if _tab == "history" else "Lần quay trước", 32)
+	var h2 := Journal.ink("Lịch sử · %s" % String(cur.get("name", _bid)) if _tab == "history" else "Lần quay trước", 32)
 	var under := StyleBoxFlat.new()
 	under.bg_color = Color(0, 0, 0, 0)
 	under.border_color = Journal.INK
 	under.border_width_bottom = 3
 	h2.add_theme_stylebox_override("normal", under)
 	mv.add_child(h2)
+	var hl := HBoxContainer.new()   # the history switch by mouse too (user 2026-11-28: H only was key-only)
+	hl.alignment = BoxContainer.ALIGNMENT_END
+	hl.position = RIGHT_PAGE.position + Vector2(0, 6)
+	hl.size = Vector2(RIGHT_PAGE.size.x, 0)
+	var hb := Journal.link(("◂ Quay trước (H)" if _tab == "history" else "Lịch sử ▸ (H)"), 18)
+	hb.pressed.connect(func() -> void:
+		_tab = "result" if _tab == "history" else "history"
+		_rebuild())
+	hl.add_child(hb)
+	root.add_child(hl)
 	if _tab == "history":
 		_history(mv)
 	else:

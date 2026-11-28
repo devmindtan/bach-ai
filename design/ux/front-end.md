@@ -66,7 +66,7 @@ Thiết kế lại 2026-11-26: người dùng xem 3 hướng trong Design Lab (`
   đỏ, túi đủ 5 nguyên liệu ở chân trang (vàng, đá, Tinh hoa, Mảnh thẻ, Tẩy Tủy Đan).
 - C: trang phải thành **Phụ lục: chỉ số** (11 chỉ số, cột Gốc / Trang bị / Cây / Tổng, tính từ PlayerStats.breakdown
   của trang bị + cây kỹ năng; chí mạng cộng nền run_config).
-- Ba dải đánh dấu (icon) ở mép sổ: Cài đặt, Đổi nhân vật, Tiêu đề; → sang dải, ↑ ↓ giữa dải, ← về Mục lục.
+- Hai dải đánh dấu (icon) ở mép sổ: Cài đặt, Tiêu đề (bỏ Đổi nhân vật, người dùng 2026-11-28: đổi nhân vật thì về Tiêu đề; Esc cũng về Tiêu đề); → sang dải, ↑ ↓ giữa dải, ← về Mục lục.
 - Trang phải: **Mục lục** (Trang bị, Cây kỹ năng, Bộ thẻ, Quay đồ, Nhiệm vụ, Album; số trang La Mã, dòng chấm dẫn), dòng mô tả chương đang chọn (mục chưa mở ghi "Qua ải N"), con dấu sáp
   **Lên đường ▶** (mục chính, focus sẵn, mở màn chọn ải).
 - ↑/↓ đi vòng qua các chương và con dấu, Enter mở, Esc đổi nhân vật.

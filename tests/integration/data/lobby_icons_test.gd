@@ -17,7 +17,7 @@ func test_lobby_icons_exist_and_are_credited() -> void:
 	var seen := {}
 	for m in re.search_all(src):
 		seen[m.get_string()] = true
-	_check(seen.size() >= 9, "the lobby uses its nine icons, found %d" % seen.size())
+	_check(seen.size() >= 8, "the lobby uses its eight icons (nav_character dropped 2026-11-28), found %d" % seen.size())
 	for id: String in seen:
 		_check(ResourceLoader.exists("res://assets/icons/lobby/%s.svg" % id), "%s.svg exists" % id)
 		_check(credits.contains(id + ".svg"), "%s.svg is credited" % id)

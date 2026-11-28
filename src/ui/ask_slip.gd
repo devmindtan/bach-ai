@@ -48,6 +48,12 @@ func setup(key: String, title: String, text: String, cost: String, yes: String, 
 		v.add_child(Journal.ink(cost, 18, Journal.INK_SOFT))
 	if key != "":
 		_box = Journal.ink("", 18)
+		_box.mouse_filter = Control.MOUSE_FILTER_STOP   # a click ticks it too (user 2026-11-28)
+		_box.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		_box.gui_input.connect(func(e: InputEvent) -> void:
+			var m := e as InputEventMouseButton
+			if m != null and m.pressed and m.button_index == MOUSE_BUTTON_LEFT:
+				_toggle_skip())
 		v.add_child(_box)
 		_paint_box()
 	var row := HBoxContainer.new()
@@ -91,6 +97,11 @@ func _button(text: String, red: bool) -> Button:
 	return b
 
 
+func _toggle_skip() -> void:
+	_skip = not _skip
+	_paint_box()
+
+
 func _paint_box() -> void:
 	_box.text = ("[✓]" if _skip else "[  ]") + "  Không hỏi lại (Space)"
 
@@ -108,8 +119,7 @@ func _input(event: InputEvent) -> void:
 			_accept()
 		KEY_SPACE:
 			if _box != null:
-				_skip = not _skip
-				_paint_box()
+				_toggle_skip()
 		KEY_LEFT:
 			_no_b.grab_focus()
 		KEY_RIGHT:

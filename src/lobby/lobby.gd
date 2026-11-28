@@ -2,8 +2,9 @@ extends Node2D
 ## The preparation lobby of the chosen character (design/ux/front-end.md): the hero
 ## on its pedestal with its progress, the class card (stats with equipment, passive,
 ## skills, level milestones), equipment, stage choice and Start. Characters are
-## chosen on the character screen (src/front/characters.tscn): "Nhân vật" and Esc go
-## there, "Menu chính" goes to the title. Without a character it opens that screen.
+## chosen on the character screen (src/front/characters.tscn), reached from the title only (user 2026-11-28: changing
+## character means going back to the title): Esc and the "Tiêu đề" ribbon go to the title. Without a character it
+## opens the character screen.
 
 const DATA := "res://assets/data/"
 const SPRITES := "res://assets/sprites/custom/"
@@ -84,7 +85,7 @@ func _load_class(id: String) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel") and _layer != null and _layer.get_child(0).get_child(0).visible:
-		get_tree().change_scene_to_file(CHARACTERS_SCENE)
+		get_tree().change_scene_to_file(TITLE_SCENE)
 
 
 func _process(delta: float) -> void:
@@ -94,7 +95,7 @@ func _process(delta: float) -> void:
 
 ## Hướng B "Sổ hành trình" (design-web/games/bach-ai/specs/lobby.md, user 2026-11-26 approved the web set): a travel
 ## journal open on a wooden desk; the left page is the character, the right page the contents (or, with C, the stats
-## appendix); three ribbons on the edge are Cài đặt, Đổi nhân vật, Tiêu đề.
+## appendix); two ribbons on the edge are Cài đặt, Tiêu đề.
 const BOOK := Journal.BOOK
 const RUN := preload("res://src/run/run.gd")   # armor_mul: what armour takes off a hit
 const PORTRAIT := Rect2(130, 170, 220, 220)
@@ -166,7 +167,8 @@ func _build_ui() -> void:
 	for key: String in ["max_hp", "damage", "armor", "move_speed", "crit_chance", "cooldown"]:
 		var r: Dictionary = st[key]
 		rows.add_child(Journal.ledger(String(r["icon"]), String(r["short"]), String(r["total"]), 18))
-	var more := Journal.ink("Xem đủ chỉ số (C) ▸", 16, Journal.INK_RED)
+	var more := Journal.link("Xem đủ chỉ số ▸ (C)", 16)   # a click opens it too (user 2026-11-28)
+	more.pressed.connect(_toggle_appendix)
 	rows.add_child(more)
 	var notes := VBoxContainer.new()
 	notes.add_theme_constant_override("separation", 2)
@@ -248,11 +250,11 @@ func _build_ui() -> void:
 
 	# the ribbons: icon tabs on the book's edge (→ from the contents, ↑ ↓ between them, ← back)
 	var ribs: Array[Button] = []
-	for k in 3:
+	const NR := 2
+	for k in NR:
 		var r: Array = [["nav_settings", Color("3a6a8a"), "Cài đặt", "Cài đặt: âm thanh, hiển thị, phím.", func() -> void: _show_settings(root, menu)],
-			["nav_character", Color("6a8a3a"), "Đổi nhân vật", "Đổi nhân vật: chọn hoặc tạo nhân vật khác (Esc).",
-				func() -> void: get_tree().change_scene_to_file(CHARACTERS_SCENE)],
-			["nav_title", Color("8a3a6a"), "Tiêu đề", "Tiêu đề: về màn hình tiêu đề.", func() -> void: get_tree().change_scene_to_file(TITLE_SCENE)]][k]
+			["nav_title", Color("8a3a6a"), "Tiêu đề", "Tiêu đề: về màn hình tiêu đề; đổi nhân vật ở đó (Esc).",
+				func() -> void: get_tree().change_scene_to_file(TITLE_SCENE)]][k]
 		var rb := Journal.ribbon(String(r[0]), r[1], String(r[2]))
 		rb.position = Vector2(BOOK.end.x + 14, BOOK.position.y + 56 + k * 60)
 		rb.pressed.connect(r[4])
@@ -260,9 +262,9 @@ func _build_ui() -> void:
 		rb.focus_entered.connect(func() -> void: _desc.text = say)
 		menu.add_child(rb)
 		ribs.append(rb)
-	for k in 3:
-		ribs[k].focus_neighbor_bottom = ribs[(k + 1) % 3].get_path()
-		ribs[k].focus_neighbor_top = ribs[(k + 2) % 3].get_path()
+	for k in NR:
+		ribs[k].focus_neighbor_bottom = ribs[(k + 1) % NR].get_path()
+		ribs[k].focus_neighbor_top = ribs[(k + NR - 1) % NR].get_path()
 		ribs[k].focus_neighbor_left = buttons[0].get_path()
 	for b in buttons:
 		b.focus_neighbor_right = ribs[0].get_path()
@@ -274,7 +276,7 @@ func _build_ui() -> void:
 	if OS.get_cmdline_user_args().has("--lobby-settings"):   # shots of the settings page
 		_show_settings.call_deferred(root, menu)
 
-	var hint := _label("↑ ↓ chọn chương · → dải đánh dấu · Enter mở · C chỉ số · Esc đổi nhân vật", 15, Color("c8a878"))
+	var hint := _label("↑ ↓ chọn chương · → dải đánh dấu · Enter mở · C chỉ số · Esc về tiêu đề", 15, Color("c8a878"))
 	hint.position = Vector2(BOOK.position.x, vp.y - 28)
 	menu.add_child(hint)
 
@@ -282,9 +284,14 @@ func _build_ui() -> void:
 func _unhandled_key_input(event: InputEvent) -> void:
 	var k := event as InputEventKey
 	if k != null and k.pressed and not k.echo and k.keycode == KEY_C and _appendix != null:   # the stats appendix
-		_appendix.visible = not _appendix.visible
-		_contents.visible = not _appendix.visible
+		_toggle_appendix()
 		get_viewport().set_input_as_handled()
+
+
+## Shows / hides the stats appendix (C or a click on "Xem đủ chỉ số").
+func _toggle_appendix() -> void:
+	_appendix.visible = not _appendix.visible
+	_contents.visible = not _appendix.visible
 
 
 const STAT_ROWS := [["max_hp", "Máu tối đa", "Máu", "heart"], ["regen", "Hồi máu", "Hồi máu", "regen"], ["armor", "Giáp", "Giáp", "shield"],
@@ -373,7 +380,8 @@ func _build_appendix(st: Dictionary, rx: float, page_w: float) -> Control:
 		grid.add_child(Journal.ink(String(e["gear"]), 17, Color("2a7a3a") if e["gear"] != "—" else Journal.INK))
 		grid.add_child(Journal.ink(String(e["tree"]), 17, Color("2a7a3a") if e["tree"] != "—" else Journal.INK))
 		grid.add_child(Journal.ink(String(e["total"]), 17, Journal.INK_RED))
-	var foot := Journal.ink("C: về Mục lục.", 18, Journal.INK_SOFT)
+	var foot := Journal.link("◂ Về Mục lục (C)", 18)   # clickable too (user 2026-11-28)
+	foot.pressed.connect(_toggle_appendix)
 	foot.position = Vector2(rx, BOOK.end.y - 60)
 	box.add_child(foot)
 	return box
