@@ -20,7 +20,10 @@ const RIGHT_PAGE := Rect2(660, 74, 470, 572)
 const STATS := [["max_hp", "Máu tối đa", "%d", false], ["damage", "Sát thương", "%d", false],
 	["armor", "Giáp", "%d", false], ["move_speed", "Tốc độ chạy", "%d", false],
 	["cooldown", "Hồi chiêu", "×%.2f", true], ["area", "Vùng đánh", "×%.2f", false],
-	["magnet", "Tầm hút", "×%.2f", false], ["regen", "Hồi máu", "%.1f/giây", false]]
+	["regen", "Hồi máu", "%.1f/giây", false], ["magnet", "Tầm hút", "×%.2f", false]]
+## each stat's icon (the lobby's STAT_ROWS icons; web screen-equipment-journal ?view=full, approved 2026-11-28)
+const STAT_ICON := {"max_hp": "heart", "damage": "sword", "armor": "shield", "move_speed": "boot", "cooldown": "haste",
+	"area": "reach", "regen": "regen", "magnet": "magnet"}
 # where each slot sits round the hero (left column, local to the doll)
 const DOLL := Vector2(380, 380)
 const CELL := Vector2(76, 76)
@@ -186,15 +189,18 @@ func _doll(root: Control) -> void:
 	# stats with the worn gear: a two-column ledger under the doll
 	var base: Dictionary = _class.get("stats", {})
 	var st := _stats_with(worn)
-	var grid := VBoxContainer.new()   # web: one ledger column, Máu / Sát thương / Giáp / Tốc độ
-	grid.add_theme_constant_override("separation", 0)
-	grid.position = LEFT_PAGE.position + Vector2(0, 418)
-	grid.custom_minimum_size = Vector2(LEFT_PAGE.size.x, 0)
+	var grid := GridContainer.new()   # web ?view=full: eight stats with icons in two columns
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 22)
+	grid.add_theme_constant_override("v_separation", 0)
+	grid.position = LEFT_PAGE.position + Vector2(0, 416)
 	root.add_child(grid)
-	for t in [["Máu", "max_hp"], ["Sát thương", "damage"], ["Giáp", "armor"], ["Tốc độ", "move_speed"]]:
-		var val := float(st.get(t[1], 0.0))
-		var boosted := not is_equal_approx(val, float(base.get(t[1], val)))
-		grid.add_child(Journal.ledger("", t[0], str(roundi(val)), 18, UP if boosted else Journal.INK))
+	for s in STATS:
+		var val := float(st.get(s[0], 0.0))
+		var boosted := not is_equal_approx(val, float(base.get(s[0], val)))
+		var row := Journal.ledger(String(STAT_ICON[s[0]]), String(s[1]), _fmt(s[2], val), 17, UP if boosted else Journal.INK)
+		row.custom_minimum_size.x = (LEFT_PAGE.size.x - 22) * 0.5
+		grid.add_child(row)
 
 
 ## A slot round the hero: its item (rarity frame) or an empty dim frame, the slot
@@ -430,6 +436,15 @@ func _bag_cell(id: String) -> Button:
 		tag.add_theme_stylebox_override("panel", sb)
 		tag.position = Vector2(BAG_CELL.x - 30, 2)
 		b.add_child(tag)
+	if _prof.equipped(_cls).values().has(id):   # worn: a gold tick on the top-left corner (web .wr)
+		var tick := _badge("✓", Journal.INK)
+		var tb: StyleBoxFlat = tick.get_theme_stylebox("panel").duplicate()
+		tb.bg_color = Journal.GOLD
+		tb.border_color = Journal.INK
+		tb.set_border_width_all(2)
+		tick.add_theme_stylebox_override("panel", tb)
+		tick.position = Vector2(-4, -6)
+		b.add_child(tick)
 	b.pressed.connect(func() -> void:
 		_view = id
 		_sel = String(d.get("slot", _sel))
@@ -634,7 +649,7 @@ func _detail(root: Control) -> void:
 			continue
 		changed += 1
 		var better: bool = (b < a) if s[3] else (b > a)
-		body.add_child(Journal.ledger("", s[1], "%s → %s %s" % [_fmt(s[2], a), _fmt(s[2], b), "▲" if better else "▼"], 18, UP if better else DOWN))
+		body.add_child(Journal.ledger(String(STAT_ICON[s[0]]), s[1], "%s → %s %s" % [_fmt(s[2], a), _fmt(s[2], b), "▲" if better else "▼"], 18, UP if better else DOWN))
 	if changed == 0:
 		body.add_child(Journal.ink("Không đổi chỉ số nào.", 17, Journal.INK_SOFT))
 	var prefs := Prefs.current()
@@ -648,7 +663,7 @@ func _detail(root: Control) -> void:
 	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_sibling(col)
 	v.move_child(col, row.get_index())
-	col.add_child(Journal.ledger("", "Cường hoá +%d/%d (mỗi bậc +%d%%)" % [lv, _prof.max_plus(_view), roundi(Profile.PLUS_STEP * 100)],
+	col.add_child(Journal.ledger("coin", "Cường hoá +%d/%d (mỗi bậc +%d%%)" % [lv, _prof.max_plus(_view), roundi(Profile.PLUS_STEP * 100)],
 		("%d vàng" % cost) if cost > 0 else "tối đa", 16))
 	var eb := Journal.link("Cường hoá ▸ (C)", 18)
 	eb.disabled = false   # opens the sheet; its seal checks the gold
