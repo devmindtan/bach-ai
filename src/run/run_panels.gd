@@ -398,16 +398,14 @@ func _upgrade_card(i: int, id: String) -> Button:
 	v.add_child(pips)
 	if String(pv["milestone"]) != "":
 		v.add_child(_label("★ " + String(pv["milestone"]), 14, MILESTONE))
-	# real numbers: before -> after
-	var grid := GridContainer.new()
-	grid.columns = 2
-	grid.add_theme_constant_override("h_separation", 10)
-	grid.add_theme_constant_override("v_separation", 2)
+	# real numbers: before -> after; one row per stat, a long change on its own row under the name
+	# ("-40% (tối đa) → -40% (tối đa)" ran past the card, 2026-11-28)
+	var grid := VBoxContainer.new()
+	grid.add_theme_constant_override("separation", 2)
 	grid.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	for line: Array in pv["lines"]:
 		var k := _label(String(line[0]), 15, MUTED)
 		k.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		grid.add_child(k)
 		var change := HBoxContainer.new()   # Labels report their width; an unwrapped RichTextLabel does not (ran past the card 2026-11-22)
 		change.alignment = BoxContainer.ALIGNMENT_END
 		change.add_theme_constant_override("separation", 6)
@@ -416,7 +414,16 @@ func _upgrade_card(i: int, id: String) -> Button:
 		change.add_child(_label("→", 15, MUTED))
 		var after := _label(String(line[2]), 15, TEXT if line[1] == line[2] else GAIN)   # unchanged: not a gain
 		change.add_child(after)
-		grid.add_child(change)
+		if wide_change(String(line[1]), String(line[2])):
+			grid.add_child(k)
+			grid.add_child(change)
+		else:
+			var row := HBoxContainer.new()
+			row.add_theme_constant_override("separation", 10)
+			row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			row.add_child(k)
+			row.add_child(change)
+			grid.add_child(row)
 	v.add_child(grid)
 	var d := _label(String(u.get("desc", "")), 14, MUTED)
 	d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -440,6 +447,11 @@ func _upgrade_card(i: int, id: String) -> Button:
 ## "Cấp n/m", or "Cấp n · không giới hạn" for a card without a level cap.
 ## Segments in a card's level bar: one per level, none for a card without a cap
 ## (2^30 segments ran the pause screen out of memory, bug 2026-11-21).
+## True when a "before → after" change is too long to share a card row with its stat name.
+static func wide_change(before: String, after: String) -> bool:
+	return before.length() + after.length() > 16
+
+
 static func badge_segments(mx: int) -> int:
 	return 0 if mx > 20 else mx
 

@@ -282,6 +282,7 @@ func _build_ui() -> void:
 
 	var hint := _label("↑ ↓ chọn chương · → dải đánh dấu · Enter mở · C chỉ số · Esc về tiêu đề", 15, Color("c8a878"))
 	hint.position = Vector2(BOOK.position.x, vp.y - 28)
+	hint.visible = vp.y - 28 >= BOOK.end.y   # a short window put it over the book's edge (01h, 2026-11-28)
 	menu.add_child(hint)
 
 

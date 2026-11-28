@@ -681,10 +681,14 @@ func _detail(root: Control) -> void:
 	v.add_child(row)
 	var cost := _prof.enhance_cost(_view)   # web proposal approved 2026-11-26: a ledger line and "Cường hoá ▸ (C)"
 	var col := VBoxContainer.new()   # the enhance line on its own full-width row above the link and the seal
-	col.add_theme_constant_override("separation", 2)
+	col.add_theme_constant_override("separation", 6)
 	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_sibling(col)
 	v.move_child(col, row.get_index())
+	var rule := ColorRect.new()   # the scrolled text ended flush on the enhance line, a cut row read as overlap (2026-11-28)
+	rule.color = Journal.INK
+	rule.custom_minimum_size = Vector2(0, 2)
+	col.add_child(rule)
 	col.add_child(Journal.ledger("coin", "Cường hoá +%d/%d (mỗi bậc +%d%%)" % [lv, _prof.max_plus(_view), roundi(Profile.PLUS_STEP * 100)],
 		("%d vàng" % cost) if cost > 0 else "tối đa", 16))
 	var eb := Journal.link("Cường hoá ▸ (C)", 18)

@@ -137,7 +137,7 @@ func _row(id: String) -> Button:
 	var done := _d.done(_slot, id)
 	var b := Button.new()
 	b.focus_mode = Control.FOCUS_ALL
-	b.custom_minimum_size = Vector2(LEFT_PAGE.size.x, 84)
+	b.custom_minimum_size = Vector2(LEFT_PAGE.size.x, 100)   # 84 left the bar on the task text and the rule (2026-11-28)
 	var flat := StyleBoxFlat.new()
 	flat.bg_color = Color(0, 0, 0, 0)
 	flat.border_color = Journal.DOTS
@@ -161,7 +161,7 @@ func _row(id: String) -> Button:
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	h.add_child(box)
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 0)
+	v.add_theme_constant_override("separation", 4)
 	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	h.add_child(v)
